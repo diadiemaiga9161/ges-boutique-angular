@@ -1,0 +1,338 @@
+<div class="container-fluid py-4 app-page">
+  <!-- VUE LISTE -->
+  <div *ngIf="vueActuelle === 'liste'">
+    <!-- En-tête -->
+    <div class="app-page-header mb-4">
+      <div class="app-page-header-left">
+        <div class="app-page-icon"><i class="fas fa-file-invoice-dollar"></i></div>
+        <div>
+          <h1 class="app-page-title">Dettes Anciennes</h1>
+          <p class="app-page-subtitle">Dettes antérieures des clients et règlements</p>
+        </div>
+      </div>
+      <div class="app-page-header-actions">
+        <button class="btn btn-primary" (click)="openNouvelleDette()">
+          <i class="fas fa-plus-circle me-1"></i> Nouvelle Dette
+        </button>
+        <button class="btn btn-outline-secondary" (click)="refresh()">
+          <i class="fas fa-sync-alt me-1"></i> Actualiser
+        </button>
+      </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-md-3">
+        <div class="app-stat-card">
+          <div class="app-stat-icon red"><i class="fas fa-file-invoice"></i></div>
+          <div class="app-stat-body">
+            <div class="app-stat-label">Dettes en cours</div>
+            <div class="app-stat-value">{{ statistiques.nombreDettesNonReglees || 0 }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="app-stat-card">
+          <div class="app-stat-icon orange"><i class="fas fa-money-bill-wave"></i></div>
+          <div class="app-stat-body">
+            <div class="app-stat-label">Montant restant</div>
+            <div class="app-stat-value">{{ formatDecimal(statistiques.totalDettesRestantes || 0) }} F</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="app-stat-card">
+          <div class="app-stat-icon teal"><i class="fas fa-chart-line"></i></div>
+          <div class="app-stat-body">
+            <div class="app-stat-label">% remboursé</div>
+            <div class="app-stat-value">{{ getPourcentageGlobal() | number:'1.0-0' }}%</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="app-stat-card">
+          <div class="app-stat-icon green"><i class="fas fa-hand-holding-usd"></i></div>
+          <div class="app-stat-body">
+            <div class="app-stat-label">Total remboursé</div>
+            <div class="app-stat-value">{{ formatDecimal(statistiques.totalReglementsEffectues || 0) }} F</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="app-filter-card mb-4">
+      <div class="d-flex gap-2 flex-wrap align-items-center">
+        <button [class.btn-primary]="filtreActif === 'nonReglees'" [class.btn-outline-primary]="filtreActif !== 'nonReglees'" (click)="changerFiltre('nonReglees')" class="btn btn-sm">
+          <i class="fas fa-hourglass-half me-1"></i> Non réglées
+        </button>
+        <button [class.btn-success]="filtreActif === 'reglees'" [class.btn-outline-success]="filtreActif !== 'reglees'" (click)="changerFiltre('reglees')" class="btn btn-sm">
+          <i class="fas fa-check-circle me-1"></i> Réglées
+        </button>
+        <button [class.btn-secondary]="filtreActif === 'toutes'" [class.btn-outline-secondary]="filtreActif !== 'toutes'" (click)="changerFiltre('toutes')" class="btn btn-sm">
+          <i class="fas fa-list me-1"></i> Toutes
+        </button>
+        <div class="input-group input-group-sm ms-auto" style="max-width:280px">
+          <span class="input-group-text"><i class="fas fa-search"></i></span>
+          <input type="text" class="form-control" placeholder="Rechercher par client..." (input)="onSearchInput($event)">
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="loading" class="loading-container">
+      <div class="spinner"></div>
+      <p><i class="fas fa-spinner fa-spin"></i> Chargement des dettes...</p>
+    </div>
+
+    <div *ngIf="!loading" class="app-table-card">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th><i class="fas fa-user"></i> Client</th>
+            <th><i class="fas fa-calendar"></i> Date crédit</th>
+            <th><i class="fas fa-chart-simple"></i> Montant initial</th>
+            <th><i class="fas fa-coins"></i> Montant restant</th>
+            <th><i class="fas fa-chart-line"></i> Avancement</th>
+            <th><i class="fas fa-tag"></i> Statut</th>
+            <th><i class="fas fa-cogs"></i> Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let dette of paginatedDettes">
+            <td class="client-info">
+              <div class="client-avatar"><i class="fas fa-user-circle"></i></div>
+              <div class="client-details">
+                <strong><i class="fas fa-user"></i> {{ getClientDisplayName(dette) }}</strong>
+                <small><i class="fas fa-phone"></i> {{ dette.clientTelephone }}</small>
+                <small *ngIf="dette.description" class="description"><i class="fas fa-file-alt"></i> {{ dette.description | slice:0:30 }}</small>
+              </div>
+            </td>
+            <td><i class="fas fa-calendar-day"></i> {{ formatDate(dette.dateCredit) }}</td>
+            <td class="montant"><i class="fas fa-arrow-up"></i> {{ formatDecimal(dette.montantInitial) }} F</td>
+            <td class="montant restant"><i class="fas fa-arrow-down"></i> {{ formatDecimal(dette.montantRestant) }} F</td>
+            <td>
+              <div class="progress-container">
+                <div class="progress-bar-small">
+                  <div class="progress-fill-small" [style.width.%]="detteService.getPourcentagePaye(dette)"></div>
+                </div>
+                <span><i class="fas fa-percent"></i> {{ detteService.getPourcentagePaye(dette) | number:'1.0-0' }}%</span>
+              </div>
+            </td>
+            <td>
+              <span class="status-badge" [class.paid]="dette.estReglee" [class.unpaid]="!dette.estReglee">
+                <i class="fas" [class.fa-check-circle]="dette.estReglee" [class.fa-clock]="!dette.estReglee"></i>
+                {{ dette.estReglee ? 'Réglée' : 'Non réglée' }}
+              </span>
+            </td>
+            <td class="actions">
+              <button class="action-btn pay-btn" (click)="preparerReglement(dette)" [disabled]="dette.estReglee" title="Enregistrer un règlement">
+                <i class="fas fa-hand-holding-usd"></i> Payer
+              </button>
+              <button class="action-btn history-btn" (click)="voirHistorique(dette)" title="Voir l'historique">
+                <i class="fas fa-history"></i> Historique
+              </button>
+              <button class="action-btn edit-btn" (click)="editerDette(dette)" *ngIf="!dette.estReglee" title="Modifier">
+                <i class="fas fa-edit"></i> Modifier
+              </button>
+              <button class="action-btn delete-btn" (click)="supprimerDette(dette.id)" *ngIf="!dette.estReglee && dette.montantInitial === dette.montantRestant" title="Supprimer">
+                <i class="fas fa-trash-alt"></i> Supprimer
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="paginatedDettes.length === 0">
+            <td colspan="7" class="empty-state">
+              <i class="fas fa-inbox fa-3x"></i>
+              <p><i class="fas fa-folder-open"></i> Aucune dette trouvée</p>
+              <button class="btn btn-outline" (click)="openNouvelleDette()">
+                <i class="fas fa-plus-circle"></i> Créer une nouvelle dette
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Pagination -->
+      <div class="pagination-container" *ngIf="totalPages > 1">
+        <div class="pagination-info">
+          Affichage {{ (currentPage - 1) * itemsPerPage + 1 }}–{{ currentPage * itemsPerPage > dettesFiltrees.length ? dettesFiltrees.length : currentPage * itemsPerPage }} sur {{ dettesFiltrees.length }} dettes
+        </div>
+        <div class="pagination-controls">
+          <button class="page-btn" (click)="goToPage(currentPage - 1)" [disabled]="currentPage === 1">
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          <button *ngFor="let p of pages" class="page-btn" [class.active]="p === currentPage" (click)="goToPage(p)">{{ p }}</button>
+          <button class="page-btn" (click)="goToPage(currentPage + 1)" [disabled]="currentPage === totalPages">
+            <i class="fas fa-chevron-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VUE NOUVELLE DETTE -->
+  <div *ngIf="vueActuelle === 'nouvelle'">
+    <div class="form-header">
+      <button class="btn-back" (click)="annuler()">
+        <i class="fas fa-arrow-left"></i> Retour
+      </button>
+      <h1><i class="fas" [class.fa-edit]="isEditing" [class.fa-plus-circle]="!isEditing"></i> {{ isEditing ? 'Modifier la Dette' : 'Nouvelle Dette Ancienne' }}</h1>
+      <p><i class="fas fa-info-circle"></i> {{ isEditing ? 'Modifiez les informations de la dette' : 'Enregistrez une dette antérieure d\'un client' }}</p>
+    </div>
+    <div class="form-card">
+      <form (ngSubmit)="isEditing ? modifierDette() : creerDette()">
+        <div class="form-group">
+          <label class="form-label required"><i class="fas fa-user"></i> Client</label>
+          <div class="client-selector">
+            <input type="text" class="form-control" [(ngModel)]="clientSearch" name="clientSearch" 
+                   (input)="onClientSearch()" (focus)="showClientDropdown = true" 
+                   placeholder="Rechercher un client..." [disabled]="isEditing" autocomplete="off">
+            <div class="dropdown" *ngIf="showClientDropdown && filteredClients.length > 0 && !isEditing">
+              <div *ngFor="let client of filteredClients" class="dropdown-item" (click)="selectClient(client)">
+                <strong><i class="fas fa-user"></i> {{ getClientFullName(client) }}</strong>
+                <small><i class="fas fa-phone"></i> {{ client.numeroTelephone }}</small>
+              </div>
+            </div>
+          </div>
+          <div *ngIf="selectedClient" class="selected-client">
+            <i class="fas fa-check-circle"></i> Client: {{ getClientFullName(selectedClient) }}
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label required"><i class="fas fa-money-bill-wave"></i> Montant (F CFA)</label>
+          <input type="number" class="form-control" [(ngModel)]="detteForm.montant" name="montant" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label required"><i class="fas fa-calendar"></i> Date du crédit</label>
+          <input type="date" class="form-control" [(ngModel)]="detteForm.dateCredit" name="dateCredit" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label"><i class="fas fa-file-alt"></i> Description</label>
+          <textarea class="form-control" [(ngModel)]="detteForm.description" name="description" rows="3" placeholder="Motif de la dette, observations..."></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" (click)="annuler()">
+            <i class="fas fa-times"></i> Annuler
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="submitting">
+            <i class="fas" [class.fa-spinner]="submitting" [class.fa-spin]="submitting" [class.fa-save]="!submitting"></i>
+            {{ submitting ? 'Enregistrement...' : (isEditing ? 'Modifier' : 'Créer la dette') }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- VUE RÈGLEMENT -->
+  <div *ngIf="vueActuelle === 'reglement' && detteSelectionnee">
+    <div class="form-header">
+      <button class="btn-back" (click)="annuler()">
+        <i class="fas fa-arrow-left"></i> Retour
+      </button>
+      <h1><i class="fas fa-hand-holding-usd"></i> Règlement de Dette</h1>
+      <p><i class="fas fa-info-circle"></i> Enregistrez un paiement partiel ou total</p>
+    </div>
+    <div class="form-card">
+      <div class="info-dette">
+        <div class="info-row"><i class="fas fa-user"></i> <strong>Client:</strong> {{ getClientDisplayName(detteSelectionnee) }}</div>
+        <div class="info-row"><i class="fas fa-phone"></i> <strong>Téléphone:</strong> {{ detteSelectionnee.clientTelephone }}</div>
+        <div class="info-row"><i class="fas fa-chart-simple"></i> <strong>Montant initial:</strong> {{ formatDecimal(detteSelectionnee.montantInitial) }} F CFA</div>
+        <div class="info-row"><i class="fas fa-arrow-down"></i> <strong>Montant restant:</strong> <span class="restant">{{ formatDecimal(detteSelectionnee.montantRestant) }} F CFA</span></div>
+        <div class="info-row"><i class="fas fa-calendar"></i> <strong>Date crédit:</strong> {{ formatDate(detteSelectionnee.dateCredit) }}</div>
+        <div class="info-row" *ngIf="detteSelectionnee.description"><i class="fas fa-file-alt"></i> <strong>Description:</strong> {{ detteSelectionnee.description }}</div>
+      </div>
+      <form (ngSubmit)="enregistrerReglement()">
+        <div class="form-group">
+          <label class="form-label required"><i class="fas fa-money-bill-wave"></i> Montant à payer (F CFA)</label>
+          <input type="number" class="form-control" [(ngModel)]="reglementForm.montantPaye" name="montantPaye" required>
+          <small class="help-text"><i class="fas fa-info-circle"></i> Maximum: {{ formatDecimal(detteSelectionnee.montantRestant) }} F CFA</small>
+        </div>
+        <div class="form-group">
+          <label class="form-label required"><i class="fas fa-credit-card"></i> Mode de paiement</label>
+          <select class="form-control" [(ngModel)]="reglementForm.modePaiement" name="modePaiement">
+            <option *ngFor="let mode of modesPaiement" [value]="mode">
+              <i class="fas" [class.fa-money-bill]="mode === 'ESPECES'" [class.fa-mobile-alt]="mode === 'ORANGE_MONEY'"></i>
+              {{ mode }}
+            </option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label"><i class="fas fa-hashtag"></i> Référence paiement</label>
+          <input type="text" class="form-control" [(ngModel)]="reglementForm.referencePaiement" name="referencePaiement" placeholder="N° transaction, numéro chèque...">
+        </div>
+        <div class="form-group">
+          <label class="form-label"><i class="fas fa-comment"></i> Observations</label>
+          <textarea class="form-control" [(ngModel)]="reglementForm.observations" name="observations" rows="2" placeholder="Commentaires..."></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" (click)="annuler()">
+            <i class="fas fa-times"></i> Annuler
+          </button>
+          <button type="submit" class="btn btn-success" [disabled]="submitting">
+            <i class="fas" [class.fa-spinner]="submitting" [class.fa-spin]="submitting" [class.fa-save]="!submitting"></i>
+            {{ submitting ? 'Enregistrement...' : 'Enregistrer le règlement' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- VUE HISTORIQUE -->
+  <div *ngIf="vueActuelle === 'historique' && detteSelectionnee">
+    <div class="form-header">
+      <button class="btn-back" (click)="annuler()">
+        <i class="fas fa-arrow-left"></i> Retour
+      </button>
+      <h1><i class="fas fa-history"></i> Historique des Règlements</h1>
+      <p><i class="fas fa-file-invoice"></i> Dette de {{ getClientDisplayName(detteSelectionnee) }}</p>
+    </div>
+    <div class="info-dette historique-info">
+      <div class="info-row"><i class="fas fa-chart-simple"></i> <strong>Montant initial:</strong> {{ formatDecimal(detteSelectionnee.montantInitial) }} F CFA</div>
+      <div class="info-row"><i class="fas fa-arrow-down"></i> <strong>Montant restant:</strong> <span class="restant">{{ formatDecimal(detteSelectionnee.montantRestant) }} F CFA</span></div>
+      <div class="info-row"><i class="fas fa-arrow-up"></i> <strong>Montant déjà payé:</strong> {{ formatDecimal(detteSelectionnee.montantInitial - detteSelectionnee.montantRestant) }} F CFA</div>
+      <div class="info-row"><i class="fas fa-tag"></i> <strong>Statut:</strong> 
+        <span class="status-badge" [class.paid]="detteSelectionnee.estReglee" [class.unpaid]="!detteSelectionnee.estReglee">
+          <i class="fas" [class.fa-check-circle]="detteSelectionnee.estReglee" [class.fa-clock]="!detteSelectionnee.estReglee"></i>
+          {{ detteSelectionnee.estReglee ? 'Réglée' : 'Non réglée' }}
+        </span>
+      </div>
+    </div>
+    <div class="historique-table-container" *ngIf="!loading; else loadingTemplate">
+      <table class="historique-table" *ngIf="historiqueReglements.length > 0; else emptyHistorique">
+        <thead>
+          <tr>
+            <th><i class="fas fa-calendar"></i> Date</th>
+            <th><i class="fas fa-money-bill-wave"></i> Montant payé</th>
+            <th><i class="fas fa-credit-card"></i> Mode de paiement</th>
+            <th><i class="fas fa-hashtag"></i> Référence</th>
+            <th><i class="fas fa-comment"></i> Observations</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let reg of historiqueReglements">
+            <td><i class="fas fa-calendar-day"></i> {{ formatDate(reg.dateReglement) }}</td>
+            <td class="montant paye"><i class="fas fa-arrow-up"></i> {{ formatDecimal(reg.montantPaye) }} F</td>
+            <td><i class="fas" [class.fa-money-bill]="reg.modePaiement === 'ESPECES'" [class.fa-mobile-alt]="reg.modePaiement === 'ORANGE_MONEY'"></i> {{ reg.modePaiement }}</td>
+            <td><i class="fas fa-hashtag"></i> {{ reg.referencePaiement || '-' }}</td>
+            <td><i class="fas fa-comment"></i> {{ reg.observations || '-' }}</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="2"><strong><i class="fas fa-chart-line"></i> Total payé</strong></td>
+            <td colspan="3"><strong><i class="fas fa-check-circle"></i> {{ formatDecimal(getTotalPayeHistorique()) }} F</strong></td>
+          </tr>
+        </tfoot>
+      </table>
+      <ng-template #emptyHistorique>
+        <div class="empty-state">
+          <i class="fas fa-history fa-3x"></i>
+          <p><i class="fas fa-folder-open"></i> Aucun règlement enregistré pour cette dette</p>
+        </div>
+      </ng-template>
+    </div>
+    <ng-template #loadingTemplate>
+      <div class="loading-container">
+        <div class="spinner"></div>
+        <p><i class="fas fa-spinner fa-spin"></i> Chargement...</p>
+      </div>
+    </ng-template>
+  </div>
+</div>

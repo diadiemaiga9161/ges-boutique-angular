@@ -1,0 +1,190 @@
+<body class="auth-bg">
+  <div class="form-wrapper">
+    <div class="card auth-card">
+      <div class="card-gradient"></div>
+      
+      <!-- Photo de profil -->
+      <div class="photo-section">
+        <div class="photo-circle" [class.photo-circle--has-photo]="photoPreview">
+          <img *ngIf="photoPreview" [src]="photoPreview" alt="Photo de profil" class="photo-img" />
+          <i *ngIf="!photoPreview" class="fas fa-user-circle photo-icon-default"></i>
+          <div *ngIf="loadingPhoto" class="photo-overlay">
+            <div class="spinner-border spinner-border-sm" role="status"></div>
+          </div>
+        </div>
+
+        <div class="photo-actions">
+          <label class="btn-photo btn-photo--upload" [class.disabled]="loadingPhoto">
+            <i class="fas fa-camera"></i>
+            <span>{{ photoPreview ? 'Changer' : 'Ajouter une photo' }}</span>
+            <input type="file" accept="image/*" (change)="onPhotoSelected($event)" [disabled]="loadingPhoto" hidden />
+          </label>
+          <button *ngIf="photoPreview" class="btn-photo btn-photo--remove" type="button"
+                  (click)="removePhoto()" [disabled]="loadingPhoto">
+            <i class="fas fa-trash-alt"></i>
+          </button>
+        </div>
+
+        <div *ngIf="photoMessage" class="photo-msg" [class.photo-msg--error]="photoError">
+          <i class="fas" [class.fa-check-circle]="!photoError" [class.fa-exclamation-circle]="photoError"></i>
+          {{ photoMessage }}
+        </div>
+      </div>
+
+      <h3 class="form-title">Mon Profil</h3>
+      <p class="form-subtitle">Gérez vos informations personnelles</p>
+
+      <!-- Message d'information -->
+      <div *ngIf="message" class="alert"
+           [class.alert-success]="!isError"
+           [class.alert-danger]="isError">
+        <i class="fas" [class.fa-check-circle]="!isError" [class.fa-exclamation-circle]="isError"></i>
+        {{ message }}
+      </div>
+
+      <!-- Chargement -->
+      <div *ngIf="isLoading" class="alert alert-info">
+        <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+        Chargement en cours...
+      </div>
+
+      <!-- Formulaire -->
+      <form *ngIf="showForm && !isLoading" (ngSubmit)="updateProfile()" #f="ngForm">
+
+        <div class="row">
+          <!-- Username -->
+          <div class="col-md-6 mb-3">
+            <label class="form-label">
+              <i class="fas fa-user"></i>
+              Nom d'utilisateur
+            </label>
+            <div class="input-disabled">
+              <i class="fas fa-lock"></i>
+              <span>{{ user?.username || '-' }}</span>
+            </div>
+          </div>
+
+          <!-- Rôle -->
+          <div class="col-md-6 mb-3">
+            <label class="form-label">
+              <i class="fas fa-badge"></i>
+              Rôle
+            </label>
+            <div class="input-disabled" [class.admin-role]="user?.role === 'ADMIN'" [class.vendeur-role]="user?.role === 'VENDEUR'">
+              <i class="fas" [class.fa-crown]="user?.role === 'ADMIN'" [class.fa-user-tie]="user?.role === 'VENDEUR'"></i>
+              <span>{{ getFormattedRole() }}</span>
+            </div>
+          </div>
+
+          <!-- Nom complet -->
+          <div class="col-12 mb-3">
+            <label class="form-label">
+              <i class="fas fa-user-edit"></i>
+              Nom complet <span class="required">*</span>
+            </label>
+            <input class="form-control"
+                   name="nomComplet"
+                   [(ngModel)]="updateData.nomComplet"
+                   required
+                   placeholder="Nom et prénom"
+                   autocomplete="name" />
+            <div class="input-border"></div>
+          </div>
+
+          <!-- Email -->
+          <div class="col-md-6 mb-3">
+            <label class="form-label">
+              <i class="fas fa-envelope"></i>
+              Email <span class="required">*</span>
+            </label>
+            <input type="email"
+                   class="form-control"
+                   name="email"
+                   [(ngModel)]="updateData.email"
+                   required
+                   placeholder="email@example.com"
+                   autocomplete="email" />
+            <div class="input-border"></div>
+          </div>
+
+          <!-- Téléphone -->
+          <div class="col-md-6 mb-3">
+            <label class="form-label">
+              <i class="fas fa-phone-alt"></i>
+              Téléphone <span class="required">*</span>
+            </label>
+            <input type="tel"
+                   class="form-control"
+                   name="telephone"
+                   [(ngModel)]="updateData.telephone"
+                   pattern="[0-9]{10}"
+                   required
+                   placeholder="0123456789"
+                   autocomplete="tel" />
+            <div class="input-border"></div>
+            <small class="form-text">10 chiffres requis</small>
+          </div>
+
+          <!-- Mot de passe -->
+          <div class="col-12 mb-3">
+            <label class="form-label">
+              <i class="fas fa-key"></i>
+              Nouveau mot de passe
+            </label>
+            <div class="input-group">
+              <input class="form-control"
+                     name="password"
+                     [(ngModel)]="updateData.password"
+                     [type]="showPassword ? 'text' : 'password'"
+                     placeholder="Laissez vide pour ne pas modifier"
+                     autocomplete="new-password" />
+              <button class="btn-password-toggle"
+                      type="button"
+                      (click)="togglePasswordVisibility()">
+                <i class="fa" [class.fa-eye]="!showPassword" [class.fa-eye-slash]="showPassword"></i>
+              </button>
+            </div>
+            <div class="input-border"></div>
+            <small class="form-text text-muted">Minimum 6 caractères (optionnel)</small>
+          </div>
+        </div>
+
+        <!-- Boutons -->
+        <div class="mt-4">
+          <button class="btn btn-primary w-100 mb-3"
+                  type="submit"
+                  [disabled]="!isFormValid || isLoading">
+            <span *ngIf="!isLoading">
+              <i class="fas fa-save"></i> Mettre à jour le profil
+            </span>
+            <span *ngIf="isLoading">
+              <i class="fas fa-spinner fa-spin me-1"></i> Mise à jour...
+            </span>
+          </button>
+
+          <button class="btn btn-outline-danger w-100"
+                  type="button"
+                  (click)="logout()">
+            <i class="fas fa-sign-out-alt me-2"></i>
+            Se déconnecter
+          </button>
+        </div>
+
+      </form>
+
+      <!-- Message si pas connecté -->
+      <div *ngIf="!showForm && !isLoading" class="text-center">
+        <div class="alert alert-warning mb-3">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          Vous n'êtes pas connecté
+        </div>
+        <button class="btn btn-primary" (click)="goToPage()">
+          <i class="fas fa-sign-in-alt me-2"></i>
+          Se connecter
+        </button>
+      </div>
+      
+    
+    </div>
+  </div>
+</body>

@@ -1,0 +1,159 @@
+<div class="auth-bg">
+  <div class="form-wrapper">
+    <div class="card auth-card">
+      <h3 class="form-title">Créer un compte</h3>
+
+      <div class="registration">
+        Déjà un compte ?
+        <button type="button" (click)="goToLogin()">Connectez-vous ici</button>
+      </div>
+
+      <div *ngIf="message" class="alert-message"
+           [class.success]="!isError"
+           [class.error]="isError">
+        {{ message }}
+      </div>
+
+      <form (ngSubmit)="register()" #f="ngForm">
+        <div class="section-title">
+          <i class="fa fa-user"></i> Informations de connexion
+        </div>
+
+        <div class="row g-2 mb-3">
+          <div class="col-md-6">
+            <label class="form-label">Nom d'utilisateur *</label>
+            <input type="text" class="form-control"
+                   name="username"
+                   [(ngModel)]="username"
+                   required
+                   [disabled]="isLoading"
+                   placeholder="john.doe">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Rôle *</label>
+            <select class="form-select"
+                    name="role"
+                    [(ngModel)]="role"
+                    required
+                    [disabled]="isLoading || !authService.isAdmin()">
+              <option value="VENDEUR">Vendeur</option>
+              <option value="ADMIN" *ngIf="authService.isAdmin()">Administrateur</option>
+            </select>
+            <small *ngIf="!authService.isAdmin()" class="text-muted">
+              Seuls les administrateurs peuvent créer des comptes admin
+            </small>
+          </div>
+        </div>
+
+        <div class="section-title">
+          <i class="fa fa-lock"></i> Mot de passe
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Mot de passe *</label>
+          <div class="input-group">
+            <input [type]="showPassword ? 'text' : 'password'"
+                   class="form-control"
+                   name="password"
+                   [(ngModel)]="password"
+                   (input)="checkPasswordStrength()"
+                   required
+                   minlength="6"
+                   [disabled]="isLoading"
+                   placeholder="●●●●●●●●">
+            <button class="btn btn-outline-secondary" type="button"
+                    (click)="togglePasswordVisibility()">
+              <i class="fa" [class.fa-eye]="!showPassword" [class.fa-eye-slash]="showPassword"></i>
+            </button>
+          </div>
+          
+          <div *ngIf="password" class="mt-2">
+            <div class="password-strength">
+              <div class="strength-bars">
+                <div class="bar" [class.active]="passwordStrength >= 1"></div>
+                <div class="bar" [class.active]="passwordStrength >= 2"></div>
+                <div class="bar" [class.active]="passwordStrength >= 3"></div>
+                <div class="bar" [class.active]="passwordStrength >= 4"></div>
+              </div>
+              <small class="strength-text">{{ passwordStrengthText }}</small>
+            </div>
+            <small class="form-text text-muted">
+              Minimum 6 caractères avec majuscules, minuscules et chiffres
+            </small>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Confirmer le mot de passe *</label>
+          <input type="password"
+                 class="form-control"
+                 name="confirmPassword"
+                 [(ngModel)]="confirmPassword"
+                 required
+                 [disabled]="isLoading"
+                 placeholder="●●●●●●●●">
+        </div>
+
+        <div class="section-title">
+          <i class="fa fa-id-card"></i> Informations personnelles
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Nom complet *</label>
+          <input type="text"
+                 class="form-control"
+                 name="nomComplet"
+                 [(ngModel)]="nomComplet"
+                 required
+                 [disabled]="isLoading"
+                 placeholder="John Doe">
+        </div>
+
+        <div class="row g-2 mb-3">
+          <div class="col-md-6">
+            <label class="form-label">Email *</label>
+            <input type="email"
+                   class="form-control"
+                   name="email"
+                   [(ngModel)]="email"
+                   required
+                   [disabled]="isLoading"
+                   placeholder="john@example.com">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Téléphone *</label>
+            <input type="tel"
+                   class="form-control"
+                   name="telephone"
+                   [(ngModel)]="telephone"
+                   required
+                   pattern="[0-9]{10}"
+                   [disabled]="isLoading"
+                   placeholder="0123456789">
+            <small class="form-text text-muted">10 chiffres</small>
+          </div>
+        </div>
+
+        <button class="btn btn-primary btn-block mt-4"
+                type="submit"
+                [disabled]="isLoading || f.invalid">
+          <span *ngIf="!isLoading">
+            <i class="fa fa-user-plus me-1"></i> Créer le compte
+          </span>
+          <span *ngIf="isLoading">
+            <i class="fa fa-spinner fa-spin me-1"></i> Création...
+          </span>
+        </button>
+
+        <div class="mt-4 p-3 bg-light rounded">
+          <small class="text-muted">
+            <i class="fa fa-info-circle me-1"></i>
+            <strong>Note:</strong> L'inscription publique n'est pas disponible. 
+            Seuls les administrateurs connectés peuvent créer des comptes utilisateurs.
+            Si vous n'avez pas accès, contactez votre administrateur.
+          </small>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

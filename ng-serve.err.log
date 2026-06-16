@@ -1,0 +1,770 @@
+[1m[33mComponent HMR has been enabled, see https://angular.dev/hmr for more info.[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2339: Property 'setCurrentInfo' does not exist on type 'BoutiqueService'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/shared/services/boutique.service.ts:41:13:
+[37m      41 │         this.[32msetCurrentInfo[37m(this.defaultInfo());
+         ╵              [32m~~~~~~~~~~~~~~[0m
+
+[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2339: Property 'setCurrentInfo' does not exist on type 'BoutiqueService'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/shared/services/boutique.service.ts:41:13:
+[37m      41 │         this.[32msetCurrentInfo[37m(this.defaultInfo());
+         ╵              [32m~~~~~~~~~~~~~~[0m
+
+[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2554: Expected 1 arguments, but got 2.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/pages/clients/clients.component.ts:380:73:
+[37m      380 │ ...gerFacture(this.selectedVenteIdForFacture, [32mdateHeure[37m).subscribe({
+          ╵                                               [32m~~~~~~~~~[0m
+
+[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mNG5002: Unexpected closing tag "td". It may happen when the tag has already been closed by another tag. For more info see https://www.w3.org/TR/html5/syntax.html#closing-elements-that-have-implied-end-tags[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/pages/clients/clients.component.html:493:14:
+[37m      493 │               [32m</td>[37m
+          ╵               [32m~~~~~[0m
+
+  Error occurs in the template of component ClientsComponent.
+
+    src/app/views/pages/clients/clients.component.ts:14:15:
+[37m      14 │   templateUrl: [32m'./clients.component.html'[37m,
+         ╵                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2554: Expected 1 arguments, but got 2.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/pages/clients/clients.component.ts:380:73:
+[37m      380 │ ...gerFacture(this.selectedVenteIdForFacture, [32mdateHeure[37m).subscribe({
+          ╵                                               [32m~~~~~~~~~[0m
+
+[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2305: Module '"../../../shared/services/vente.service"' has no exported member 'Vente'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/pages/factures/factures.component.ts:11:23:
+[37m      11 │ import { VenteService, [32mVente[37m } from '../../../shared/services/vent...
+         ╵                        [32m~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2339: Property 'obtenirToutesVentes' does not exist on type 'VenteService'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/pages/factures/factures.component.ts:569:22:
+[37m      569 │     this.venteService.[32mobtenirToutesVentes[37m().subscribe({
+          ╵                       [32m~~~~~~~~~~~~~~~~~~~[0m
+
+[39m[22m
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mDeprecation[0m [1m[35m[plugin angular-sass][0m
+
+    src/app/views/pages/factures/factures.component.scss:145:28:
+[37m      145 │       &:hover { background: [32m[37mdarken($info, 8%); }
+          ╵                             [32m^[0m
+
+
+  Global built-in functions are deprecated and will be removed in Dart Sass 3.0.0.
+  Use color.adjust instead.
+  
+  More info and automated migrator: [4mhttps://sass-lang.com/d/import[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mDeprecation[0m [1m[35m[plugin angular-sass][0m
+
+    src/app/views/pages/factures/factures.component.scss:145:28:
+[37m      145 │       &:hover { background: [32m[37mdarken($info, 8%); }
+          ╵                             [32m^[0m
+
+
+  darken() is deprecated. Suggestions:
+  
+  color.scale($color, $lightness: -22.4175824176%)
+  color.adjust($color, $lightness: -8%)
+  
+  More info: [4mhttps://sass-lang.com/d/color-functions[0m
+
+[39m[22m
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mDeprecation[0m [1m[35m[plugin angular-sass][0m
+
+    src/app/views/pages/factures/factures.component.scss:145:28:
+[37m      145 │       &:hover { background: [32m[37mdarken($info, 8%); }
+          ╵                             [32m^[0m
+
+
+  Global built-in functions are deprecated and will be removed in Dart Sass 3.0.0.
+  Use color.adjust instead.
+  
+  More info and automated migrator: [4mhttps://sass-lang.com/d/import[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mDeprecation[0m [1m[35m[plugin angular-sass][0m
+
+    src/app/views/pages/factures/factures.component.scss:145:28:
+[37m      145 │       &:hover { background: [32m[37mdarken($info, 8%); }
+          ╵                             [32m^[0m
+
+
+  darken() is deprecated. Suggestions:
+  
+  color.scale($color, $lightness: -22.4175824176%)
+  color.adjust($color, $lightness: -8%)
+  
+  More info: [4mhttps://sass-lang.com/d/color-functions[0m
+
+[39m[22m
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mDeprecation[0m [1m[35m[plugin angular-sass][0m
+
+    src/app/views/pages/factures/factures.component.scss:145:28:
+[37m      145 │       &:hover { background: [32m[37mdarken($info, 8%); }
+          ╵                             [32m^[0m
+
+
+  Global built-in functions are deprecated and will be removed in Dart Sass 3.0.0.
+  Use color.adjust instead.
+  
+  More info and automated migrator: [4mhttps://sass-lang.com/d/import[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mDeprecation[0m [1m[35m[plugin angular-sass][0m
+
+    src/app/views/pages/factures/factures.component.scss:145:28:
+[37m      145 │       &:hover { background: [32m[37mdarken($info, 8%); }
+          ╵                             [32m^[0m
+
+
+  darken() is deprecated. Suggestions:
+  
+  color.scale($color, $lightness: -22.4175824176%)
+  color.adjust($color, $lightness: -8%)
+  
+  More info: [4mhttps://sass-lang.com/d/color-functions[0m
+
+[39m[22m
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mDeprecation[0m [1m[35m[plugin angular-sass][0m
+
+    src/app/views/pages/factures/factures.component.scss:145:28:
+[37m      145 │       &:hover { background: [32m[37mdarken($info, 8%); }
+          ╵                             [32m^[0m
+
+
+  Global built-in functions are deprecated and will be removed in Dart Sass 3.0.0.
+  Use color.adjust instead.
+  
+  More info and automated migrator: [4mhttps://sass-lang.com/d/import[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mDeprecation[0m [1m[35m[plugin angular-sass][0m
+
+    src/app/views/pages/factures/factures.component.scss:145:28:
+[37m      145 │       &:hover { background: [32m[37mdarken($info, 8%); }
+          ╵                             [32m^[0m
+
+
+  darken() is deprecated. Suggestions:
+  
+  color.scale($color, $lightness: -22.4175824176%)
+  color.adjust($color, $lightness: -8%)
+  
+  More info: [4mhttps://sass-lang.com/d/color-functions[0m
+
+[39m[22m
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mDeprecation[0m [1m[35m[plugin angular-sass][0m
+
+    src/app/views/pages/factures/factures.component.scss:145:28:
+[37m      145 │       &:hover { background: [32m[37mdarken($info, 8%); }
+          ╵                             [32m^[0m
+
+
+  Global built-in functions are deprecated and will be removed in Dart Sass 3.0.0.
+  Use color.adjust instead.
+  
+  More info and automated migrator: [4mhttps://sass-lang.com/d/import[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mDeprecation[0m [1m[35m[plugin angular-sass][0m
+
+    src/app/views/pages/factures/factures.component.scss:145:28:
+[37m      145 │       &:hover { background: [32m[37mdarken($info, 8%); }
+          ╵                             [32m^[0m
+
+
+  darken() is deprecated. Suggestions:
+  
+  color.scale($color, $lightness: -22.4175824176%)
+  color.adjust($color, $lightness: -8%)
+  
+  More info: [4mhttps://sass-lang.com/d/color-functions[0m
+
+[39m[22m
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mDeprecation[0m [1m[35m[plugin angular-sass][0m
+
+    src/app/views/pages/factures/factures.component.scss:145:28:
+[37m      145 │       &:hover { background: [32m[37mdarken($info, 8%); }
+          ╵                             [32m^[0m
+
+
+  Global built-in functions are deprecated and will be removed in Dart Sass 3.0.0.
+  Use color.adjust instead.
+  
+  More info and automated migrator: [4mhttps://sass-lang.com/d/import[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mDeprecation[0m [1m[35m[plugin angular-sass][0m
+
+    src/app/views/pages/factures/factures.component.scss:145:28:
+[37m      145 │       &:hover { background: [32m[37mdarken($info, 8%); }
+          ╵                             [32m^[0m
+
+
+  darken() is deprecated. Suggestions:
+  
+  color.scale($color, $lightness: -22.4175824176%)
+  color.adjust($color, $lightness: -8%)
+  
+  More info: [4mhttps://sass-lang.com/d/color-functions[0m
+
+[39m[22m
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mDeprecation[0m [1m[35m[plugin angular-sass][0m
+
+    src/app/views/pages/factures/factures.component.scss:145:28:
+[37m      145 │       &:hover { background: [32m[37mdarken($info, 8%); }
+          ╵                             [32m^[0m
+
+
+  Global built-in functions are deprecated and will be removed in Dart Sass 3.0.0.
+  Use color.adjust instead.
+  
+  More info and automated migrator: [4mhttps://sass-lang.com/d/import[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mDeprecation[0m [1m[35m[plugin angular-sass][0m
+
+    src/app/views/pages/factures/factures.component.scss:145:28:
+[37m      145 │       &:hover { background: [32m[37mdarken($info, 8%); }
+          ╵                             [32m^[0m
+
+
+  darken() is deprecated. Suggestions:
+  
+  color.scale($color, $lightness: -22.4175824176%)
+  color.adjust($color, $lightness: -8%)
+  
+  More info: [4mhttps://sass-lang.com/d/color-functions[0m
+
+[39m[22m
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mDeprecation[0m [1m[35m[plugin angular-sass][0m
+
+    src/app/views/pages/factures/factures.component.scss:145:28:
+[37m      145 │       &:hover { background: [32m[37mdarken($info, 8%); }
+          ╵                             [32m^[0m
+
+
+  Global built-in functions are deprecated and will be removed in Dart Sass 3.0.0.
+  Use color.adjust instead.
+  
+  More info and automated migrator: [4mhttps://sass-lang.com/d/import[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mDeprecation[0m [1m[35m[plugin angular-sass][0m
+
+    src/app/views/pages/factures/factures.component.scss:145:28:
+[37m      145 │       &:hover { background: [32m[37mdarken($info, 8%); }
+          ╵                             [32m^[0m
+
+
+  darken() is deprecated. Suggestions:
+  
+  color.scale($color, $lightness: -22.4175824176%)
+  color.adjust($color, $lightness: -8%)
+  
+  More info: [4mhttps://sass-lang.com/d/color-functions[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mDuplicate member "openFacturesParVenteModal" in class body[0m [duplicate-class-member]
+
+    src/app/views/pages/factures/factures.component.ts:1826:4:
+[37m      1826 │     [32mopenFacturesParVenteModal[37m() {
+           ╵     [32m~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+  The original member "openFacturesParVenteModal" is here:
+
+    src/app/views/pages/factures/factures.component.ts:1787:4:
+[37m      1787 │     [32mopenFacturesParVenteModal[37m() {
+           ╵     [32m~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mDuplicate member "searchVentes" in class body[0m [duplicate-class-member]
+
+    src/app/views/pages/factures/factures.component.ts:1847:4:
+[37m      1847 │     [32msearchVentes[37m() {
+           ╵     [32m~~~~~~~~~~~~[0m
+
+  The original member "searchVentes" is here:
+
+    src/app/views/pages/factures/factures.component.ts:1732:4:
+[37m      1732 │     [32msearchVentes[37m() {
+           ╵     [32m~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mDuplicate member "afficherFacturesVente" in class body[0m [duplicate-class-member]
+
+    src/app/views/pages/factures/factures.component.ts:1855:4:
+[37m      1855 │     [32mafficherFacturesVente[37m(vente) {
+           ╵     [32m~~~~~~~~~~~~~~~~~~~~~[0m
+
+  The original member "afficherFacturesVente" is here:
+
+    src/app/views/pages/factures/factures.component.ts:1808:4:
+[37m      1808 │     [32mafficherFacturesVente[37m(vente) {
+           ╵     [32m~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mDuplicate member "closeFacturesParVenteModal" in class body[0m [duplicate-class-member]
+
+    src/app/views/pages/factures/factures.component.ts:1867:4:
+[37m      1867 │     [32mcloseFacturesParVenteModal[37m() {
+           ╵     [32m~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+  The original member "closeFacturesParVenteModal" is here:
+
+    src/app/views/pages/factures/factures.component.ts:1820:4:
+[37m      1820 │     [32mcloseFacturesParVenteModal[37m() {
+           ╵     [32m~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2393: Duplicate function implementation.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/pages/factures/factures.component.ts:584:2:
+[37m      584 │   [32msearchVentes[37m(): void {
+          ╵   [32m~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2393: Duplicate function implementation.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/pages/factures/factures.component.ts:654:0:
+[37m      654 │ [32mopenFacturesParVenteModal[37m(): void {
+          ╵ [32m~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2393: Duplicate function implementation.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/pages/factures/factures.component.ts:677:0:
+[37m      677 │ [32mafficherFacturesVente[37m(vente: VenteMap): void {
+          ╵ [32m~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2393: Duplicate function implementation.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/pages/factures/factures.component.ts:690:0:
+[37m      690 │ [32mcloseFacturesParVenteModal[37m(): void {
+          ╵ [32m~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2300: Duplicate identifier 'showFacturesParVenteModal'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/pages/factures/factures.component.ts:696:0:
+[37m      696 │ [32mshowFacturesParVenteModal[37m: boolean = false;
+          ╵ [32m~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2300: Duplicate identifier 'venteSelectionneePourFactures'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/pages/factures/factures.component.ts:697:0:
+[37m      697 │ [32mventeSelectionneePourFactures[37m: VenteMap | null = null;
+          ╵ [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2300: Duplicate identifier 'facturesDeLaVente'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/pages/factures/factures.component.ts:698:0:
+[37m      698 │ [32mfacturesDeLaVente[37m: Facture[] = [];
+          ╵ [32m~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2393: Duplicate function implementation.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/pages/factures/factures.component.ts:701:0:
+[37m      701 │ [32mopenFacturesParVenteModal[37m(): void {
+          ╵ [32m~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2393: Duplicate function implementation.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/pages/factures/factures.component.ts:724:0:
+[37m      724 │ [32msearchVentes[37m(): void {
+          ╵ [32m~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2393: Duplicate function implementation.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/pages/factures/factures.component.ts:735:0:
+[37m      735 │ [32mafficherFacturesVente[37m(vente: VenteMap): void {
+          ╵ [32m~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2393: Duplicate function implementation.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/pages/factures/factures.component.ts:748:0:
+[37m      748 │ [32mcloseFacturesParVenteModal[37m(): void {
+          ╵ [32m~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[39m[22m
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mDeprecation[0m [1m[35m[plugin angular-sass][0m
+
+    src/app/views/pages/factures/factures.component.scss:145:28:
+[37m      145 │       &:hover { background: [32m[37mdarken($info, 8%); }
+          ╵                             [32m^[0m
+
+
+  Global built-in functions are deprecated and will be removed in Dart Sass 3.0.0.
+  Use color.adjust instead.
+  
+  More info and automated migrator: [4mhttps://sass-lang.com/d/import[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mDeprecation[0m [1m[35m[plugin angular-sass][0m
+
+    src/app/views/pages/factures/factures.component.scss:145:28:
+[37m      145 │       &:hover { background: [32m[37mdarken($info, 8%); }
+          ╵                             [32m^[0m
+
+
+  darken() is deprecated. Suggestions:
+  
+  color.scale($color, $lightness: -22.4175824176%)
+  color.adjust($color, $lightness: -8%)
+  
+  More info: [4mhttps://sass-lang.com/d/color-functions[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mDuplicate member "openFacturesParVenteModal" in class body[0m [duplicate-class-member]
+
+    src/app/views/pages/factures/factures.component.ts:1826:4:
+[37m      1826 │     [32mopenFacturesParVenteModal[37m() {
+           ╵     [32m~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+  The original member "openFacturesParVenteModal" is here:
+
+    src/app/views/pages/factures/factures.component.ts:1787:4:
+[37m      1787 │     [32mopenFacturesParVenteModal[37m() {
+           ╵     [32m~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mDuplicate member "searchVentes" in class body[0m [duplicate-class-member]
+
+    src/app/views/pages/factures/factures.component.ts:1847:4:
+[37m      1847 │     [32msearchVentes[37m() {
+           ╵     [32m~~~~~~~~~~~~[0m
+
+  The original member "searchVentes" is here:
+
+    src/app/views/pages/factures/factures.component.ts:1732:4:
+[37m      1732 │     [32msearchVentes[37m() {
+           ╵     [32m~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mDuplicate member "afficherFacturesVente" in class body[0m [duplicate-class-member]
+
+    src/app/views/pages/factures/factures.component.ts:1855:4:
+[37m      1855 │     [32mafficherFacturesVente[37m(vente) {
+           ╵     [32m~~~~~~~~~~~~~~~~~~~~~[0m
+
+  The original member "afficherFacturesVente" is here:
+
+    src/app/views/pages/factures/factures.component.ts:1808:4:
+[37m      1808 │     [32mafficherFacturesVente[37m(vente) {
+           ╵     [32m~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mDuplicate member "closeFacturesParVenteModal" in class body[0m [duplicate-class-member]
+
+    src/app/views/pages/factures/factures.component.ts:1867:4:
+[37m      1867 │     [32mcloseFacturesParVenteModal[37m() {
+           ╵     [32m~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+  The original member "closeFacturesParVenteModal" is here:
+
+    src/app/views/pages/factures/factures.component.ts:1820:4:
+[37m      1820 │     [32mcloseFacturesParVenteModal[37m() {
+           ╵     [32m~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2393: Duplicate function implementation.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/pages/factures/factures.component.ts:584:2:
+[37m      584 │   [32msearchVentes[37m(): void {
+          ╵   [32m~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2393: Duplicate function implementation.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/pages/factures/factures.component.ts:654:0:
+[37m      654 │ [32mopenFacturesParVenteModal[37m(): void {
+          ╵ [32m~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2393: Duplicate function implementation.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/pages/factures/factures.component.ts:677:0:
+[37m      677 │ [32mafficherFacturesVente[37m(vente: VenteMap): void {
+          ╵ [32m~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2393: Duplicate function implementation.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/pages/factures/factures.component.ts:690:0:
+[37m      690 │ [32mcloseFacturesParVenteModal[37m(): void {
+          ╵ [32m~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2300: Duplicate identifier 'showFacturesParVenteModal'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/pages/factures/factures.component.ts:696:0:
+[37m      696 │ [32mshowFacturesParVenteModal[37m: boolean = false;
+          ╵ [32m~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2300: Duplicate identifier 'venteSelectionneePourFactures'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/pages/factures/factures.component.ts:697:0:
+[37m      697 │ [32mventeSelectionneePourFactures[37m: VenteMap | null = null;
+          ╵ [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2300: Duplicate identifier 'facturesDeLaVente'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/pages/factures/factures.component.ts:698:0:
+[37m      698 │ [32mfacturesDeLaVente[37m: Facture[] = [];
+          ╵ [32m~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2393: Duplicate function implementation.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/pages/factures/factures.component.ts:701:0:
+[37m      701 │ [32mopenFacturesParVenteModal[37m(): void {
+          ╵ [32m~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2393: Duplicate function implementation.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/pages/factures/factures.component.ts:724:0:
+[37m      724 │ [32msearchVentes[37m(): void {
+          ╵ [32m~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2393: Duplicate function implementation.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/pages/factures/factures.component.ts:735:0:
+[37m      735 │ [32mafficherFacturesVente[37m(vente: VenteMap): void {
+          ╵ [32m~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2393: Duplicate function implementation.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/views/pages/factures/factures.component.ts:748:0:
+[37m      748 │ [32mcloseFacturesParVenteModal[37m(): void {
+          ╵ [32m~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[39m[22m
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mDeprecation[0m [1m[35m[plugin angular-sass][0m
+
+    src/app/views/pages/factures/factures.component.scss:145:28:
+[37m      145 │       &:hover { background: [32m[37mdarken($info, 8%); }
+          ╵                             [32m^[0m
+
+
+  Global built-in functions are deprecated and will be removed in Dart Sass 3.0.0.
+  Use color.adjust instead.
+  
+  More info and automated migrator: [4mhttps://sass-lang.com/d/import[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mDeprecation[0m [1m[35m[plugin angular-sass][0m
+
+    src/app/views/pages/factures/factures.component.scss:145:28:
+[37m      145 │       &:hover { background: [32m[37mdarken($info, 8%); }
+          ╵                             [32m^[0m
+
+
+  darken() is deprecated. Suggestions:
+  
+  color.scale($color, $lightness: -22.4175824176%)
+  color.adjust($color, $lightness: -8%)
+  
+  More info: [4mhttps://sass-lang.com/d/color-functions[0m
+
+[39m[22m
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mDeprecation[0m [1m[35m[plugin angular-sass][0m
+
+    src/app/views/pages/factures/factures.component.scss:145:28:
+[37m      145 │       &:hover { background: [32m[37mdarken($info, 8%); }
+          ╵                             [32m^[0m
+
+
+  Global built-in functions are deprecated and will be removed in Dart Sass 3.0.0.
+  Use color.adjust instead.
+  
+  More info and automated migrator: [4mhttps://sass-lang.com/d/import[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mDeprecation[0m [1m[35m[plugin angular-sass][0m
+
+    src/app/views/pages/factures/factures.component.scss:145:28:
+[37m      145 │       &:hover { background: [32m[37mdarken($info, 8%); }
+          ╵                             [32m^[0m
+
+
+  darken() is deprecated. Suggestions:
+  
+  color.scale($color, $lightness: -22.4175824176%)
+  color.adjust($color, $lightness: -8%)
+  
+  More info: [4mhttps://sass-lang.com/d/color-functions[0m
+
+[39m[22m
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mDeprecation[0m [1m[35m[plugin angular-sass][0m
+
+    src/app/views/pages/factures/factures.component.scss:145:28:
+[37m      145 │       &:hover { background: [32m[37mdarken($info, 8%); }
+          ╵                             [32m^[0m
+
+
+  Global built-in functions are deprecated and will be removed in Dart Sass 3.0.0.
+  Use color.adjust instead.
+  
+  More info and automated migrator: [4mhttps://sass-lang.com/d/import[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mDeprecation[0m [1m[35m[plugin angular-sass][0m
+
+    src/app/views/pages/factures/factures.component.scss:145:28:
+[37m      145 │       &:hover { background: [32m[37mdarken($info, 8%); }
+          ╵                             [32m^[0m
+
+
+  darken() is deprecated. Suggestions:
+  
+  color.scale($color, $lightness: -22.4175824176%)
+  color.adjust($color, $lightness: -8%)
+  
+  More info: [4mhttps://sass-lang.com/d/color-functions[0m
+
+[39m[22m
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mDeprecation[0m [1m[35m[plugin angular-sass][0m
+
+    src/app/views/pages/factures/factures.component.scss:145:28:
+[37m      145 │       &:hover { background: [32m[37mdarken($info, 8%); }
+          ╵                             [32m^[0m
+
+
+  Global built-in functions are deprecated and will be removed in Dart Sass 3.0.0.
+  Use color.adjust instead.
+  
+  More info and automated migrator: [4mhttps://sass-lang.com/d/import[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mDeprecation[0m [1m[35m[plugin angular-sass][0m
+
+    src/app/views/pages/factures/factures.component.scss:145:28:
+[37m      145 │       &:hover { background: [32m[37mdarken($info, 8%); }
+          ╵                             [32m^[0m
+
+
+  darken() is deprecated. Suggestions:
+  
+  color.scale($color, $lightness: -22.4175824176%)
+  color.adjust($color, $lightness: -8%)
+  
+  More info: [4mhttps://sass-lang.com/d/color-functions[0m
+
+[39m[22m
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mDeprecation[0m [1m[35m[plugin angular-sass][0m
+
+    src/app/views/pages/factures/factures.component.scss:145:28:
+[37m      145 │       &:hover { background: [32m[37mdarken($info, 8%); }
+          ╵                             [32m^[0m
+
+
+  Global built-in functions are deprecated and will be removed in Dart Sass 3.0.0.
+  Use color.adjust instead.
+  
+  More info and automated migrator: [4mhttps://sass-lang.com/d/import[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mDeprecation[0m [1m[35m[plugin angular-sass][0m
+
+    src/app/views/pages/factures/factures.component.scss:145:28:
+[37m      145 │       &:hover { background: [32m[37mdarken($info, 8%); }
+          ╵                             [32m^[0m
+
+
+  darken() is deprecated. Suggestions:
+  
+  color.scale($color, $lightness: -22.4175824176%)
+  color.adjust($color, $lightness: -8%)
+  
+  More info: [4mhttps://sass-lang.com/d/color-functions[0m
+
+[39m[22m
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mDeprecation[0m [1m[35m[plugin angular-sass][0m
+
+    src/app/views/pages/factures/factures.component.scss:145:28:
+[37m      145 │       &:hover { background: [32m[37mdarken($info, 8%); }
+          ╵                             [32m^[0m
+
+
+  Global built-in functions are deprecated and will be removed in Dart Sass 3.0.0.
+  Use color.adjust instead.
+  
+  More info and automated migrator: [4mhttps://sass-lang.com/d/import[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mDeprecation[0m [1m[35m[plugin angular-sass][0m
+
+    src/app/views/pages/factures/factures.component.scss:145:28:
+[37m      145 │       &:hover { background: [32m[37mdarken($info, 8%); }
+          ╵                             [32m^[0m
+
+
+  darken() is deprecated. Suggestions:
+  
+  color.scale($color, $lightness: -22.4175824176%)
+  color.adjust($color, $lightness: -8%)
+  
+  More info: [4mhttps://sass-lang.com/d/color-functions[0m
+
+[39m[22m
+[1m[33m[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mDeprecation[0m [1m[35m[plugin angular-sass][0m
+
+    src/app/views/pages/factures/factures.component.scss:145:28:
+[37m      145 │       &:hover { background: [32m[37mdarken($info, 8%); }
+          ╵                             [32m^[0m
+
+
+  Global built-in functions are deprecated and will be removed in Dart Sass 3.0.0.
+  Use color.adjust instead.
+  
+  More info and automated migrator: [4mhttps://sass-lang.com/d/import[0m
+
+
+[33m▲ [43;33m[[43;30mWARNING[43;33m][0m [1mDeprecation[0m [1m[35m[plugin angular-sass][0m
+
+    src/app/views/pages/factures/factures.component.scss:145:28:
+[37m      145 │       &:hover { background: [32m[37mdarken($info, 8%); }
+          ╵                             [32m^[0m
+
+
+  darken() is deprecated. Suggestions:
+  
+  color.scale($color, $lightness: -22.4175824176%)
+  color.adjust($color, $lightness: -8%)
+  
+  More info: [4mhttps://sass-lang.com/d/color-functions[0m
+
+[39m[22m
+[1m[31m[2m21:42:43[22m[1m [31m[1m[vite][22m[1m[31m [31mhttp proxy error: /assets/images/logo.png[31m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)[39m[22m
+[1m[31m[2m21:42:47[22m[1m [31m[1m[vite][22m[1m[31m [31mhttp proxy error: /assets/images/logo.png[31m
+AggregateError [ECONNREFUSED]: 
+    at internalConnectMultiple (node:net:1134:18)
+    at afterConnectMultiple (node:net:1715:7)[39m[22m

@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/shared/components/btn-loading/btn-loading.component.scss"],
+  "sourcesContent": ["button {\n    position: relative;\n    transition: all .15s ease-in-out;\n    &.loading {\n        padding-left: 36px;\n    }\n    .btn-spinner {\n        position: absolute;\n        top: 0;\n        bottom: 0;\n        margin: auto;\n        left: 10px;\n    }\n}\n"],
+  "mappings": ";AAAA;AACI,YAAA;AACA,cAAA,IAAA,MAAA;;AACA,MAAA,CAAA;AACI,gBAAA;;AAEJ,OAAA,CAAA;AACI,YAAA;AACA,OAAA;AACA,UAAA;AACA,UAAA;AACA,QAAA;;",
+  "names": []
+}

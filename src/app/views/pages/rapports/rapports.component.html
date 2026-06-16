@@ -1,0 +1,342 @@
+<div class="container-fluid py-4 app-page">
+  <!-- En-tête -->
+  <div class="app-page-header mb-4">
+    <div class="app-page-header-left">
+      <div class="app-page-icon"><i class="fas fa-chart-line"></i></div>
+      <div>
+        <h1 class="app-page-title">Tableau de Bord</h1>
+        <p class="app-page-subtitle">Vue d'ensemble de votre activité</p>
+      </div>
+    </div>
+    <div class="app-page-header-actions" *ngIf="isAdmin">
+      <button class="btn btn-primary" (click)="genererRapportJour()">
+        <i class="fas fa-calendar-day me-1"></i> Aujourd'hui
+      </button>
+      <button class="btn btn-success" (click)="genererRapportSemaine()">
+        <i class="fas fa-calendar-week me-1"></i> Cette semaine
+      </button>
+      <button class="btn btn-info" (click)="genererRapportMois()">
+        <i class="fas fa-calendar-alt me-1"></i> Ce mois
+      </button>
+    </div>
+  </div>
+
+  <!-- Filtres simples -->
+  <div class="app-filter-card mb-4">
+    <div class="row">
+ <div class="col-md-3">
+ <label class="form-label">Du</label>
+ <input type="date" class="form-control" [(ngModel)]="dateDebut" />
+ </div>
+ <div class="col-md-3">
+ <label class="form-label">Au</label>
+ <input type="date" class="form-control" [(ngModel)]="dateFin" />
+ </div>
+ <div class="col-md-3">
+ <label class="form-label">Période</label>
+ <select class="form-select" [(ngModel)]="typeRapport">
+ <option value="journalier">Journalier</option>
+ <option value="hebdomadaire">Hebdomadaire</option>
+ <option value="mensuel">Mensuel</option>
+ <option value="personnalise">Personnalisé</option>
+ </select>
+ </div>
+ <div class="col-md-3 d-flex align-items-end">
+ <button class="btn btn-primary w-100" (click)="appliquerFiltres()" [disabled]="isLoading">
+ <i class="fas fa-search"></i> Voir
+ </button>
+ </div>
+ </div>
+ </div>
+ <!-- RAPPORT ACTIF (DONNÉES RÉELLES DE LA PÉRIODE SÉLECTIONNÉE) -->
+ <div *ngIf="rapportActif" class="rapport-detail fade-in">
+ <div class="rapport-header">
+ <div>
+ <h3><i class="fas fa-file-alt"></i> Détail de la période</h3>
+ <small>{{ getRapportTitre() }}</small>
+ </div>
+ <div class="rapport-actions">
+ <button class="btn btn-outline-light" (click)="exporterRapport()">
+ <i class="fas fa-download"></i> Télécharger PDF
+ </button>
+ <button class="btn btn-outline-light" (click)="fermerRapport()">
+ <i class="fas fa-times"></i> Fermer
+ </button>
+ </div>
+ </div>
+ 
+ <div class="rapport-resume">
+ <div class="row g-3">
+ <div class="col-md-3 col-6">
+ <div class="resume-item">
+ <h4>{{ formatPrice(rapportActif.chiffreAffaireTotal) }}</h4>
+ <p> Argent rentré</p>
+ </div>
+ </div>
+ <div class="col-md-3 col-6">
+ <div class="resume-item">
+ <h4>{{ rapportActif.nombreVentes }}</h4>
+ <p> Nombre de ventes</p>
+ </div>
+ </div>
+ <div class="col-md-3 col-6">
+ <div class="resume-item">
+ <h4>{{ formatPrice(rapportActif.montantRemisesTotal || 0) }}</h4>
+ <p> Remises accordées</p>
+ </div>
+ </div>
+ <div class="col-md-3 col-6">
+ <div class="resume-item">
+ <h4>{{ formatPrice(rapportActif.chiffreAffaireTotal / (rapportActif.nombreVentes || 1)) }}</h4>
+ <p> Moyenne par vente</p>
+ </div>
+ </div>
+ </div>
+ 
+ <!-- Bénéfice réel de la période -->
+ <div class="alert alert-success mt-3 text-center" *ngIf="getBeneficeBrut() > 0">
+ <i class="fas fa-smile-wink"></i> 
+ <strong>Bonne nouvelle !</strong> Vous avez gagné <strong>{{ formatPrice(getBeneficeBrut()) }}</strong> 
+ sur les ventes (bénéfice = prix vente - prix d'achat).
+ </div>
+ 
+ <!-- Top produits de la période -->
+ <div *ngIf="rapportActif.topProduits?.length > 0" class="mt-3">
+ <h6 class="mb-2">⭐ Top produits de cette période</h6>
+ <div class="table-responsive">
+ <table class="table table-sm">
+ <thead>
+ <tr><th>Produit</th><th>Quantité</th><th>Chiffre d'affaires</th></tr>
+ </thead>
+ <tbody>
+ <tr *ngFor="let p of rapportActif.topProduits.slice(0,5)">
+ <td>{{ p.nom }}</td><td>{{ p.quantite }} unités</td><td class="text-success">{{ formatPrice(p.chiffreAffaire) }}</td>
+ </tr>
+ </tbody>
+ </table>
+ </div>
+ </div>
+ </div>
+ </div>
+
+ <!-- 4 GRANDES CARTES - DONNÉES RÉELLES -->
+ <div *ngIf="statistiquesGenerales" class="stats-grid fade-in">
+ <div class="stat-card bg-success">
+ <div class="stat-icon"><i class="fas fa-shopping-cart"></i></div>
+ <div class="stat-content">
+ <h3>{{ statistiquesGenerales.chiffreAffaire.totalVentes }}</h3>
+ <p> Ventes réalisées</p>
+ </div>
+ </div>
+
+ <div class="stat-card" style="background: linear-gradient(135deg, #11998e, #38ef7d);">
+ <div class="stat-icon"><i class="fas fa-money-bill-wave"></i></div>
+ <div class="stat-content">
+ <h3>{{ formatPrice(getBilanNet()) }}</h3>
+ <p> Ce que vous avez gagné</p>
+ <small>Ventes - Dépenses</small>
+ </div>
+ </div>
+
+ <div class="stat-card" style="background: linear-gradient(135deg, #f093fb, #f5576c);">
+ <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
+ <div class="stat-content">
+ <h3>{{ getMargeBrute() | number:'1.1-1' }}%</h3>
+ <p> Rentabilité</p>
+ <small>Ce que vous gardez sur 100 FCFA</small>
+ </div>
+ </div>
+
+ <div class="stat-card bg-warning">
+ <div class="stat-icon"><i class="fas fa-box"></i></div>
+ <div class="stat-content">
+ <h3>{{ statistiquesGenerales.inventaire.totalProduits }}</h3>
+ <p> Produits en stock</p>
+ </div>
+ </div>
+ </div>
+ <!-- CRÉDITS CLIENTS (DONNÉES RÉELLES) -->
+ <div class="credits-section fade-in">
+ <h4><i class="fas fa-hand-holding-usd"></i> Argent qui vous est dû (crédits clients)</h4>
+ <div class="row">
+ <div class="col-md-4 mb-2">
+ <div class="stat-card bg-warning">
+ <small>Crédits en cours</small>
+ <h5 class="mb-0">{{ creditsEnCours.length }}</h5>
+ </div>
+ </div>
+ <div class="col-md-4 mb-2">
+ <div class="stat-card bg-danger ">
+ <small>Crédits en retard</small>
+ <h5 class="mb-0">{{ creditsEnRetard.length }}</h5>
+ </div>
+ </div>
+ <div class="col-md-4 mb-2">
+ <div class="stat-card bg-info ">
+ <small>Montant total dû</small>
+ <h5 class="mb-0">{{ formatPrice(situationCredits?.montantTotalCredits || 0) }}</h5>
+ </div>
+ </div>
+ </div>
+ 
+ <div class="table-responsive mt-3" *ngIf="creditsEnCours.length > 0">
+ <table class="table table-sm">
+ <thead>
+ <tr><th>Client</th><th>Montant total</th><th>Déjà payé</th><th>Reste à payer</th><th>Échéance</th></tr>
+ </thead>
+ <tbody>
+ <tr *ngFor="let credit of creditsEnCours.slice(0,5)">
+ <td>{{ credit.clientNom }}</td>
+ <td>{{ formatPrice(credit.montantTotal) }}<td>
+ <td class="text-success">{{ formatPrice(credit.montantVerse) }}</td>
+ <td class="text-warning fw-bold">{{ formatPrice(credit.montantRestant) }}</td>
+ <td>{{ formatDateShort(credit.dateEcheance) }}</td>
+ </tr>
+ </tbody>
+ </table>
+ </div>
+ <div class="text-muted small mt-2" *ngIf="creditsEnCours.length === 0">
+ <i class="fas fa-check-circle"></i> Aucun crédit en cours, tout est payé !
+ </div>
+ </div>
+ <!-- GAINS vs PERTES - DONNÉES RÉELLES -->
+ <div *ngIf="getTotalGains() > 0 || getTotalPertes() > 0" class="gains-pertes-card fade-in">
+ <h4><i class="fas fa-chart-pie"></i> Votre argent : Ce qui rentre vs Ce qui sort</h4>
+ <div class="row">
+ <div class="col-md-6">
+ <div class="gain-card">
+ <div class="gain-icon"><i class="fas fa-arrow-up"></i></div>
+ <div class="gain-content">
+ <h5> CE QUI RENTRE</h5>
+ <h3>{{ formatPrice(getTotalGains()) }}</h3>
+ <p>Total des ventes + règlements</p>
+ </div>
+ </div>
+ </div>
+ <div class="col-md-6">
+ <div class="perte-card">
+ <div class="perte-icon"><i class="fas fa-arrow-down"></i></div>
+ <div class="perte-content">
+ <h5> CE QUI SORT</h5>
+ <h3>{{ formatPrice(getTotalPertes()) }}</h3>
+ <p>Annulations, dépenses, pertes</p>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="bilan-simple text-center mt-3">
+ <div class="bilan-card" [ngClass]="getBilanNet() >= 0 ? 'positive' : 'negative'">
+ <i class="fas fa-chart-line"></i>
+ <span> CE QUE VOUS GARDEZ : <strong>{{ formatPrice(getBilanNet()) }}</strong></span>
+ </div>
+ </div>
+ </div>
+
+
+ <!-- TOP PRODUITS (DONNÉES RÉELLES) -->
+ <div *ngIf="statistiquesGenerales?.produitsPlusVendus?.length" class="section-card fade-in">
+ <h4><i class="fas fa-star"></i> ⭐ Vos produits les plus vendus (toute période)</h4>
+ <div class="table-responsive">
+ <table class="table table-hover">
+ <thead>
+ <tr><th>#</th><th>Produit</th><th>Catégorie</th><th>Quantité vendue</th><th>Chiffre d'affaires</th></tr>
+ </thead>
+ <tbody>
+ <tr *ngFor="let produit of statistiquesGenerales.produitsPlusVendus.slice(0,10); let i = index">
+ <td><span class="badge bg-primary">{{ i + 1 }}</span></td>
+ <td class="fw-bold">{{ produit.nom }}</td>
+ <td>{{ produit.categorie }}</td>
+ <td>{{ produit.quantiteVendue }} unités</td>
+ <td class="text-success">{{ formatPrice(produit.chiffreAffaire) }}</td>
+ </tr>
+ </tbody>
+ </table>
+ </div>
+ </div>
+
+ <!-- PAR CATÉGORIE (DONNÉES RÉELLES) -->
+ <div class="row fade-in">
+ <div class="col-lg-6">
+ <div class="section-card h-100">
+ <h4><i class="fas fa-tags"></i> Ventes par catégorie</h4>
+ <div class="table-responsive" *ngIf="statistiquesGenerales?.categoriesStats?.length">
+ <table class="table table-sm">
+ <thead>
+ <tr><th>Catégorie</th><th>Produits</th><th>Chiffre d'affaires</th></tr>
+ </thead>
+ <tbody>
+ <tr *ngFor="let cat of statistiquesGenerales.categoriesStats">
+ <td class="fw-bold">{{ cat.nom }}</td>
+ <td>{{ cat.nombreProduits }} produits</td>
+ <td class="text-success">{{ formatPrice(cat.chiffreAffaire) }}</td>
+ </tr>
+ </tbody>
+ </table>
+ </div>
+ <div class="text-muted text-center py-3" *ngIf="!statistiquesGenerales?.categoriesStats?.length">
+ Aucune donnée disponible
+ </div>
+ </div>
+ </div>
+
+ <div class="col-lg-6">
+ <div class="section-card h-100">
+ <h4><i class="fas fa-credit-card"></i> Modes de paiement utilisés</h4>
+ <div class="table-responsive" *ngIf="statistiquesGenerales?.modePaiementStats?.length">
+ <table class="table table-sm">
+ <thead>
+ <tr><th>Mode</th><th>Nombre de ventes</th><th>Montant</th></tr>
+ </thead>
+ <tbody>
+ <tr *ngFor="let mode of statistiquesGenerales.modePaiementStats">
+ <td><span class="badge" [ngClass]="getModePaiementBadge(mode.mode)">{{ getModePaiementLabel(mode.mode) }}</span></td>
+ <td>{{ mode.nombreVentes }} ventes</td>
+ <td class="text-success">{{ formatPrice(mode.montant) }}</td>
+ </tr>
+ </tbody>
+ </table>
+ </div>
+ <div class="text-muted text-center py-3" *ngIf="!statistiquesGenerales?.modePaiementStats?.length">
+ Aucune donnée disponible
+ </div>
+ </div>
+ </div>
+ </div>
+
+ <!-- VENDEURS (DONNÉES RÉELLES) -->
+ <div *ngIf="statistiquesGenerales?.vendeurs?.length" class="section-card fade-in">
+ <h4><i class="fas fa-users"></i> Performance de votre équipe</h4>
+ <div class="table-responsive">
+ <table class="table table-hover">
+ <thead>
+ <tr><th>Vendeur</th><th>Ventes</th><th>Chiffre d'affaires</th></tr>
+ </thead>
+ <tbody>
+ <tr *ngFor="let vendeur of statistiquesGenerales.vendeurs">
+ <td class="fw-bold">{{ vendeur.nomComplet || vendeur.nom }}</td>
+ <td>{{ vendeur.nombreVentes }} ventes</td>
+ <td class="text-success">{{ formatPrice(vendeur.chiffreAffaire) }}</td>
+ </tr>
+ </tbody>
+ </table>
+ </div>
+ </div>
+
+ 
+
+ <!-- Messages -->
+ <div *ngIf="errorMessage" class="alert alert-danger">
+ <i class="fas fa-exclamation-circle"></i> {{ errorMessage }}
+ <button class="btn-close float-end" (click)="errorMessage = ''"></button>
+ </div>
+ <div *ngIf="successMessage" class="alert alert-success">
+ <i class="fas fa-check-circle"></i> {{ successMessage }}
+ <button class="btn-close float-end" (click)="successMessage = ''"></button>
+ </div>
+
+ <!-- Loading -->
+ <div *ngIf="isLoading" class="loading-overlay">
+ <div class="spinner-border text-primary"></div>
+ <p class="mt-3">Chargement des données...</p>
+ </div>
+</div>

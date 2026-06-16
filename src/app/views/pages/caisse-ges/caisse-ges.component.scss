@@ -1,0 +1,800 @@
+// src/app/views/pages/caisse-ges/caisse-ges.component.scss
+
+.modal {
+  overflow-y: auto;
+}
+
+.table {
+  th {
+    white-space: nowrap;
+  }
+  
+  td {
+    vertical-align: middle;
+  }
+}
+
+.badge {
+  font-size: 0.85rem;
+  padding: 0.35rem 0.65rem;
+}
+
+.btn-group-sm > .btn, .btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+}
+
+.card {
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  }
+}
+
+.table-warning {
+  --bs-table-bg: #fff3cd;
+}
+
+.table-danger {
+  --bs-table-bg: #f8d7da;
+}
+
+.table-success {
+  --bs-table-bg: #d1e7dd;
+}
+
+.text-success {
+  color: #28a745 !important;
+}
+
+.text-danger {
+  color: #dc3545 !important;
+}
+
+.text-warning {
+  color: #ffc107 !important;
+}
+
+.bg-success {
+  background-color: #28a745 !important;
+}
+
+.bg-danger {
+  background-color: #dc3545 !important;
+}
+
+.bg-warning {
+  background-color: #ffc107 !important;
+}
+
+.bg-info {
+  background-color: #17a2b8 !important;
+}
+
+@media (max-width: 768px) {
+  .btn-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    
+    .btn {
+      margin: 0 !important;
+    }
+  }
+  
+  .card-body {
+    padding: 1rem;
+  }
+  
+  h3 {
+    font-size: 1.5rem;
+  }
+}
+
+// Animation pour les changements de solde
+@keyframes highlight {
+  0% { background-color: rgba(40, 167, 69, 0.2); }
+  100% { background-color: transparent; }
+}
+
+.solde-change {
+  animation: highlight 1s ease;
+}
+
+// Style pour l'écart de caisse
+.ecart-positive {
+  color: #28a745;
+  font-weight: bold;
+}
+
+.ecart-negative {
+  color: #dc3545;
+  font-weight: bold;
+}
+
+.ecart-zero {
+  color: #6c757d;
+  font-weight: bold;
+}
+
+/* ============================================= */
+/* STYLES GLOBAUX DES BOUTONS */
+/* ============================================= */
+
+/* Base de tous les boutons */
+.btn {
+  position: relative;
+  padding: 0.6rem 1.2rem;
+  font-weight: 500;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  border: none;
+  overflow: hidden;
+  z-index: 1;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, rgba(255,255,255,0.2), rgba(255,255,255,0));
+  transition: left 0.3s ease;
+  z-index: -1;
+}
+
+.btn:hover::before {
+  left: 100%;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.25);
+}
+
+/* ============================================= */
+/* BOUTON REVENUS ET PERTES */
+/* ============================================= */
+.btn-success.me-2[title="Analyser les revenus et pertes"] {
+  background: linear-gradient(135deg, #2ecc71, #27ae60);
+  border: none;
+  color: white;
+  padding: 0.7rem 1.5rem;
+  font-size: 1rem;
+  animation: pulse 2s infinite;
+  position: relative;
+  box-shadow: 0 4px 15px rgba(46, 204, 113, 0.4);
+}
+
+.btn-success.me-2[title="Analyser les revenus et pertes"] i {
+  animation: spin 4s linear infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 4px 15px rgba(46, 204, 113, 0.4);
+  }
+  50% {
+    box-shadow: 0 4px 25px rgba(46, 204, 113, 0.8);
+  }
+  100% {
+    box-shadow: 0 4px 15px rgba(46, 204, 113, 0.4);
+  }
+}
+
+/* ============================================= */
+/* BOUTON RAPPORTS PDF */
+/* ============================================= */
+.btn-outline-danger.dropdown-toggle {
+  background: linear-gradient(135deg, #fff, #f8f9fa);
+  border: 2px solid #e74c3c;
+  color: #e74c3c;
+  padding: 0.7rem 1.5rem;
+  font-weight: 600;
+  position: relative;
+}
+
+.btn-outline-danger.dropdown-toggle:hover {
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  color: white;
+  border-color: #e74c3c;
+}
+
+/* Style du menu déroulant */
+.dropdown-menu {
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  padding: 0.5rem;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdown-item {
+  border-radius: 8px;
+  padding: 0.6rem 1rem;
+  transition: all 0.2s ease;
+  margin: 2px 0;
+}
+
+.dropdown-item:hover {
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  transform: translateX(5px);
+}
+
+.dropdown-item i {
+  width: 20px;
+  text-align: center;
+}
+
+/* ============================================= */
+/* BOUTONS D'ACTION PRINCIPAUX */
+/* ============================================= */
+
+/* Bouton Ouvrir caisse */
+.btn-success:not([title*="Analyser"]) {
+  background: linear-gradient(135deg, #2ecc71, #27ae60);
+  border: none;
+  position: relative;
+}
+
+.btn-success:not([title*="Analyser"]):hover {
+  background: linear-gradient(135deg, #27ae60, #219a52);
+}
+
+/* Bouton Entrée */
+.btn-success:contains("Entrée") {
+  background: linear-gradient(135deg, #3498db, #2980b9);
+  box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
+}
+
+.btn-success:contains("Entrée"):hover {
+  background: linear-gradient(135deg, #2980b9, #2471a3);
+}
+
+/* Bouton Sortie */
+.btn-danger {
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  border: none;
+  box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+}
+
+.btn-danger:hover {
+  background: linear-gradient(135deg, #c0392b, #a93226);
+}
+
+/* Bouton Vérifier */
+.btn-info {
+  background: linear-gradient(135deg, #f1c40f, #f39c12);
+  border: none;
+  color: white;
+  box-shadow: 0 4px 15px rgba(241, 196, 15, 0.4);
+}
+
+.btn-info:hover {
+  background: linear-gradient(135deg, #f39c12, #e67e22);
+  color: white;
+}
+
+/* Bouton Fermer */
+.btn-secondary {
+  background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+  border: none;
+  box-shadow: 0 4px 15px rgba(149, 165, 166, 0.4);
+}
+
+.btn-secondary:hover {
+  background: linear-gradient(135deg, #7f8c8d, #6c7a7d);
+}
+
+/* Bouton Statistiques */
+.btn-primary {
+  background: linear-gradient(135deg, #3498db, #2980b9);
+  border: none;
+  box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #2980b9, #1f618d);
+}
+
+/* ============================================= */
+/* BOUTONS DANS LES TABLEAUX */
+/* ============================================= */
+
+.btn-group-sm .btn {
+  padding: 0.25rem 0.5rem;
+  margin: 0 2px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  transform: scale(1);
+}
+
+.btn-group-sm .btn:hover {
+  transform: scale(1.1);
+  z-index: 2;
+}
+
+.btn-outline-info {
+  border: 2px solid #3498db;
+  color: #3498db;
+  background: transparent;
+}
+
+.btn-outline-info:hover {
+  background: linear-gradient(135deg, #3498db, #2980b9);
+  color: white;
+  border-color: transparent;
+}
+
+.btn-outline-primary {
+  border: 2px solid #2980b9;
+  color: #2980b9;
+  background: transparent;
+}
+
+.btn-outline-primary:hover {
+  background: linear-gradient(135deg, #2980b9, #1f618d);
+  color: white;
+  border-color: transparent;
+}
+
+.btn-outline-success {
+  border: 2px solid #27ae60;
+  color: #27ae60;
+  background: transparent;
+}
+
+.btn-outline-success:hover:not(:disabled) {
+  background: linear-gradient(135deg, #27ae60, #229954);
+  color: white;
+  border-color: transparent;
+}
+
+.btn-outline-success:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: #95a5a6;
+  color: #95a5a6;
+}
+
+/* ============================================= */
+/* BOUTONS DE FILTRES */
+/* ============================================= */
+
+.btn-group .btn-outline-primary {
+  border: 1px solid #dee2e6;
+  background: white;
+  color: #495057;
+  box-shadow: none;
+  padding: 0.4rem 1rem;
+}
+
+.btn-group .btn-outline-primary:hover {
+  background: #e9ecef;
+  color: #495057;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-group .btn-outline-primary.active {
+  background: linear-gradient(135deg, #3498db, #2980b9);
+  color: white;
+  border-color: transparent;
+}
+
+/* ============================================= */
+/* BOUTONS DANS LES MODALES */
+/* ============================================= */
+
+/* Boutons du footer des modales */
+.modal-footer .btn {
+  padding: 0.6rem 1.5rem;
+  font-weight: 500;
+  min-width: 100px;
+}
+
+.modal-footer .btn-secondary {
+  background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+}
+
+.modal-footer .btn-success {
+  background: linear-gradient(135deg, #2ecc71, #27ae60);
+}
+
+.modal-footer .btn-danger {
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+}
+
+.modal-footer .btn-info {
+  background: linear-gradient(135deg, #3498db, #2980b9);
+}
+
+/* ============================================= */
+/* BOUTON DE FERMETURE DES MODALES */
+/* ============================================= */
+
+.btn-close {
+  background: transparent url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23fff'%3e%3cpath d='M.293.293a1 1 0 011.414 0L8 6.586 14.293.293a1 1 0 111.414 1.414L9.414 8l6.293 6.293a1 1 0 01-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 01-1.414-1.414L6.586 8 .293 1.707a1 1 0 010-1.414z'/%3e%3c/svg%3e") center/1em auto no-repeat;
+  opacity: 0.8;
+  transition: all 0.2s ease;
+}
+
+.btn-close:hover {
+  opacity: 1;
+  transform: rotate(90deg);
+}
+
+/* ============================================= */
+/* BOUTONS DE PAGINATION */
+/* ============================================= */
+
+.pagination {
+  gap: 5px;
+}
+
+.page-item .page-link {
+  border: none;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  color: #495057;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  background: white;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.page-item .page-link:hover {
+  background: linear-gradient(135deg, #3498db, #2980b9);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(52, 152, 219, 0.4);
+}
+
+.page-item.active .page-link {
+  background: linear-gradient(135deg, #3498db, #2980b9);
+  color: white;
+  box-shadow: 0 4px 10px rgba(52, 152, 219, 0.4);
+}
+
+.page-item.disabled .page-link {
+  background: #e9ecef;
+  color: #adb5bd;
+  pointer-events: none;
+  box-shadow: none;
+}
+
+/* ============================================= */
+/* BOUTONS D'EXPORTATION */
+/* ============================================= */
+
+.btn-group .btn-success:contains("Excel") {
+  background: linear-gradient(135deg, #27ae60, #229954);
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.btn-group .btn-danger:contains("PDF") {
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+/* ============================================= */
+/* ANIMATIONS DES ICÔNES */
+/* ============================================= */
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.bi-arrow-repeat.spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Animation pour les boutons avec icônes */
+.btn i {
+  transition: all 0.2s ease;
+}
+
+.btn:hover i {
+  transform: scale(1.2);
+}
+
+/* ============================================= */
+/* ÉTATS DE CHARGEMENT */
+/* ============================================= */
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+  animation: none !important;
+}
+
+.btn:disabled:hover {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* ============================================= */
+/* RESPONSIVE */
+/* ============================================= */
+
+@media (max-width: 768px) {
+  .btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+  
+  .btn-group-sm .btn {
+    padding: 0.2rem 0.4rem;
+  }
+  
+  .modal-footer .btn {
+    min-width: 80px;
+    padding: 0.4rem 1rem;
+  }
+  
+  .pagination .page-link {
+    padding: 0.4rem 0.8rem;
+  }
+}
+
+/* ============================================= */
+/* EFFETS SPÉCIAUX */
+/* ============================================= */
+
+/* Effet de vague au clic */
+.btn::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.5);
+  opacity: 0;
+  border-radius: 100%;
+  transform: scale(1, 1) translate(-50%);
+  transform-origin: 50% 50%;
+}
+
+.btn:focus:not(:active)::after {
+  animation: ripple 1s ease-out;
+}
+
+@keyframes ripple {
+  0% {
+    transform: scale(0, 0);
+    opacity: 0.5;
+  }
+  20% {
+    transform: scale(25, 25);
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(40, 40);
+  }
+}
+
+/* Effet de brillance pour les boutons importants */
+.btn-success.me-2[title="Analyser les revenus et pertes"]::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, 
+    rgba(255,255,255,0) 30%, 
+    rgba(255,255,255,0.8) 50%, 
+    rgba(255,255,255,0) 70%);
+  border-radius: 10px;
+  animation: shine 3s infinite;
+  z-index: -1;
+}
+
+@keyframes shine {
+  0% {
+    transform: translateX(-100%) rotate(45deg);
+  }
+  20% {
+    transform: translateX(100%) rotate(45deg);
+  }
+  100% {
+    transform: translateX(100%) rotate(45deg);
+  }
+}
+
+/* ============================================= */
+/* STYLES SPÉCIFIQUES POUR LES BOUTONS DU HEADER */
+/* ============================================= */
+
+.d-flex.gap-2 .btn {
+  margin: 0 3px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* Bouton Revenus & Pertes en évidence */
+.d-flex.gap-2 .btn-success:first-child {
+  font-size: 1rem;
+  padding: 0.8rem 1.8rem;
+  background: linear-gradient(135deg, #2ecc71, #27ae60, #2ecc71);
+  background-size: 200% 100%;
+  animation: gradientShift 3s ease infinite;
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* ============================================= */
+/* TOOLTIPS PERSONNALISÉS */
+/* ============================================= */
+
+[title] {
+  position: relative;
+  cursor: pointer;
+}
+
+[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 5px 10px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  z-index: 1000;
+  margin-bottom: 5px;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* ============================================= */
+/* VARIANTES DE COULEURS POUR LES BOUTONS DE CRÉDIT */
+/* ============================================= */
+
+/* Bouton Détails crédit */
+.btn-outline-info[title="Détails"] {
+  border-color: #3498db;
+  color: #3498db;
+}
+
+.btn-outline-info[title="Détails"]:hover {
+  background: linear-gradient(135deg, #3498db, #2980b9);
+}
+
+/* Bouton Historique */
+.btn-outline-primary[title="Historique"] {
+  border-color: #9b59b6;
+  color: #9b59b6;
+}
+
+.btn-outline-primary[title="Historique"]:hover {
+  background: linear-gradient(135deg, #9b59b6, #8e44ad);
+}
+
+/* Bouton Règlement */
+.btn-outline-success[title="Règlement"] {
+  border-color: #27ae60;
+  color: #27ae60;
+}
+
+.btn-outline-success[title="Règlement"]:hover {
+  background: linear-gradient(135deg, #27ae60, #229954);
+}
+
+// Animation spin pour les icônes
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+// Styles pour les badges
+.badge {
+  padding: 0.35rem 0.65rem;
+  font-weight: 500;
+}
+
+// Styles pour les cartes
+.card {
+  transition: transform 0.2s ease-in-out;
+  &:hover {
+    transform: translateY(-2px);
+  }
+}
+
+// Styles pour les modales
+.modal {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-dialog {
+  margin: 1.75rem auto;
+}
+
+// Styles pour les tables
+.table-responsive {
+  overflow-x: auto;
+}
+
+// Styles pour les progress bars
+.progress {
+  border-radius: 20px;
+  background-color: #e9ecef;
+}
+
+.progress-bar {
+  border-radius: 20px;
+  transition: width 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+}

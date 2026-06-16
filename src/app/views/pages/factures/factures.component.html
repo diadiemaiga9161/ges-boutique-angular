@@ -1,0 +1,386 @@
+<div class="container-fluid py-4 app-page factures-container">
+  <!-- En-tête -->
+  <div class="app-page-header mb-4">
+    <div class="app-page-header-left">
+      <div class="app-page-icon"><i class="fa fa-file-text"></i></div>
+      <div>
+        <h1 class="app-page-title">Gestion des Factures</h1>
+        <p class="app-page-subtitle">Créer, consulter et gérer les factures</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cartes statistiques -->
+  <div class="row g-3 mb-4" *ngIf="statistiques">
+    <div class="col-6 col-sm-4 col-lg-2">
+      <div class="app-stat-card">
+        <div class="app-stat-icon blue"><i class="fa fa-file"></i></div>
+        <div class="app-stat-body">
+          <div class="app-stat-label">Total</div>
+          <div class="app-stat-value">{{ statistiques.nombreTotal }}</div>
+          <div class="app-stat-sub">factures</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-sm-4 col-lg-2">
+      <div class="app-stat-card">
+        <div class="app-stat-icon purple"><i class="fa fa-pencil"></i></div>
+        <div class="app-stat-body">
+          <div class="app-stat-label">Brouillons</div>
+          <div class="app-stat-value">{{ statistiques.nombreBrouillons }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-sm-4 col-lg-2">
+      <div class="app-stat-card">
+        <div class="app-stat-icon teal"><i class="fa fa-check"></i></div>
+        <div class="app-stat-body">
+          <div class="app-stat-label">Validées</div>
+          <div class="app-stat-value">{{ statistiques.nombreValides }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-sm-4 col-lg-2">
+      <div class="app-stat-card">
+        <div class="app-stat-icon green"><i class="fa fa-money"></i></div>
+        <div class="app-stat-body">
+          <div class="app-stat-label">Payées</div>
+          <div class="app-stat-value">{{ statistiques.nombrePayees }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-sm-4 col-lg-2">
+      <div class="app-stat-card">
+        <div class="app-stat-icon red"><i class="fa fa-ban"></i></div>
+        <div class="app-stat-body">
+          <div class="app-stat-label">Annulées</div>
+          <div class="app-stat-value">{{ statistiques.nombreAnnulees }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-sm-4 col-lg-2">
+      <div class="stat-card montant">
+        <h6>Montant total</h6>
+        <h3>{{ formatPrice(statistiques.montantTotal) }}</h3>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtres -->
+  <div class="app-filter-card mb-4">
+      <div class="row g-2 align-items-end">
+        <div class="col-12 col-sm-6 col-lg-4">
+          <input type="text"
+                 placeholder="Rechercher par numéro, client ou téléphone..."
+                 [(ngModel)]="searchTerm"
+                 (input)="applyFilters()"
+                 class="form-control form-control-sm">
+        </div>
+        <div class="col-6 col-sm-3 col-lg-2">
+          <select [(ngModel)]="statutFilter" (change)="applyFilters()" class="form-select form-select-sm">
+            <option value="">Tous statuts</option>
+            <option *ngFor="let opt of getStatutOptions()" [value]="opt.value">{{ opt.label }}</option>
+          </select>
+        </div>
+        <div class="col-6 col-sm-3 col-lg-2">
+          <input type="date" [(ngModel)]="dateDebut" (change)="applyFilters()" class="form-control form-control-sm">
+        </div>
+        <div class="col-6 col-sm-3 col-lg-2">
+          <input type="date" [(ngModel)]="dateFin" (change)="applyFilters()" class="form-control form-control-sm">
+        </div>
+        <div class="col-6 col-sm-3 col-lg-2 d-flex gap-1 flex-wrap">
+          <button (click)="resetFilters()" class="btn btn-secondary btn-sm" title="Réinitialiser">
+            <i class="fa fa-refresh"></i>
+          </button>
+          <button (click)="openCreateModal()" class="btn btn-primary btn-sm" title="Nouvelle facture pro forma">
+            <i class="fa fa-plus"></i> <span class="d-none d-sm-inline">Nouvelle</span>
+          </button>
+        </div>
+      </div>
+  </div>
+
+  <!-- Alertes -->
+  <div *ngIf="errorMessage" class="alert error">
+    <i class="fa fa-exclamation-circle"></i> {{ errorMessage }}
+  </div>
+  <div *ngIf="successMessage" class="alert success">
+    <i class="fa fa-check-circle"></i> {{ successMessage }}
+  </div>
+  <div *ngIf="isLoading" class="loading">
+    <i class="fa fa-spinner fa-spin"></i> Chargement des factures...
+  </div>
+
+  <!-- Cartes factures -->
+  <div class="factures-grid" *ngIf="!isLoading && factures.length > 0">
+    <div class="fc-card" *ngFor="let facture of paginatedFactures">
+      <div class="fc-card-top" (click)="viewFacture(facture)">
+        <div class="fc-card-left">
+          <span class="fc-num">{{ facture.numeroFacture }}</span>
+          <span [class]="'fc-badge fc-badge--' + facture.statut.toLowerCase()">{{ getStatusText(facture.statut) }}</span>
+        </div>
+        <div class="fc-card-right">
+          <span class="fc-montant">{{ formatPrice(facture.montantTotal) }}</span>
+        </div>
+      </div>
+      <div class="fc-card-mid" (click)="viewFacture(facture)">
+        <span class="fc-client"><i class="fa fa-user-circle"></i> {{ facture.clientNom || 'Client divers' }}{{ facture.clientPrenom ? ' ' + facture.clientPrenom : '' }}</span>
+        <span class="fc-date"><i class="fa fa-calendar-o"></i> {{ formatDateShort(facture.dateCreation) }}</span>
+      </div>
+      <div class="fc-card-actions">
+        <button class="fc-btn fc-btn--pdf" (click)="telechargerPdfServeur(facture); $event.stopPropagation()" title="Télécharger PDF">
+          <i class="fa fa-download"></i> PDF
+        </button>
+        <button class="fc-btn fc-btn--view" (click)="ouvrirPdfServeur(facture); $event.stopPropagation()" title="Voir PDF">
+          <i class="fa fa-eye"></i> Voir
+        </button>
+        <button class="fc-btn fc-btn--validate" *ngIf="facture.statut === 'BROUILLON'"
+                (click)="validerFacture(facture); $event.stopPropagation()">
+          <i class="fa fa-check"></i> Valider
+        </button>
+        <button class="fc-btn fc-btn--edit" *ngIf="facture.statut === 'BROUILLON'"
+                (click)="openEditModal(facture); $event.stopPropagation()">
+          <i class="fa fa-edit"></i> Modifier
+        </button>
+        <button class="fc-btn fc-btn--cancel" *ngIf="facture.statut !== 'ANNULEE' && facture.statut !== 'PAYEE'"
+                (click)="annulerFacture(facture); $event.stopPropagation()">
+          <i class="fa fa-ban"></i> Annuler
+        </button>
+        <button class="fc-btn fc-btn--delete" *ngIf="facture.statut === 'BROUILLON'"
+                (click)="supprimerFacture(facture); $event.stopPropagation()">
+          <i class="fa fa-trash"></i> Suppr.
+        </button>
+      </div>
+    </div>
+
+    <div class="pagination" *ngIf="totalPages > 1">
+      <button (click)="changePage(currentPage-1)" [disabled]="currentPage===1">
+        <i class="fa fa-chevron-left"></i>
+      </button>
+      <button *ngFor="let p of pageNumbers" [class.active]="p===currentPage" (click)="changePage(p)">{{ p }}</button>
+      <button (click)="changePage(currentPage+1)" [disabled]="currentPage===totalPages">
+        <i class="fa fa-chevron-right"></i>
+      </button>
+    </div>
+  </div>
+  
+  <div *ngIf="!isLoading && factures.length === 0" class="empty-state">
+    <i class="fa fa-receipt fa-4x mb-3"></i>
+    <h4>Aucune facture trouvée</h4>
+    <p>Commencez par créer votre première facture</p>
+    <button (click)="openCreateModal()" class="btn-primary mt-3">
+      <i class="fa fa-plus"></i> Créer une facture
+    </button>
+  </div>
+
+  <!-- ==================== MODALES (inchangées) ==================== -->
+  <!-- MODALE DÉTAIL -->
+  <div class="facture-modal" [class.show]="showDetailModal" *ngIf="showDetailModal && selectedFacture">
+    <div class="modal-content modal-detail">
+      <div class="modal-header">
+        <h3><i class="fa fa-file-text-o"></i> Détails de la facture</h3>
+        <span class="close" (click)="closeAllModals()">&times;</span>
+      </div>
+      <div class="detail-section">
+        <div class="detail-row"><span class="detail-label">Numéro :</span><span class="detail-value">{{ selectedFacture.numeroFacture }}</span></div>
+        <div class="detail-row"><span class="detail-label">Client :</span><span class="detail-value">{{ selectedFacture.clientNom || 'Client divers' }} {{ selectedFacture.clientPrenom || '' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Téléphone :</span><span class="detail-value">{{ selectedFacture.clientTelephone || '-' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Adresse :</span><span class="detail-value">{{ selectedFacture.clientAdresse || '-' }}</span></div>
+        <div class="detail-row"><span class="detail-label">Statut :</span><span class="detail-value"><span [class]="'badge ' + getStatusBadgeClass(selectedFacture.statut)">{{ getStatusText(selectedFacture.statut) }}</span></span></div>
+        <div class="detail-row"><span class="detail-label">Date :</span><span class="detail-value">{{ formatDateShort(selectedFacture.dateCreation) }}</span></div>
+        <div class="detail-row"><span class="detail-label">Total :</span><span class="detail-value text-primary fw-bold">{{ formatPrice(selectedFacture.montantTotal) }}</span></div>
+      </div>
+      <div class="detail-section" *ngIf="selectedFacture.lignes.length">
+        <h4><i class="fa fa-list"></i> Articles</h4>
+        <div class="lines-list">
+          <div class="lines-header"><span>Désignation</span><span>Qté</span><span>Prix U.</span><span>Total</span></div>
+          <div *ngFor="let l of selectedFacture.lignes" class="line-item">
+            <span class="line-designation">{{ l.designation }}</span>
+            <span class="line-quantite">{{ l.quantite }}</span>
+            <span class="line-prix">{{ formatPrice(l.prixUnitaire) }}</span>
+            <span class="line-total">{{ formatPrice(l.sousTotal ?? 0) }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="detail-section" *ngIf="selectedFacture.notes">
+        <h4><i class="fa fa-sticky-note"></i> Notes</h4>
+        <p class="notes-text">{{ selectedFacture.notes }}</p>
+      </div>
+      <!-- QR Code téléchargement -->
+      <div class="detail-section qr-section">
+        <h4><i class="fa fa-qrcode"></i> QR Code — Accès direct à la facture</h4>
+        <div class="qr-wrapper">
+          <img [src]="getQrCodeUrl(selectedFacture)" alt="QR Code facture" class="qr-img">
+          <p class="qr-hint">Scannez ce code pour télécharger le PDF directement (sans connexion)</p>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-primary" (click)="imprimerFacture(selectedFacture)"><i class="fa fa-print"></i> Imprimer</button>
+        <button class="btn-success" (click)="telechargerPdfServeur(selectedFacture)"><i class="fa fa-download"></i> Télécharger PDF</button>
+        <button class="btn-primary" (click)="ouvrirPdfServeur(selectedFacture)"><i class="fa fa-eye"></i> Voir PDF</button>
+        <button class="btn-warning" *ngIf="selectedFacture.statut === 'BROUILLON' && isAdmin" (click)="openEditModal(selectedFacture); closeAllModals()">
+          <i class="fa fa-edit"></i> Modifier
+        </button>
+        <button class="btn-danger" *ngIf="selectedFacture.statut === 'BROUILLON' && isAdmin" (click)="supprimerFacture(selectedFacture); closeAllModals()">
+          <i class="fa fa-trash"></i> Supprimer
+        </button>
+        <button class="btn-secondary" (click)="closeAllModals()"><i class="fa fa-times"></i> Fermer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODALE CRÉATION / MODIFICATION -->
+  <div class="facture-modal" [class.show]="showCreateModal || showEditModal" *ngIf="showCreateModal || showEditModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3><i class="fa fa-file-text-o"></i> {{ showCreateModal ? 'Nouvelle facture' : 'Modifier facture' }}</h3>
+        <span class="close" (click)="closeAllModals()">&times;</span>
+      </div>
+      
+      <form (ngSubmit)="showCreateModal ? createFacture() : modifierFacture()">
+        <!-- Alerte erreur dans le modal -->
+        <div *ngIf="errorMessage" class="alert error" style="margin:12px 16px 0;border-radius:6px">
+          <i class="fa fa-exclamation-circle"></i> {{ errorMessage }}
+        </div>
+        <!-- Section Client -->
+        <div class="form-section">
+          <h4><i class="fa fa-user"></i> Informations client</h4>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Nom <span class="required">*</span></label>
+              <input type="text" class="form-control" [(ngModel)]="factureForm.clientNom" name="clientNom" required>
+            </div>
+            <div class="form-group">
+              <label>Prénom</label>
+              <input type="text" class="form-control" [(ngModel)]="factureForm.clientPrenom" name="clientPrenom">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Téléphone</label>
+              <input type="tel" class="form-control" [(ngModel)]="factureForm.clientTelephone" name="clientTelephone">
+            </div>
+            <div class="form-group">
+              <label>Adresse</label>
+              <input type="text" class="form-control" [(ngModel)]="factureForm.clientAdresse" name="clientAdresse">
+            </div>
+          </div>
+          <div class="client-search-section">
+            <label>Ou sélectionnez un client existant :</label>
+            <div class="search-box">
+              <input type="text" class="form-control" placeholder="Rechercher..." [(ngModel)]="clientSearchTerm" (input)="searchClients()" (focus)="showClientSearch = true" [ngModelOptions]="{standalone: true}">
+              <ul class="search-results" *ngIf="showClientSearch && filteredClients.length">
+                <li *ngFor="let c of filteredClients" (click)="selectClient(c)">
+                  <i class="fa fa-user-circle"></i> <strong>{{ c.nom }} {{ c.prenom }}</strong> <small>{{ c.numeroTelephone }}</small>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div class="new-client-checkbox">
+            <label><input type="checkbox" [(ngModel)]="creerNouveauClient" [ngModelOptions]="{standalone: true}"> Créer un nouveau client</label>
+          </div>
+          <div *ngIf="creerNouveauClient" class="new-client-form">
+            <div class="form-row">
+              <div class="form-group"><input type="text" class="form-control" placeholder="Nom *" [(ngModel)]="nouveauClient.nom" [ngModelOptions]="{standalone: true}"></div>
+              <div class="form-group"><input type="text" class="form-control" placeholder="Prénom" [(ngModel)]="nouveauClient.prenom" [ngModelOptions]="{standalone: true}"></div>
+              <div class="form-group"><input type="tel" class="form-control" placeholder="Téléphone *" [(ngModel)]="nouveauClient.numeroTelephone" [ngModelOptions]="{standalone: true}"></div>
+              <div class="form-group"><button type="button" class="btn-success" (click)="creerClient()"><i class="fa fa-save"></i> Créer client</button></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section Articles -->
+        <div class="form-section">
+          <div class="articles-header">
+            <h4><i class="fa fa-shopping-cart"></i> Articles</h4>
+            <button type="button" class="btn-toggle-mode" [class.active]="modeLibre" (click)="toggleModeLibre()">
+              <i class="fa" [class.fa-database]="!modeLibre" [class.fa-pencil]="modeLibre"></i>
+              {{ modeLibre ? 'Mode libre (hors catalogue)' : 'Mode catalogue (stock)' }}
+            </button>
+          </div>
+
+          <!-- Mode catalogue : recherche produit en base -->
+          <div *ngIf="!modeLibre">
+            <div class="product-search-section">
+              <label>Rechercher un produit du stock :</label>
+              <div class="search-box">
+                <input type="text" class="form-control" placeholder="Nom ou code-barre..." [(ngModel)]="productSearchTerm" (input)="searchProduits()" (focus)="showProductSearch = true" [ngModelOptions]="{standalone: true}">
+                <ul class="search-results" *ngIf="showProductSearch && filteredProduits.length">
+                  <li *ngFor="let p of filteredProduits" (click)="selectProduit(p)">
+                    <i class="fa fa-cube"></i> <strong>{{ p.nom }}</strong> <small>Prix: {{ formatPrice(p.prixVente) }} | Stock: {{ p.quantite }}</small>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            <div *ngIf="selectedProduit" class="selected-product">
+              <div class="product-info">
+                <i class="fa fa-check-circle text-success"></i> <strong>{{ selectedProduit.nom }}</strong>
+                <span>Prix: {{ formatPrice(selectedProduit.prixVente) }}</span> <span>Stock: {{ selectedProduit.quantite }}</span>
+              </div>
+              <button type="button" class="btn-sm btn-outline" (click)="selectedProduit = null; newLine.produitId = 0"><i class="fa fa-refresh"></i> Changer</button>
+            </div>
+            <div class="line-editor" *ngIf="selectedProduit">
+              <div class="line-inputs">
+                <div class="input-group"><label>Quantité</label><input type="number" class="form-control" [(ngModel)]="newLine.quantite" min="1" [max]="selectedProduit.quantite" [ngModelOptions]="{standalone: true}"></div>
+                <div class="input-group"><label>Prix unitaire (FCFA)</label><input type="number" class="form-control" [(ngModel)]="newLine.prixUnitaire" step="1" min="0" [ngModelOptions]="{standalone: true}"></div>
+                <div class="input-group"><label>Remise (%)</label><input type="number" class="form-control" [(ngModel)]="newLine.remisePourcentage" min="0" max="100" [ngModelOptions]="{standalone: true}"></div>
+                <button type="button" class="btn-primary" (click)="addLine()"><i class="fa fa-plus"></i> Ajouter</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mode libre : produit hors catalogue -->
+          <div *ngIf="modeLibre" class="mode-libre-form">
+            <div class="line-inputs">
+              <div class="input-group input-group-wide"><label>Désignation <span class="required">*</span></label><input type="text" class="form-control" placeholder="Ex: Transport, Service, Article spécial..." [(ngModel)]="ligneLibre.designation" [ngModelOptions]="{standalone: true}"></div>
+              <div class="input-group"><label>Quantité</label><input type="number" class="form-control" [(ngModel)]="ligneLibre.quantite" min="1" [ngModelOptions]="{standalone: true}"></div>
+              <div class="input-group"><label>Prix unitaire (FCFA)</label><input type="number" class="form-control" [(ngModel)]="ligneLibre.prixUnitaire" step="1" min="0" [ngModelOptions]="{standalone: true}"></div>
+              <div class="input-group"><label>Remise (%)</label><input type="number" class="form-control" [(ngModel)]="ligneLibre.remisePourcentage" min="0" max="100" [ngModelOptions]="{standalone: true}"></div>
+              <button type="button" class="btn-primary" (click)="addLine()"><i class="fa fa-plus"></i> Ajouter</button>
+            </div>
+          </div>
+          <div class="lines-list" *ngIf="factureForm.lignes.length">
+            <div class="lines-header"><span>Désignation</span><span>Qté</span><span>Prix U.</span><span>Remise</span><span>Total</span><span></span></div>
+            <div *ngFor="let ligne of factureForm.lignes; let i=index" class="line-item">
+              <span class="line-designation">{{ ligne.designation }}</span>
+              <span class="line-quantite">{{ ligne.quantite }}</span>
+              <span class="line-prix">{{ formatPrice(ligne.prixUnitaire) }}</span>
+              <span class="line-remise">{{ ligne.remisePourcentage ? ligne.remisePourcentage + '%' : (ligne.remiseMontant ? formatPrice(ligne.remiseMontant) : '-') }}</span>
+              <span class="line-total">{{ formatPrice(ligne.prixUnitaire * ligne.quantite) }}</span>
+              <span class="line-actions"><button type="button" class="danger" (click)="removeLine(i)"><i class="fa fa-trash"></i></button></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section Remise globale -->
+        <div class="form-section">
+          <div class="remise-globale-header"><label><input type="checkbox" [(ngModel)]="showRemiseGlobale" [ngModelOptions]="{standalone: true}"> Appliquer une remise globale</label></div>
+          <div *ngIf="showRemiseGlobale" class="remise-globale-form">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Type</label>
+                <select class="form-control" [(ngModel)]="typeRemiseGlobale" [ngModelOptions]="{standalone: true}">
+                  <option [value]="FactureRemiseType.POURCENTAGE">Pourcentage (%)</option>
+                  <option [value]="FactureRemiseType.MONTANT_FIXE">Montant fixe (FCFA)</option>
+                </select>
+              </div>
+              <div class="form-group"><label>Valeur</label><input type="number" class="form-control" [(ngModel)]="remiseGlobale" step="1" min="0" [ngModelOptions]="{standalone: true}"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h4><i class="fa fa-sticky-note"></i> Notes</h4>
+          <textarea rows="3" class="form-control" [(ngModel)]="factureForm.notes" name="notes" placeholder="Informations complémentaires..."></textarea>
+        </div>
+
+        <div class="invoice-total"><span>Total TTC :</span><strong>{{ formatPrice(getTotalAvecRemiseGlobale()) }}</strong></div>
+        <div class="modal-actions">
+          <button type="submit" class="btn-primary" [disabled]="isSaving"><i *ngIf="!isSaving" class="fa fa-save"></i><i *ngIf="isSaving" class="fa fa-spinner fa-spin"></i> {{ showCreateModal ? 'Créer' : 'Enregistrer' }}</button>
+          <button type="button" class="btn-secondary" (click)="closeAllModals()"><i class="fa fa-times"></i> Annuler</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+</div>

@@ -1,0 +1,309 @@
+<div class="container-fluid py-4 app-page">
+  <!-- En-tête -->
+  <div class="app-page-header mb-4">
+    <div class="app-page-header-left">
+      <div class="app-page-icon"><i class="fa fa-trophy"></i></div>
+      <div>
+        <h1 class="app-page-title">Objectifs Fournisseurs</h1>
+        <p class="app-page-subtitle">Suivi des objectifs et bonus fournisseurs</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="app-stat-card">
+        <div class="app-stat-icon blue"><i class="fa fa-tag"></i></div>
+        <div class="app-stat-body">
+          <div class="app-stat-label">Total objectifs</div>
+          <div class="app-stat-value">{{ stats.totalObjectifs }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="app-stat-card">
+        <div class="app-stat-icon green"><i class="fa fa-trophy"></i></div>
+        <div class="app-stat-body">
+          <div class="app-stat-label">Objectifs atteints</div>
+          <div class="app-stat-value">{{ stats.objectifsAtteints }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="app-stat-card">
+        <div class="app-stat-icon orange"><i class="fa fa-gift"></i></div>
+        <div class="app-stat-body">
+          <div class="app-stat-label">Total bonus</div>
+          <div class="app-stat-value">{{ fmt(stats.totalBonusCalcule) }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="app-stat-card">
+        <div class="app-stat-icon teal"><i class="fa fa-cube"></i></div>
+        <div class="app-stat-body">
+          <div class="app-stat-label">Quantité bonus</div>
+          <div class="app-stat-value">{{ stats.totalQuantiteBonusRecue | number:'1.0-0' }} u.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FORMULE RÉSULTAT NET -->
+  <div class="card mb-4">
+    <div class="card-body bg-light rounded">
+      <div class="d-flex align-items-center justify-content-center flex-wrap gap-3 text-center">
+        <div class="px-3">
+          <p class="text-muted mb-1 small">Bénéfice ventes</p>
+          <p class="font-weight-bold text-dark mb-0">+ Ventes</p>
+        </div>
+        <span class="text-primary font-weight-bold text-20">+</span>
+        <div class="px-3 border rounded bg-primary text-white">
+          <p class="mb-1 small">Bonus fournisseurs</p>
+          <p class="font-weight-bold mb-0">{{ fmt(stats.totalBonusCalcule) }}</p>
+        </div>
+        <span class="text-danger font-weight-bold text-20">−</span>
+        <div class="px-3">
+          <p class="text-muted mb-1 small">Dépenses</p>
+          <p class="font-weight-bold text-dark mb-0">− Dépenses</p>
+        </div>
+        <span class="text-success font-weight-bold text-20">=</span>
+        <div class="px-3 border rounded bg-success text-white">
+          <p class="mb-1 small">Résultat net</p>
+          <p class="font-weight-bold mb-0">Bénéfice + {{ fmt(stats.totalBonusCalcule) }} − Dépenses</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FILTRES & ACTIONS -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <div class="row align-items-end">
+        <div class="col-md-2">
+          <label class="small text-muted">Mode</label>
+          <select class="form-control form-control-sm" [(ngModel)]="modeFiltre" (change)="chargerObjectifs()">
+            <option value="mois">Par mois</option>
+            <option value="annee">Par année</option>
+            <option value="tous">Tous</option>
+          </select>
+        </div>
+        <div class="col-md-2" *ngIf="modeFiltre === 'mois'">
+          <label class="small text-muted">Mois</label>
+          <select class="form-control form-control-sm" [(ngModel)]="filtreMois" (change)="chargerObjectifs()">
+            <option *ngFor="let m of moisOptions" [value]="m.val">{{ m.label }}</option>
+          </select>
+        </div>
+        <div class="col-md-2" *ngIf="modeFiltre !== 'tous'">
+          <label class="small text-muted">Année</label>
+          <select class="form-control form-control-sm" [(ngModel)]="filtreAnnee" (change)="chargerObjectifs()">
+            <option *ngFor="let a of annees" [value]="a">{{ a }}</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="small text-muted">Fournisseur</label>
+          <select class="form-control form-control-sm" [(ngModel)]="filtreFournisseurId">
+            <option [value]="0">Tous</option>
+            <option *ngFor="let f of fournisseurs" [value]="f.id">{{ f.nom }}</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="small text-muted">Statut</label>
+          <select class="form-control form-control-sm" [(ngModel)]="filtreStatut">
+            <option value="">Tous</option>
+            <option value="ATTEINT">Atteint</option>
+            <option value="NON_ATTEINT">Non atteint</option>
+          </select>
+        </div>
+        <div class="col-md-2 text-right">
+          <button class="btn btn-primary btn-sm" (click)="ouvrirFormulaire()">
+            <i class="i-Add mr-1"></i> Nouvel objectif
+          </button>
+        </div>
+      </div>
+      <div class="row mt-2">
+        <div class="col text-right">
+          <button class="btn btn-outline-danger btn-sm mr-2" (click)="genererPdfMensuel()">
+            <i class="i-File-Download mr-1"></i> PDF mensuel
+          </button>
+          <button class="btn btn-outline-secondary btn-sm" (click)="genererPdfAnnuel()">
+            <i class="i-File-Download mr-1"></i> PDF annuel
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLEAU -->
+  <div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <span>Objectifs <span class="badge badge-primary ml-2">{{ objectifsFiltres.length }}</span></span>
+      <span *ngIf="objectifsFiltres.length" class="text-success font-weight-bold">
+        Bonus total atteints : {{ fmt(totalBonusFiltres) }}
+      </span>
+    </div>
+    <div class="card-body p-0">
+      <div class="text-center py-5" *ngIf="isLoading">
+        <div class="spinner-border text-primary"></div>
+      </div>
+      <div class="text-center py-5 text-muted" *ngIf="!isLoading && !objectifsFiltres.length">
+        <i class="i-Trophy" style="font-size:3rem;opacity:.3"></i>
+        <p class="mt-2">Aucun objectif pour cette période</p>
+        <button class="btn btn-primary btn-sm" (click)="ouvrirFormulaire()">Créer le premier objectif</button>
+      </div>
+      <div class="table-responsive" *ngIf="!isLoading && objectifsFiltres.length">
+        <table class="table table-hover mb-0">
+          <thead class="thead-light">
+            <tr>
+              <th>Fournisseur</th>
+              <th>Produit</th>
+              <th>Période</th>
+              <th>Objectif</th>
+              <th>Atteinte</th>
+              <th>Bonus/u</th>
+              <th>Bonus total</th>
+              <th>Qté bonus</th>
+              <th>Statut</th>
+              <th>Stock</th>
+              <th class="text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let o of objectifsFiltres">
+              <td><strong>{{ o.fournisseurNom }}</strong></td>
+              <td>{{ o.produitNom || '—' }}</td>
+              <td class="text-nowrap">{{ moisLabels[o.mois] }} {{ o.annee }}</td>
+              <td>{{ o.objectifQuantite | number:'1.0-0' }} u.</td>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <div class="progress flex-grow-1" style="height:6px;min-width:60px">
+                    <div class="progress-bar"
+                      [ngClass]="o.statut === 'ATTEINT' ? 'bg-success' : 'bg-warning'"
+                      [style.width.%]="getPourcentage(o)">
+                    </div>
+                  </div>
+                  <small>{{ getPourcentage(o) }}%</small>
+                </div>
+                <small class="text-muted">{{ o.quantiteAtteinte | number:'1.0-0' }} u.</small>
+              </td>
+              <td>{{ o.bonusParUnite | number:'1.0-0' }} FCFA</td>
+              <td class="font-weight-bold" [ngClass]="o.statut === 'ATTEINT' ? 'text-success' : 'text-muted'">
+                {{ fmt(o.bonusCalcule) }}
+              </td>
+              <td>{{ o.quantiteBonusRecue | number:'1.0-0' }} u.</td>
+              <td>
+                <span class="badge" [ngClass]="o.statut === 'ATTEINT' ? 'badge-success' : 'badge-warning'">
+                  {{ o.statut === 'ATTEINT' ? 'Atteint' : 'Non atteint' }}
+                </span>
+              </td>
+              <td>
+                <span class="badge" [ngClass]="o.stockAjoute ? 'badge-info' : 'badge-light'">
+                  {{ o.stockAjoute ? 'Ajouté' : 'En attente' }}
+                </span>
+              </td>
+              <td class="text-center text-nowrap">
+                <button class="btn btn-sm btn-outline-primary mr-1" (click)="ouvrirFormulaire(o)"
+                  [disabled]="o.stockAjoute" title="Modifier">
+                  <i class="i-Pen-2"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-success mr-1"
+                  *ngIf="o.statut === 'ATTEINT' && !o.stockAjoute"
+                  (click)="confirmerValider(o)" title="Valider et ajouter au stock">
+                  <i class="i-Check"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger"
+                  (click)="confirmerSupprimer(o)" [disabled]="o.stockAjoute" title="Supprimer">
+                  <i class="i-Trash1"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======= MODAL FORMULAIRE ======= -->
+<div class="modal fade show d-block" tabindex="-1" *ngIf="showFormModal" style="background:rgba(0,0,0,.5)">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title">{{ isEditing ? 'Modifier objectif' : 'Nouvel objectif fournisseur' }}</h5>
+        <button class="close text-white" (click)="showFormModal = false"><span>&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-md-6 form-group">
+            <label>Fournisseur <span class="text-danger">*</span></label>
+            <select class="form-control" [(ngModel)]="form.fournisseurId">
+              <option [value]="0">— Sélectionner —</option>
+              <option *ngFor="let f of fournisseurs" [value]="f.id">{{ f.nom }}</option>
+            </select>
+          </div>
+          <div class="col-md-6 form-group">
+            <label>Produit concerné</label>
+            <select class="form-control" [(ngModel)]="form.produitId">
+              <option [value]="undefined">— Aucun —</option>
+              <option *ngFor="let p of produits" [value]="p.id">{{ p.nom }}</option>
+            </select>
+          </div>
+          <div class="col-md-3 form-group">
+            <label>Mois <span class="text-danger">*</span></label>
+            <select class="form-control" [(ngModel)]="form.mois">
+              <option *ngFor="let m of moisOptions" [value]="m.val">{{ m.label }}</option>
+            </select>
+          </div>
+          <div class="col-md-3 form-group">
+            <label>Année <span class="text-danger">*</span></label>
+            <select class="form-control" [(ngModel)]="form.annee">
+              <option *ngFor="let a of annees" [value]="a">{{ a }}</option>
+            </select>
+          </div>
+          <div class="col-md-3 form-group">
+            <label>Objectif quantité <span class="text-danger">*</span></label>
+            <input type="number" class="form-control" [(ngModel)]="form.objectifQuantite" placeholder="ex: 50000">
+          </div>
+          <div class="col-md-3 form-group">
+            <label>Bonus par unité (FCFA) <span class="text-danger">*</span></label>
+            <input type="number" class="form-control" [(ngModel)]="form.bonusParUnite" placeholder="ex: 25">
+          </div>
+          <div class="col-md-4 form-group">
+            <label>Quantité atteinte <small class="text-muted">(mis à jour automatiquement)</small></label>
+            <input type="number" class="form-control bg-light" [(ngModel)]="form.quantiteAtteinte" placeholder="0" disabled>
+          </div>
+          <div class="col-md-4 form-group">
+            <label>Quantité bonus reçue</label>
+            <input type="number" class="form-control" [(ngModel)]="form.quantiteBonusRecue" placeholder="0">
+          </div>
+          <div class="col-md-4 form-group">
+            <label>Bonus calculé (aperçu)</label>
+            <input type="text" class="form-control bg-light font-weight-bold text-success"
+              [value]="fmt(bonusCalculePreview)" readonly>
+          </div>
+          <div class="col-12 form-group">
+            <label>Observation</label>
+            <textarea class="form-control" [(ngModel)]="form.observation" rows="2"></textarea>
+          </div>
+        </div>
+        <div class="alert alert-info py-2 small mb-0" *ngIf="form.quantiteAtteinte && form.objectifQuantite">
+          <i class="i-Information mr-1"></i>
+          <span *ngIf="(form.quantiteAtteinte || 0) >= (form.objectifQuantite || 1)">
+            ✅ Objectif atteint — Bonus : <strong>{{ fmt(bonusCalculePreview) }}</strong>
+          </span>
+          <span *ngIf="(form.quantiteAtteinte || 0) < (form.objectifQuantite || 1)">
+            ⚠️ Objectif non atteint ({{ ((form.quantiteAtteinte || 0) / (form.objectifQuantite || 1) * 100) | number:'1.0-0' }}%)
+          </span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="showFormModal = false">Annuler</button>
+        <button class="btn btn-primary" (click)="enregistrer()" [disabled]="isSaving">
+          <span *ngIf="isSaving" class="spinner-border spinner-border-sm mr-1"></span>
+          {{ isEditing ? 'Enregistrer les modifications' : 'Créer l\'objectif' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

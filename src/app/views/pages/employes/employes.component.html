@@ -1,0 +1,171 @@
+<div class="container-fluid py-4 app-page">
+  <!-- En-tête -->
+  <div class="app-page-header mb-4">
+    <div class="app-page-header-left">
+      <div class="app-page-icon"><i class="fa fa-id-badge"></i></div>
+      <div>
+        <h1 class="app-page-title">Gestion des Employés</h1>
+        <p class="app-page-subtitle">Personnel, postes et informations</p>
+      </div>
+    </div>
+    <div class="app-page-header-actions">
+      <button class="btn btn-primary" (click)="ouvrirFormAjout()">
+        <i class="fa fa-plus me-1"></i> Nouvel employé
+      </button>
+    </div>
+  </div>
+
+  <!-- Barre de recherche -->
+  <div class="app-filter-card mb-4">
+    <div class="input-group">
+      <span class="input-group-text"><i class="fa fa-search"></i></span>
+      <input type="text" class="form-control" placeholder="Rechercher (nom, poste, téléphone)..."
+        [(ngModel)]="searchQuery" />
+    </div>
+  </div>
+
+  <!-- Tableau -->
+  <div class="app-table-card">
+    <div class="app-table-header">
+      <div class="app-table-title"><i class="fa fa-list me-2"></i>Liste des employés</div>
+    </div>
+      <div *ngIf="isLoading" class="text-center p-4">
+        <div class="spinner-border text-primary"></div>
+      </div>
+
+      <table *ngIf="!isLoading" class="table table-hover mb-0">
+        <thead class="thead-light">
+          <tr>
+            <th>#</th>
+            <th>Nom complet</th>
+            <th>Poste</th>
+            <th>Salaire mensuel</th>
+            <th>Téléphone</th>
+            <th>Date embauche</th>
+            <th>Statut</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let emp of paginatedEmployes; let i = index"
+              [style.opacity]="emp.statut === 'INACTIF' ? '0.65' : '1'"
+              [style.background-color]="emp.statut === 'INACTIF' ? '#fafafa' : ''">
+            <td>{{ (currentPage - 1) * itemsPerPage + i + 1 }}</td>
+            <td>
+              <strong [ngClass]="emp.statut === 'INACTIF' ? 'text-muted' : ''">{{ emp.nomComplet }}</strong>
+            </td>
+            <td>{{ emp.poste }}</td>
+            <td class="text-right">{{ formatMontant(emp.salaireMensuel) }}</td>
+            <td>{{ emp.telephone || '—' }}</td>
+            <td>{{ emp.dateEmbauche ? (emp.dateEmbauche | date:'dd/MM/yyyy') : '—' }}</td>
+            <td>
+              <!-- Statut ACTIF -->
+              <span *ngIf="emp.statut === 'ACTIF'"
+                    class="badge badge-pill badge-success"
+                    style="font-size:0.85rem; padding:6px 14px; font-weight:600; letter-spacing:0.3px;">
+                <i class="i-Check mr-1"></i> Actif
+              </span>
+              <!-- Statut INACTIF -->
+              <span *ngIf="emp.statut === 'INACTIF'"
+                    class="badge badge-pill badge-danger"
+                    style="font-size:0.85rem; padding:6px 14px; font-weight:600; letter-spacing:0.3px;">
+                <i class="i-Close-Window mr-1"></i> Inactif
+              </span>
+            </td>
+            <td>
+              <button class="btn btn-xs btn-outline-primary mr-1" title="Modifier" (click)="ouvrirFormModification(emp)">
+                <i class="i-Pen-2"></i>
+              </button>
+              <button *ngIf="emp.statut === 'ACTIF'" class="btn btn-xs btn-outline-warning mr-1"
+                      title="Désactiver l'employé" (click)="confirmerDesactivation(emp)">
+                <i class="i-Power-2"></i>
+              </button>
+              <button *ngIf="emp.statut === 'INACTIF'" class="btn btn-xs btn-outline-success mr-1"
+                      title="Réactiver l'employé" (click)="confirmerActivation(emp)">
+                <i class="i-Check"></i>
+              </button>
+              <button class="btn btn-xs btn-outline-danger" title="Supprimer" (click)="confirmerSuppression(emp)">
+                <i class="i-Close-Window"></i>
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="filteredEmployes.length === 0">
+            <td colspan="8" class="text-center text-muted py-4">Aucun employé trouvé.</td>
+          </tr>
+        </tbody>
+      </table>
+  </div>
+
+  <!-- Pagination -->
+  <div class="d-flex justify-content-center mt-3" *ngIf="totalPages > 1">
+    <ul class="pagination pagination-sm">
+      <li class="page-item" [class.disabled]="currentPage === 1">
+        <a class="page-link" (click)="goToPage(currentPage - 1)">«</a>
+      </li>
+      <li class="page-item" *ngFor="let p of pages" [class.active]="p === currentPage">
+        <a class="page-link" (click)="goToPage(p)">{{ p }}</a>
+      </li>
+      <li class="page-item" [class.disabled]="currentPage === totalPages">
+        <a class="page-link" (click)="goToPage(currentPage + 1)">»</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<!-- Modal Formulaire -->
+<div class="modal fade show d-block" tabindex="-1" *ngIf="showFormModal" style="background:rgba(0,0,0,0.5)">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{ isEditing ? 'Modifier' : 'Nouvel' }} employé</h5>
+        <button type="button" class="close" (click)="fermerModal()"><span>&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-md-6 form-group">
+            <label>Nom <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" [(ngModel)]="form.nom" placeholder="Nom de famille" />
+          </div>
+          <div class="col-md-6 form-group">
+            <label>Prénom</label>
+            <input type="text" class="form-control" [(ngModel)]="form.prenom" placeholder="Prénom" />
+          </div>
+          <div class="col-md-6 form-group">
+            <label>Poste <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" [(ngModel)]="form.poste" placeholder="Ex: Caissier, Vendeur..." />
+          </div>
+          <div class="col-md-6 form-group">
+            <label>Salaire mensuel (FCFA) <span class="text-danger">*</span></label>
+            <input type="number" class="form-control" [(ngModel)]="form.salaireMensuel" placeholder="0" min="0" />
+          </div>
+          <div class="col-md-6 form-group">
+            <label>Téléphone</label>
+            <input type="text" class="form-control" [(ngModel)]="form.telephone" placeholder="Ex: 07 00 00 00 00" />
+          </div>
+          <div class="col-md-6 form-group">
+            <label>Date d'embauche</label>
+            <input type="date" class="form-control" [(ngModel)]="form.dateEmbauche" />
+          </div>
+          <div class="col-md-6 form-group">
+            <label>Statut</label>
+            <select class="form-control" [(ngModel)]="form.statut">
+              <option value="ACTIF">Actif</option>
+              <option value="INACTIF">Inactif</option>
+            </select>
+          </div>
+          <div class="col-12 form-group">
+            <label>Observation</label>
+            <textarea class="form-control" [(ngModel)]="form.observation" rows="2" placeholder="Remarques optionnelles..."></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="fermerModal()">Annuler</button>
+        <button class="btn btn-primary" (click)="sauvegarder()" [disabled]="isSaving">
+          <span *ngIf="isSaving" class="spinner-border spinner-border-sm mr-1"></span>
+          {{ isEditing ? 'Modifier' : 'Enregistrer' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,36 @@
+<div class="main-header">
+  <!-- Hamburger + Logo MC -->
+  <div class="d-flex align-items-center">
+    <div class="menu-toggle" (click)="toggelSidebar()">
+      <div></div><div></div><div></div>
+    </div>
+    <div class="header-brand d-none d-sm-flex align-items-center gap-2 ms-1">
+      <div class="header-mc-logo">
+        <span class="mc-m">M</span><span class="mc-c">C</span>
+      </div>
+      <div>
+        <p class="header-app-name">Ges Lafia</p>
+        <p class="header-app-sub">Maïga Consulting</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: user + logout -->
+  <div class="header-part-right d-flex align-items-center gap-3 pe-3">
+    <app-notification-bell></app-notification-bell>
+    <div class="header-user d-none d-md-flex align-items-center gap-2">
+      <div class="header-avatar" [class.header-avatar--photo]="userPhoto">
+        <img *ngIf="userPhoto" [src]="userPhoto" alt="photo" class="header-avatar-img">
+        <i *ngIf="!userPhoto" class="i-Administrator header-avatar-icon"></i>
+      </div>
+      <div>
+        <p class="header-username">{{ currentUserName }}</p>
+        <p class="header-role">{{ currentUserRole }}</p>
+      </div>
+    </div>
+    <button class="header-logout-btn" (click)="logout()" title="Déconnexion">
+      <i class="i-Lock-User"></i>
+      <span class="d-none d-sm-inline ms-1">Quitter</span>
+    </button>
+  </div>
+</div>

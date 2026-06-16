@@ -1,0 +1,57 @@
+<div class="app-admin-wrap layout-sidebar-large">
+  <app-loading-bar></app-loading-bar>
+  <div>
+    <app-header-sidebar-large></app-header-sidebar-large>
+  </div>
+  <div class="side-content-wrap">
+    <app-sidebar-large></app-sidebar-large>
+  </div>
+
+  <ng-scrollbar class="vh-100" visibility="hover" appearance="compact">
+    <div class="main-content-wrap d-flex flex-column"
+      [ngClass]="{'sidenav-open': navService.sidebarState.sidenavOpen}">
+      <router-outlet></router-outlet>
+      <div class="flex-grow-1"></div>
+      <app-footer></app-footer>
+      @if (moduleLoading) {
+        <div class="module-loader">
+          <div class="spinner spinner-bubble spinner-bubble-primary me-3"></div>
+        </div>
+      }
+
+    </div>
+  </ng-scrollbar>
+
+</div>
+
+<!-- Mobile Bottom Navigation -->
+<nav class="mobile-bottom-nav d-flex d-md-none">
+  <a class="mobile-nav-item" routerLink="/pages/vente" routerLinkActive="active">
+    <i class="i-Money-2"></i>
+    <span>Ventes</span>
+  </a>
+  <a *ngIf="authService.isAdmin()" class="mobile-nav-item" routerLink="/pages/caisse" routerLinkActive="active">
+    <i class="i-Cash-register-2"></i>
+    <span>Caisse</span>
+  </a>
+  <a class="mobile-nav-item" routerLink="/pages/produit" routerLinkActive="active">
+    <i class="i-Clothing-Store"></i>
+    <span>Produits</span>
+  </a>
+  <a class="mobile-nav-item" routerLink="/pages/client" routerLinkActive="active">
+    <i class="i-Business-ManWoman"></i>
+    <span>Clients</span>
+  </a>
+  <a class="mobile-nav-item" routerLink="/pages/profile" routerLinkActive="active">
+    <i class="i-Administrator"></i>
+    <span>Profil</span>
+  </a>
+  <button class="mobile-nav-item mobile-nav-logout" (click)="logout()">
+    <i class="i-Lock-User"></i>
+    <span>Quitter</span>
+  </button>
+</nav>
+
+@if (searchService.searchOpen) {
+  <app-search></app-search>
+}

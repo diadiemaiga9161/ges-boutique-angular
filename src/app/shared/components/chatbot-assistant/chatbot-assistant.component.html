@@ -1,0 +1,45 @@
+<div class="chatbot-assistant" [class.is-open]="isOpen">
+  <button type="button" class="chatbot-toggle" (click)="toggleChat()" [attr.aria-expanded]="isOpen" aria-label="Ouvrir le chat d'aide" title="Chat d'aide">
+    <i class="fa" [ngClass]="isOpen ? 'fa-times' : 'fa-comments'"></i>
+    <span *ngIf="!isOpen">Aide</span>
+  </button>
+
+  <section class="chatbot-panel" *ngIf="isOpen">
+    <header class="chatbot-header">
+      <div>
+        <strong>Assistant d'aide</strong>
+        <span>Reponses rapides</span>
+      </div>
+      <button type="button" class="chatbot-close" (click)="toggleChat()" aria-label="Fermer">
+        <i class="fa fa-times"></i>
+        <span>Fermer</span>
+      </button>
+    </header>
+
+    <div class="chatbot-messages">
+      <div *ngFor="let message of messages" class="chatbot-message" [class.user]="message.sender === 'user'">
+        {{ message.text }}
+      </div>
+    </div>
+
+    <div class="chatbot-quick-actions">
+      <button type="button" *ngFor="let question of quickQuestions" (click)="sendMessage(question)">
+        {{ question }}
+      </button>
+    </div>
+
+    <form class="chatbot-form" (ngSubmit)="sendMessage()">
+      <input
+        type="text"
+        name="chatbotMessage"
+        [(ngModel)]="userMessage"
+        placeholder="Ecrire votre question..."
+        autocomplete="off"
+      />
+      <button type="submit" [disabled]="!userMessage.trim()">
+        <i class="fa fa-paper-plane"></i>
+        <span>Envoyer</span>
+      </button>
+    </form>
+  </section>
+</div>

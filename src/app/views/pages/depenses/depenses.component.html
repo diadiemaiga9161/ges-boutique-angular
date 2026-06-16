@@ -1,0 +1,154 @@
+<div class="container-fluid py-4 app-page">
+
+  <!-- En-tête -->
+  <div class="app-page-header mb-4">
+    <div class="app-page-header-left">
+      <div class="app-page-icon"><i class="fa fa-credit-card"></i></div>
+      <div>
+        <h1 class="app-page-title">Dépenses</h1>
+        <p class="app-page-subtitle">Déduction automatique de la caisse</p>
+      </div>
+    </div>
+    <div class="app-page-header-actions">
+      <button class="btn btn-primary" (click)="startCreate()">
+        <i class="fa fa-plus me-1"></i> Nouvelle dépense
+      </button>
+    </div>
+  </div>
+
+  <!-- Filtres période -->
+  <div class="app-filter-card mb-4">
+    <div class="row g-2 align-items-end">
+      <div class="col-sm-4">
+        <label class="form-label small mb-1">Du</label>
+        <input type="date" class="form-control" [(ngModel)]="dateDebut">
+      </div>
+      <div class="col-sm-4">
+        <label class="form-label small mb-1">Au</label>
+        <input type="date" class="form-control" [(ngModel)]="dateFin">
+      </div>
+      <div class="col-sm-4 d-flex gap-2">
+        <button class="btn btn-outline-primary btn-sm" (click)="filtrer()">
+          <i class="fa fa-filter me-1"></i>Filtrer
+        </button>
+        <button class="btn btn-outline-secondary btn-sm" (click)="load()" *ngIf="filtreActif">
+          <i class="fa fa-times me-1"></i>Réinitialiser
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Total -->
+  <div class="alert d-flex justify-content-between align-items-center py-2 mb-3"
+    style="background: var(--gl-red-50); border: 1.5px solid var(--gl-red-100); border-radius: 12px;">
+    <span class="fw-bold" style="color: var(--gl-red-600)">
+      <i class="fa fa-money me-1"></i>
+      {{ filtreActif ? 'Total sur la période' : 'Total des dépenses' }}
+    </span>
+    <strong style="color: var(--gl-red-600); font-size: 1.1rem">{{ formatPrice(totalDepenses) }}</strong>
+  </div>
+
+  <!-- Tableau -->
+  <div class="card shadow-sm">
+    <div class="card-body p-0">
+      <div *ngIf="loading" class="text-center py-5">
+        <div class="spinner-border text-primary"></div>
+      </div>
+
+      <div *ngIf="!loading && depenses.length === 0" class="text-center py-5 text-muted">
+        <i class="fa fa-inbox fa-3x mb-3 d-block"></i>
+        Aucune dépense enregistrée
+      </div>
+
+      <div class="table-responsive" *ngIf="!loading && depenses.length > 0">
+        <table class="table table-hover mb-0">
+          <thead style="background: var(--gl-blue-50);">
+            <tr>
+              <th class="ps-3">Date</th>
+              <th>Nom</th>
+              <th>Motif</th>
+              <th class="text-end">Montant</th>
+              <th class="text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let d of depenses">
+              <td class="ps-3">
+                <small class="text-muted">{{ d.date }}</small>
+              </td>
+              <td><strong>{{ d.nom }}</strong></td>
+              <td><span class="text-muted">{{ d.motif || '—' }}</span></td>
+              <td class="text-end">
+                <span class="badge" style="background: var(--gl-red-50); color: var(--gl-red-600); font-size: 0.85rem; padding: 6px 10px; border-radius: 8px;">
+                  {{ formatPrice(d.montant) }}
+                </span>
+              </td>
+              <td class="text-center">
+                <button class="btn btn-sm btn-outline-primary me-1" (click)="startEdit(d)" title="Modifier">
+                  <i class="fa fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger" (click)="supprimer(d)" title="Supprimer">
+                  <i class="fa fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Formulaire -->
+<div class="modal fade show d-block" *ngIf="showForm" style="background: rgba(0,0,0,0.5); z-index: 1050;" (click)="cancel()">
+  <div class="modal-dialog modal-dialog-centered" (click)="$event.stopPropagation()">
+    <div class="modal-content" style="border-radius: 16px; border: none;">
+      <div class="modal-header" style="background: var(--gl-blue-900); border-radius: 16px 16px 0 0;">
+        <h5 class="modal-title text-white">
+          <i class="fa fa-credit-card me-2"></i>
+          {{ editing ? 'Modifier la dépense' : 'Nouvelle dépense' }}
+        </h5>
+        <button class="btn-close btn-close-white" (click)="cancel()"></button>
+      </div>
+      <div class="modal-body">
+
+        <div class="mb-3">
+          <label class="form-label fw-bold">Nom de la dépense *</label>
+          <input class="form-control" [(ngModel)]="form.nom" placeholder="Ex: Électricité, Transport...">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-bold">Motif / Description</label>
+          <textarea class="form-control" [(ngModel)]="form.motif" rows="2" placeholder="Détails optionnels..."></textarea>
+        </div>
+
+        <div class="row g-2">
+          <div class="col-6">
+            <label class="form-label fw-bold">Date *</label>
+            <input type="date" class="form-control" [(ngModel)]="form.date">
+          </div>
+          <div class="col-6">
+            <label class="form-label fw-bold">Montant (FCFA) *</label>
+            <input type="number" class="form-control" [(ngModel)]="form.montant" min="1" placeholder="0">
+          </div>
+        </div>
+
+        <div class="alert alert-warning mt-3 mb-0 py-2 small" *ngIf="editing">
+          <i class="fa fa-info-circle me-1"></i>
+          Si le montant est modifié, la caisse sera <strong>ajustée automatiquement</strong> par la différence.
+        </div>
+        <div class="alert alert-info mt-3 mb-0 py-2 small" *ngIf="!editing">
+          <i class="fa fa-info-circle me-1"></i>
+          Le montant sera <strong>déduit automatiquement</strong> de la caisse à l'enregistrement.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="cancel()">Annuler</button>
+        <button class="btn btn-primary" (click)="save()">
+          <i class="fa fa-save me-1"></i>
+          {{ editing ? 'Enregistrer les modifications' : 'Créer la dépense' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

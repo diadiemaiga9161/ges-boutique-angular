@@ -1,0 +1,28 @@
+.badge-actif {
+  background-color: #28a745;
+  color: white;
+}
+.badge-cloture {
+  background-color: #6c757d;
+  color: white;
+}
+.progress-bar-depot {
+  height: 6px;
+  border-radius: 3px;
+  background-color: #e9ecef;
+  overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%;
+  background-color: #dc3545;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+.table-row-cloture {
+  opacity: 0.65;
+}
+.retrait-item {
+  border-left: 3px solid #dc3545;
+  padding-left: 10px;
+  margin-bottom: 8px;
+}

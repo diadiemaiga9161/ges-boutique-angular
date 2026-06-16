@@ -1,0 +1,25 @@
+.modal-backdrop-custom {
+  position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 1040;
+}
+.modal-panel {
+  position: fixed; top: 50%; right: 0; transform: translateY(-50%);
+  width: min(640px, 95vw); max-height: 90vh;
+  background: #fff; border-radius: 12px 0 0 12px;
+  box-shadow: -4px 0 30px rgba(0,0,0,.2); z-index: 1050;
+  display: flex; flex-direction: column;
+}
+.modal-panel-header {
+  display: flex; align-items: center; gap: 8px;
+  padding: 16px 20px; border-bottom: 1px solid #f3f4f6; flex-shrink: 0;
+}
+.modal-panel-body { padding: 20px; overflow-y: auto; flex: 1; }
+
+.timeline-simple { border-left: 2px solid #e5e7eb; padding-left: 16px; }
+.timeline-item { position: relative; padding: 8px 0; }
+.timeline-dot {
+  position: absolute; left: -21px; top: 12px;
+  width: 10px; height: 10px; border-radius: 50%;
+  background: #3b82f6; border: 2px solid #fff;
+}
+
+.btn-xs { padding: 2px 7px; font-size: .75rem; }

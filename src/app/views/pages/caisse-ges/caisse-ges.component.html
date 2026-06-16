@@ -1,0 +1,1356 @@
+<div class="container-fluid py-4 app-page">
+  <!-- En-tête -->
+  <div class="app-page-header mb-4">
+    <div class="app-page-header-left">
+      <div class="app-page-icon"><i class="bi bi-safe2"></i></div>
+      <div>
+        <h1 class="app-page-title">Gestion de la Caisse</h1>
+        <p class="app-page-subtitle"><i class="bi bi-calendar me-1"></i> {{ formatDateLong(dateActuelle) }}</p>
+      </div>
+    </div>
+    <div class="app-page-header-actions">
+      <button class="btn btn-info btn-sm" (click)="openVentesComptantModal()" *ngIf="isAdmin">
+        <i class="bi bi-cash me-1"></i> Ventes comptant
+      </button>
+      <button class="btn btn-warning btn-sm" (click)="openVentesCreditModal()" *ngIf="isAdmin">
+        <i class="bi bi-credit-card me-1"></i> Ventes crédit
+      </button>
+      <ng-container *ngIf="!estOuverte">
+        <button class="btn btn-success btn-sm" (click)="openOuvertureModal()" *ngIf="isAdmin">
+          <i class="bi bi-unlock me-1"></i> Ouvrir la caisse
+        </button>
+      </ng-container>
+      <ng-container *ngIf="estOuverte">
+        <button class="btn btn-success btn-sm" (click)="openEntreeModal()" *ngIf="isAdmin">
+          <i class="bi bi-plus-circle me-1"></i> Entrée d'argent
+        </button>
+        <button class="btn btn-danger btn-sm" (click)="openSortieModal()" *ngIf="isAdmin">
+          <i class="bi bi-dash-circle me-1"></i> Sortie d'argent
+        </button>
+        <button class="btn btn-info btn-sm" (click)="openVerificationModal()" *ngIf="isAdmin">
+          <i class="bi bi-check-circle me-1"></i> Vérifier
+        </button>
+        <button class="btn btn-secondary btn-sm" (click)="openTransfertBanqueModal()" *ngIf="isAdmin">
+          <i class="bi bi-bank2 me-1"></i> → Banque
+        </button>
+        <button class="btn btn-secondary btn-sm" (click)="openFermetureModal()" *ngIf="isAdmin">
+          <i class="bi bi-lock me-1"></i> Fermer
+        </button>
+      </ng-container>
+    </div>
+  </div>
+
+ <!-- Messages -->
+ <div *ngIf="errorMessage" class="alert alert-danger alert-dismissible fade show" role="alert">
+ <i class="bi bi-exclamation-triangle me-2"></i> {{ errorMessage }}
+ <button type="button" class="btn-close" (click)="errorMessage = ''"></button>
+ </div>
+
+ <div *ngIf="successMessage" class="alert alert-success alert-dismissible fade show" role="alert">
+ <i class="bi bi-check-circle me-2"></i> {{ successMessage }}
+ <button type="button" class="btn-close" (click)="successMessage = ''"></button>
+ </div>
+
+ <!-- Statut caisse -->
+ <div class="alert mb-4" [class.alert-success]="estOuverte" [class.alert-secondary]="!estOuverte">
+ <div class="d-flex justify-content-between align-items-center flex-wrap">
+ <div>
+ <i class="bi me-2" [class.bi-unlock]="estOuverte" [class.bi-lock]="!estOuverte"></i>
+ <strong>Caisse {{ estOuverte ? 'ouverte' : 'fermée' }}</strong>
+ <span *ngIf="caisse && estOuverte" class="ms-3">
+ Ouverte le {{ formatDateLong(caisse.dateOuverture) }}
+ <span *ngIf="estVerifiee" class="badge bg-success ms-2">
+ <i class="bi bi-check-circle me-1"></i> Vérifiée
+ </span>
+ </span>
+ <span *ngIf="caisse && !estOuverte && caisse.dateFermeture" class="ms-3">
+ Fermée le {{ formatDateLong(caisse.dateFermeture) }}
+ </span>
+ </div>
+ <div *ngIf="!estOuverte" class="text-warning">
+ <i class="bi bi-exclamation-triangle me-1"></i> Caisse fermée - Veuillez l'ouvrir pour commencer
+ </div>
+ </div>
+ </div>
+
+ <!-- RÉSUMÉ CAISSE TOTALE / CAISSE DU JOUR -->
+ <div class="row mb-3">
+ <div class="col-md-6 mb-3">
+ <div class="card border-0 h-100" style="background: linear-gradient(135deg,#1a56db 0%,#0d47a1 100%); border-radius: 14px;">
+ <div class="card-body text-white p-4">
+ <div class="d-flex align-items-center mb-2">
+ <i class="bi bi-safe2-fill fs-3 me-3 opacity-75"></i>
+ <div>
+ <div class="text-uppercase fw-semibold small opacity-75 mb-1">Caisse Totale</div>
+ <div class="fs-2 fw-bold">{{ formatPrice(soldeActuel) }}</div>
+ </div>
+ </div>
+ <div class="d-flex justify-content-between mt-3 pt-2 border-top border-white border-opacity-25 small">
+ <span>Solde initial: <strong>{{ formatPrice(caisse?.soldeInitial || 0) }}</strong></span>
+ <span [class.text-warning]="ecart !== 0" [class.text-white]="ecart === 0">
+ Écart: {{ getEcartSign(ecart) }}{{ formatPrice(Math.abs(ecart)) }}
+ </span>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="col-md-6 mb-3">
+ <div class="card border-0 h-100" style="background: linear-gradient(135deg,#0e9f6e 0%,#057a55 100%); border-radius: 14px;">
+ <div class="card-body text-white p-4">
+ <div class="d-flex align-items-center mb-2">
+ <i class="bi bi-calendar-check-fill fs-3 me-3 opacity-75"></i>
+ <div>
+ <div class="text-uppercase fw-semibold small opacity-75 mb-1">Caisse du Jour</div>
+ <div class="fs-2 fw-bold">{{ formatPrice(statistiquesJour?.soldeNetPeriode || 0) }}</div>
+ </div>
+ </div>
+ <div class="d-flex justify-content-between mt-3 pt-2 border-top border-white border-opacity-25 small">
+ <span>
+ <i class="bi bi-arrow-up me-1"></i>Entrées: <strong>{{ formatPrice(totalEntreesAujourdhui) }}</strong>
+ </span>
+ <span>
+ <i class="bi bi-arrow-down me-1"></i>Sorties: <strong>{{ formatPrice(totalSortiesAujourdhui) }}</strong>
+ </span>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+
+ <!-- Cartes récapitulatives -->
+ <div class="row mb-4">
+ <div class="col-xl-3 col-md-6 mb-3">
+ <div class="card bg-primary text-white h-100">
+ <div class="card-body">
+ <div class="d-flex justify-content-between align-items-start">
+ <div>
+ <h6 class="card-title mb-2"> Solde en caisse</h6>
+ <h3 class="mb-0">{{ formatPrice(soldeActuel) }}</h3>
+ <small>Solde initial: {{ formatPrice(caisse?.soldeInitial || 0) }}</small>
+ </div>
+ <i class="bi bi-cash-stack fs-1 opacity-50"></i>
+ </div>
+ <div class="mt-3 d-flex justify-content-between small">
+ <span class="badge bg-light text-dark">
+ <i class="bi bi-arrow-up text-success me-1"></i> Entrées: +{{ formatPrice(totalEntreesAujourdhui) }}
+ </span>
+ <span class="badge bg-light text-dark">
+ <i class="bi bi-arrow-down text-danger me-1"></i> Sorties: -{{ formatPrice(totalSortiesAujourdhui) }}
+ </span>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="col-xl-3 col-md-6 mb-3">
+ <div class="card h-100" [class.bg-success]="ecart === 0" [class.bg-warning]="ecart !== 0" [class.text-white]="ecart !== 0">
+ <div class="card-body">
+ <div class="d-flex justify-content-between align-items-start">
+ <div>
+ <h6 class="card-title mb-2"> Écart de caisse</h6>
+ <h3 class="mb-0" [class]="getEcartClass(ecart)">
+ {{ getEcartSign(ecart) }}{{ formatPrice(Math.abs(ecart)) }}
+ </h3>
+ <small>Solde système: {{ formatPrice(soldeSysteme) }}</small>
+ </div>
+ <i class="bi bi-pie-chart fs-1 opacity-50"></i>
+ </div>
+ <div class="mt-3">
+ <span class="badge bg-light text-dark" *ngIf="ecart === 0">
+ <i class="bi bi-check-circle text-success me-1"></i> Caisse conforme
+ </span>
+ <span class="badge bg-light text-dark" *ngIf="ecart !== 0">
+ <i class="bi bi-exclamation-triangle text-warning me-1"></i> Écart détecté
+ </span>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="col-xl-3 col-md-6 mb-3">
+ <div class="card bg-warning h-100">
+ <div class="card-body">
+ <div class="d-flex justify-content-between align-items-start">
+ <div>
+ <h6 class="card-title mb-2"> Crédits clients</h6>
+ <h3 class="mb-0">{{ nombreCreditsEnCours }}</h3>
+ <small>Reste à payer: {{ formatPrice(montantTotalCredits) }}</small>
+ </div>
+ <i class="bi bi-credit-card-2-front fs-1 opacity-50"></i>
+ </div>
+ <div class="mt-3 d-flex justify-content-between small">
+ <span class="badge bg-light text-dark">
+ <i class="bi bi-exclamation-triangle text-danger me-1"></i> {{ creditsEnRetard.length }} en retard
+ </span>
+ <span class="badge bg-light text-dark">
+ <i class="bi bi-arrow-up text-success me-1"></i> Recouvrement: {{ tauxRecouvrement.toFixed(0) }}%
+ </span>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="col-xl-3 col-md-6 mb-3">
+ <div class="card bg-info text-white h-100">
+ <div class="card-body">
+ <div class="d-flex justify-content-between align-items-start">
+ <div>
+ <h6 class="card-title mb-2"> Revenus</h6>
+ <h3 class="mb-0">{{ formatPrice(revenusJour) }}</h3>
+ <small>Aujourd'hui</small>
+ </div>
+ <i class="bi bi-graph-up fs-1 opacity-50"></i>
+ </div>
+ <div class="mt-3 d-flex justify-content-between small">
+ <span class="badge bg-light text-dark">
+ <i class="bi bi-calendar-week me-1"></i> Semaine: {{ formatPrice(revenusSemaine) }}
+ </span>
+ <span class="badge bg-light text-dark">
+ <i class="bi bi-calendar-month me-1"></i> Mois: {{ formatPrice(revenusMois) }}
+ </span>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+
+ <!-- CARTE BÉNÉFICE / PERTE DU JOUR -->
+ <div class="card mb-4" [class.border-danger]="isPerte" [class.border-success]="!isPerte && profitNetJour > 0" style="border-width: 2px;">
+ <div class="card-body py-3">
+ <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+ <div class="d-flex align-items-center gap-3">
+ <div class="rounded-circle d-flex align-items-center justify-content-center"
+ [style.background]="isPerte ? '#fff0f0' : '#f0fff4'"
+ style="width: 52px; height: 52px;">
+ <i class="bi fs-4" [class.bi-graph-down-arrow]="isPerte" [class.bi-graph-up-arrow]="!isPerte"
+ [class.text-danger]="isPerte" [class.text-success]="!isPerte"></i>
+ </div>
+ <div>
+ <div class="text-uppercase small fw-semibold text-muted mb-1">{{ labelBilanceJour }} du jour</div>
+ <div class="fs-4 fw-bold" [class.text-danger]="isPerte" [class.text-success]="!isPerte">
+ {{ isPerte ? '-' : '+' }}{{ formatPrice(Math.abs(profitNetJour)) }}
+ </div>
+ </div>
+ </div>
+ <div class="d-flex gap-3 small text-muted">
+ <span><i class="bi bi-arrow-up text-success me-1"></i>Entrées: <strong class="text-success">{{ formatPrice(totalEntreesAujourdhui) }}</strong></span>
+ <span><i class="bi bi-arrow-down text-danger me-1"></i>Sorties: <strong class="text-danger">{{ formatPrice(totalSortiesAujourdhui) }}</strong></span>
+ </div>
+ <div>
+ <span class="badge fs-6 px-3 py-2" [class.bg-danger]="isPerte" [class.bg-success]="!isPerte">
+ {{ isPerte ? ' Perte nette' : ' Bénéfice net' }}
+ </span>
+ <div class="small text-muted mt-1 text-center">
+ {{ isPerte ? 'Les sorties dépassent les entrées' : 'Les entrées dépassent les sorties' }}
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+
+ <!-- SECTION CRÉDITS EN COURS -->
+ <div class="card mb-4" *ngIf="creditsEnCours.length > 0">
+ <div class="card-header bg-warning text-white d-flex justify-content-between align-items-center flex-wrap">
+ <h5 class="mb-0">
+ <i class="bi bi-credit-card-2-front me-2"></i> Crédits en cours ({{ creditsEnCours.length }})
+ </h5>
+ <div>
+ <span class="badge bg-light text-dark me-2">Total dû: {{ formatPrice(montantTotalCredits) }}</span>
+ <span class="badge bg-danger" *ngIf="creditsEnRetard.length > 0"> {{ creditsEnRetard.length }} en retard</span>
+ </div>
+ </div>
+ <div class="card-body p-0">
+ <div class="table-responsive">
+ <table class="table table-hover mb-0">
+ <thead class="table-light">
+ <tr>
+ <th> Client</th>
+ <th> Téléphone</th>
+ <th> Vente</th>
+ <th class="text-end"> Montant</th>
+ <th class="text-end"> Versé</th>
+ <th class="text-end">⏳ Reste</th>
+ <th> Échéance</th>
+ <th> Progression</th>
+ <th> Statut</th>
+ <th class="text-center"> Actions</th>
+ </tr>
+ </thead>
+ <tbody>
+ <tr *ngFor="let credit of paginatedCredits"
+ [class.table-danger]="credit.enRetard"
+ [class.table-warning]="!credit.enRetard && credit.progression > 0">
+ <td><strong>{{ credit.clientNom }}</strong></td>
+ <td>{{ credit.clientTelephone || '-' }}</td>
+ <td class="text-center">{{ credit.numeroVente }}</td>
+ <td class="text-end">{{ formatPrice(credit.montantTotal) }}</td>
+ <td class="text-end text-success">{{ formatPrice(credit.montantVerse) }}</td>
+ <td class="text-end fw-bold text-primary">{{ formatPrice(credit.montantRestant) }}</td>
+ <td class="text-center">
+ {{ formatDateShort(credit.dateEcheance) }}
+ <span *ngIf="credit.enRetard" class="badge bg-danger ms-1">{{ credit.joursRetard }}j</span>
+ </td>
+ <td style="min-width: 130px;">
+ <div class="progress" style="height: 22px;">
+ <div class="progress-bar"
+ [class.bg-success]="credit.progression >= 100"
+ [class.bg-warning]="credit.progression < 100 && credit.progression > 0"
+ [class.bg-info]="credit.progression === 0"
+ [style.width.%]="credit.progression">
+ {{ credit.progression.toFixed(0) }}%
+ </div>
+ </div>
+ </td>
+ <td class="text-center">
+ <span [class]="getCreditStatusClass(credit)">{{ getCreditStatusText(credit) }}</span>
+ </td>
+ <td class="text-center">
+   <div class="d-flex gap-1 justify-content-center flex-wrap">
+     <button class="btn btn-sm btn-outline-info"
+             (click)="openDetailsCreditModal(credit)"
+             title="Voir les détails de ce crédit">
+       <i class="bi bi-eye me-1"></i> Détails
+     </button>
+     <button class="btn btn-sm btn-outline-primary"
+             (click)="loadHistoriqueReglementsCredit(credit)"
+             title="Voir l'historique des règlements">
+       <i class="bi bi-clock-history me-1"></i> Historique
+     </button>
+     <button class="btn btn-sm btn-outline-success"
+             (click)="openReglementCreditModal(credit)"
+             title="Enregistrer un règlement"
+             [disabled]="credit.montantRestant <= 0">
+       <i class="bi bi-check-lg me-1"></i> Régler
+     </button>
+   </div>
+ </td>
+ </tr>
+ </tbody>
+ <tfoot class="table-light">
+ <tr>
+ <th colspan="3"> Totaux</th>
+ <th class="text-end">{{ formatPrice(montantTotalCreditsOrigine) }}</th>
+ <th class="text-end text-success">{{ formatPrice(montantTotalCreditsOrigine - montantTotalCredits) }}</th>
+ <th class="text-end text-primary">{{ formatPrice(montantTotalCredits) }}</th>
+ <th colspan="4"></th>
+ </tr>
+ </tfoot>
+ </table>
+ </div>
+ <!-- Pagination crédits -->
+ <div class="d-flex justify-content-between align-items-center px-3 py-2 border-top" *ngIf="creditsTotalPages > 1">
+ <small class="text-muted">
+ {{ (creditsCurrentPage - 1) * creditsItemsPerPage + 1 }}–{{ Math.min(creditsCurrentPage * creditsItemsPerPage, creditsEnCours.length) }}
+ sur {{ creditsEnCours.length }} crédits
+ </small>
+ <nav>
+ <ul class="pagination pagination-sm mb-0">
+ <li class="page-item" [class.disabled]="creditsCurrentPage === 1">
+ <button class="page-link" (click)="changeCreditsPage(creditsCurrentPage - 1)">&laquo;</button>
+ </li>
+ <li class="page-item" *ngFor="let p of creditsPageNumbers" [class.active]="p === creditsCurrentPage">
+ <button class="page-link" (click)="changeCreditsPage(p)">{{ p }}</button>
+ </li>
+ <li class="page-item" [class.disabled]="creditsCurrentPage === creditsTotalPages">
+ <button class="page-link" (click)="changeCreditsPage(creditsCurrentPage + 1)">&raquo;</button>
+ </li>
+ </ul>
+ </nav>
+ </div>
+ </div>
+ </div>
+
+ <div class="alert alert-info mb-4" *ngIf="creditsEnCours.length === 0">
+ <i class="bi bi-info-circle me-2"></i> Aucun crédit en cours - Tous vos clients sont à jour !
+ </div>
+
+ <!-- SECTION CRÉDITS PAR CLIENT -->
+ <div class="card mb-4" *ngIf="creditsGroupesParClient.length > 0">
+ <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+ <h5 class="mb-0"><i class="bi bi-people-fill me-2"></i> Crédits par client ({{ creditsGroupesParClient.length }} clients)</h5>
+ </div>
+ <div class="card-body p-0">
+ <div class="table-responsive">
+ <table class="table table-hover mb-0">
+ <thead class="table-light">
+ <tr>
+ <th>Client</th>
+ <th class="text-center">Nb crédits</th>
+ <th class="text-end">Total restant</th>
+ <th class="text-center">Action</th>
+ </tr>
+ </thead>
+ <tbody>
+ <tr *ngFor="let groupe of creditsGroupesParClient">
+ <td><strong>{{ groupe.nom }}</strong></td>
+ <td class="text-center"><span class="badge bg-warning text-dark">{{ groupe.count }}</span></td>
+ <td class="text-end text-danger fw-bold">{{ formatPrice(groupe.total) }}</td>
+ <td class="text-center">
+ <button class="btn btn-sm btn-outline-primary" (click)="openCreditsClientModal(groupe.nom)">
+ <i class="bi bi-eye me-1"></i> Voir détails
+ </button>
+ </td>
+ </tr>
+ </tbody>
+ </table>
+ </div>
+ </div>
+ </div>
+
+ <!-- SECTION FILTRES OPÉRATIONS -->
+ <div class="card mb-4">
+ <div class="card-header bg-white">
+ <div class="d-flex justify-content-between align-items-center flex-wrap">
+ <h5 class="mb-0"> Historique des opérations</h5>
+ <div class="btn-group mt-2 mt-sm-0">
+ <button class="btn btn-outline-primary btn-sm" [class.active]="periodeActive === 'jour'" (click)="setPeriode('jour')"> Aujourd'hui</button>
+ <button class="btn btn-outline-primary btn-sm" [class.active]="periodeActive === 'semaine'" (click)="setPeriode('semaine')"> Cette semaine</button>
+ <button class="btn btn-outline-primary btn-sm" [class.active]="periodeActive === 'mois'" (click)="setPeriode('mois')"> Ce mois</button>
+ <button class="btn btn-outline-primary btn-sm" [class.active]="periodeActive === 'annee'" (click)="setPeriode('annee')"> Cette année</button>
+ <button class="btn btn-outline-primary btn-sm" [class.active]="periodeActive === 'personnalise'" (click)="setPeriode('personnalise')"> Personnalisé</button>
+ </div>
+ </div>
+ </div>
+ <div class="card-body">
+ <div class="row g-2">
+ <div class="col-6 col-md-2">
+ <label class="form-label small"> Date début</label>
+ <input type="date" class="form-control form-control-sm" [(ngModel)]="dateDebut" [disabled]="periodeActive !== 'personnalise'">
+ </div>
+ <div class="col-6 col-md-2">
+ <label class="form-label small"> Date fin</label>
+ <input type="date" class="form-control form-control-sm" [(ngModel)]="dateFin" [disabled]="periodeActive !== 'personnalise'">
+ </div>
+ <div class="col-6 col-md-2">
+ <label class="form-label small">⏰ Heure début</label>
+ <input type="time" class="form-control form-control-sm" [(ngModel)]="heureDebut" (change)="appliquerFiltres()">
+ </div>
+ <div class="col-6 col-md-2">
+ <label class="form-label small">⏰ Heure fin</label>
+ <input type="time" class="form-control form-control-sm" [(ngModel)]="heureFin" (change)="appliquerFiltres()">
+ </div>
+ <div class="col-6 col-md-2">
+ <label class="form-label small"> Type</label>
+ <select class="form-select form-select-sm" [(ngModel)]="typeOperationFilter" (change)="appliquerFiltres()">
+ <option value="">Tous</option>
+ <option [value]="TypeOperationCaisseEnum.OUVERTURE">Ouverture</option>
+ <option [value]="TypeOperationCaisseEnum.FERMETURE">Fermeture</option>
+ <option [value]="TypeOperationCaisseEnum.VENTE_COMPTANT">Vente comptant</option>
+ <option [value]="TypeOperationCaisseEnum.VENTE_CREDIT">Vente crédit</option>
+ <option [value]="TypeOperationCaisseEnum.REGLEMENT_CREDIT">Règlement crédit</option>
+ <option [value]="TypeOperationCaisseEnum.ENTREE">Entrée</option>
+ <option [value]="TypeOperationCaisseEnum.SORTIE">Sortie</option>
+ <option [value]="TypeOperationCaisseEnum.REMBOURSEMENT_RETOUR">Remboursement retour</option>
+
+ </select>
+ </div>
+ <div class="col-12 col-md-2">
+ <label class="form-label small"> Recherche</label>
+ <div class="input-group input-group-sm">
+ <input type="text" class="form-control" placeholder="Motif, client..." [(ngModel)]="searchTerm" (keyup.enter)="appliquerFiltres()">
+ <button class="btn btn-outline-primary" type="button" (click)="appliquerFiltres()">
+ <i class="bi bi-search"></i>
+ </button>
+ <button class="btn btn-outline-secondary" type="button" (click)="resetFiltres()">
+ <i class="bi bi-x-lg"></i>
+ </button>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+
+ <!-- TABLEAU DES OPÉRATIONS -->
+ <div class="card">
+ <div class="card-header bg-white d-flex justify-content-between align-items-center">
+ <h5 class="mb-0"> Opérations <span class="badge bg-secondary ms-2">{{ operationsFiltrees.length }}</span></h5>
+ <span class="text-muted"> Page {{ currentPage }} / {{ totalPages }}</span>
+ </div>
+ <div class="card-body p-0">
+ <div class="table-responsive">
+ <table class="table table-hover mb-0">
+ <thead class="table-light">
+ <tr>
+ <th> Date/Heure</th>
+ <th> Type</th>
+ <th> Motif / Client</th>
+ <th class="text-end"> Montant</th>
+ <th class="text-end"> Avant</th>
+ <th class="text-end"> Après</th>
+ <th> Paiement</th>
+ <th> Utilisateur</th>
+ <th class="text-center"> Actions</th>
+ </tr>
+ </thead>
+ <tbody *ngIf="!isLoadingOperations">
+ <tr *ngFor="let op of paginatedOperations"
+ [class.table-secondary]="op.venteAnnulee"
+ [style.text-decoration]="op.venteAnnulee ? 'line-through' : 'none'"
+ [style.opacity]="op.venteAnnulee ? '0.65' : '1'">
+ <td>
+ <div>{{ formatDateShort(op.dateOperation) }}</div>
+ <small class="text-muted">{{ formatTime(op.dateOperation) }}</small>
+ </td>
+ <td>
+ <span [class]="getTypeOperationClass(op.type)">{{ getTypeOperationLabel(op.type) }}</span>
+ <span *ngIf="op.venteAnnulee" class="badge bg-danger ms-1" style="text-decoration: none; font-size: 10px;">ANNULÉE</span>
+ </td>
+ <td>
+ <div *ngIf="op.clientNom"><strong>{{ op.clientNom }}</strong><br><small>{{ op.motif }}</small></div>
+ <div *ngIf="!op.clientNom">{{ op.motif }} <small *ngIf="op.numeroVente">({{ op.numeroVente }})</small></div>
+ </td>
+ <td class="text-end fw-bold" 
+ [class.text-success]="op.type === TypeOperationCaisseEnum.VENTE_COMPTANT || op.type === TypeOperationCaisseEnum.REGLEMENT_CREDIT || op.type === TypeOperationCaisseEnum.ENTREE"
+ [class.text-danger]="op.type === TypeOperationCaisseEnum.SORTIE"
+ [class.text-warning]="op.type === TypeOperationCaisseEnum.VENTE_CREDIT">
+ {{ op.type === TypeOperationCaisseEnum.SORTIE ? '-' : '' }}{{ formatPrice(op.montant) }}
+ </td>
+ <td class="text-end">{{ formatPrice(op.soldeAvant) }}</td>
+ <td class="text-end">{{ formatPrice(op.soldeApres) }}</td>
+ <td>
+ <div *ngIf="op.modePaiement">
+ <span [class]="getModePaiementClass(op.modePaiement)">{{ getModePaiementLabel(op.modePaiement) }}</span>
+ <small *ngIf="op.referencePaiement" class="d-block text-muted">Réf: {{ op.referencePaiement }}</small>
+ </div>
+ </td>
+ <td>{{ op.utilisateurNom || 'Système' }}</td>
+ <td class="text-center">
+   <button class="btn btn-sm btn-outline-info"
+           (click)="openDetailsOperationModal(op)"
+           title="Voir les détails de cette opération">
+     <i class="bi bi-eye me-1"></i> Détails
+   </button>
+ </td>
+ </tr>
+ <tr *ngIf="operationsFiltrees.length === 0">
+ <td colspan="9" class="text-center py-4">
+ <i class="bi bi-inbox fs-1 text-muted"></i><br>
+ Aucune opération trouvée
+ </td>
+ </tr>
+ </tbody>
+ <tbody *ngIf="isLoadingOperations">
+ <tr>
+ <td colspan="9" class="text-center py-4">
+ <i class="bi bi-arrow-repeat spin me-2"></i> Chargement des opérations...
+ </td>
+ </tr>
+ </tbody>
+ </table>
+ </div>
+ </div>
+ </div>
+
+ <!-- PAGINATION -->
+ <div *ngIf="totalPages > 1" class="d-flex justify-content-center mt-4">
+ <nav>
+ <ul class="pagination">
+ <li class="page-item" [class.disabled]="currentPage === 1">
+ <a class="page-link" href="javascript:void(0)" (click)="changePage(currentPage - 1)">« Précédent</a>
+ </li>
+ <li *ngFor="let page of pageNumbers" class="page-item" [class.active]="currentPage === page">
+ <a class="page-link" href="javascript:void(0)" (click)="changePage(page)">{{ page }}</a>
+ </li>
+ <li class="page-item" [class.disabled]="currentPage === totalPages">
+ <a class="page-link" href="javascript:void(0)" (click)="changePage(currentPage + 1)">Suivant »</a>
+ </li>
+ </ul>
+ </nav>
+ </div>
+</div>
+
+<!-- ==================== MODALES ==================== -->
+
+<!-- MODALE OUVERTURE -->
+<div class="modal fade show" [class.d-block]="showOuvertureModal" *ngIf="showOuvertureModal" style="background-color: rgba(0,0,0,0.5); z-index:1050;" tabindex="-1">
+ <div class="modal-dialog modal-dialog-centered">
+ <div class="modal-content">
+ <div class="modal-header bg-success text-white">
+ <h5 class="modal-title"><i class="bi bi-unlock me-2"></i> Ouvrir la caisse</h5>
+ <button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button>
+ </div>
+ <div class="modal-body text-center">
+ <i class="bi bi-question-circle fs-1 mb-3 d-block"></i>
+ <p>Voulez-vous ouvrir la caisse ?</p>
+ <p> Solde d'ouverture: <strong>{{ formatPrice(caisse?.soldeActuel || 0) }}</strong></p>
+ </div>
+ <div class="modal-footer">
+ <button class="btn btn-secondary" (click)="closeAllModals()"> Annuler</button>
+ <button class="btn btn-success" (click)="ouvrirCaisse()" [disabled]="isLoading">
+ <span *ngIf="isLoading"><i class="bi bi-arrow-repeat spin me-1"></i></span>
+ <span *ngIf="!isLoading"><i class="bi bi-unlock me-1"></i> Ouvrir</span>
+ </button>
+ </div>
+ </div>
+ </div>
+</div>
+
+<!-- MODALE FERMETURE -->
+<div class="modal fade show" [class.d-block]="showFermetureModal" *ngIf="showFermetureModal" style="background-color: rgba(0,0,0,0.5); z-index:1050;" tabindex="-1">
+ <div class="modal-dialog modal-dialog-centered">
+ <div class="modal-content">
+ <div class="modal-header bg-danger text-white">
+ <h5 class="modal-title"><i class="bi bi-lock me-2"></i> Fermer la caisse</h5>
+ <button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button>
+ </div>
+ <div class="modal-body text-center">
+ <i class="bi bi-exclamation-triangle fs-1 mb-3 d-block text-warning"></i>
+ <p>Êtes-vous sûr de vouloir fermer la caisse ?</p>
+ <p> Solde actuel: <strong>{{ formatPrice(soldeActuel) }}</strong></p>
+ <p> Opérations effectuées: <strong>{{ operations.length }}</strong></p>
+ </div>
+ <div class="modal-footer">
+ <button class="btn btn-secondary" (click)="closeAllModals()"> Annuler</button>
+ <button class="btn btn-danger" (click)="fermerCaisse()" [disabled]="isLoading">
+ <span *ngIf="isLoading"><i class="bi bi-arrow-repeat spin me-1"></i></span>
+ <span *ngIf="!isLoading"><i class="bi bi-lock me-1"></i> Fermer</span>
+ </button>
+ </div>
+ </div>
+ </div>
+</div>
+
+<!-- MODALE VÉRIFICATION -->
+<div class="modal fade show" [class.d-block]="showVerificationModal" *ngIf="showVerificationModal" style="background-color: rgba(0,0,0,0.5); z-index:1050;" tabindex="-1">
+ <div class="modal-dialog modal-dialog-centered">
+ <div class="modal-content">
+ <div class="modal-header bg-info text-white">
+ <h5 class="modal-title"><i class="bi bi-check-circle me-2"></i> Vérifier la caisse</h5>
+ <button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button>
+ </div>
+ <div class="modal-body">
+ <div class="mb-3">
+ <label class="form-label"> Solde système</label>
+ <input class="form-control" [value]="formatPrice(soldeSysteme)" readonly>
+ </div>
+ <div class="mb-3">
+ <label class="form-label"> Solde réel *</label>
+ <input type="number" class="form-control" [(ngModel)]="verificationForm.soldeReelSaisi" min="0" step="1">
+ </div>
+ <div class="mb-3">
+ <label class="form-label"> Observations</label>
+ <textarea class="form-control" [(ngModel)]="verificationForm.observations" rows="2" placeholder="Commentaires sur l'écart éventuel..."></textarea>
+ </div>
+ <div *ngIf="verificationForm.soldeReelSaisi !== soldeSysteme" class="alert alert-warning">
+ <i class="bi bi-exclamation-triangle me-2"></i>
+ Écart: {{ getEcartSign(verificationForm.soldeReelSaisi - soldeSysteme) }}{{ formatPrice(Math.abs(verificationForm.soldeReelSaisi - soldeSysteme)) }}
+ </div>
+ </div>
+ <div class="modal-footer">
+ <button class="btn btn-secondary" (click)="closeAllModals()"> Annuler</button>
+ <button class="btn btn-info" (click)="verifierCaisse()" [disabled]="isLoading">
+ <span *ngIf="isLoading"><i class="bi bi-arrow-repeat spin me-1"></i></span>
+ <span *ngIf="!isLoading"><i class="bi bi-check-lg me-1"></i> Vérifier</span>
+ </button>
+ </div>
+ </div>
+ </div>
+</div>
+
+<!-- MODALE ENTRÉE -->
+<div class="modal fade show" [class.d-block]="showEntreeModal" *ngIf="showEntreeModal" style="background-color: rgba(0,0,0,0.5); z-index:1050;" tabindex="-1">
+ <div class="modal-dialog modal-dialog-centered">
+ <div class="modal-content">
+ <div class="modal-header bg-success text-white">
+ <h5 class="modal-title"><i class="bi bi-plus-circle me-2"></i> Entrée d'argent</h5>
+ <button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button>
+ </div>
+ <div class="modal-body">
+ <div class="mb-3">
+ <label class="form-label"> Montant *</label>
+ <input type="number" class="form-control" [(ngModel)]="entreeForm.montant" min="1" step="1">
+ </div>
+ <div class="mb-3">
+ <label class="form-label"> Motif *</label>
+ <input type="text" class="form-control" [(ngModel)]="entreeForm.motif" placeholder="Ex: Dépôt, Remboursement, Don...">
+ </div>
+ <div class="mb-3">
+ <label class="form-label"> Mode de paiement</label>
+ <select class="form-select" [(ngModel)]="entreeForm.modePaiement">
+ <option [value]="ModePaiementCaisseEnum.ESPECES"> Espèces</option>
+ <option [value]="ModePaiementCaisseEnum.ORANGE_MONEY"> Orange Money</option>
+ <option [value]="ModePaiementCaisseEnum.MOOV_MONEY"> Moov Money</option>
+ <option [value]="ModePaiementCaisseEnum.CARTE_BANCAIRE"> Carte Bancaire</option>
+ <option [value]="ModePaiementCaisseEnum.VIREMENT"> Virement</option>
+ </select>
+ </div>
+ <div class="mb-3" *ngIf="entreeForm.modePaiement !== ModePaiementCaisseEnum.ESPECES">
+ <label class="form-label"> Référence *</label>
+ <input type="text" class="form-control" [(ngModel)]="entreeForm.referencePaiement" [placeholder]="'Numéro ' + getModePaiementLabel(entreeForm.modePaiement)">
+ </div>
+ </div>
+ <div class="modal-footer">
+ <button class="btn btn-secondary" (click)="closeAllModals()"> Annuler</button>
+ <button class="btn btn-success" (click)="enregistrerEntree()" [disabled]="isLoading">
+ <span *ngIf="isLoading"><i class="bi bi-arrow-repeat spin me-1"></i></span>
+ <span *ngIf="!isLoading"><i class="bi bi-check-lg me-1"></i> Enregistrer</span>
+ </button>
+ </div>
+ </div>
+ </div>
+</div>
+
+<!-- MODALE SORTIE -->
+<div class="modal fade show" [class.d-block]="showSortieModal" *ngIf="showSortieModal" style="background-color: rgba(0,0,0,0.5); z-index:1050;" tabindex="-1">
+ <div class="modal-dialog modal-dialog-centered">
+ <div class="modal-content">
+ <div class="modal-header bg-danger text-white">
+ <h5 class="modal-title"><i class="bi bi-dash-circle me-2"></i> Sortie d'argent</h5>
+ <button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button>
+ </div>
+ <div class="modal-body">
+ <div class="alert alert-info mb-3">
+ <i class="bi bi-info-circle me-2"></i>
+ Solde actuel: <strong>{{ formatPrice(soldeActuel) }}</strong>
+ </div>
+ <div class="mb-3">
+ <label class="form-label"> Montant *</label>
+ <input type="number" class="form-control" [(ngModel)]="sortieForm.montant" [max]="soldeActuel" min="1" step="1">
+ <small class="text-muted">Maximum possible: {{ formatPrice(soldeActuel) }}</small>
+ </div>
+ <div class="mb-3">
+ <label class="form-label"> Motif *</label>
+ <input type="text" class="form-control" [(ngModel)]="sortieForm.motif" placeholder="Ex: Paiement fournisseur, Achat...">
+ </div>
+ </div>
+ <div class="modal-footer">
+ <button class="btn btn-secondary" (click)="closeAllModals()"> Annuler</button>
+ <button class="btn btn-danger" (click)="enregistrerSortie()" [disabled]="isLoading">
+ <span *ngIf="isLoading"><i class="bi bi-arrow-repeat spin me-1"></i></span>
+ <span *ngIf="!isLoading"><i class="bi bi-check-lg me-1"></i> Enregistrer</span>
+ </button>
+ </div>
+ </div>
+ </div>
+</div>
+
+<!-- MODALE RÈGLEMENT CRÉDIT -->
+<div class="modal fade show" [class.d-block]="showReglementCreditModal" *ngIf="showReglementCreditModal" style="background-color: rgba(0,0,0,0.5); z-index:1050;" tabindex="-1">
+ <div class="modal-dialog modal-dialog-centered">
+ <div class="modal-content">
+ <div class="modal-header bg-success text-white">
+ <h5 class="modal-title"><i class="bi bi-check-circle me-2"></i> Paiement de crédit</h5>
+ <button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button>
+ </div>
+ <div class="modal-body">
+ <div *ngIf="selectedCredit">
+ <div class="alert alert-info">
+ <div class="row mb-2"><div class="col-6"><strong>Client:</strong></div><div class="col-6">{{ selectedCredit.clientNom }}</div></div>
+ <div class="row mb-2"><div class="col-6"><strong>Vente:</strong></div><div class="col-6">{{ selectedCredit.numeroVente }}</div></div>
+ <div class="row mb-2"><div class="col-6"><strong>Montant total:</strong></div><div class="col-6">{{ formatPrice(selectedCredit.montantTotal) }}</div></div>
+ <div class="row mb-2"><div class="col-6"><strong>Déjà versé:</strong></div><div class="col-6 text-success">{{ formatPrice(selectedCredit.montantVerse) }}</div></div>
+ <div class="row mb-2 fw-bold"><div class="col-6"><strong>Reste à payer:</strong></div><div class="col-6 text-primary">{{ formatPrice(selectedCredit.montantRestant) }}</div></div>
+ <div class="row mb-2"><div class="col-6"><strong>Échéance:</strong></div><div class="col-6" [class.text-danger]="selectedCredit.enRetard">{{ formatDateShort(selectedCredit.dateEcheance) }}<span *ngIf="selectedCredit.enRetard" class="badge bg-danger ms-2">{{ selectedCredit.joursRetard }}j de retard</span></div></div>
+ <div class="mt-2"><div class="progress" style="height: 25px;"><div class="progress-bar" [class.bg-success]="selectedCredit.progression >= 100" [class.bg-warning]="selectedCredit.progression < 100" [style.width.%]="selectedCredit.progression">{{ selectedCredit.progression.toFixed(0) }}% payé</div></div></div>
+ </div>
+ <div class="mb-3"><label class="form-label"> Montant du paiement *</label><input type="number" class="form-control" [(ngModel)]="reglementForm.montantRegle" [max]="selectedCredit.montantRestant" min="1" step="1"><small class="text-muted">Maximum: {{ formatPrice(selectedCredit.montantRestant) }}</small></div>
+ <div class="mb-3"><label class="form-label"> Mode de paiement *</label><select class="form-select" [(ngModel)]="reglementForm.modePaiement"><option [value]="ModePaiementCaisseEnum.ESPECES">Espèces</option><option [value]="ModePaiementCaisseEnum.ORANGE_MONEY">Orange Money</option><option [value]="ModePaiementCaisseEnum.MOOV_MONEY">Moov Money</option><option [value]="ModePaiementCaisseEnum.CARTE_BANCAIRE">Carte Bancaire</option></select></div>
+ <div class="mb-3" *ngIf="reglementForm.modePaiement !== ModePaiementCaisseEnum.ESPECES"><label class="form-label"> Référence *</label><input type="text" class="form-control" [(ngModel)]="reglementForm.referencePaiement" [placeholder]="'Numéro ' + getModePaiementLabel(reglementForm.modePaiement)"></div>
+ <div class="alert alert-warning" *ngIf="reglementForm.montantRegle < selectedCredit.montantRestant"><i class="bi bi-info-circle me-2"></i>Paiement partiel. Il restera {{ formatPrice(selectedCredit.montantRestant - reglementForm.montantRegle) }} à payer.</div>
+ <div class="alert alert-success" *ngIf="reglementForm.montantRegle === selectedCredit.montantRestant"><i class="bi bi-check-circle me-2"></i>Paiement total ! Le crédit sera complètement soldé.</div>
+ </div>
+ </div>
+ <div class="modal-footer">
+ <button class="btn btn-secondary" (click)="closeAllModals()"> Annuler</button>
+ <button class="btn btn-success" (click)="enregistrerReglementCredit()" [disabled]="isLoading">
+ <span *ngIf="isLoading"><i class="bi bi-arrow-repeat spin me-1"></i></span>
+ <span *ngIf="!isLoading"><i class="bi bi-check-lg me-1"></i> Enregistrer</span>
+ </button>
+ </div>
+ </div>
+ </div>
+</div>
+
+<!-- MODALE DÉTAILS OPÉRATION -->
+<div class="modal fade show" [class.d-block]="showDetailsOperationModal" *ngIf="showDetailsOperationModal" style="background-color: rgba(0,0,0,0.5); z-index:1050;" tabindex="-1">
+ <div class="modal-dialog modal-dialog-centered">
+ <div class="modal-content">
+ <div class="modal-header bg-info text-white">
+ <h5 class="modal-title"><i class="bi bi-info-circle me-2"></i> Détails de l'opération</h5>
+ <button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button>
+ </div>
+ <div class="modal-body">
+ <table class="table table-sm" *ngIf="selectedOperation">
+ <tr><th>ID:</th><td>#{{ selectedOperation.id }}</td></tr>
+ <tr><th>Date:</th><td>{{ formatDateLong(selectedOperation.dateOperation) }}</td></tr>
+ <tr><th>Type:</th><td><span [class]="getTypeOperationClass(selectedOperation.type)">{{ getTypeOperationLabel(selectedOperation.type) }}</span></td></tr>
+ <tr><th>Montant:</th><td class="fw-bold">{{ formatPrice(selectedOperation.montant) }}</td></tr>
+ <tr><th>Solde avant:</th><td>{{ formatPrice(selectedOperation.soldeAvant) }}</td></tr>
+ <tr><th>Solde après:</th><td>{{ formatPrice(selectedOperation.soldeApres) }}</td></tr>
+ <tr><th>Motif:</th><td>{{ selectedOperation.motif }}</td></tr>
+ <tr *ngIf="selectedOperation.clientNom"><th>Client:</th><td>{{ selectedOperation.clientNom }} {{ selectedOperation.clientTelephone ? '(' + selectedOperation.clientTelephone + ')' : '' }}</td></tr>
+ <tr *ngIf="selectedOperation.numeroVente"><th>Vente:</th><td>{{ selectedOperation.numeroVente }}</td></tr>
+ <tr *ngIf="selectedOperation.modePaiement"><th>Paiement:</th><td><span [class]="getModePaiementClass(selectedOperation.modePaiement)">{{ getModePaiementLabel(selectedOperation.modePaiement) }}</span> {{ selectedOperation.referencePaiement ? '- ' + selectedOperation.referencePaiement : '' }}</td></tr>
+ <tr *ngIf="selectedOperation.utilisateurNom"><th>Utilisateur:</th><td>{{ selectedOperation.utilisateurNom }}</td></tr>
+ </table>
+ </div>
+ <div class="modal-footer">
+ <button class="btn btn-secondary" (click)="closeAllModals()"> Fermer</button>
+ </div>
+ </div>
+ </div>
+</div>
+
+<!-- MODALE DÉTAILS CRÉDIT -->
+<div class="modal fade show" [class.d-block]="showDetailsCreditModal" *ngIf="showDetailsCreditModal" style="background-color: rgba(0,0,0,0.5); z-index:1050;" tabindex="-1">
+ <div class="modal-dialog modal-dialog-centered">
+ <div class="modal-content">
+ <div class="modal-header bg-warning">
+ <h5 class="modal-title"><i class="bi bi-info-circle me-2"></i> Détails du crédit</h5>
+ <button type="button" class="btn-close" (click)="closeAllModals()"></button>
+ </div>
+ <div class="modal-body">
+ <table class="table table-sm" *ngIf="selectedCredit">
+ <tr><th>Client:</th><td><strong>{{ selectedCredit.clientNom }}</strong></td></tr>
+ <tr><th>Téléphone:</th><td>{{ selectedCredit.clientTelephone || '-' }}</td></tr>
+ <tr><th>Vente:</th><td>{{ selectedCredit.numeroVente }}</td></tr>
+ <tr><th>Date vente:</th><td>{{ formatDateLong(selectedCredit.dateOperation) }}</td></tr>
+ <tr><th>Montant total:</th><td class="fw-bold">{{ formatPrice(selectedCredit.montantTotal) }}</td></tr>
+ <tr><th>Montant versé:</th><td class="text-success fw-bold">{{ formatPrice(selectedCredit.montantVerse) }}</td></tr>
+ <tr><th>Reste à payer:</th><td class="text-primary fw-bold">{{ formatPrice(selectedCredit.montantRestant) }}</td></tr>
+ <tr><th>Progression:</th><td><div class="progress" style="height:25px"><div class="progress-bar" [class.bg-success]="selectedCredit.progression >= 100" [class.bg-warning]="selectedCredit.progression < 100" [style.width.%]="selectedCredit.progression">{{ selectedCredit.progression.toFixed(0) }}%</div></div></td></tr>
+ <tr><th>Date échéance:</th><td>{{ formatDateLong(selectedCredit.dateEcheance) }} <span *ngIf="selectedCredit.enRetard" class="badge bg-danger ms-2">{{ selectedCredit.joursRetard }}j de retard</span></td></tr>
+ <tr><th>Statut:</th><td><span [class]="getCreditStatusClass(selectedCredit)">{{ getCreditStatusText(selectedCredit) }}</span></td></tr>
+ </table>
+ </div>
+ <div class="modal-footer">
+ <button class="btn btn-secondary" (click)="closeAllModals()"> Fermer</button>
+ <button class="btn btn-primary" (click)="loadHistoriqueReglementsCredit(selectedCredit); showDetailsCreditModal = false"> Voir historique</button>
+ <button class="btn btn-success" (click)="openReglementCreditModal(selectedCredit); showDetailsCreditModal = false" *ngIf="selectedCredit && selectedCredit.montantRestant > 0"> Enregistrer paiement</button>
+ </div>
+ </div>
+ </div>
+</div>
+
+<!-- MODALE HISTORIQUE RÈGLEMENTS -->
+<div class="modal fade show" [class.d-block]="showHistoriqueReglementsModal" *ngIf="showHistoriqueReglementsModal" style="background-color: rgba(0,0,0,0.5); z-index:1050;" tabindex="-1">
+ <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+ <div class="modal-content">
+ <div class="modal-header bg-primary text-white">
+ <h5 class="modal-title"><i class="bi bi-clock-history me-2"></i> Historique des paiements</h5>
+ <button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button>
+ </div>
+ <div class="modal-body">
+ <div class="alert alert-info mb-3">
+ <div class="row"><div class="col-md-6"><strong>Client:</strong> {{ selectedCredit?.clientNom }}</div><div class="col-md-6"><strong>Vente:</strong> {{ selectedCredit?.numeroVente }}</div></div>
+ <div class="row mt-2"><div class="col-md-6"><strong>Montant total:</strong> {{ formatPrice(selectedCredit?.montantTotal || 0) }}</div><div class="col-md-6"><strong>Reste à payer:</strong> <span class="text-warning">{{ formatPrice(selectedCredit?.montantRestant || 0) }}</span></div></div>
+ </div>
+ <div class="table-responsive">
+ <table class="table table-sm table-striped">
+ <thead><tr><th>Date</th><th>Montant</th><th>Mode</th><th>Référence</th><th>Utilisateur</th></tr></thead>
+ <tbody>
+ <tr *ngFor="let r of selectedCreditReglements"><td>{{ formatDateLong(r.dateOperation) }}</td><td class="text-success fw-bold">{{ formatPrice(r.montant) }}</td><td><span [class]="getModePaiementClass(r.modePaiement || '')">{{ getModePaiementLabel(r.modePaiement || '') }}</span></td><td><small>{{ r.referencePaiement || '-' }}</small></td><td>{{ r.utilisateurNom || 'Système' }}</td></tr>
+ <tr *ngIf="selectedCreditReglements.length === 0"><td colspan="5" class="text-center py-4"><i class="bi bi-inbox fs-1 text-muted"></i><br>Aucun paiement enregistré pour ce crédit</td></tr>
+ </tbody>
+ <tfoot *ngIf="selectedCreditReglements.length > 0" class="table-light"><tr><th>Total réglé</th><th class="text-success fw-bold">{{ formatPrice(getTotalReglements(selectedCreditReglements)) }}</th><th colspan="3"></th></tr></tfoot>
+ </table>
+ </div>
+ </div>
+ <div class="modal-footer">
+ <button class="btn btn-secondary" (click)="closeAllModals()"> Fermer</button>
+ <button class="btn btn-success" (click)="openReglementCreditModal(selectedCredit); showHistoriqueReglementsModal = false" *ngIf="selectedCredit && selectedCredit.montantRestant > 0"><i class="bi bi-plus-circle me-1"></i> Nouveau paiement</button>
+ </div>
+ </div>
+ </div>
+</div>
+
+<!-- MODALE STATISTIQUES -->
+<div class="modal fade show" [class.d-block]="showStatistiquesModal" *ngIf="showStatistiquesModal" style="background-color: rgba(0,0,0,0.5); z-index:1050;" tabindex="-1">
+ <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+ <div class="modal-content">
+ <div class="modal-header bg-primary text-white">
+ <h5 class="modal-title"><i class="bi bi-bar-chart me-2"></i> Statistiques</h5>
+ <button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button>
+ </div>
+ <div class="modal-body">
+ <div *ngIf="statistiquesPeriode">
+ <div class="alert alert-info">Du <strong>{{ formatDateShort(statistiquesPeriode.periode.debut) }}</strong> au <strong>{{ formatDateShort(statistiquesPeriode.periode.fin) }}</strong> ({{ statistiquesPeriode.periode.nbJours }} jours)</div>
+ <div class="row mb-4">
+ <div class="col-md-3"><div class="card bg-primary text-white"><div class="card-body text-center"><h6>Entrées</h6><h4>{{ formatPrice(statistiquesPeriode.totalEntrees) }}</h4></div></div></div>
+ <div class="col-md-3"><div class="card bg-danger text-white"><div class="card-body text-center"><h6>Sorties</h6><h4>{{ formatPrice(statistiquesPeriode.totalSorties) }}</h4></div></div></div>
+ <div class="col-md-3"><div class="card bg-success text-white"><div class="card-body text-center"><h6>Solde net</h6><h4>{{ formatPrice(statistiquesPeriode.soldeNetPeriode) }}</h4></div></div></div>
+ <div class="col-md-3"><div class="card bg-info text-white"><div class="card-body text-center"><h6>Opérations</h6><h4>{{ statistiquesPeriode.nombreOperations }}</h4></div></div></div>
+ </div>
+ <div class="row">
+ <div class="col-md-6"><div class="card"><div class="card-header bg-success text-white">Détail des entrées</div><div class="card-body"><table class="table table-sm"><tr><td>Ventes comptant:</td><td class="text-end">{{ formatPrice(statistiquesPeriode.totalVentesComptant) }}</td></tr><tr><td>Règlements crédits:</td><td class="text-end">{{ formatPrice(statistiquesPeriode.totalReglementsCredit) }}</td></tr><tr><td>Nouveaux crédits:</td><td class="text-end text-warning">{{ formatPrice(statistiquesPeriode.totalNouveauxCredits) }}</td></tr><tr><td>Autres entrées:</td><td class="text-end">{{ formatPrice(statistiquesPeriode.totalAutresEntrees) }}</td></tr><tr class="fw-bold"><td>TOTAL</td><td class="text-end text-success">{{ formatPrice(statistiquesPeriode.totalEntrees) }}</td></tr></table></div></div></div>
+ <div class="col-md-6"><div class="card"><div class="card-header bg-danger text-white">Détail des sorties</div><div class="card-body"><table class="table table-sm"><tr><td>Sorties diverses:</td><td class="text-end">{{ formatPrice(statistiquesPeriode.totalSorties) }}</td></tr><tr class="fw-bold"><td>TOTAL</td><td class="text-end text-danger">{{ formatPrice(statistiquesPeriode.totalSorties) }}</td></tr></table></div></div></div>
+ </div>
+ <div class="card mt-3"><div class="card-header bg-info text-white">Moyenne journalière</div><div class="card-body text-center"><h3>{{ formatPrice(statistiquesPeriode.moyenneJournaliere) }}</h3></div></div>
+ </div>
+ </div>
+ <div class="modal-footer"><button class="btn btn-secondary" (click)="closeAllModals()">Fermer</button></div>
+ </div>
+ </div>
+</div>
+
+<!-- MODALE REVENUS ET PERTES -->
+<div class="modal fade show" [class.d-block]="showRevenusPertesModal" *ngIf="showRevenusPertesModal" style="background-color: rgba(0,0,0,0.5); z-index:1050;" tabindex="-1">
+ <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+ <div class="modal-content">
+ <div class="modal-header bg-success text-white">
+ <h5 class="modal-title"><i class="bi bi-pie-chart me-2"></i> Revenus et Pertes</h5>
+ <button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button>
+ </div>
+ <div class="modal-body">
+ <div *ngIf="revenusPertes">
+ <div class="btn-group mb-3 w-100">
+ <button class="btn btn-outline-primary btn-sm" [class.active]="periodeRevenusPertes === 'jour'" (click)="loadRevenusPertesJour()">Aujourd'hui</button>
+ <button class="btn btn-outline-primary btn-sm" [class.active]="periodeRevenusPertes === 'semaine'" (click)="loadRevenusPertesSemaine()">Cette semaine</button>
+ <button class="btn btn-outline-primary btn-sm" [class.active]="periodeRevenusPertes === 'mois'" (click)="loadRevenusPertesMois()">Ce mois</button>
+ <button class="btn btn-outline-primary btn-sm" [class.active]="periodeRevenusPertes === 'annee'" (click)="loadRevenusPertesAnnee()">Cette année</button>
+ <button class="btn btn-outline-primary btn-sm" [class.active]="periodeRevenusPertes === 'personnalise'" (click)="loadRevenusPertesPersonnalise()">Personnalisé</button>
+ </div>
+ <div class="row mb-3" *ngIf="periodeRevenusPertes === 'personnalise'"><div class="col-md-6"><label class="form-label">Date début</label><input type="date" class="form-control" [(ngModel)]="dateDebut"></div><div class="col-md-6"><label class="form-label">Date fin</label><input type="date" class="form-control" [(ngModel)]="dateFin"></div></div>
+ <div class="alert alert-info">Période: <strong>{{ formatDateShort(revenusPertes.periode.dateDebut) }}</strong> au <strong>{{ formatDateShort(revenusPertes.periode.dateFin) }}</strong></div>
+ <div class="row mb-4"><div class="col-md-6"><div class="card bg-success text-white"><div class="card-body text-center"><h6><i class="bi bi-arrow-up"></i> REVENUS</h6><h3>{{ formatPrice(revenusPertes.totalRevenus) }}</h3><small>Total de ce qui est rentré</small></div></div></div><div class="col-md-6"><div class="card bg-danger text-white"><div class="card-body text-center"><h6><i class="bi bi-arrow-down"></i> PERTES</h6><h3>{{ formatPrice(revenusPertes.totalPertes) }}</h3><small>Total de ce qui est sorti</small></div></div></div></div>
+ <div class="row mb-4"><div class="col-md-12"><div class="card" [class.bg-success]="revenusPertes.soldeNet >= 0" [class.bg-danger]="revenusPertes.soldeNet < 0" [class.text-white]="true"><div class="card-body text-center"><h6><i class="bi bi-calculator"></i> BILAN NET</h6><h3>{{ formatPrice(revenusPertes.soldeNet) }}</h3><small>Revenus - Pertes = Ce que vous avez vraiment gagné</small></div></div></div></div>
+ <div class="row"><div class="col-md-6"><div class="card"><div class="card-header bg-success text-white">Détail des REVENUS</div><div class="card-body"><table class="table table-sm"><tr><td>Ventes comptant:</td><td class="text-end">{{ formatPrice(revenusPertes.detailsRevenus.ventesComptant) }}</td></tr><tr><td>Règlements crédits:</td><td class="text-end">{{ formatPrice(revenusPertes.detailsRevenus.reglementsCredit) }}</td></tr><tr><td>Autres entrées:</td><td class="text-end">{{ formatPrice(revenusPertes.detailsRevenus.autresEntrees) }}</td></tr><tr class="fw-bold"><td>TOTAL REVENUS</td><td class="text-end text-success">{{ formatPrice(revenusPertes.totalRevenus) }}</td></tr></table></div></div></div><div class="col-md-6"><div class="card"><div class="card-header bg-danger text-white">Détail des PERTES</div><div class="card-body"><table class="table table-sm"><tr><td>Sorties caisse:</td><td class="text-end">{{ formatPrice(revenusPertes.detailsPertes.sorties) }}</td></tr><tr><td>Annulations:</td><td class="text-end">{{ formatPrice(revenusPertes.detailsPertes.annulations) }}</td></tr><tr class="fw-bold"><td>TOTAL PERTES</td><td class="text-end text-danger">{{ formatPrice(revenusPertes.totalPertes) }}</td></tr></table></div></div></div></div>
+ <div class="alert alert-info mt-3 text-center"><i class="bi bi-lightbulb me-2"></i><strong>À retenir :</strong> Votre bilan net est de <strong>{{ formatPrice(revenusPertes.soldeNet) }}</strong> ({{ revenusPertes.totalRevenus | number }} rentré - {{ revenusPertes.totalPertes | number }} sorti)</div>
+ </div>
+ </div>
+ <div class="modal-footer"><button class="btn btn-secondary" (click)="closeAllModals()">Fermer</button></div>
+ </div>
+ </div>
+</div>
+
+<!-- MODALE VENTES COMPTANT -->
+<div class="modal fade show" [class.d-block]="showVentesComptantModal" *ngIf="showVentesComptantModal" style="background-color: rgba(0,0,0,0.5); z-index:1050;" tabindex="-1">
+ <div class="modal-dialog modal-dialog-centered">
+ <div class="modal-content">
+ <div class="modal-header bg-info text-white"><h5 class="modal-title"><i class="bi bi-cash me-2"></i> Ventes comptant du jour</h5><button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button></div>
+ <div class="modal-body"><div *ngIf="ventesComptant"><div class="row"><div class="col-md-6"><div class="card bg-success text-white"><div class="card-body text-center"><h6>Total des ventes</h6><h3>{{ formatPrice(ventesComptant.totalVentesComptant) }}</h3></div></div></div><div class="col-md-6"><div class="card bg-primary text-white"><div class="card-body text-center"><h6>Nombre de ventes</h6><h3>{{ ventesComptant.nombreVentes }}</h3></div></div></div></div><div class="mt-3 text-center"><p class="text-muted">Panier moyen: <strong>{{ formatPrice(ventesComptant.nombreVentes > 0 ? ventesComptant.totalVentesComptant / ventesComptant.nombreVentes : 0) }}</strong></p></div></div></div>
+ <div class="modal-footer"><button class="btn btn-secondary" (click)="closeAllModals()">Fermer</button></div>
+ </div>
+ </div>
+</div>
+
+<!-- MODALE VENTES CRÉDIT -->
+<div class="modal fade show" [class.d-block]="showVentesCreditModal" *ngIf="showVentesCreditModal" style="background-color: rgba(0,0,0,0.5); z-index:1050;" tabindex="-1">
+ <div class="modal-dialog modal-dialog-centered">
+ <div class="modal-content">
+ <div class="modal-header bg-warning"><h5 class="modal-title"><i class="bi bi-credit-card me-2"></i> Ventes crédit du jour</h5><button type="button" class="btn-close" (click)="closeAllModals()"></button></div>
+ <div class="modal-body"><div *ngIf="ventesCredit"><div class="row"><div class="col-md-6"><div class="card bg-warning"><div class="card-body text-center"><h6>Total des crédits</h6><h3>{{ formatPrice(ventesCredit.totalVentesCredit) }}</h3></div></div></div><div class="col-md-6"><div class="card bg-primary text-white"><div class="card-body text-center"><h6>Nombre de crédits</h6><h3>{{ ventesCredit.nombreVentes }}</h3></div></div></div></div><div class="mt-3 text-center"><p class="text-muted">Montant moyen par crédit: <strong>{{ formatPrice(ventesCredit.nombreVentes > 0 ? ventesCredit.totalVentesCredit / ventesCredit.nombreVentes : 0) }}</strong></p></div></div></div>
+ <div class="modal-footer"><button class="btn btn-secondary" (click)="closeAllModals()">Fermer</button></div>
+ </div>
+ </div>
+</div>
+
+<!-- MODALE CRÉDITS PAR CLIENT -->
+<div class="modal fade show" [class.d-block]="showCreditsClientModal" *ngIf="showCreditsClientModal" style="background-color: rgba(0,0,0,0.5); z-index:1060;" tabindex="-1" (click)="$event.target === $event.currentTarget && closeCreditsClientModal()">
+ <div class="modal-dialog modal-dialog-centered modal-lg" (click)="$event.stopPropagation()">
+ <div class="modal-content">
+ <div class="modal-header bg-primary text-white"><h5 class="modal-title"><i class="bi bi-person-badge me-2"></i> Crédits de {{ selectedClientCreditsNom }}</h5><button type="button" class="btn-close btn-close-white" (click)="closeCreditsClientModal()"></button></div>
+ <div class="modal-body p-0"><div class="table-responsive"><table class="table table-hover mb-0"><thead class="table-light"><tr><th>Vente #</th><th class="text-end">Total</th><th class="text-end">Déjà payé</th><th class="text-end">Reste</th><th>Échéance</th><th>Statut</th><th class="text-center">Action</th></tr></thead><tbody><tr *ngFor="let credit of selectedClientCreditsList" [class.table-danger]="credit.enRetard" [class.table-warning]="!credit.enRetard && !credit.estReglee"><td><strong>{{ credit.numeroVente || ('#' + credit.venteId) }}</strong></td><td class="text-end">{{ formatPrice(credit.montantTotal) }}</td><td class="text-end text-success">{{ formatPrice(credit.montantVerse) }}</td><td class="text-end text-danger fw-bold">{{ formatPrice(credit.montantRestant) }}</td><td><span *ngIf="credit.dateEcheance">{{ credit.dateEcheance | date:'dd/MM/yyyy' }}</span><span *ngIf="!credit.dateEcheance" class="text-muted">—</span></td><td><span class="badge" [class.bg-success]="credit.estReglee" [class.bg-danger]="credit.enRetard && !credit.estReglee" [class.bg-warning]="!credit.enRetard && !credit.estReglee" [class.text-dark]="!credit.enRetard && !credit.estReglee">{{ credit.estReglee ? 'Réglé' : (credit.enRetard ? 'En retard' : 'En cours') }}</span></td><td class="text-center"><button class="btn btn-sm btn-primary" (click)="closeCreditsClientModal(); openReglementCreditModal(credit)" [disabled]="credit.estReglee || credit.venteAnnulee"><i class="bi bi-cash me-1"></i> Payer</button></td></tr></tbody><tfoot class="table-light"><tr><td><strong>Total</strong></td><td class="text-end"><strong>{{ formatPrice(totalSelectedClientCredits('montantTotal')) }}</strong></td><td class="text-end text-success"><strong>{{ formatPrice(totalSelectedClientCredits('montantVerse')) }}</strong></td><td class="text-end text-danger"><strong>{{ formatPrice(totalSelectedClientCredits('montantRestant')) }}</strong></td><td colspan="3"></td></tr></tfoot></table></div></div>
+ <div class="modal-footer d-flex justify-content-between align-items-center flex-wrap gap-2"><button class="btn btn-success" (click)="openPaiementGroupeModal()" [disabled]="totalSelectedClientCredits('montantRestant') <= 0"><i class="bi bi-cash-stack me-1"></i> Payer en groupe</button><button class="btn btn-secondary" (click)="closeCreditsClientModal()">Fermer</button></div>
+ </div>
+ </div>
+</div>
+
+<!-- MODALE PAIEMENT GROUPÉ -->
+<div class="modal fade show" [class.d-block]="showPaiementGroupeModal" *ngIf="showPaiementGroupeModal" style="background-color: rgba(0,0,0,0.5); z-index:1070;" tabindex="-1" (click)="$event.target === $event.currentTarget && (showPaiementGroupeModal = false)">
+ <div class="modal-dialog modal-dialog-centered modal-lg" (click)="$event.stopPropagation()">
+ <div class="modal-content">
+ <div class="modal-header bg-success text-white"><h5 class="modal-title"><i class="bi bi-cash-stack me-2"></i> Paiement groupé — {{ selectedClientCreditsNom }}</h5><button type="button" class="btn-close btn-close-white" (click)="showPaiementGroupeModal = false"></button></div>
+ <div class="modal-body"><div class="alert alert-info small mb-3"><i class="bi bi-info-circle me-1"></i>Entrez le montant global payé par le client. Il sera réparti <strong>proportionnellement</strong> sur chacun de ses crédits selon le montant restant.</div>
+ <div class="row g-3 mb-3"><div class="col-md-4"><label class="form-label">Montant global payé *</label><input type="number" class="form-control" [(ngModel)]="montantPaiementGroupe" [max]="totalSelectedClientCredits('montantRestant')" min="1" placeholder="Ex: 5000" (ngModelChange)="calculerRepartitionGroupe()"><small class="text-muted">Max: {{ formatPrice(totalSelectedClientCredits('montantRestant')) }}</small></div>
+ <div class="col-md-4"><label class="form-label">Mode de paiement</label><select class="form-select" [(ngModel)]="modePaiementGroupe"><option [value]="ModePaiementCaisseEnum.ESPECES">Espèces</option><option [value]="ModePaiementCaisseEnum.ORANGE_MONEY">Orange Money</option><option [value]="ModePaiementCaisseEnum.MOOV_MONEY">Moov Money</option><option [value]="ModePaiementCaisseEnum.VIREMENT">Virement</option><option [value]="ModePaiementCaisseEnum.CHEQUE">Chèque</option></select></div>
+ <div class="col-md-4" *ngIf="modePaiementGroupe !== ModePaiementCaisseEnum.ESPECES"><label class="form-label">Référence *</label><input type="text" class="form-control" [(ngModel)]="referenceGroupePaiement" placeholder="N° transaction..."></div></div>
+ <div *ngIf="repartitionGroupe.length > 0" class="mt-3"><h6 class="fw-semibold mb-2"><i class="bi bi-pie-chart me-1"></i>Répartition prévisionnelle</h6><div class="table-responsive"><table class="table table-sm table-bordered mb-0"><thead class="table-light"><tr><th>Vente #</th><th class="text-end">Restant dû</th><th class="text-end text-success">Part à payer</th><th class="text-end">Restera après</th></tr></thead><tbody><tr *ngFor="let r of repartitionGroupe"><td><strong>{{ r.credit.numeroVente || ('#' + r.credit.venteId) }}</strong></td><td class="text-end text-danger">{{ formatPrice(r.credit.montantRestant) }}</td><td class="text-end text-success fw-bold">{{ formatPrice(r.montantAPayer) }}</td><td class="text-end" [class.text-success]="r.credit.montantRestant - r.montantAPayer <= 0" [class.text-warning]="r.credit.montantRestant - r.montantAPayer > 0">{{ formatPrice(Math.max(0, r.credit.montantRestant - r.montantAPayer)) }}<span *ngIf="r.credit.montantRestant - r.montantAPayer <= 0" class="badge bg-success ms-1">Soldé</span></td></tr></tbody><tfoot class="table-light"><tr><td><strong>Total</strong></td><td class="text-end text-danger"><strong>{{ formatPrice(totalSelectedClientCredits('montantRestant')) }}</strong></td><td class="text-end text-success"><strong>{{ formatPrice(montantPaiementGroupe) }}</strong></td><td class="text-end"><strong>{{ formatPrice(Math.max(0, totalSelectedClientCredits('montantRestant') - montantPaiementGroupe)) }}</strong></td></tr></tfoot></table></div></div>
+ <div *ngIf="montantPaiementGroupe > 0 && repartitionGroupe.length === 0" class="alert alert-warning mt-3"><i class="bi bi-exclamation-triangle me-1"></i>Aucun crédit non réglé trouvé pour ce client.</div></div>
+ <div class="modal-footer"><button class="btn btn-secondary" (click)="showPaiementGroupeModal = false">Annuler</button><button class="btn btn-success" (click)="confirmerPaiementGroupe()" [disabled]="isLoadingPaiementGroupe || montantPaiementGroupe <= 0 || repartitionGroupe.length === 0"><span *ngIf="isLoadingPaiementGroupe"><i class="bi bi-arrow-repeat spin me-1"></i> Traitement...</span><span *ngIf="!isLoadingPaiementGroupe"><i class="bi bi-check-lg me-1"></i> Confirmer le paiement groupé</span></button></div>
+ </div>
+ </div>
+</div>
+
+<!-- SECTION CAISSES CLÔTURÉES -->
+<div class="container-fluid pb-5 mt-4">
+  <div class="card shadow-sm">
+
+    <!-- En-tête section -->
+    <div class="card-header d-flex justify-content-between align-items-center"
+         style="background: linear-gradient(135deg, #495057 0%, #343a40 100%); color:#fff;">
+      <h5 class="mb-0">
+        <i class="bi bi-archive me-2"></i>
+        Historique des caisses clôturées
+        <span class="badge bg-light text-dark ms-2">{{ caissesSessions.length }}</span>
+      </h5>
+    </div>
+
+    <!-- Cartes résumé — même charte graphique que la page caisse -->
+    <div class="card-body border-bottom" *ngIf="caissesSessions.length > 0">
+      <div class="row g-3">
+        <div class="col-6 col-md-3">
+          <div class="card border-0 text-white h-100"
+               style="background: linear-gradient(135deg,#1a56db 0%,#0d47a1 100%); border-radius:12px;">
+            <div class="card-body py-3">
+              <div class="small opacity-75 text-uppercase">Nb sessions</div>
+              <div class="fs-3 fw-bold">{{ caissesSessions.length }}</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="card border-0 text-white h-100"
+               style="background: linear-gradient(135deg,#0e9f6e 0%,#057a55 100%); border-radius:12px;">
+            <div class="card-body py-3">
+              <div class="small opacity-75 text-uppercase">Total entrées</div>
+              <div class="fs-5 fw-bold">{{ formatPrice(getTotalEntreesSessions()) }}</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="card border-0 text-white h-100"
+               style="background: linear-gradient(135deg,#e53e3e 0%,#c53030 100%); border-radius:12px;">
+            <div class="card-body py-3">
+              <div class="small opacity-75 text-uppercase">Total sorties</div>
+              <div class="fs-5 fw-bold">{{ formatPrice(getTotalSortiesSessions()) }}</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="card border-0 text-white h-100"
+               [style.background]="getTotalBilanSessions() >= 0
+                 ? 'linear-gradient(135deg,#0e9f6e 0%,#057a55 100%)'
+                 : 'linear-gradient(135deg,#e53e3e 0%,#c53030 100%)'"
+               style="border-radius:12px;">
+            <div class="card-body py-3">
+              <div class="small opacity-75 text-uppercase">Bilan total</div>
+              <div class="fs-5 fw-bold">
+                {{ getTotalBilanSessions() >= 0 ? '+' : '' }}{{ formatPrice(getTotalBilanSessions()) }}
+              </div>
+              <div class="small opacity-75">{{ getTotalBilanSessions() >= 0 ? '📈 Bénéfice' : '📉 Perte' }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-body p-0">
+
+      <!-- Aucune session -->
+      <div *ngIf="caissesSessions.length === 0" class="text-center py-5 text-muted">
+        <i class="bi bi-archive fs-1 d-block mb-2 opacity-25"></i>
+        <p class="mb-0">Aucune caisse clôturée enregistrée.</p>
+        <small>Les caisses fermées apparaîtront ici avec leur historique complet.</small>
+      </div>
+
+      <!-- Tableau des sessions -->
+      <div *ngIf="caissesSessions.length > 0" class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-dark">
+            <tr>
+              <th style="width:45px;">#</th>
+              <th><i class="bi bi-unlock me-1"></i> Ouverture</th>
+              <th><i class="bi bi-lock me-1"></i> Fermeture</th>
+              <th class="text-end">Solde initial</th>
+              <th class="text-end">Solde final</th>
+              <th class="text-end text-success">Entrées</th>
+              <th class="text-end text-danger">Sorties</th>
+              <th class="text-end">Bilan</th>
+              <th class="text-center">Opérations</th>
+              <th class="text-center" style="min-width:180px;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let session of caissesSessions; let i = index"
+                [class.table-danger]="getSessionBilan(session) < 0"
+                [class.table-success]="getSessionBilan(session) > 0">
+              <td class="fw-bold text-muted">{{ caissesSessions.length - i }}</td>
+              <td>
+                <small class="text-muted">
+                  <i class="bi bi-calendar me-1"></i>{{ formatDateLong(session.dateOuverture) }}
+                </small>
+              </td>
+              <td>
+                <small class="text-muted">
+                  <i class="bi bi-calendar-check me-1"></i>{{ formatDateLong(session.dateFermeture) }}
+                </small>
+              </td>
+              <td class="text-end fw-semibold">{{ formatPrice(session.soldeInitial) }}</td>
+              <td class="text-end fw-semibold">{{ formatPrice(session.soldeFinal) }}</td>
+              <td class="text-end text-success fw-semibold">
+                <i class="bi bi-arrow-up-circle me-1"></i>+{{ formatPrice(session.totalEntrees) }}
+              </td>
+              <td class="text-end text-danger fw-semibold">
+                <i class="bi bi-arrow-down-circle me-1"></i>-{{ formatPrice(session.totalSorties) }}
+              </td>
+              <td class="text-end">
+                <span class="badge fs-6 px-3 py-2"
+                      [class.bg-success]="getSessionBilan(session) >= 0"
+                      [class.bg-danger]="getSessionBilan(session) < 0">
+                  {{ getSessionBilan(session) >= 0 ? '+' : '' }}{{ formatPrice(getSessionBilan(session)) }}
+                </span>
+                <div class="small mt-1" [class.text-success]="getSessionBilan(session) >= 0" [class.text-danger]="getSessionBilan(session) < 0">
+                  {{ getSessionBilan(session) >= 0 ? '📈 Bénéfice' : '📉 Perte' }}
+                </div>
+              </td>
+              <td class="text-center">
+                <span class="badge bg-secondary rounded-pill px-3">
+                  {{ session.nombreOperations }} op.
+                </span>
+              </td>
+              <td class="text-center">
+                <div class="d-flex gap-2 justify-content-center">
+                  <button class="btn btn-sm btn-outline-info"
+                          (click)="openSessionDetail(session)"
+                          title="Voir le détail des opérations">
+                    <i class="bi bi-eye me-1"></i> Détails
+                  </button>
+                  <button class="btn btn-sm btn-outline-dark"
+                          (click)="exportSessionPDF(session)"
+                          title="Télécharger en PDF">
+                    <i class="bi bi-file-earmark-pdf me-1"></i> PDF
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- MODALE DÉTAIL SESSION CLÔTURÉE -->
+<div *ngIf="showSessionDetailModal && selectedSession"
+     class="modal fade show d-block"
+     style="background-color:rgba(0,0,0,0.55); z-index:1070;"
+     tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+
+      <!-- Header -->
+      <div class="modal-header text-white"
+           style="background: linear-gradient(135deg,#495057 0%,#343a40 100%);">
+        <h5 class="modal-title">
+          <i class="bi bi-archive me-2"></i>
+          Caisse clôturée
+        </h5>
+        <button type="button" class="btn-close btn-close-white" (click)="closeSessionDetailModal()"></button>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body">
+
+        <!-- Période -->
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <div class="d-flex align-items-center gap-2 text-muted small">
+              <i class="bi bi-unlock fs-5 text-success"></i>
+              <div>
+                <div class="fw-semibold text-dark">Ouverture</div>
+                <div>{{ formatDateLong(selectedSession.dateOuverture) }}</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="d-flex align-items-center gap-2 text-muted small">
+              <i class="bi bi-lock fs-5 text-danger"></i>
+              <div>
+                <div class="fw-semibold text-dark">Fermeture</div>
+                <div>{{ formatDateLong(selectedSession.dateFermeture) }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cartes statistiques — même charte que page principale -->
+        <div class="row g-3 mb-4">
+          <div class="col-6 col-md-3">
+            <div class="card border-0 text-white"
+                 style="background:linear-gradient(135deg,#1a56db,#0d47a1);border-radius:10px;">
+              <div class="card-body py-3 text-center">
+                <div class="small opacity-75">Solde initial</div>
+                <div class="fs-6 fw-bold">{{ formatPrice(selectedSession.soldeInitial) }}</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="card border-0 text-white"
+                 style="background:linear-gradient(135deg,#2d3748,#1a202c);border-radius:10px;">
+              <div class="card-body py-3 text-center">
+                <div class="small opacity-75">Solde final</div>
+                <div class="fs-6 fw-bold">{{ formatPrice(selectedSession.soldeFinal) }}</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="card border-0 text-white"
+                 style="background:linear-gradient(135deg,#0e9f6e,#057a55);border-radius:10px;">
+              <div class="card-body py-3 text-center">
+                <div class="small opacity-75">Total entrées</div>
+                <div class="fs-6 fw-bold">+{{ formatPrice(selectedSession.totalEntrees) }}</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="card border-0 text-white"
+                 style="background:linear-gradient(135deg,#e53e3e,#c53030);border-radius:10px;">
+              <div class="card-body py-3 text-center">
+                <div class="small opacity-75">Total sorties</div>
+                <div class="fs-6 fw-bold">-{{ formatPrice(selectedSession.totalSorties) }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bilan net -->
+        <div class="p-3 rounded mb-4 text-center text-white"
+             [style.background]="getSessionBilan(selectedSession) >= 0
+               ? 'linear-gradient(135deg,#0e9f6e,#057a55)'
+               : 'linear-gradient(135deg,#e53e3e,#c53030)'">
+          <div class="small opacity-80 mb-1">Bilan net de la session</div>
+          <div class="fs-4 fw-bold">
+            {{ getSessionBilan(selectedSession) >= 0 ? '📈' : '📉' }}
+            {{ getSessionBilan(selectedSession) >= 0 ? '+' : '' }}{{ formatPrice(getSessionBilan(selectedSession)) }}
+          </div>
+          <div class="small opacity-80 mt-1">
+            {{ getSessionBilan(selectedSession) >= 0 ? 'Bénéfice' : 'Perte' }}
+            &bull; {{ selectedSession.nombreOperations }} opération(s)
+          </div>
+        </div>
+
+        <!-- Tableau des opérations -->
+        <h6 class="mb-2 fw-semibold">
+          <i class="bi bi-list-ul me-1 text-primary"></i>
+          Historique des opérations ({{ selectedSession?.operations?.length || 0 }})
+        </h6>
+
+        <div class="table-responsive" style="max-height:380px; overflow-y:auto;">
+          <table class="table table-sm table-hover mb-0">
+            <thead class="table-dark" style="position:sticky; top:0; z-index:1;">
+              <tr>
+                <th>#</th>
+                <th>Date / Heure</th>
+                <th>Type</th>
+                <th>Client / Motif</th>
+                <th class="text-end">Montant</th>
+                <th>Mode</th>
+                <th class="text-center">Statut</th>
+              </tr>
+            </thead>
+            <tbody>
+              <ng-container *ngIf="selectedSession?.operations?.length > 0">
+                <tr *ngFor="let op of selectedSession.operations; let idx = index"
+                    [class.table-secondary]="op.venteAnnulee"
+                    [style.opacity]="op.venteAnnulee ? '0.6' : '1'">
+                  <td class="text-muted small">{{ idx + 1 }}</td>
+                  <td>
+                    <small>{{ formatTime(op.dateOperation) }}</small>
+                  </td>
+                  <td>
+                    <span [class]="getTypeOperationClass(op.type)" style="font-size:11px;">
+                      {{ getTypeOperationLabel(op.type) }}
+                    </span>
+                  </td>
+                  <td>
+                    <strong *ngIf="op.clientNom">{{ op.clientNom }}</strong>
+                    <span *ngIf="!op.clientNom" class="text-muted">
+                      {{ op.motif || op.numeroVente || '—' }}
+                    </span>
+                    <br *ngIf="op.clientNom && op.motif">
+                    <small *ngIf="op.clientNom && op.motif" class="text-muted">{{ op.motif }}</small>
+                  </td>
+                  <td class="text-end fw-bold"
+                      [class.text-success]="op.type === 'VENTE_COMPTANT' || op.type === 'REGLEMENT_CREDIT' || op.type === 'ENTREE'"
+                      [class.text-danger]="op.type === 'SORTIE' || op.type === 'PAIEMENT_FOURNISSEUR' || op.type === 'PAIEMENT_EMPLOYE'">
+                    {{ formatPrice(op.montant) }}
+                  </td>
+                  <td>
+                    <span *ngIf="op.modePaiement"
+                          [class]="getModePaiementClass(op.modePaiement)"
+                          style="font-size:11px;">
+                      {{ getModePaiementLabel(op.modePaiement) }}
+                    </span>
+                    <span *ngIf="!op.modePaiement" class="text-muted">—</span>
+                  </td>
+                  <td class="text-center">
+                    <span *ngIf="op.venteAnnulee"
+                          class="badge bg-danger"
+                          style="font-size:10px; text-decoration:none;">
+                      ANNULÉE
+                    </span>
+                    <span *ngIf="!op.venteAnnulee"
+                          class="badge bg-success"
+                          style="font-size:10px;">
+                      OK
+                    </span>
+                  </td>
+                </tr>
+              </ng-container>
+              <tr *ngIf="!selectedSession?.operations?.length">
+                <td colspan="7" class="text-center text-muted py-4">
+                  <i class="bi bi-inbox fs-3 d-block mb-1 opacity-25"></i>
+                  Aucune opération enregistrée pour cette session.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div><!-- /modal-body -->
+
+      <!-- Footer -->
+      <div class="modal-footer">
+        <button class="btn btn-outline-dark" (click)="exportSessionPDF(selectedSession)">
+          <i class="bi bi-file-earmark-pdf me-1"></i> Télécharger PDF
+        </button>
+        <button class="btn btn-secondary" (click)="closeSessionDetailModal()">
+          <i class="bi bi-x-circle me-1"></i> Fermer
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- MODALE TRANSFERT VERS BANQUE -->
+<div class="modal fade show" [class.d-block]="showTransfertBanqueModal" *ngIf="showTransfertBanqueModal" style="background-color: rgba(0,0,0,0.5); z-index:1075;" tabindex="-1" (click)="$event.target === $event.currentTarget && (showTransfertBanqueModal = false)">
+ <div class="modal-dialog modal-dialog-centered modal-md" (click)="$event.stopPropagation()">
+ <div class="modal-content">
+ <div class="modal-header bg-secondary text-white">
+ <h5 class="modal-title"><i class="bi bi-bank2 me-2"></i> Virement Caisse → Banque</h5>
+ <button type="button" class="btn-close btn-close-white" (click)="showTransfertBanqueModal = false"></button>
+ </div>
+ <div class="modal-body">
+ <div class="alert alert-info mb-3">
+ <i class="bi bi-info-circle me-1"></i> Solde actuel caisse : <strong>{{ formatPrice(caisse?.soldeActuel || 0) }}</strong>
+ </div>
+ <form (ngSubmit)="validerTransfertVersBanque()">
+ <div class="mb-3">
+ <label class="form-label fw-bold">Compte bancaire <span class="text-danger">*</span></label>
+ <select class="form-select" [(ngModel)]="transfertForm.compteId" name="compteId" required>
+ <option [ngValue]="null">-- Sélectionnez un compte --</option>
+ <option *ngFor="let compte of comptesDisponibles" [ngValue]="compte.id">{{ compte.nomBanque }} - Solde: {{ formatPrice(compte.soldeActuel) }}</option>
+ </select>
+ </div>
+ <div class="mb-3">
+ <label class="form-label fw-bold">Montant (FCFA) <span class="text-danger">*</span></label>
+ <input type="number" class="form-control" [(ngModel)]="transfertForm.montant" name="montant" required min="1" [max]="caisse?.soldeActuel" placeholder="Saisir le montant à transférer">
+ <small class="text-muted">Maximum : {{ formatPrice(caisse?.soldeActuel || 0) }}</small>
+ </div>
+ <div class="mb-3">
+ <label class="form-label fw-bold">Motif <span class="text-danger">*</span></label>
+ <input type="text" class="form-control" [(ngModel)]="transfertForm.motif" name="motif" required placeholder="Ex: Virement fonds, Dépôt sécuritaire...">
+ </div>
+ <div class="mb-3">
+ <label class="form-label fw-bold">Référence (optionnel)</label>
+ <input type="text" class="form-control" [(ngModel)]="transfertForm.reference" name="reference" placeholder="Ex: Numéro de bordereau">
+ </div>
+ <div class="alert alert-warning small"><i class="bi bi-exclamation-triangle me-1"></i>Cette opération est irréversible. Après confirmation, le montant sera déduit de la caisse et crédité sur le compte bancaire.</div>
+ <div class="d-flex justify-content-end gap-2">
+ <button type="button" class="btn btn-secondary" (click)="showTransfertBanqueModal = false">Annuler</button>
+ <button type="submit" class="btn btn-secondary" [disabled]="isLoadingTransfert"><span *ngIf="isLoadingTransfert" class="spinner-border spinner-border-sm me-1"></span><i class="bi bi-bank2 me-1"></i> Transférer</button>
+ </div>
+ </form>
+ </div>
+ </div>
+ </div>
+</div>
+
+<style>
+ .spin { animation: spin 1s linear infinite; }
+ @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+ .progress-bar { transition: width 0.5s ease-in-out; line-height: 20px; font-size: 11px; font-weight: bold; }
+ .modal-dialog-centered { display: flex; align-items: center; min-height: calc(100% - 1rem); }
+ .card { border-radius: 10px; overflow: hidden; }
+ .table td { vertical-align: middle; }
+ .btn-group .btn { white-space: nowrap; }
+</style>

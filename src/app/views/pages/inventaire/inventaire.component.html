@@ -1,0 +1,969 @@
+<div class="container-fluid py-4 app-page">
+  <!-- En-tête -->
+  <div class="app-page-header mb-4">
+    <div class="app-page-header-left">
+      <div class="app-page-icon"><i class="fa fa-boxes"></i></div>
+      <div>
+        <h1 class="app-page-title">Gestion de l'Inventaire</h1>
+        <p class="app-page-subtitle">Mouvements de stock entrants et sortants</p>
+      </div>
+    </div>
+    <div class="app-page-header-actions">
+      <button class="btn btn-info text-white" (click)="openExportModal()">
+        <i class="fa fa-download me-1"></i> Exporter
+      </button>
+      <button class="btn btn-success" (click)="openEntreeModal()" *ngIf="isAdmin">
+        <i class="fa fa-plus-circle me-1"></i> Entrée Stock
+      </button>
+      <button class="btn btn-danger" (click)="openSortieModal()" *ngIf="isAdmin">
+        <i class="fa fa-minus-circle me-1"></i> Sortie Stock
+      </button>
+      <button class="btn btn-warning text-white" (click)="openAjustementModal()" *ngIf="isAdmin">
+        <i class="fa fa-adjust me-1"></i> Ajuster Stock
+      </button>
+    </div>
+  </div>
+
+  <!-- Filtres rapides -->
+  <div class="row mb-3 align-items-center">
+    <div class="col-12 d-flex flex-wrap gap-2 align-items-center justify-content-between">
+      <div class="btn-group flex-wrap" role="group">
+        <button type="button" class="btn btn-secondary" (click)="loadTousMouvements()">
+          <i class="fa fa-list me-1"></i> Tout afficher
+        </button>
+        <button type="button" class="btn btn-outline-primary" (click)="chargerParPeriode('jour')">
+          <i class="fa fa-calendar-day me-1"></i> Aujourd'hui
+        </button>
+        <button type="button" class="btn btn-outline-primary" (click)="chargerParPeriode('semaine')">
+          <i class="fa fa-calendar-week me-1"></i> Cette semaine
+        </button>
+        <button type="button" class="btn btn-outline-primary" (click)="chargerParPeriode('mois')">
+          <i class="fa fa-calendar-alt me-1"></i> Ce mois
+        </button>
+        <button type="button" class="btn btn-outline-primary" (click)="chargerParPeriode('annee')">
+          <i class="fa fa-calendar-year me-1"></i> Cette année
+        </button>
+      </div>
+      <button type="button" class="btn btn-outline-success" (click)="loadTousMouvements()" title="Actualiser la liste">
+        <i class="fa fa-sync-alt me-1"></i> Actualiser
+      </button>
+    </div>
+  </div>
+
+  <!-- Messages d'alerte -->
+  <div *ngIf="errorMessage" class="alert alert-danger alert-dismissible fade show" role="alert">
+    <i class="fa fa-exclamation-triangle me-2"></i>
+    {{ errorMessage }}
+    <button type="button" class="btn-close" (click)="errorMessage = ''"></button>
+  </div>
+
+  <div *ngIf="successMessage" class="alert alert-success alert-dismissible fade show" role="alert">
+    <i class="fa fa-check-circle me-2"></i>
+    {{ successMessage }}
+    <button type="button" class="btn-close" (click)="successMessage = ''"></button>
+  </div>
+
+  <!-- Chargement -->
+  <div *ngIf="isLoading && !showEntreeModal && !showSortieModal && !showAjustementModal && !showHistoriqueModal" 
+       class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Chargement...</span>
+    </div>
+    <p class="mt-2">Chargement de l'inventaire...</p>
+  </div>
+
+  <div *ngIf="!isLoading || showEntreeModal || showSortieModal || showAjustementModal || showHistoriqueModal">
+    <!-- Cartes Statistiques -->
+    <div class="row mb-4" *ngIf="statistiques">
+      <div class="col-md-3 col-6 mb-3">
+        <div class="card border-0 shadow-sm h-100 border-start border-success border-4">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <h6 class="text-muted mb-1">Stock faible</h6>
+                <h3 class="mb-0 text-warning">{{ statistiques.produitsStockFaible }}</h3>
+              </div>
+              <div class="rounded-circle bg-warning bg-opacity-10 p-3">
+                <i class="fa fa-exclamation-triangle text-warning fa-2x"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 col-6 mb-3">
+        <div class="card border-0 shadow-sm h-100 border-start border-danger border-4">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <h6 class="text-muted mb-1">En rupture</h6>
+                <h3 class="mb-0 text-danger">{{ statistiques.produitsRupture }}</h3>
+              </div>
+              <div class="rounded-circle bg-danger bg-opacity-10 p-3">
+                <i class="fa fa-times-circle text-danger fa-2x"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 col-6 mb-3">
+        <div class="card border-0 shadow-sm h-100 border-start border-primary border-4">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <h6 class="text-muted mb-1">Valeur totale</h6>
+                <h3 class="mb-0 text-primary">{{ formatPrice(statistiques.valeurTotaleStock) }}</h3>
+              </div>
+              <div class="rounded-circle bg-primary bg-opacity-10 p-3">
+                <i class="fa fa-money-bill text-primary fa-2x"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 col-6 mb-3">
+        <div class="card border-0 shadow-sm h-100 border-start border-info border-4">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <h6 class="text-muted mb-1">Variation nette</h6>
+                <h3 class="mb-0" 
+                    [class.text-success]="statistiques.variationNet > 0"
+                    [class.text-danger]="statistiques.variationNet < 0"
+                    [class.text-muted]="statistiques.variationNet === 0">
+                  {{ statistiques.variationNet > 0 ? '+' : '' }}{{ statistiques.variationNet }}
+                </h3>
+              </div>
+              <div class="rounded-circle bg-info bg-opacity-10 p-3">
+                <i class="fa fa-chart-line text-info fa-2x"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Produits en stock faible AVEC PAGINATION -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card border-0 shadow-sm">
+          <div class="card-header bg-warning text-white">
+            <h5 class="mb-0">
+              <i class="fa fa-exclamation-triangle me-2"></i>
+              Produits en stock faible ({{ produitsStockFaible.length }})
+            </h5>
+          </div>
+          <div class="card-body">
+            <div *ngIf="produitsStockFaible.length === 0" class="text-center py-3 text-muted">
+              <i class="fa fa-check-circle fa-3x mb-2 text-success"></i>
+              <p class="mb-0">Aucun produit en stock faible</p>
+            </div>
+            
+            <div *ngIf="produitsStockFaible.length > 0" class="table-responsive">
+              <table class="table table-hover">
+                <thead class="table-light">
+                  <tr>
+                    <th>Produit</th>
+                    <th>Catégorie</th>
+                    <th class="text-end">Stock actuel</th>
+                    <th class="text-end">Seuil alerte</th>
+                    <th class="text-center">Statut</th>
+                    <th class="text-center">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let produit of paginatedProduitsStockFaible">
+                    <td>
+                      <strong>{{ produit.nom }}</strong>
+                      <br>
+                      <small class="text-muted">{{ produit.codeBarre || 'N/A' }}</small>
+                    </td>
+                    <td class="text-center">{{ produit.categorie?.nom || 'N/A' }}</td>
+                    <td class="text-end fw-bold">{{ produit.quantite }}</td>
+                    <td class="text-end">{{ produit.seuilAlerte }}</td>
+                    <td class="text-center">
+                      <span class="badge bg-warning">
+                        {{ getStockStatusText(produit.quantite, produit.seuilAlerte) }}
+                      </span>
+                    </td>
+                    <td class="text-center">
+                      <div class="d-flex gap-1 justify-content-center flex-wrap">
+                        <button class="btn btn-sm btn-outline-success"
+                                title="Faire une entrée pour ce produit"
+                                (click)="openEntreeModal(produit)">
+                          <i class="fa fa-plus me-1"></i> Entrée
+                        </button>
+                        <button class="btn btn-sm btn-outline-info"
+                                title="Voir l'historique du produit"
+                                (click)="openHistoriqueModal(produit)">
+                          <i class="fa fa-history me-1"></i> Historique
+                        </button>
+                        <button class="btn btn-sm btn-outline-warning"
+                                title="Ajuster le stock"
+                                (click)="openAjustementModal(produit)">
+                          <i class="fa fa-adjust me-1"></i> Ajuster
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Pagination pour les produits en stock faible -->
+            <div *ngIf="totalPagesStockFaible > 1" class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+              <div class="text-muted small">
+                Affichage de {{ (currentPageStockFaible-1)*itemsPerPageStockFaible+1 }} 
+                à {{ currentPageStockFaible*itemsPerPageStockFaible > produitsStockFaible.length ? produitsStockFaible.length : currentPageStockFaible*itemsPerPageStockFaible }} 
+                sur {{ produitsStockFaible.length }} produits
+              </div>
+              <nav>
+                <ul class="pagination pagination-sm mb-0">
+                  <li class="page-item" [class.disabled]="currentPageStockFaible === 1">
+                    <a class="page-link" (click)="changePageStockFaible(currentPageStockFaible - 1)">
+                      <i class="fa fa-chevron-left"></i>
+                    </a>
+                  </li>
+                  <li *ngFor="let page of pageNumbersStockFaible" 
+                      class="page-item" [class.active]="currentPageStockFaible === page">
+                    <a class="page-link" (click)="changePageStockFaible(page)">{{ page }}</a>
+                  </li>
+                  <li class="page-item" [class.disabled]="currentPageStockFaible === totalPagesStockFaible">
+                    <a class="page-link" (click)="changePageStockFaible(currentPageStockFaible + 1)">
+                      <i class="fa fa-chevron-right"></i>
+                    </a>
+                  </li>
+                </ul>
+              </nav>
+              <div class="d-flex align-items-center gap-2">
+                <label class="text-muted small mb-0">Lignes :</label>
+                <select class="form-select form-select-sm w-auto" 
+                        [(ngModel)]="itemsPerPageStockFaible" 
+                        (change)="changePageStockFaible(1)">
+                  <option [value]="5">5</option>
+                  <option [value]="10">10</option>
+                  <option [value]="20">20</option>
+                  <option [value]="50">50</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filtres pour les mouvements -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-white">
+        <h5 class="mb-0">
+          <i class="fa fa-filter me-2"></i> Filtres
+        </h5>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-2">
+            <label class="form-label fw-semibold">Date de début</label>
+            <input type="date" class="form-control" [(ngModel)]="dateDebut">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label fw-semibold">Date de fin</label>
+            <input type="date" class="form-control" [(ngModel)]="dateFin">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-semibold">Produit</label>
+            <select class="form-select" [(ngModel)]="selectedProduitId" (change)="onProduitChange()">
+              <option [value]="null">Tous les produits</option>
+              <option *ngFor="let produit of produits" [value]="produit.id">
+                {{ produit.nom }} (Stock: {{ produit.quantite }})
+              </option>
+            </select>
+          </div>
+          <!-- <div class="col-md-2">
+            <label class="form-label fw-semibold">Catégorie</label>
+            <select class="form-select" [(ngModel)]="categorieMouvementFilter" (change)="onFilterChange()">
+              <option [value]="null">Toutes catégories</option>
+              <option *ngFor="let cat of categories" [value]="cat.id">
+                {{ cat.nom }}
+              </option>
+            </select>
+          </div> -->
+          <div class="col-md-3">
+            <label class="form-label fw-semibold">Type de mouvement</label>
+            <select class="form-select" [(ngModel)]="typeMouvementFilter" (change)="onFilterChange()">
+              <option [value]="null">Tous les types</option>
+              <option *ngFor="let type of getTypeMouvementOptions()" [value]="type">
+                {{ getTypeMouvementLabel(type) }}
+              </option>
+            </select>
+          </div>
+          <div class="col-md-10">
+            <label class="form-label fw-semibold">Recherche</label>
+            <div class="input-group">
+              <input type="text" class="form-control" placeholder="Rechercher par produit, motif ou utilisateur..." 
+                     [(ngModel)]="searchTerm" (input)="onFilterChange()">
+              <button class="btn btn-primary" type="button" (click)="rechercherMouvements()">
+                <i class="fa fa-search me-1"></i> Rechercher
+              </button>
+            </div>
+          </div>
+          <div class="col-md-2 d-flex align-items-end">
+            <button class="btn btn-outline-secondary w-100" type="button" (click)="resetFilters()">
+              <i class="fa fa-refresh me-1"></i> Réinitialiser
+            </button>
+          </div>
+        </div>
+        <div class="row mt-3">
+          <div class="col-12">
+            <button class="btn btn-primary" type="button" (click)="rechercherMouvements()">
+              <i class="fa fa-calendar me-1"></i> Appliquer la période
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tableau des mouvements -->
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <h5 class="mb-0">
+          <i class="fa fa-list me-2"></i> Historique des mouvements
+        </h5>
+        <div class="d-flex align-items-center gap-3">
+          <span class="badge bg-secondary">{{ mouvementsFiltres.length }} mouvement(s)</span>
+          <span class="text-muted small">Page {{ currentPage }} / {{ totalPages }}</span>
+        </div>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead class="table-light">
+              <tr>
+                <th style="min-width: 150px">Date</th>
+                <th style="min-width: 180px">Produit</th>
+                <th style="min-width: 100px">Catégorie</th>
+                <th style="min-width: 100px">Type</th>
+                <th class="text-end" style="min-width: 80px">Quantité</th>
+                <th class="text-end" style="min-width: 80px">Avant</th>
+                <th class="text-end" style="min-width: 80px">Après</th>
+                <th class="text-end" style="min-width: 80px">Variation</th>
+                <th style="min-width: 120px">Utilisateur</th>
+                <th style="min-width: 150px">Motif</th>
+                <th class="text-center" style="min-width: 80px">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let mouvement of paginatedMouvements">
+                <td>
+                  <i class="fa fa-calendar me-1 text-muted"></i>
+                  {{ formatDateSafely(mouvement.dateMouvement) }}
+                </td>
+                <td>
+                  <strong>{{ mouvement.produit?.nom || 'Produit inconnu' }}</strong>
+                </td>
+                <td class="text-center">
+                  <span class="badge bg-secondary">{{ getProduitCategorie(mouvement) }}</span>
+                </td>
+                <td>
+                  <span [class]="'badge ' + getTypeMouvementClass(mouvement.typeMouvement)">
+                    <i [class]="mouvement.typeMouvement === TypeMouvement.ENTREE ? 'fa fa-arrow-down' : 
+                               mouvement.typeMouvement === TypeMouvement.SORTIE ? 'fa fa-arrow-up' : 
+                               'fa fa-adjust'"></i>
+                    {{ getTypeMouvementLabel(mouvement.typeMouvement) }}
+                  </span>
+                </td>
+                <td class="text-end fw-bold">{{ mouvement.quantite }}</td>
+                <td class="text-end">{{ mouvement.quantiteAvant }}</td>
+                <td class="text-end">{{ mouvement.quantiteApres }}</td>
+                <td class="text-end">
+                  <span [class]="getVariationClass(mouvement)">
+                    <i [class]="getVariation(mouvement) > 0 ? 'fa fa-arrow-up' : getVariation(mouvement) < 0 ? 'fa fa-arrow-down' : 'fa fa-minus'"></i>
+                    {{ getVariation(mouvement) }}
+                  </span>
+                </td>
+                <td>
+                  <i class="fa fa-user me-1 text-muted"></i>
+                  <small>{{ mouvement.utilisateur?.nomComplet || 'Système' }}</small>
+                </td>
+                <td>
+                  <!-- Badge source selon le motif -->
+                  <ng-container *ngIf="mouvement.motif">
+                    <span *ngIf="mouvement.motif.toLowerCase().includes('achat fournisseur')"
+                          class="badge badge-pill mr-1"
+                          style="background-color:#17a2b8; color:#fff; font-size:0.72rem;">
+                      <i class="fa fa-truck"></i> Fournisseur
+                    </span>
+                    <span *ngIf="mouvement.motif.toLowerCase().includes('vente')"
+                          class="badge badge-pill mr-1"
+                          style="background-color:#fd7e14; color:#fff; font-size:0.72rem;">
+                      <i class="fa fa-shopping-cart"></i> Vente
+                    </span>
+                    <span *ngIf="mouvement.motif.toLowerCase().includes('retour')"
+                          class="badge badge-pill mr-1"
+                          style="background-color:#6f42c1; color:#fff; font-size:0.72rem;">
+                      <i class="fa fa-undo"></i> Retour
+                    </span>
+                    <span *ngIf="mouvement.motif.toLowerCase().includes('annulation')"
+                          class="badge badge-pill mr-1"
+                          style="background-color:#dc3545; color:#fff; font-size:0.72rem;">
+                      <i class="fa fa-times"></i> Annulation
+                    </span>
+                  </ng-container>
+                  <br *ngIf="mouvement.motif">
+                  <small class="text-muted">{{ mouvement.motif }}</small>
+                </td>
+                <td class="text-center">
+                  <button class="btn btn-sm btn-outline-info"
+                          (click)="openHistoriqueModal(mouvement.produit)"
+                          title="Voir l'historique du produit">
+                    <i class="fa fa-history"></i> Historique
+                  </button>
+                </td>
+              </tr>
+              <tr *ngIf="mouvementsFiltres.length === 0">
+                <td colspan="11" class="text-center py-5">
+                  <i class="fa fa-exchange-alt fa-4x text-muted mb-3"></i>
+                  <p class="text-muted mb-0">Aucun mouvement trouvé pour cette période</p>
+                  <small class="text-muted">Sélectionnez une période et cliquez sur "Rechercher"</small>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+      <!-- Pagination pour les mouvements -->
+      <div class="card-footer bg-white" *ngIf="totalPages > 1">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div class="text-muted small">
+            Affichage de {{ (currentPage-1)*itemsPerPage+1 }} à {{ currentPage*itemsPerPage > mouvementsFiltres.length ? mouvementsFiltres.length : currentPage*itemsPerPage }} sur {{ mouvementsFiltres.length }} mouvements
+          </div>
+          <nav>
+            <ul class="pagination pagination-sm mb-0">
+              <li class="page-item" [class.disabled]="currentPage === 1">
+                <a class="page-link" (click)="changePage(currentPage - 1)">
+                  <i class="fa fa-chevron-left"></i>
+                </a>
+              </li>
+              <li *ngFor="let page of pageNumbers" 
+                  class="page-item" [class.active]="currentPage === page">
+                <a class="page-link" (click)="changePage(page)">{{ page }}</a>
+              </li>
+              <li class="page-item" [class.disabled]="currentPage === totalPages">
+                <a class="page-link" (click)="changePage(currentPage + 1)">
+                  <i class="fa fa-chevron-right"></i>
+                </a>
+              </li>
+            </ul>
+          </nav>
+          <div class="d-flex align-items-center gap-2">
+            <label class="text-muted small mb-0">Lignes :</label>
+            <select class="form-select form-select-sm w-auto" [(ngModel)]="itemsPerPage" (change)="changePage(1)">
+              <option [value]="10">10</option>
+              <option [value]="25">25</option>
+              <option [value]="50">50</option>
+              <option [value]="100">100</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL ENTREE STOCK AVEC RECHERCHE ==================== -->
+<div class="modal fade show" [class.d-block]="showEntreeModal" *ngIf="showEntreeModal" 
+     style="background-color: rgba(0,0,0,0.5); z-index: 1050;" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title">
+          <i class="fa fa-plus-circle me-2"></i> Entrée de Stock
+        </h5>
+        <button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Recherche de produit avec autocomplete -->
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Produit <span class="text-danger">*</span></label>
+          
+          <!-- Filtre par catégorie -->
+          <!-- <div class="mb-2">
+            <select class="form-select form-select-sm" [(ngModel)]="categorieEntreeFilter" (change)="onRechercheProduitEntreeChange()">
+              <option [value]="null">Toutes catégories</option>
+              <option *ngFor="let cat of categories" [value]="cat.id">{{ cat.nom }}</option>
+            </select>
+          </div> -->
+          
+          <!-- Champ de recherche -->
+          <input type="text" class="form-control" 
+                 placeholder="Tapez le nom du produit pour rechercher..."
+                 [(ngModel)]="rechercheProduitEntree"
+                 (input)="onRechercheProduitEntreeChange()"
+                 autocomplete="off">
+          
+          <!-- Liste des résultats -->
+          <div *ngIf="produitsFiltresEntree.length > 0" class="list-group mt-2" style="max-height: 250px; overflow-y: auto;">
+            <button type="button" class="list-group-item list-group-item-action" 
+                    *ngFor="let produit of produitsFiltresEntree"
+                    (click)="selectionnerProduitEntree(produit)">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <strong>{{ produit.nom }}</strong>
+                  <br>
+                  <small class="text-muted">{{ produit.categorie?.nom }} | Code: {{ produit.codeBarre || 'N/A' }}</small>
+                </div>
+                <div class="text-end">
+                  <span class="badge" [class]="getStockStatusClass(produit.quantite, produit.seuilAlerte)">
+                    Stock: {{ produit.quantite }}
+                  </span>
+                </div>
+              </div>
+            </button>
+          </div>
+          
+          <!-- Produit sélectionné -->
+          <div *ngIf="entreeForm.produitId > 0 && produitsFiltresEntree.length === 0" class="alert alert-success mt-2">
+            <i class="fa fa-check-circle me-1"></i>
+            Produit sélectionné: <strong>{{ getProduitNom(entreeForm.produitId) }}</strong>
+            <br>
+            <small>Stock actuel: {{ getProduitStock(entreeForm.produitId) }} unités</small>
+          </div>
+        </div>
+        
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Quantité <span class="text-danger">*</span></label>
+          <div class="input-group">
+            <input type="number" class="form-control" [(ngModel)]="entreeForm.quantite" required min="1" step="1">
+            <span class="input-group-text">unités</span>
+          </div>
+          <small class="text-muted">Nombre d'unités à ajouter au stock</small>
+        </div>
+        
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Motif <span class="text-danger">*</span></label>
+          <textarea class="form-control" rows="3" [(ngModel)]="entreeForm.motif" required maxlength="200"
+                    placeholder="Ex: Réapprovisionnement, Retour client, Correction stock..."></textarea>
+          <div class="text-end"><small class="text-muted">{{ entreeForm.motif?.length || 0 }}/200</small></div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">
+            <i class="fa fa-calendar-alt me-1 text-primary"></i>
+            Date et heure de l'entrée
+          </label>
+          <input type="datetime-local" class="form-control" [(ngModel)]="entreeForm.dateMouvement" />
+          <small class="text-muted">
+            <i class="fa fa-info-circle me-1"></i>
+            Par défaut : date et heure actuelles. Modifiez si le produit est arrivé à une autre date.
+          </small>
+        </div>
+
+        <div class="alert alert-info">
+          <i class="fa fa-info-circle me-2"></i>
+          Cette action augmentera le stock du produit sélectionné.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeAllModals()" [disabled]="isLoading">
+          Annuler
+        </button>
+        <button type="button" class="btn btn-success" (click)="enregistrerEntree()" [disabled]="isLoading || entreeForm.produitId === 0">
+          <span *ngIf="!isLoading">
+            <i class="fa fa-save me-1"></i> Enregistrer
+          </span>
+          <span *ngIf="isLoading">
+            <span class="spinner-border spinner-border-sm me-1"></span> Enregistrement...
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL SORTIE STOCK AVEC RECHERCHE ==================== -->
+<div class="modal fade show" [class.d-block]="showSortieModal" *ngIf="showSortieModal" 
+     style="background-color: rgba(0,0,0,0.5); z-index: 1050;" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title">
+          <i class="fa fa-minus-circle me-2"></i> Sortie de Stock
+        </h5>
+        <button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Recherche de produit avec autocomplete -->
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Produit <span class="text-danger">*</span></label>
+          
+          <!-- Filtre par catégorie -->
+          <!-- <div class="mb-2">
+            <select class="form-select form-select-sm" [(ngModel)]="categorieSortieFilter" (change)="onRechercheProduitSortieChange()">
+              <option [value]="null">Toutes catégories</option>
+              <option *ngFor="let cat of categories" [value]="cat.id">{{ cat.nom }}</option>
+            </select>
+          </div> -->
+          
+          <!-- Champ de recherche -->
+          <input type="text" class="form-control" 
+                 placeholder="Tapez le nom du produit pour rechercher..."
+                 [(ngModel)]="rechercheProduitSortie"
+                 (input)="onRechercheProduitSortieChange()"
+                 autocomplete="off">
+          
+          <!-- Liste des résultats -->
+          <div *ngIf="produitsFiltresSortie.length > 0" class="list-group mt-2" style="max-height: 250px; overflow-y: auto;">
+            <button type="button" class="list-group-item list-group-item-action" 
+                    *ngFor="let produit of produitsFiltresSortie"
+                    (click)="selectionnerProduitSortie(produit)">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <strong>{{ produit.nom }}</strong>
+                  <br>
+                  <small class="text-muted">{{ produit.categorie?.nom }} | Code: {{ produit.codeBarre || 'N/A' }}</small>
+                </div>
+                <div class="text-end">
+                  <span class="badge" [class]="getStockStatusClass(produit.quantite, produit.seuilAlerte)">
+                    Stock: {{ produit.quantite }}
+                  </span>
+                </div>
+              </div>
+            </button>
+          </div>
+          
+          <!-- Produit sélectionné -->
+          <div *ngIf="sortieForm.produitId > 0 && produitsFiltresSortie.length === 0" class="alert alert-success mt-2">
+            <i class="fa fa-check-circle me-1"></i>
+            Produit sélectionné: <strong>{{ getProduitNom(sortieForm.produitId) }}</strong>
+            <br>
+            <small>Stock actuel: {{ getProduitStock(sortieForm.produitId) }} unités</small>
+          </div>
+        </div>
+        
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Quantité <span class="text-danger">*</span></label>
+          <div class="input-group">
+            <input type="number" class="form-control" [(ngModel)]="sortieForm.quantite" required min="1" step="1">
+            <span class="input-group-text">unités</span>
+          </div>
+          <small class="text-muted">Nombre d'unités à retirer du stock</small>
+        </div>
+        
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Motif <span class="text-danger">*</span></label>
+          <textarea class="form-control" rows="3" [(ngModel)]="sortieForm.motif" required maxlength="200"
+                    placeholder="Ex: Vente, Perte, Détérioration, Don..."></textarea>
+          <div class="text-end"><small class="text-muted">{{ sortieForm.motif?.length || 0 }}/200</small></div>
+        </div>
+        
+        <div class="alert alert-warning">
+          <i class="fa fa-exclamation-triangle me-2"></i>
+          Cette action réduira le stock du produit sélectionné.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeAllModals()" [disabled]="isLoading">
+          Annuler
+        </button>
+        <button type="button" class="btn btn-danger" (click)="enregistrerSortie()" [disabled]="isLoading || sortieForm.produitId === 0">
+          <span *ngIf="!isLoading">
+            <i class="fa fa-save me-1"></i> Enregistrer
+          </span>
+          <span *ngIf="isLoading">
+            <span class="spinner-border spinner-border-sm me-1"></span> Enregistrement...
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL AJUSTEMENT STOCK AVEC RECHERCHE ==================== -->
+<div class="modal fade show" [class.d-block]="showAjustementModal" *ngIf="showAjustementModal" 
+     style="background-color: rgba(0,0,0,0.5); z-index: 1050;" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-warning text-white">
+        <h5 class="modal-title">
+          <i class="fa fa-adjust me-2"></i> Ajustement de Stock
+        </h5>
+        <button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Recherche de produit avec autocomplete -->
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Produit <span class="text-danger">*</span></label>
+          
+          <!-- Filtre par catégorie -->
+          <!-- <div class="mb-2">
+            <select class="form-select form-select-sm" [(ngModel)]="categorieAjustementFilter" (change)="onRechercheProduitAjustementChange()">
+              <option [value]="null">Toutes catégories</option>
+              <option *ngFor="let cat of categories" [value]="cat.id">{{ cat.nom }}</option>
+            </select>
+          </div> -->
+          
+          <!-- Champ de recherche -->
+          <input type="text" class="form-control" 
+                 placeholder="Tapez le nom du produit pour rechercher..."
+                 [(ngModel)]="rechercheProduitAjustement"
+                 (input)="onRechercheProduitAjustementChange()"
+                 autocomplete="off">
+          
+          <!-- Liste des résultats -->
+          <div *ngIf="produitsFiltresAjustement.length > 0" class="list-group mt-2" style="max-height: 250px; overflow-y: auto;">
+            <button type="button" class="list-group-item list-group-item-action" 
+                    *ngFor="let produit of produitsFiltresAjustement"
+                    (click)="selectionnerProduitAjustement(produit)">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <strong>{{ produit.nom }}</strong>
+                  <br>
+                  <small class="text-muted">{{ produit.categorie?.nom }} | Code: {{ produit.codeBarre || 'N/A' }}</small>
+                </div>
+                <div class="text-end">
+                  <span class="badge" [class]="getStockStatusClass(produit.quantite, produit.seuilAlerte)">
+                    Stock: {{ produit.quantite }}
+                  </span>
+                </div>
+              </div>
+            </button>
+          </div>
+          
+          <!-- Produit sélectionné -->
+          <div *ngIf="ajustementForm.produitId > 0 && produitsFiltresAjustement.length === 0" class="alert alert-success mt-2">
+            <i class="fa fa-check-circle me-1"></i>
+            Produit sélectionné: <strong>{{ getProduitNom(ajustementForm.produitId) }}</strong>
+          </div>
+        </div>
+        
+        <div *ngIf="selectedProduit" class="alert alert-info mb-3">
+          <div class="row">
+            <div class="col-6">
+              <small class="text-muted">Stock actuel</small>
+              <h5 class="mb-0">{{ selectedProduit.quantite }} unités</h5>
+            </div>
+            <div class="col-6">
+              <small class="text-muted">Seuil d'alerte</small>
+              <h5 class="mb-0">{{ selectedProduit.seuilAlerte }} unités</h5>
+            </div>
+          </div>
+        </div>
+        
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Nouvelle quantité <span class="text-danger">*</span></label>
+          <div class="input-group">
+            <input type="number" class="form-control" [(ngModel)]="ajustementForm.nouvelleQuantite" required min="0" step="1">
+            <span class="input-group-text">unités</span>
+          </div>
+          <small class="text-muted">
+            La différence avec le stock actuel sera enregistrée comme entrée ou sortie
+          </small>
+        </div>
+        
+        <div class="mb-3" *ngIf="selectedProduit">
+          <label class="form-label fw-semibold">Variation</label>
+          <div class="input-group">
+            <span class="input-group-text" [class.text-success]="(ajustementForm.nouvelleQuantite - selectedProduit.quantite) > 0"
+                  [class.text-danger]="(ajustementForm.nouvelleQuantite - selectedProduit.quantite) < 0">
+              <i [class]="(ajustementForm.nouvelleQuantite - selectedProduit.quantite) > 0 ? 'fa fa-arrow-up' : 
+                         (ajustementForm.nouvelleQuantite - selectedProduit.quantite) < 0 ? 'fa fa-arrow-down' : 'fa fa-minus'"></i>
+            </span>
+            <input type="text" class="form-control" 
+                   [value]="(ajustementForm.nouvelleQuantite - selectedProduit.quantite) > 0 ? 
+                            '+' + (ajustementForm.nouvelleQuantite - selectedProduit.quantite) : 
+                            ajustementForm.nouvelleQuantite - selectedProduit.quantite"
+                   readonly>
+            <span class="input-group-text">unités</span>
+          </div>
+        </div>
+        
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Motif <span class="text-danger">*</span></label>
+          <textarea class="form-control" rows="3" [(ngModel)]="ajustementForm.motif" required maxlength="200"
+                    placeholder="Ex: Inventaire physique, Correction d'erreur, Transfert..."></textarea>
+          <div class="text-end"><small class="text-muted">{{ ajustementForm.motif?.length || 0 }}/200</small></div>
+        </div>
+        
+        <div class="alert alert-warning">
+          <i class="fa fa-exclamation-triangle me-2"></i>
+          Cette action remplacera le stock actuel par la nouvelle valeur.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeAllModals()" [disabled]="isLoading">
+          Annuler
+        </button>
+        <button type="button" class="btn btn-warning" (click)="ajusterStock()" [disabled]="isLoading || ajustementForm.produitId === 0">
+          <span *ngIf="!isLoading">
+            <i class="fa fa-save me-1"></i> Ajuster
+          </span>
+          <span *ngIf="isLoading">
+            <span class="spinner-border spinner-border-sm me-1"></span> Ajustement...
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL EXPORT ==================== -->
+<div class="modal fade show" [class.d-block]="showExportModal" *ngIf="showExportModal" 
+     style="background-color: rgba(0,0,0,0.5); z-index: 1050;" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-info text-white">
+        <h5 class="modal-title">
+          <i class="fa fa-download me-2"></i> Exporter les mouvements
+        </h5>
+        <button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-4">
+          <label class="form-label fw-semibold">Période d'export</label>
+          <div class="d-flex flex-wrap gap-2">
+            <button type="button" class="btn btn-outline-primary" [class.active]="exportPeriode === 'jour'" (click)="exportPeriode = 'jour'">
+              <i class="fa fa-calendar-day"></i> Jour
+            </button>
+            <button type="button" class="btn btn-outline-primary" [class.active]="exportPeriode === 'semaine'" (click)="exportPeriode = 'semaine'">
+              <i class="fa fa-calendar-week"></i> Semaine
+            </button>
+            <button type="button" class="btn btn-outline-primary" [class.active]="exportPeriode === 'mois'" (click)="exportPeriode = 'mois'">
+              <i class="fa fa-calendar-alt"></i> Mois
+            </button>
+            <button type="button" class="btn btn-outline-primary" [class.active]="exportPeriode === 'annee'" (click)="exportPeriode = 'annee'">
+              <i class="fa fa-calendar-year"></i> Année
+            </button>
+            <button type="button" class="btn btn-outline-primary" [class.active]="exportPeriode === 'personnalise'" (click)="exportPeriode = 'personnalise'">
+              <i class="fa fa-calendar"></i> Personnalisé
+            </button>
+          </div>
+        </div>
+        
+        <div *ngIf="exportPeriode === 'personnalise'" class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Date début</label>
+            <input type="date" class="form-control" [(ngModel)]="exportDateDebut">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Date fin</label>
+            <input type="date" class="form-control" [(ngModel)]="exportDateFin">
+          </div>
+        </div>
+        
+        <div class="alert alert-info mt-3">
+          <i class="fa fa-info-circle me-2"></i>
+          L'export sera généré au format Excel (XLSX) et téléchargé automatiquement.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeAllModals()">
+          Annuler
+        </button>
+        <button type="button" class="btn btn-info text-white" (click)="exporterMouvements()" [disabled]="isLoading">
+          <span *ngIf="!isLoading">
+            <i class="fa fa-download me-1"></i> Exporter
+          </span>
+          <span *ngIf="isLoading">
+            <span class="spinner-border spinner-border-sm me-1"></span> Export...
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL HISTORIQUE PRODUIT ==================== -->
+<div class="modal fade show" [class.d-block]="showHistoriqueModal" *ngIf="showHistoriqueModal && selectedProduit" 
+     style="background-color: rgba(0,0,0,0.5); z-index: 1050;" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header bg-info text-white">
+        <h5 class="modal-title">
+          <i class="fa fa-history me-2"></i> Historique - {{ selectedProduit.nom }}
+        </h5>
+        <button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Informations produit -->
+        <div class="row g-3 mb-4 p-3 bg-light rounded">
+          <div class="col-md-4">
+            <small class="text-muted d-block">Stock actuel</small>
+            <h5 class="mb-0">{{ selectedProduit.quantite }} unités</h5>
+          </div>
+          <div class="col-md-4">
+            <small class="text-muted d-block">Seuil d'alerte</small>
+            <h5 class="mb-0">{{ selectedProduit.seuilAlerte }} unités</h5>
+          </div>
+          <div class="col-md-4">
+            <small class="text-muted d-block">Statut</small>
+            <span class="badge bg-warning">{{ getStockStatusText(selectedProduit.quantite, selectedProduit.seuilAlerte) }}</span>
+          </div>
+        </div>
+        
+        <!-- Chargement -->
+        <div *ngIf="isLoading" class="text-center py-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Chargement...</span>
+          </div>
+          <p class="mt-2">Chargement de l'historique...</p>
+        </div>
+        
+        <!-- Tableau historique -->
+        <div *ngIf="!isLoading">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="mb-0">Mouvements ({{ produitHistorique.length }})</h6>
+          </div>
+          
+          <div *ngIf="produitHistorique.length === 0" class="text-center py-5 text-muted">
+            <i class="fa fa-history fa-4x mb-3"></i>
+            <p class="mb-0">Aucun mouvement enregistré pour ce produit</p>
+          </div>
+          
+          <div *ngIf="produitHistorique.length > 0" class="table-responsive">
+            <table class="table table-sm table-hover">
+              <thead class="table-light">
+                <tr>
+                  <th>Date</th>
+                  <th>Type</th>
+                  <th class="text-end">Quantité</th>
+                  <th class="text-end">Avant</th>
+                  <th class="text-end">Après</th>
+                  <th>Utilisateur</th>
+                  <th>Motif</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let mouvement of produitHistorique">
+                  <td>
+                    <i class="fa fa-calendar me-1 text-muted"></i>
+                    {{ formatDateSafely(mouvement.dateMouvement) }}
+                  </td>
+                  <td>
+                    <span [class]="'badge ' + getTypeMouvementClass(mouvement.typeMouvement)">
+                      {{ getTypeMouvementLabel(mouvement.typeMouvement) }}
+                    </span>
+                  </td>
+                  <td class="text-end fw-bold">{{ mouvement.quantite }}</td>
+                  <td class="text-end">{{ mouvement.quantiteAvant }}</td>
+                  <td class="text-end">{{ mouvement.quantiteApres }}</td>
+                  <td>
+                    <i class="fa fa-user me-1 text-muted"></i>
+                    <small>{{ mouvement.utilisateur?.nomComplet || 'Système' }}</small>
+                  </td>
+                  <td>
+                    <i class="fa fa-comment me-1 text-muted"></i>
+                    <small>{{ mouvement.motif }}</small>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeAllModals()">
+          <i class="fa fa-times me-1"></i> Fermer
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

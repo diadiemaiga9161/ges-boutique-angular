@@ -1,0 +1,566 @@
+<div class="container-fluid py-4 app-page">
+
+  <!-- En-tête -->
+  <div class="app-page-header mb-4">
+    <div class="app-page-header-left">
+      <div class="app-page-icon"><i class="fa fa-archive"></i></div>
+      <div>
+        <h1 class="app-page-title">Dépôts Garde</h1>
+        <p class="app-page-subtitle">Argent confié pour garde — hors caisse</p>
+      </div>
+    </div>
+    <div class="app-page-header-actions">
+      <button class="btn btn-primary" (click)="ouvrirFormCreation()">
+        <i class="fa fa-plus me-1"></i> Nouveau dépôt
+      </button>
+    </div>
+  </div>
+
+  <!-- Statistiques -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="app-stat-card">
+        <div class="app-stat-icon blue"><i class="fa fa-archive"></i></div>
+        <div class="app-stat-body">
+          <div class="app-stat-label">Total dépôts</div>
+          <div class="app-stat-value">{{ stats.totalDepots }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="app-stat-card">
+        <div class="app-stat-icon green"><i class="fa fa-check-circle"></i></div>
+        <div class="app-stat-body">
+          <div class="app-stat-label">Actifs</div>
+          <div class="app-stat-value">{{ stats.totalActifs }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="app-stat-card">
+        <div class="app-stat-icon orange"><i class="fa fa-money"></i></div>
+        <div class="app-stat-body">
+          <div class="app-stat-label">Montant en garde</div>
+          <div class="app-stat-value">{{ formatMontant(stats.totalMontantGarde) }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="app-stat-card">
+        <div class="app-stat-icon purple"><i class="fa fa-times-circle"></i></div>
+        <div class="app-stat-body">
+          <div class="app-stat-label">Clôturés</div>
+          <div class="app-stat-value">{{ stats.totalClotures }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bascule Liste / Par client -->
+  <div class="d-flex mb-3">
+    <div class="btn-group" role="group">
+      <button type="button" class="btn btn-sm"
+        [ngClass]="vueMode === 'liste' ? 'btn-primary' : 'btn-outline-primary'"
+        (click)="basculerVue('liste')">
+        <i class="fa fa-list me-1"></i> Liste
+      </button>
+      <button type="button" class="btn btn-sm"
+        [ngClass]="vueMode === 'groupes' ? 'btn-primary' : 'btn-outline-primary'"
+        (click)="basculerVue('groupes')">
+        <i class="fa fa-users me-1"></i> Par client
+      </button>
+    </div>
+  </div>
+
+  <!-- Filtres (liste seulement) -->
+  <div class="app-filter-card mb-4" *ngIf="vueMode === 'liste'">
+    <div class="row g-2">
+      <div class="col-md-4">
+        <div class="input-group">
+          <span class="input-group-text"><i class="fa fa-search"></i></span>
+          <input type="text" class="form-control" placeholder="Rechercher par nom ou numéro..."
+            [(ngModel)]="searchQuery" />
+        </div>
+      </div>
+      <div class="col-md-3">
+        <select class="form-select" [(ngModel)]="filtreStatut">
+          <option value="">Tous les statuts</option>
+          <option value="ACTIF">Actifs</option>
+          <option value="CLOTURE">Clôturés</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== VUE PAR CLIENT ===== -->
+  <div *ngIf="vueMode === 'groupes'">
+    <div *ngIf="isLoadingGroupes" class="text-center p-4">
+      <div class="spinner-border text-primary"></div>
+      <p class="mt-2 text-muted">Chargement des groupes...</p>
+    </div>
+
+    <div *ngIf="!isLoadingGroupes && groupesClient.length === 0" class="text-center text-muted py-5">
+      <i class="fa fa-users fa-3x mb-3 d-block"></i>
+      Aucun client avec dépôt actif.
+    </div>
+
+    <div class="row g-3" *ngIf="!isLoadingGroupes && groupesClient.length > 0">
+      <div class="col-md-6 col-lg-4" *ngFor="let client of groupesClient">
+        <div class="card shadow-sm h-100">
+          <div class="card-header d-flex align-items-center justify-content-between py-2">
+            <div>
+              <strong class="d-block">{{ client.nomComplet }}</strong>
+              <small class="text-muted"><i class="fa fa-phone mr-1"></i>{{ client.numero }}</small>
+            </div>
+            <span class="badge badge-pill badge-primary px-2">{{ client.nombreDepotsActifs }} dépôt{{ client.nombreDepotsActifs > 1 ? 's' : '' }}</span>
+          </div>
+          <div class="card-body py-2">
+            <table class="table table-sm table-borderless mb-2">
+              <tr>
+                <td class="text-muted small">Total initial</td>
+                <td class="text-right font-weight-bold">{{ formatMontant(client.totalMontantInitial) }}</td>
+              </tr>
+              <tr>
+                <td class="text-muted small">Déjà retiré</td>
+                <td class="text-right text-danger">{{ formatMontant(client.totalMontantRetire) }}</td>
+              </tr>
+              <tr>
+                <td class="text-muted small">Disponible</td>
+                <td class="text-right text-success font-weight-bold" style="font-size:1.05em">{{ formatMontant(client.totalMontantRestant) }}</td>
+              </tr>
+            </table>
+
+            <!-- Détail des dépôts individuels -->
+            <div class="mt-1">
+              <small class="text-muted font-weight-bold">Dépôts actifs :</small>
+              <div *ngFor="let d of client.depots" class="d-flex justify-content-between align-items-center mt-1 px-2 py-1 bg-light rounded">
+                <small class="text-muted">{{ d.dateDepot | date:'dd/MM/yy' }}</small>
+                <small class="text-success font-weight-bold">{{ formatMontant(d.montantRestant) }}</small>
+                <button class="btn btn-xs btn-outline-warning py-0 px-1" (click)="ouvrirRetrait(d)" title="Retrait partiel">
+                  <i class="i-Arrow-Down-2"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="card-footer py-2 text-right">
+            <button class="btn btn-sm btn-danger" (click)="ouvrirRetraitGlobal(client)">
+              <i class="fa fa-arrow-down mr-1"></i> Retrait global
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tableau (liste seulement) -->
+  <div class="app-table-card" *ngIf="vueMode === 'liste'">
+    <div class="app-table-header">
+      <div class="app-table-title"><i class="fa fa-archive me-2"></i>Liste des dépôts</div>
+    </div>
+      <div *ngIf="isLoading" class="text-center p-4">
+        <div class="spinner-border text-primary"></div>
+      </div>
+
+      <table *ngIf="!isLoading" class="table table-hover mb-0">
+        <thead class="thead-light">
+          <tr>
+            <th>#</th>
+            <th>Nom & Prénom</th>
+            <th>Numéro</th>
+            <th class="text-right">Montant initial</th>
+            <th class="text-right">Retiré</th>
+            <th class="text-right">Restant</th>
+            <th>Progression</th>
+            <th>Date dépôt</th>
+            <th>Statut</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let d of paginatedDepots; let i = index"
+              [ngClass]="d.statut === 'CLOTURE' ? 'table-row-cloture' : ''">
+            <td>{{ (currentPage - 1) * itemsPerPage + i + 1 }}</td>
+            <td>
+              <strong>{{ d.nomComplet }}</strong>
+              <div *ngIf="d.observation" class="small text-muted">{{ d.observation }}</div>
+            </td>
+            <td>{{ d.numero }}</td>
+            <td class="text-right">{{ formatMontant(d.montantInitial) }}</td>
+            <td class="text-right text-danger">
+              <span *ngIf="d.montantRetire > 0">{{ formatMontant(d.montantRetire) }}</span>
+              <span *ngIf="d.montantRetire === 0" class="text-muted">—</span>
+            </td>
+            <td class="text-right font-weight-bold"
+                [ngClass]="d.montantRestant === 0 ? 'text-muted' : 'text-success'">
+              {{ formatMontant(d.montantRestant) }}
+            </td>
+            <td style="min-width:100px">
+              <div class="progress-bar-depot">
+                <div class="progress-bar-fill" [style.width.%]="getPourcentageRetire(d)"></div>
+              </div>
+              <small class="text-muted">{{ getPourcentageRetire(d) }}% retiré</small>
+            </td>
+            <td>{{ d.dateDepot | date:'dd/MM/yyyy' }}</td>
+            <td>
+              <span class="badge badge-pill px-3 py-2"
+                    [ngClass]="d.statut === 'ACTIF' ? 'badge-actif' : 'badge-cloture'">
+                {{ d.statut === 'ACTIF' ? 'Actif' : 'Clôturé' }}
+              </span>
+            </td>
+            <td>
+              <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-info btn-xs" title="Voir les retraits" (click)="voirDetail(d)">
+                  <i class="i-Eye"></i>
+                </button>
+                <button *ngIf="d.statut === 'ACTIF'" class="btn btn-outline-warning btn-xs"
+                  title="Effectuer un retrait" (click)="ouvrirRetrait(d)">
+                  <i class="i-Arrow-Down-2"></i> Retrait
+                </button>
+                <button class="btn btn-outline-secondary btn-xs" title="Modifier" (click)="ouvrirFormEdition(d)">
+                  <i class="i-Edit"></i>
+                </button>
+                <button *ngIf="d.statut === 'ACTIF'" class="btn btn-outline-danger btn-xs"
+                  title="Clôturer" (click)="confirmerCloture(d)">
+                  <i class="i-Close-Window"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="depotsFiltres.length === 0">
+            <td colspan="10" class="text-center text-muted py-4">Aucun dépôt trouvé.</td>
+          </tr>
+        </tbody>
+      </table>
+  </div>
+
+  <!-- Pagination (liste seulement) -->
+  <div class="d-flex justify-content-center mt-3" *ngIf="vueMode === 'liste' && totalPages > 1">
+    <ul class="pagination pagination-sm">
+      <li class="page-item" [class.disabled]="currentPage === 1">
+        <a class="page-link" (click)="goToPage(currentPage - 1)">«</a>
+      </li>
+      <li class="page-item" *ngFor="let p of pages" [class.active]="p === currentPage">
+        <a class="page-link" (click)="goToPage(p)">{{ p }}</a>
+      </li>
+      <li class="page-item" [class.disabled]="currentPage === totalPages">
+        <a class="page-link" (click)="goToPage(currentPage + 1)">»</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<!-- ==================== MODAL RETRAIT GLOBAL ==================== -->
+<div class="modal fade show d-block" tabindex="-1" *ngIf="showRetraitGlobalModal && clientRetraitGlobal" style="background:rgba(0,0,0,0.5)">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title"><i class="fa fa-arrow-down mr-2"></i> Retrait global — {{ clientRetraitGlobal!.nomComplet }}</h5>
+        <button type="button" class="close text-white" (click)="fermerModal()"><span>&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <!-- Récap client -->
+        <div class="alert alert-light border mb-3">
+          <p class="mb-1"><strong>Client :</strong> {{ clientRetraitGlobal!.nomComplet }}</p>
+          <p class="mb-1"><strong>Numéro :</strong> {{ clientRetraitGlobal!.numero }}</p>
+          <p class="mb-1"><strong>Nombre de dépôts actifs :</strong> {{ clientRetraitGlobal!.nombreDepotsActifs }}</p>
+          <p class="mb-0"><strong>Total disponible :</strong>
+            <span class="text-success font-weight-bold">{{ formatMontant(clientRetraitGlobal!.totalMontantRestant) }}</span>
+          </p>
+        </div>
+
+        <div class="form-group">
+          <label>Montant à retirer (FCFA)</label>
+          <input type="number" class="form-control" [(ngModel)]="retraitGlobalForm.montant"
+            [max]="clientRetraitGlobal!.totalMontantRestant" min="0"
+            placeholder="Laisser à 0 pour retirer TOUT" />
+          <small class="text-muted">Laisser à 0 ou vide = retirer tout le solde disponible</small>
+        </div>
+        <div class="form-group">
+          <label>Observation</label>
+          <textarea class="form-control" [(ngModel)]="retraitGlobalForm.observation" rows="2"
+            placeholder="Raison du retrait (optionnel)"></textarea>
+        </div>
+
+        <!-- Bouton tout retirer -->
+        <button class="btn btn-sm btn-outline-danger mb-2"
+          (click)="retraitGlobalForm.montant = clientRetraitGlobal!.totalMontantRestant">
+          Retirer tout ({{ formatMontant(clientRetraitGlobal!.totalMontantRestant) }})
+        </button>
+
+        <!-- Aperçu -->
+        <div *ngIf="(retraitGlobalForm.montant || 0) > 0" class="alert alert-info mt-2">
+          Solde restant après retrait :
+          <strong [ngClass]="(clientRetraitGlobal!.totalMontantRestant - (retraitGlobalForm.montant || 0)) === 0 ? 'text-danger' : 'text-success'">
+            {{ formatMontant(clientRetraitGlobal!.totalMontantRestant - (retraitGlobalForm.montant || 0)) }}
+          </strong>
+        </div>
+        <div *ngIf="!(retraitGlobalForm.montant) || retraitGlobalForm.montant === 0" class="alert alert-warning mt-2">
+          <i class="fa fa-exclamation-triangle mr-1"></i>
+          Tous les dépôts actifs de ce client seront soldés.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="fermerModal()">Annuler</button>
+        <button class="btn btn-danger" (click)="confirmerRetraitGlobal()">
+          <i class="fa fa-arrow-down mr-1"></i> Confirmer le retrait global
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL CRÉATION / MODIFICATION ==================== -->
+<div class="modal fade show d-block" tabindex="-1" *ngIf="showFormModal" style="background:rgba(0,0,0,0.5)">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="i-Safe-Box mr-2"></i>
+          {{ isEditing ? 'Modifier le dépôt' : 'Nouveau dépôt garde' }}
+        </h5>
+        <button type="button" class="close" (click)="fermerModal()"><span>&times;</span></button>
+      </div>
+      <div class="modal-body">
+
+        <!-- Recherche client dépôt -->
+        <div class="form-group position-relative" *ngIf="!isEditing">
+          <label>Rechercher un client existant</label>
+          <input type="text" class="form-control" [(ngModel)]="depotClientSearch"
+            (input)="searchDepotClients()" placeholder="Nom ou numéro de téléphone..." autocomplete="off" />
+          <!-- Dropdown suggestions -->
+          <ul class="list-group shadow" *ngIf="filteredDepotClients.length && !selectedDepotClient"
+            style="position:absolute;z-index:1050;width:100%;top:100%">
+            <li class="list-group-item list-group-item-action py-2 px-3 cursor-pointer"
+              *ngFor="let c of filteredDepotClients" (click)="selectDepotClient(c)">
+              <strong>{{ c.nomComplet }}</strong> &nbsp;<span class="text-muted">{{ c.numero }}</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Client sélectionné -->
+        <div *ngIf="selectedDepotClient && !isEditing" class="alert alert-success d-flex align-items-center justify-content-between py-2 mb-3">
+          <div>
+            <i class="i-Male-2 mr-2"></i>
+            <strong>{{ selectedDepotClient.nomComplet }}</strong>
+            <span class="ml-2 text-muted">{{ selectedDepotClient.numero }}</span>
+          </div>
+          <button type="button" class="btn btn-sm btn-light" (click)="clearDepotClient()">
+            <i class="i-Close-Window"></i>
+          </button>
+        </div>
+
+        <!-- Bouton nouveau client -->
+        <div *ngIf="!selectedDepotClient && !isEditing" class="mb-3">
+          <button type="button" class="btn btn-sm btn-outline-primary" (click)="showNewDepotClientForm = !showNewDepotClientForm">
+            <i class="i-Add mr-1"></i>{{ showNewDepotClientForm ? 'Annuler' : '+ Nouveau client' }}
+          </button>
+        </div>
+
+        <!-- Formulaire nouveau client inline -->
+        <div *ngIf="showNewDepotClientForm && !isEditing" class="card card-body bg-light mb-3">
+          <p class="font-weight-bold mb-2">Nouveau client dépôt</p>
+          <div class="row">
+            <div class="col-md-6 form-group mb-2">
+              <label>Nom <span class="text-danger">*</span></label>
+              <input type="text" class="form-control form-control-sm" [(ngModel)]="depotClientForm.nom" placeholder="Nom" />
+            </div>
+            <div class="col-md-6 form-group mb-2">
+              <label>Prénom</label>
+              <input type="text" class="form-control form-control-sm" [(ngModel)]="depotClientForm.prenom" placeholder="Prénom" />
+            </div>
+            <div class="col-md-6 form-group mb-2">
+              <label>Téléphone <span class="text-danger">*</span></label>
+              <input type="text" class="form-control form-control-sm" [(ngModel)]="depotClientForm.numero" placeholder="Téléphone" />
+            </div>
+            <div class="col-md-6 form-group mb-2">
+              <label>Adresse</label>
+              <input type="text" class="form-control form-control-sm" [(ngModel)]="depotClientForm.adresse" placeholder="Adresse" />
+            </div>
+          </div>
+          <button type="button" class="btn btn-sm btn-success" (click)="saveNewDepotClient()">
+            <i class="i-Save mr-1"></i>Créer et sélectionner
+          </button>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6 form-group" *ngIf="isEditing">
+            <label>Nom <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" [(ngModel)]="form.nom" placeholder="Nom de famille" />
+          </div>
+          <div class="col-md-6 form-group" *ngIf="isEditing">
+            <label>Prénom</label>
+            <input type="text" class="form-control" [(ngModel)]="form.prenom" placeholder="Prénom (optionnel)" />
+          </div>
+          <div class="col-md-6 form-group" *ngIf="isEditing">
+            <label>Numéro de téléphone <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" [(ngModel)]="form.numero" placeholder="Ex: 06 XX XX XX XX" />
+          </div>
+          <div class="col-md-6 form-group">
+            <label>Montant déposé (FCFA) <span class="text-danger">*</span></label>
+            <input type="number" class="form-control" [(ngModel)]="form.montant"
+              [disabled]="isEditing" placeholder="Montant en FCFA" min="1" />
+            <small *ngIf="isEditing" class="text-muted">Le montant ne peut pas être modifié après création.</small>
+          </div>
+          <div class="col-12 form-group">
+            <label>Observation</label>
+            <textarea class="form-control" [(ngModel)]="form.observation" rows="2"
+              placeholder="Remarques optionnelles..."></textarea>
+          </div>
+        </div>
+
+        <!-- Récapitulatif si nouveau -->
+        <div *ngIf="!isEditing && form.montant > 0 && (selectedDepotClient || form.nom)" class="alert alert-info">
+          <p class="mb-0">
+            <strong>{{ selectedDepotClient?.nomComplet || (form.prenom ? form.prenom + ' ' : '') + form.nom }}</strong>
+            confie <strong class="text-primary">{{ formatMontant(form.montant) }}</strong>
+            en garde. Ce montant n'est <strong>pas</strong> enregistré dans la caisse.
+          </p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="fermerModal()">Annuler</button>
+        <button class="btn btn-success" (click)="enregistrer()" [disabled]="isSaving">
+          <span *ngIf="isSaving" class="spinner-border spinner-border-sm mr-1"></span>
+          <i class="i-Save mr-1" *ngIf="!isSaving"></i>
+          {{ isEditing ? 'Mettre à jour' : 'Enregistrer le dépôt' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL RETRAIT ==================== -->
+<div class="modal fade show d-block" tabindex="-1" *ngIf="showRetraitModal && depotRetrait" style="background:rgba(0,0,0,0.5)">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-warning text-white">
+        <h5 class="modal-title"><i class="i-Arrow-Down-2 mr-2"></i> Retrait de dépôt</h5>
+        <button type="button" class="close text-white" (click)="fermerModal()"><span>&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <!-- Info dépôt -->
+        <div class="alert alert-light border mb-3">
+          <p class="mb-1"><strong>Client :</strong> {{ depotRetrait!.nomComplet }}</p>
+          <p class="mb-1"><strong>Numéro :</strong> {{ depotRetrait!.numero }}</p>
+          <p class="mb-1"><strong>Montant initial :</strong> {{ formatMontant(depotRetrait!.montantInitial) }}</p>
+          <p class="mb-1"><strong>Déjà retiré :</strong>
+            <span class="text-danger">{{ formatMontant(depotRetrait!.montantRetire) }}</span>
+          </p>
+          <p class="mb-0"><strong>Solde disponible :</strong>
+            <span class="text-success font-weight-bold">{{ formatMontant(depotRetrait!.montantRestant) }}</span>
+          </p>
+        </div>
+
+        <div class="form-group">
+          <label>Montant à retirer (FCFA) <span class="text-danger">*</span></label>
+          <input type="number" class="form-control" [(ngModel)]="retraitForm.montant"
+            [max]="depotRetrait!.montantRestant" min="1" placeholder="Montant en FCFA" />
+          <small class="text-muted">Maximum : {{ formatMontant(depotRetrait!.montantRestant) }}</small>
+        </div>
+        <div class="form-group">
+          <label>Observation</label>
+          <textarea class="form-control" [(ngModel)]="retraitForm.observation" rows="2"
+            placeholder="Raison du retrait (optionnel)"></textarea>
+        </div>
+
+        <!-- Bouton tout retirer -->
+        <button class="btn btn-sm btn-outline-danger mb-2"
+          (click)="retraitForm.montant = depotRetrait!.montantRestant">
+          Retirer tout ({{ formatMontant(depotRetrait!.montantRestant) }})
+        </button>
+
+        <!-- Aperçu solde après retrait -->
+        <div *ngIf="retraitForm.montant > 0" class="alert alert-info">
+          Solde après retrait :
+          <strong [ngClass]="(depotRetrait!.montantRestant - retraitForm.montant) === 0 ? 'text-danger' : 'text-success'">
+            {{ formatMontant(depotRetrait!.montantRestant - retraitForm.montant) }}
+          </strong>
+          <span *ngIf="(depotRetrait!.montantRestant - retraitForm.montant) === 0"
+            class="text-danger ml-2"><i class="fas fa-info-circle"></i> Le dépôt sera clôturé.</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="fermerModal()">Annuler</button>
+        <button class="btn btn-warning" (click)="confirmerRetrait()">
+          <i class="i-Arrow-Down-2 mr-1"></i> Confirmer le retrait
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL DÉTAIL / HISTORIQUE ==================== -->
+<div class="modal fade show d-block" tabindex="-1" *ngIf="showDetailModal && depotDetail" style="background:rgba(0,0,0,0.5)">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="i-Eye mr-2"></i> Détail du dépôt — {{ depotDetail!.nomComplet }}</h5>
+        <button type="button" class="close" (click)="fermerModal()"><span>&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <!-- Résumé -->
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <table class="table table-sm table-borderless">
+              <tr><td class="text-muted">Nom complet</td><td><strong>{{ depotDetail!.nomComplet }}</strong></td></tr>
+              <tr><td class="text-muted">Numéro</td><td>{{ depotDetail!.numero }}</td></tr>
+              <tr><td class="text-muted">Date dépôt</td><td>{{ depotDetail!.dateDepot | date:'dd/MM/yyyy HH:mm' }}</td></tr>
+              <tr><td class="text-muted">Statut</td>
+                <td>
+                  <span class="badge badge-pill px-2"
+                    [ngClass]="depotDetail!.statut === 'ACTIF' ? 'badge-actif' : 'badge-cloture'">
+                    {{ depotDetail!.statut === 'ACTIF' ? 'Actif' : 'Clôturé' }}
+                  </span>
+                </td>
+              </tr>
+            </table>
+          </div>
+          <div class="col-md-6">
+            <table class="table table-sm table-borderless">
+              <tr><td class="text-muted">Montant initial</td><td><strong>{{ formatMontant(depotDetail!.montantInitial) }}</strong></td></tr>
+              <tr><td class="text-muted">Total retiré</td>
+                <td><span class="text-danger font-weight-bold">{{ formatMontant(depotDetail!.montantRetire) }}</span></td>
+              </tr>
+              <tr><td class="text-muted">Solde restant</td>
+                <td><span class="text-success font-weight-bold">{{ formatMontant(depotDetail!.montantRestant) }}</span></td>
+              </tr>
+              <tr><td class="text-muted">Nb retraits</td><td>{{ depotDetail!.retraits.length }}</td></tr>
+            </table>
+          </div>
+        </div>
+
+        <!-- Barre de progression -->
+        <div class="mb-3">
+          <small class="text-muted">{{ getPourcentageRetire(depotDetail!) }}% du montant retiré</small>
+          <div class="progress mt-1" style="height:8px">
+            <div class="progress-bar bg-danger" [style.width.%]="getPourcentageRetire(depotDetail!)"></div>
+          </div>
+        </div>
+
+        <!-- Historique des retraits -->
+        <h6 class="font-weight-bold mb-2">Historique des retraits</h6>
+        <div *ngIf="depotDetail!.retraits.length === 0" class="text-muted text-center py-3">
+          Aucun retrait effectué.
+        </div>
+        <div *ngFor="let r of depotDetail!.retraits" class="retrait-item mb-2 p-2 bg-light rounded">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <span class="font-weight-bold text-danger">{{ formatMontant(r.montant) }}</span>
+              <span class="text-muted ml-2 small">{{ r.dateRetrait | date:'dd/MM/yyyy HH:mm' }}</span>
+            </div>
+          </div>
+          <div *ngIf="r.observation" class="small text-muted mt-1">
+            <i class="i-Information mr-1"></i>{{ r.observation }}
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="fermerModal()">Fermer</button>
+        <button *ngIf="depotDetail!.statut === 'ACTIF'" class="btn btn-warning"
+          (click)="fermerModal(); ouvrirRetrait(depotDetail!)">
+          <i class="i-Arrow-Down-2 mr-1"></i> Effectuer un retrait
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

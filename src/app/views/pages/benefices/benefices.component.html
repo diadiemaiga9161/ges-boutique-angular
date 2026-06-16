@@ -1,0 +1,198 @@
+<div class="main-content-wrap d-flex flex-column">
+
+  <!-- HEADER -->
+  <div class="breadcrumb d-flex align-items-center mb-3">
+    <h1 class="page-title m-0">
+      <i class="i-Money-2 text-success me-2"></i> Bénéfices
+    </h1>
+    <div class="ms-auto d-flex gap-2 align-items-center">
+      <button class="btn btn-outline-danger btn-sm" (click)="exporterPDF()" [disabled]="!data || isLoading">
+        <i class="i-File-PDF"></i> Télécharger PDF
+      </button>
+    </div>
+  </div>
+
+  <!-- SÉLECTEUR DE PÉRIODE -->
+  <div class="card mb-3">
+    <div class="card-body py-2">
+      <div class="d-flex flex-wrap gap-2 align-items-center">
+        <button class="btn btn-sm" [class.btn-primary]="periodeActive==='JOURNALIER'"
+          [class.btn-outline-primary]="periodeActive!=='JOURNALIER'" (click)="selectionner('JOURNALIER')">
+          <i class="i-Calendar me-1"></i> Aujourd'hui
+        </button>
+        <button class="btn btn-sm" [class.btn-primary]="periodeActive==='HEBDOMADAIRE'"
+          [class.btn-outline-primary]="periodeActive!=='HEBDOMADAIRE'" (click)="selectionner('HEBDOMADAIRE')">
+          <i class="i-Calendar me-1"></i> Cette semaine
+        </button>
+        <button class="btn btn-sm" [class.btn-primary]="periodeActive==='MENSUEL'"
+          [class.btn-outline-primary]="periodeActive!=='MENSUEL'" (click)="selectionner('MENSUEL')">
+          <i class="i-Calendar me-1"></i> Ce mois
+        </button>
+        <button class="btn btn-sm" [class.btn-primary]="periodeActive==='ANNUEL'"
+          [class.btn-outline-primary]="periodeActive!=='ANNUEL'" (click)="selectionner('ANNUEL')">
+          <i class="i-Calendar me-1"></i> Cette année
+        </button>
+
+        <!-- Filtre date pour journalier -->
+        <ng-container *ngIf="periodeActive==='JOURNALIER'">
+          <input type="date" class="form-control form-control-sm" style="width:160px"
+            [(ngModel)]="dateJour" (change)="charger()">
+        </ng-container>
+
+        <!-- Filtres mois/année pour mensuel -->
+        <ng-container *ngIf="periodeActive==='MENSUEL'">
+          <select class="form-select form-select-sm" style="width:140px" [(ngModel)]="moisSelect" (change)="charger()">
+            <option *ngFor="let m of mois" [value]="m.v">{{m.l}}</option>
+          </select>
+          <select class="form-select form-select-sm" style="width:100px" [(ngModel)]="anneeSelect" (change)="charger()">
+            <option *ngFor="let a of annees" [value]="a">{{a}}</option>
+          </select>
+        </ng-container>
+
+        <!-- Filtre année pour annuel -->
+        <ng-container *ngIf="periodeActive==='ANNUEL'">
+          <select class="form-select form-select-sm" style="width:100px" [(ngModel)]="anneeSelect" (change)="charger()">
+            <option *ngFor="let a of annees" [value]="a">{{a}}</option>
+          </select>
+        </ng-container>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHARGEMENT -->
+  <div *ngIf="isLoading" class="text-center py-5">
+    <div class="spinner-border text-success"></div>
+    <p class="mt-2 text-muted">Calcul des bénéfices…</p>
+  </div>
+
+  <!-- ERREUR -->
+  <div *ngIf="erreur && !isLoading" class="alert alert-danger">
+    <i class="i-Warning me-2"></i>{{ erreur }}
+  </div>
+
+  <!-- DONNÉES -->
+  <ng-container *ngIf="data && !isLoading">
+
+    <!-- CARDS RÉSUMÉ -->
+    <div class="row mb-4">
+
+      <!-- Bénéfice total -->
+      <div class="col-12 col-md-3 mb-3">
+        <div class="card border-0 shadow-sm h-100" style="border-left:4px solid #10b981!important">
+          <div class="card-body">
+            <div class="d-flex align-items-center mb-2">
+              <div class="rounded-circle bg-success bg-opacity-10 p-2 me-2">
+                <i class="i-Money-2 text-success fs-5"></i>
+              </div>
+              <span class="text-muted small">Bénéfice total</span>
+            </div>
+            <h3 class="fw-bold text-success mb-0">{{ fmt(data.beneficeTotal) }}</h3>
+          </div>
+        </div>
+      </div>
+
+      <!-- CA -->
+      <div class="col-12 col-md-3 mb-3">
+        <div class="card border-0 shadow-sm h-100" style="border-left:4px solid #3b82f6!important">
+          <div class="card-body">
+            <div class="d-flex align-items-center mb-2">
+              <div class="rounded-circle bg-primary bg-opacity-10 p-2 me-2">
+                <i class="i-Cash-Register text-primary fs-5"></i>
+              </div>
+              <span class="text-muted small">Chiffre d'affaires</span>
+            </div>
+            <h3 class="fw-bold text-primary mb-0">{{ fmt(data.chiffreAffaireTotal) }}</h3>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ventes -->
+      <div class="col-12 col-md-3 mb-3">
+        <div class="card border-0 shadow-sm h-100" style="border-left:4px solid #8b5cf6!important">
+          <div class="card-body">
+            <div class="d-flex align-items-center mb-2">
+              <div class="rounded-circle p-2 me-2" style="background:rgba(139,92,246,.1)">
+                <i class="i-Receipt-4 fs-5" style="color:#8b5cf6"></i>
+              </div>
+              <span class="text-muted small">Ventes</span>
+            </div>
+            <h3 class="fw-bold mb-0" style="color:#8b5cf6">{{ data.nombreVentes }}</h3>
+          </div>
+        </div>
+      </div>
+
+      <!-- Marge + évolution -->
+      <div class="col-12 col-md-3 mb-3">
+        <div class="card border-0 shadow-sm h-100" style="border-left:4px solid #f59e0b!important">
+          <div class="card-body">
+            <div class="d-flex align-items-center mb-2">
+              <div class="rounded-circle p-2 me-2" style="background:rgba(245,158,11,.1)">
+                <i class="i-Line-Chart fs-5" style="color:#f59e0b"></i>
+              </div>
+              <span class="text-muted small">Marge / Évolution</span>
+            </div>
+            <h3 class="fw-bold mb-1" style="color:#f59e0b">{{ data.margeMoyenne.toFixed(1) }} %</h3>
+            <span class="badge" [class]="evolution >= 0 ? 'bg-success' : 'bg-danger'">
+              <i [class]="evolutionIcon"></i>
+              {{ evolution >= 0 ? '+' : '' }}{{ evolution.toFixed(1) }} % vs période préc.
+            </span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- GRAPHIQUE -->
+    <div class="card shadow-sm mb-4" *ngIf="data.lignes.length > 0">
+      <div class="card-header bg-white d-flex align-items-center">
+        <i class="i-Bar-Chart me-2 text-success"></i>
+        <strong>Évolution des bénéfices</strong>
+      </div>
+      <div class="card-body" style="height:320px">
+        <canvas #beneficeChart></canvas>
+      </div>
+    </div>
+
+    <!-- TABLEAU DÉTAIL -->
+    <div class="card shadow-sm" *ngIf="data.lignes.length > 0">
+      <div class="card-header bg-white">
+        <strong><i class="i-File-Pie me-2 text-success"></i>Détail par période</strong>
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Période</th>
+              <th class="text-end">Bénéfice</th>
+              <th class="text-end">Ventes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let l of data.lignes">
+              <td>{{ l.label }}</td>
+              <td class="text-end fw-semibold" [class.text-success]="l.benefice>=0" [class.text-danger]="l.benefice<0">
+                {{ fmt(l.benefice) }}
+              </td>
+              <td class="text-end text-muted">{{ l.nombreVentes }}</td>
+            </tr>
+          </tbody>
+          <tfoot class="table-light fw-bold">
+            <tr>
+              <td>TOTAL</td>
+              <td class="text-end text-success">{{ fmt(data.beneficeTotal) }}</td>
+              <td class="text-end">{{ data.nombreVentes }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- Aucune donnée -->
+    <div *ngIf="data.lignes.length === 0 && data.beneficeTotal === 0" class="text-center py-5">
+      <i class="i-Money-2 fs-1 text-muted"></i>
+      <p class="text-muted mt-2">Aucune vente pour cette période</p>
+    </div>
+
+  </ng-container>
+
+</div>

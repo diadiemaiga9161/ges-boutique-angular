@@ -1,0 +1,67 @@
+<div class="auth-bg">
+  <div class="form-wrapper">
+    <div class="card auth-card">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h3 class="form-title mb-0">Connexion Ges-Boutique</h3>
+        <a class="small" routerLink="/sessions/boutique-settings"></a>
+      </div>
+
+      <div class="registration">
+        Besoin d'un compte ?
+        <button type="button" (click)="goToPage()">Cliquez ici</button>
+      </div>
+
+      <div class="alert-message" [ngClass]="{ success: !isError, error: isError }" *ngIf="message">
+        {{ message }}
+      </div>
+
+      <form (ngSubmit)="login()" #f="ngForm">
+        <div class="input-group-custom mb-3">
+          <div class="icon">👤</div>
+          <input class="form-control"
+                 name="username"
+                 [(ngModel)]="username"
+                 placeholder="Nom d'utilisateur"
+                 required
+                 [disabled]="isLoading" />
+          <small class="form-text text-muted">Utilisez votre nom d'utilisateur</small>
+        </div>
+
+        <div class="input-group-custom mb-3">
+          <div class="icon">🔒</div>
+          <input class="form-control"
+                 name="password"
+                 [(ngModel)]="password"
+                 type="password"
+                 required
+                 minlength="6"
+                 placeholder="Mot de passe"
+                 [disabled]="isLoading" />
+          <small class="form-text text-muted">Minimum 6 caractères</small>
+        </div>
+
+        <button class="btn btn-primary btn-block"
+                type="submit"
+                [disabled]="isLoading || !username || !password">
+          <span *ngIf="!isLoading">Se connecter</span>
+          <span *ngIf="isLoading">
+            <i class="fa fa-spinner fa-spin"></i> Connexion...
+          </span>
+        </button>
+
+        <div class="text-center mt-3">
+          <a routerLink="/sessions/forgot" class="text-muted" style="font-size:0.85rem">
+            Mot de passe oublié ?
+          </a>
+        </div>
+      </form>
+
+      <div class="debug-info mt-4" *ngIf="authService.isAuthenticated()">
+        <small class="text-success">
+          <i class="fa fa-check-circle"></i>
+          Déjà connecté en tant que: {{ authService.getDisplayName() }}
+        </small>
+      </div>
+    </div>
+  </div>
+</div>

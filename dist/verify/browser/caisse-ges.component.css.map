@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["angular:styles/component:css;233a524411aaf95a0bf02561712a342dd1979fb96242a7c24c1304839428f990;C:\\Users\\Sniffer\\Documents\\Alimentation-ges01\\src\\app\\views\\pages\\caisse-ges\\caisse-ges.component.html"],
+  "sourcesContent": ["\n  .spin { animation: spin 1s linear infinite; }\n  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }\n  .progress-bar { transition: width 0.5s ease-in-out; line-height: 20px; font-size: 11px; font-weight: bold; }\n  .modal-dialog-centered { display: flex; align-items: center; min-height: calc(100% - 1rem); }\n  .card { border-radius: 10px; overflow: hidden; }\n  .table td { vertical-align: middle; }\n  .btn-group .btn { white-space: nowrap; }\n"],
+  "mappings": ";AACE,CAAC;AAAO,aAAW,KAAK,GAAG,OAAO;AAAU;AAC5C,WADC;AACiB;AAAO,eAAW,OAAO;AAAO;AAAE;AAAK,eAAW,OAAO;AAAS;AAAE;AACtF,CAAC;AAAe,cAAY,MAAM,KAAK;AAAa,eAAa;AAAM,aAAW;AAAM,eAAa;AAAM;AAC3G,CAAC;AAAwB,WAAS;AAAM,eAAa;AAAQ,cAAY,KAAK,KAAK,EAAE;AAAO;AAC5F,CAAC;AAAO,iBAAe;AAAM,YAAU;AAAQ;AAC/C,CAAC,MAAM;AAAK,kBAAgB;AAAQ;AACpC,CAAC,UAAU,CAAC;AAAM,eAAa;AAAQ;",
+  "names": []
+}

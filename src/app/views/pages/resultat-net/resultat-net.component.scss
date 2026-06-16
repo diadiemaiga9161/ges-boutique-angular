@@ -1,0 +1,60 @@
+.resultat-montant {
+  font-size: 2.5rem;
+  font-weight: 700;
+  line-height: 1.1;
+  margin-bottom: 0.5rem;
+}
+
+.badge-etat {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 1rem;
+  letter-spacing: 1px;
+
+  &.gain  { background: rgba(16,185,129,.15); color: #10b981; }
+  &.perte { background: rgba(239,68,68,.15);  color: #ef4444; }
+}
+
+.card-gain  { border-left: 4px solid #10b981; }
+.card-perte { border-left: 4px solid #ef4444; }
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+
+.bg-success-soft { background: rgba(16,185,129,.12); }
+.bg-primary-soft { background: rgba(59,130,246,.12); }
+.bg-danger-soft  { background: rgba(239,68,68,.12); }
+
+.formule-ligne {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.formule-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: #f8f9fa;
+  min-width: 120px;
+
+  &.formule-total { padding: 14px 20px; }
+}
+
+.formule-label  { font-size: 0.75rem; color: #6c757d; margin-bottom: 4px; }
+.formule-valeur { font-size: 1rem; }
+.formule-op     { font-size: 1.5rem; font-weight: 300; }

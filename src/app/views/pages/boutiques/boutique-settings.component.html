@@ -1,0 +1,160 @@
+<div class="container-fluid py-4 app-page">
+  <!-- En-tête -->
+  <div class="app-page-header mb-4">
+    <div class="app-page-header-left">
+      <div class="app-page-icon"><i class="fa fa-store"></i></div>
+      <div>
+        <h1 class="app-page-title">Paramètres de la Boutique</h1>
+        <p class="app-page-subtitle">Informations, logo et configuration</p>
+      </div>
+    </div>
+  </div>
+  <div class="card mx-auto" style="max-width: 800px;">
+    <div class="card-body">
+      <h5 class="card-title mb-4">Paramètres de la boutique</h5>
+
+      <div *ngIf="isLoading" class="alert alert-info">
+        Chargement des informations de la boutique ID 1...
+      </div>
+
+      <div *ngIf="errorMessage" class="alert alert-danger">
+        {{ errorMessage }}
+      </div>
+
+      <div *ngIf="successMessage" class="alert alert-success">
+        {{ successMessage }}
+      </div>
+
+      <form (ngSubmit)="save()">
+        <!-- Informations de base de la boutique -->
+        <div class="section mb-4">
+          <h6 class="section-title">Informations générales</h6>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Nom</label>
+              <input class="form-control" [(ngModel)]="model.nom" name="nom" required>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Téléphone</label>
+              <input class="form-control" [(ngModel)]="model.telephone" name="telephone">
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Email</label>
+              <input class="form-control" [(ngModel)]="model.email" name="email" type="email">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Adresse</label>
+              <input class="form-control" [(ngModel)]="model.adresse" name="adresse">
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Logo de la boutique</label>
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+              <div *ngIf="previewLogo" class="border rounded p-1" style="background:#f8f9fa;">
+                <img [src]="previewLogo" alt="logo" style="height:70px; max-width:160px; object-fit:contain;">
+              </div>
+              <div>
+                <input type="file" class="form-control" accept="image/*"
+                  (change)="onLogoFileSelected($event)" style="max-width:280px;">
+                <small class="text-muted d-block mt-1">PNG, JPG, SVG — max 2 Mo</small>
+              </div>
+              <button type="button" class="btn btn-primary btn-sm"
+                [disabled]="!selectedLogoFile || isUploadingLogo"
+                (click)="uploadLogo()">
+                <span *ngIf="isUploadingLogo" class="spinner-border spinner-border-sm me-1"></span>
+                {{ isUploadingLogo ? 'Upload...' : 'Enregistrer le logo' }}
+              </button>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Numéro RC</label>
+              <input class="form-control" [(ngModel)]="model.numeroRc" name="numeroRc" placeholder="RC-XXXX">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Numéro IFU</label>
+              <input class="form-control" [(ngModel)]="model.numeroIfu" name="numeroIfu" placeholder="IFU-XXXX">
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Ville</label>
+              <input class="form-control" [(ngModel)]="model.ville" name="ville">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Pays</label>
+              <input class="form-control" [(ngModel)]="model.pays" name="pays">
+            </div>
+          </div>
+        </div>
+
+        <!-- Personnalisation globale -->
+        <div class="section mb-4">
+          <h6 class="section-title">Personnalisation globale</h6>
+
+          <!-- Mode sombre -->
+          <div class="mb-4">
+            <div class="d-flex align-items-center justify-content-between">
+              <div>
+                <h6 class="mb-1">Mode sombre</h6>
+                <small class="text-muted">Activer le thème sombre pour toute l'application</small>
+              </div>
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox"
+                       id="darkModeToggle" [(ngModel)]="isDarkMode"
+                       name="darkMode" (change)="toggleDarkMode()">
+                <label class="form-check-label" for="darkModeToggle">
+                  <i class="fas" [class.fa-moon]="!isDarkMode" [class.fa-sun]="isDarkMode"></i>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Couleur globale -->
+          <div class="mb-3">
+            <h6 class="mb-3">Couleur principale</h6>
+            <small class="text-muted d-block mb-3">Choisissez la couleur principale qui sera appliquée à toute l'application</small>
+
+            <div class="color-palette">
+              <div class="color-option"
+                   *ngFor="let color of colorPalette"
+                   [class.active]="selectedGlobalColor === color.value"
+                   (click)="changeGlobalColor(color.value)">
+                <div class="color-circle" [style.background-color]="color.value"></div>
+                <span class="color-name">{{ color.name }}</span>
+              </div>
+            </div>
+
+            <!-- Aperçu de la couleur sélectionnée -->
+            <div class="mt-3 p-3 border rounded" [style.background-color]="selectedGlobalColor + '20'">
+              <div class="d-flex align-items-center gap-2">
+                <div class="preview-circle" [style.background-color]="selectedGlobalColor"></div>
+                <span>Aperçu : {{ selectedGlobalColor }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Boutons d'action -->
+        <div class="d-flex gap-2 justify-content-end">
+          <button class="btn btn-primary" type="submit" [disabled]="isSaving || isLoading">
+            <i class="fas fa-save me-2"></i>{{ isSaving ? 'Enregistrement...' : 'Enregistrer' }}
+          </button>
+          <button class="btn btn-warning" type="button" (click)="resetDefaults()" [disabled]="isSaving || isLoading">
+            <i class="fas fa-undo me-2"></i>Réinitialiser
+          </button>
+          <button class="btn btn-light" type="button" (click)="cancel()" [disabled]="isSaving">
+            <i class="fas fa-times me-2"></i>Annuler
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

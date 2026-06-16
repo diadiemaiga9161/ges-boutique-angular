@@ -1,0 +1,81 @@
+<div [ngClass]="{ open: navService.sidebarState.sidenavOpen }" class="sidebar-left rtl-ps-none">
+  <ng-scrollbar class="vh-100" visibility="hover" appearance="compact">
+    <div class="logo">
+      <img style="height: 40px;width: 40px;object-fit:contain;" [src]="logoPath" alt="logo" />
+    </div>
+    <ul class="navigation-left" style="color: blue;">
+      @for (item of nav; track item) {
+        <li [ngClass]="{ active: item.active }" (click)="onClickChangeActiveFlag(item)" class="nav-item lvl1"
+          >
+          @if (!item.disabled && item.type === 'link') {
+            <div class="nav-item-hold" routerLink="{{ item.state }}" (click)="closeChildNav()"
+              >
+              <i [class]="'nav-icon ' + item.icon"></i>
+              <span class="nav-text">{{ item.name }}</span>
+            </div>
+          }
+          @if (!item.disabled && item.type === 'dropDown') {
+            <div class="nav-item-hold" (mouseenter)="selectItem(item)">
+              <i [class]="'nav-icon ' + item.icon"></i>
+              <span class="nav-text">{{ item.name }}</span>
+            </div>
+          }
+          @if (!item.disabled && item.type === 'extLink') {
+            <div class="nav-item-hold">
+              <a [href]="item.state" target="_blank">
+                <i [class]="'nav-icon ' + item.icon"></i>
+                <span class="nav-text">{{ item.name }}</span>
+              </a>
+            </div>
+          }
+          @if (!item.disabled) {
+            <div class="triangle"></div>
+          }
+        </li>
+      }
+    </ul>
+  </ng-scrollbar>
+</div>
+
+<div [ngClass]="{ open: navService.sidebarState.childnavOpen }" class="sidebar-left-secondary rtl-ps-none"
+  (mouseleave)="closeChildNav()">
+  <ng-scrollbar class="vh-100" visibility="hover" appearance="compact">
+
+    <header>
+      <h6>Apps</h6>
+      <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit.</p>
+    </header>
+    <ng-container *ngTemplateOutlet="menuTemplate; context: { parentItem: navService.selectedItem }"></ng-container>
+  </ng-scrollbar>
+</div>
+
+<ng-template #menuTemplate let-parentItem="parentItem">
+  <ul class="childNav" appDropdown>
+    @for (item of parentItem?.sub; track item) {
+      <li appDropdownLink class="nav-item">
+        @if (item.type === 'link') {
+          <a routerLink="{{ item.state }}" class="" routerLinkActive="open">
+            @if (item.icon) {
+              <i [class]="'nav-icon ' + item.icon"></i>
+            }
+            <span class="item-name lvl1">{{ item.name }}</span>
+          </a>
+        }
+        @if (item.type === 'dropDown') {
+          <div>
+            <a appDropdownToggle [ngClass]="{ open: item.active }" routerLinkActive="open">
+              @if (item.icon) {
+                <i [class]="'nav-icon ' + item.icon"></i>
+              }
+              <span class="item-name">{{ item.name }}</span>
+              <i class="dd-arrow i-Arrow-Down"></i>
+            </a>
+            <ng-container *ngTemplateOutlet="menuTemplate; context: { parentItem: item }"></ng-container>
+          </div>
+        }
+      </li>
+    }
+  </ul>
+</ng-template>
+
+<div [ngClass]="{ open: navService.sidebarState.childnavOpen }" class="sidebar-overlay" (click)="closeChildNav()"></div>

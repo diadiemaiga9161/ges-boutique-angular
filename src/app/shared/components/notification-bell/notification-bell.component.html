@@ -1,0 +1,33 @@
+<div class="notif-wrapper">
+  <!-- Cloche -->
+  <button class="notif-btn" (click)="toggle()" [class.has-notif]="count > 0">
+    <i class="i-Bell"></i>
+    <span class="notif-badge" *ngIf="count > 0">{{ count > 99 ? '99+' : count }}</span>
+  </button>
+
+  <!-- Dropdown -->
+  <div class="notif-dropdown" *ngIf="ouvert">
+    <div class="notif-header">
+      <span class="notif-title">Notifications</span>
+      <button class="notif-tout-lire" *ngIf="count > 0" (click)="toutLire()">Tout lire</button>
+    </div>
+
+    <div class="notif-list" *ngIf="notifications.length > 0">
+      <div class="notif-item" *ngFor="let n of notifications" (click)="cliquer(n)">
+        <div class="notif-icon" [class]="'notif-icon--' + couleur(n.type)">
+          <i [class]="icone(n.type)"></i>
+        </div>
+        <div class="notif-body">
+          <p class="notif-item-titre">{{ n.titre }}</p>
+          <p class="notif-item-msg">{{ n.message }}</p>
+          <p class="notif-item-date">{{ n.dateCreation | date:'dd/MM HH:mm' }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="notif-vide" *ngIf="notifications.length === 0">
+      <i class="i-Bell fs-4 text-muted"></i>
+      <p>Aucune notification</p>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,73 @@
+DESCRIPTION DU PROJET - ALIMENTATION GES
+
+Alimentation GES est une application Angular de gestion commerciale pour une boutique
+ou une alimentation. Elle permet de suivre les produits, les ventes, les clients, les
+credits, les paiements, les factures et les rapports.
+
+FONCTIONNALITES PRINCIPALES
+
+1. Gestion des ventes
+- Creation de ventes normales au comptant.
+- Creation de ventes a credit pour un client selectionne.
+- Ajout de plusieurs produits dans un panier.
+- Modification de la quantite vendue selon le stock disponible.
+- Modification du prix unitaire directement dans le panier.
+- Calcul automatique du sous-total, du total a payer et du total a crediter.
+- Gestion des remises par ligne et des remises globales.
+- Calcul automatique du benefice ou de la perte selon le prix d'achat et le prix de vente saisi.
+- Generation et telechargement des factures.
+- Export PDF des ventes selon differents criteres.
+
+2. Gestion des credits
+- Enregistrement d'une vente a credit avec date d'echeance.
+- Saisie d'un acompte lors de la vente a credit.
+- Affichage du montant total, du montant verse et du reste a payer.
+- Suivi des credits en cours, regles ou en retard.
+- Statistiques et exports PDF des ventes a credit.
+
+3. Gestion des clients
+- Creation, modification, recherche et suppression de clients.
+- Consultation de l'historique complet des ventes d'un client.
+- Section separee pour voir uniquement les ventes a credit d'un client.
+- Calcul du total des credits, du montant deja verse et du reste a payer par client.
+- Consultation des ventes des clients divers.
+
+4. Gestion des produits et du stock
+- Chargement des produits disponibles.
+- Recherche par nom ou code-barres.
+- Controle de la quantite disponible avant validation d'une vente.
+- Blocage des quantites superieures au stock disponible.
+
+5. Paiements et factures
+- Gestion de plusieurs modes de paiement: especes, Orange Money, Moov Money,
+  carte bancaire et virement.
+- Reference obligatoire pour les paiements qui ne sont pas en especes.
+- Generation de factures PDF.
+
+6. Rapports et exports
+- Exports PDF complets avec chiffre d'affaires et benefices.
+- Exports des ventes du jour, de la semaine, du mois et d'une periode personnalisee.
+- Exports par type de vente: comptant, credit, credit en retard.
+- Exports par client ou clients divers.
+
+7. Assistant d'aide integre
+- Chatbot accessible depuis l'interface principale.
+- Aide rapide sur les ventes, credits, clients, factures, stock, paiements,
+  remises, benefices et pertes.
+- Fonctionne cote application sans service externe.
+
+ORGANISATION TECHNIQUE
+
+- src/app/views/pages/ventes: page de gestion des ventes.
+- src/app/views/pages/clients: page de gestion des clients et de leur historique.
+- src/app/shared/services/vente.service.ts: appels API, calculs, exports et outils lies aux ventes.
+- src/app/shared/services/client.service.ts: appels API lies aux clients.
+- src/app/shared/components/chatbot-assistant: assistant d'aide integre.
+- src/app/shared/components/layouts: layout principal de l'application.
+
+OBJECTIF METIER
+
+Le projet aide l'utilisateur a gerer clairement les ventes normales, les ventes a
+credit, les benefices, les pertes, les stocks et le suivi client. Le but est de
+permettre une lecture rapide de la situation commerciale: ce qui est vendu, ce qui
+est paye, ce qui reste a payer et si chaque vente genere un benefice ou une perte.

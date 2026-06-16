@@ -1,0 +1,231 @@
+<div class="main-content-wrap d-flex flex-column">
+
+  <!-- HEADER -->
+  <div class="breadcrumb d-flex align-items-center mb-3">
+    <h1 class="page-title m-0"><i class="i-Arrow-Right text-primary me-2"></i>Transferts entre boutiques</h1>
+    <div class="ms-auto d-flex gap-2">
+      <button class="btn btn-outline-secondary btn-sm" (click)="afficherFormPartenaire ? afficherFormPartenaire=false : nouveauPartenaire()">
+        <i class="i-Shop-2 me-1"></i> Boutiques partenaires
+      </button>
+      <button class="btn btn-primary btn-sm" (click)="nouveauTransfert()">
+        <i class="i-Add me-1"></i> Nouveau transfert
+      </button>
+    </div>
+  </div>
+
+  <!-- FORMULAIRE PARTENAIRES -->
+  <div class="card mb-3" *ngIf="afficherFormPartenaire">
+    <div class="card-header d-flex align-items-center">
+      <strong>Boutiques partenaires</strong>
+      <button class="btn btn-sm btn-outline-primary ms-3" (click)="nouveauPartenaire()">
+        <i class="i-Add me-1"></i> Ajouter
+      </button>
+    </div>
+    <div class="card-body">
+      <!-- Form partenaire -->
+      <div class="row g-2 mb-3" *ngIf="afficherFormPartenaire">
+        <div class="col-12 col-md-3">
+          <input type="text" class="form-control form-control-sm" placeholder="Nom boutique" [(ngModel)]="formPartenaire.nom">
+        </div>
+        <div class="col-12 col-md-5">
+          <input type="text" class="form-control form-control-sm" placeholder="URL (ex: http://213.156.134.139:81)" [(ngModel)]="formPartenaire.url">
+        </div>
+        <div class="col-12 col-md-2">
+          <input type="text" class="form-control form-control-sm" placeholder="Description" [(ngModel)]="formPartenaire.description">
+        </div>
+        <div class="col-12 col-md-2 d-flex gap-2">
+          <button class="btn btn-sm btn-success flex-fill" (click)="sauvegarderPartenaire()">
+            <i class="i-Yes me-1"></i>{{ editingPartenaire ? 'Modifier' : 'Ajouter' }}
+          </button>
+          <button class="btn btn-sm btn-light" (click)="afficherFormPartenaire=false">✕</button>
+        </div>
+      </div>
+      <!-- Liste -->
+      <table class="table table-sm table-hover mb-0" *ngIf="partenaires.length > 0">
+        <thead class="table-light">
+          <tr><th>Nom</th><th>URL</th><th>Description</th><th></th></tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let p of partenaires">
+            <td>{{ p.nom }}</td>
+            <td class="text-muted small">{{ p.url }}</td>
+            <td class="text-muted small">{{ p.description }}</td>
+            <td class="text-end">
+              <button class="btn btn-xs btn-outline-primary me-1" (click)="editerPartenaire(p)"><i class="i-Pen-2"></i></button>
+              <button class="btn btn-xs btn-outline-danger" (click)="supprimerPartenaire(p)"><i class="i-Trash-with-Menu"></i></button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="text-muted text-center py-2" *ngIf="partenaires.length === 0">Aucune boutique partenaire configurée</p>
+    </div>
+  </div>
+
+  <!-- FORMULAIRE TRANSFERT -->
+  <div class="card mb-3 border-primary" *ngIf="afficherFormulaire">
+    <div class="card-header bg-primary text-white d-flex align-items-center">
+      <strong>{{ editingTransfert ? 'Modifier le transfert' : 'Nouveau transfert' }}</strong>
+      <button class="btn btn-sm btn-light ms-auto" (click)="afficherFormulaire=false">✕</button>
+    </div>
+    <div class="card-body">
+      <div class="row g-2 mb-3">
+        <div class="col-12 col-md-4">
+          <label class="form-label small">Boutique destination *</label>
+          <select class="form-select form-select-sm" [(ngModel)]="form.boutiqueDestId">
+            <option [value]="0" disabled>Choisir…</option>
+            <option *ngFor="let p of partenaires" [value]="p.id">{{ p.nom }}</option>
+          </select>
+        </div>
+        <div class="col-12 col-md-3">
+          <label class="form-label small">Type de paiement</label>
+          <select class="form-select form-select-sm" [(ngModel)]="form.typePaiement">
+            <option *ngFor="let tp of TYPES_PAIEMENT" [value]="tp.v">{{ tp.l }}</option>
+          </select>
+        </div>
+        <div class="col-12 col-md-5">
+          <label class="form-label small">Notes</label>
+          <input type="text" class="form-control form-control-sm" [(ngModel)]="form.notes" placeholder="Notes optionnelles">
+        </div>
+      </div>
+
+      <!-- Lignes produits -->
+      <div class="mb-2 d-flex align-items-center">
+        <strong class="small">Produits à transférer</strong>
+        <button class="btn btn-sm btn-outline-primary ms-3" (click)="ajouterLigne()">
+          <i class="i-Add me-1"></i> Ajouter ligne
+        </button>
+      </div>
+      <div class="row g-2 mb-2" *ngFor="let l of form.lignes; let i = index">
+        <div class="col-12 col-md-5">
+          <select class="form-select form-select-sm" [(ngModel)]="l.produitId" (change)="onProduitChange(i)">
+            <option [value]="0" disabled>Choisir un produit…</option>
+            <option *ngFor="let p of produits" [value]="p.id">{{ p.nom }} (stock: {{ p.quantite }})</option>
+          </select>
+        </div>
+        <div class="col-6 col-md-2">
+          <input type="number" class="form-control form-control-sm" [(ngModel)]="l.quantite" min="1" placeholder="Qté">
+        </div>
+        <div class="col-6 col-md-3">
+          <input type="number" class="form-control form-control-sm" [(ngModel)]="l.prixUnitaire" placeholder="Prix unitaire (optionnel)">
+        </div>
+        <div class="col-12 col-md-2">
+          <button class="btn btn-sm btn-outline-danger w-100" (click)="supprimerLigne(i)"><i class="i-Close-Window"></i></button>
+        </div>
+      </div>
+
+      <div class="d-flex gap-2 mt-3">
+        <button class="btn btn-success" (click)="sauvegarder()">
+          <i class="i-Yes me-1"></i>{{ editingTransfert ? 'Enregistrer la modification' : 'Créer le transfert' }}
+        </button>
+        <button class="btn btn-light" (click)="afficherFormulaire=false">Annuler</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHARGEMENT -->
+  <div *ngIf="isLoading" class="text-center py-5">
+    <div class="spinner-border text-primary"></div>
+  </div>
+
+  <!-- LISTE TRANSFERTS -->
+  <div class="card shadow-sm" *ngIf="!isLoading">
+    <div class="card-header bg-white"><strong>Historique des transferts</strong></div>
+    <div class="card-body p-0">
+      <table class="table table-hover mb-0" *ngIf="transferts.length > 0">
+        <thead class="table-light">
+          <tr>
+            <th>N°</th><th>Source</th><th>Destination</th><th>Statut</th>
+            <th>Paiement</th><th>Date</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let t of transferts">
+            <td class="fw-semibold">{{ t.numeroTransfert }}</td>
+            <td>{{ t.boutiqueSourceNom }}</td>
+            <td>{{ t.boutiqueDestNom }}</td>
+            <td>
+              <span class="badge bg-{{ STATUT_COLORS[t.statut] }}">{{ STATUT_LABELS[t.statut] }}</span>
+            </td>
+            <td class="small text-muted">{{ labelPaiement(t.typePaiement) }}</td>
+            <td class="small text-muted">{{ t.dateCreation | date:'dd/MM/yyyy HH:mm' }}</td>
+            <td class="text-end">
+              <button class="btn btn-xs btn-outline-secondary me-1" (click)="voirDetail(t)" title="Détail">
+                <i class="i-Eye"></i>
+              </button>
+              <button class="btn btn-xs btn-outline-primary me-1" (click)="editerTransfert(t)"
+                *ngIf="t.statut !== 'CONFIRME' && t.statut !== 'ANNULE'" title="Modifier">
+                <i class="i-Pen-2"></i>
+              </button>
+              <button class="btn btn-xs btn-outline-success me-1" (click)="confirmer(t)"
+                *ngIf="t.statut !== 'CONFIRME' && t.statut !== 'ANNULE'" title="Confirmer">
+                <i class="i-Check"></i>
+              </button>
+              <button class="btn btn-xs btn-outline-danger" (click)="annuler(t)"
+                *ngIf="t.statut !== 'CONFIRME' && t.statut !== 'ANNULE'" title="Annuler">
+                <i class="i-Close-Window"></i>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="text-center py-5 text-muted" *ngIf="transferts.length === 0">
+        <i class="i-Arrow-Right fs-1"></i>
+        <p class="mt-2">Aucun transfert</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DÉTAIL -->
+  <div class="modal-backdrop-custom" *ngIf="transfertDetail" (click)="transfertDetail=null"></div>
+  <div class="modal-panel" *ngIf="transfertDetail">
+    <div class="modal-panel-header">
+      <strong>{{ transfertDetail.numeroTransfert }}</strong>
+      <span class="badge bg-{{ STATUT_COLORS[transfertDetail.statut] }} ms-2">{{ STATUT_LABELS[transfertDetail.statut] }}</span>
+      <div class="ms-auto d-flex gap-2">
+        <button class="btn btn-sm btn-outline-warning"
+                *ngIf="transfertDetail.statut !== 'CONFIRME' && transfertDetail.statut !== 'ANNULE'"
+                (click)="editerTransfert(transfertDetail); transfertDetail=null">
+          <i class="i-Pen me-1"></i> Modifier
+        </button>
+        <button class="btn btn-sm btn-outline-primary" (click)="exporterFacture()">
+          <i class="i-File-PDF me-1"></i> Facture PDF
+        </button>
+        <button class="btn btn-sm btn-light" (click)="transfertDetail=null">✕</button>
+      </div>
+    </div>
+    <div class="modal-panel-body">
+      <div class="row mb-3">
+        <div class="col-6"><span class="text-muted small">Source</span><p class="fw-bold">{{ transfertDetail.boutiqueSourceNom }}</p></div>
+        <div class="col-6"><span class="text-muted small">Destination</span><p class="fw-bold">{{ transfertDetail.boutiqueDestNom }}</p></div>
+        <div class="col-6"><span class="text-muted small">Paiement</span><p>{{ TYPES_PAIEMENT | find:transfertDetail.typePaiement:'v':'l' }}</p></div>
+        <div class="col-6"><span class="text-muted small">Créé par</span><p>{{ transfertDetail.creePar }}</p></div>
+      </div>
+
+      <h6>Produits</h6>
+      <table class="table table-sm mb-3">
+        <thead class="table-light"><tr><th>Produit</th><th class="text-end">Qté</th><th class="text-end">Prix unit.</th><th class="text-end">Total</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let l of transfertDetail.lignes">
+            <td>{{ l.produitNom }}</td>
+            <td class="text-end">{{ l.quantite }}</td>
+            <td class="text-end">{{ l.prixUnitaire ? fmt(l.prixUnitaire) : '—' }}</td>
+            <td class="text-end">{{ l.prixUnitaire ? fmt(l.prixUnitaire * l.quantite) : '—' }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h6>Historique</h6>
+      <div class="timeline-simple">
+        <div class="timeline-item" *ngFor="let h of transfertDetail.historique">
+          <span class="timeline-dot"></span>
+          <div>
+            <strong class="small">{{ h.action }}</strong> —
+            <span class="text-muted small">{{ h.description }}</span>
+            <br><span class="text-muted" style="font-size:.7rem">{{ h.dateAction | date:'dd/MM/yyyy HH:mm' }} · {{ h.effectuePar }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

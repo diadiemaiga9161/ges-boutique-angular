@@ -1,0 +1,54 @@
+<div class="app-footer">
+  <div class="footer-content py-3">
+    <div class="container">
+      <div class="d-flex flex-column flex-md-row align-items-center justify-content-between">
+        <!-- Logo et texte principal -->
+        <div class="brand-section mb-2 mb-md-0">
+          <div class="d-flex align-items-center">
+            <img class="logo me-3" [src]="logoPath" alt="Logo" style="height: 35px; filter: brightness(0) invert(1);">
+            <div>
+              <p class="m-0 fw-semibold text-white">{{ boutiqueName ? ("Gérez " + boutiqueName) : 'Gérez votre Boutique facilement' }}</p>
+              <p class="m-0 text-light opacity-80 small">Solution complète pour votre commerce</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Bouton MG -->
+        <div class="mb-2 mb-md-0">
+          <a class="btn btn-light btn-sm btn-rounded shadow-sm" target="_blank">
+            <span class="fw-bold text-primary">MG</span>
+            <small class="ms-1 text-muted">Consulting</small>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="footer-bottom border-top border-light border-opacity-25 pt-2 pb-2">
+    <div class="container">
+      <div class="d-flex flex-column flex-md-row align-items-center justify-content-between">
+        <!-- Copyright -->
+        <div class="mb-1 mb-md-0">
+          <p class="m-0 small text-light opacity-90">
+            &copy; {{year}} {{ boutiqueName ? (" " + boutiqueName) : '   ' }}• Propulsé par MG-Consulting
+          </p>
+        </div>
+        
+        <!-- Liens rapides -->
+        <div class="footer-links">
+          <div class="d-flex gap-3">
+            <a href="#" class="text-light opacity-90 small hover-white">
+              <i class="fas fa-shield-alt me-1"></i>Confidentialité
+            </a>
+            <a href="#" class="text-light opacity-90 small hover-white">
+              <i class="fas fa-file-contract me-1"></i>Conditions
+            </a>
+            <a href="#" class="text-light opacity-90 small hover-white">
+              <i class="fas fa-question-circle me-1"></i>Aide
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

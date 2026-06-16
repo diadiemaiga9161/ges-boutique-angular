@@ -1,0 +1,794 @@
+<div class="container-fluid py-4 app-page">
+
+  <!-- En-tête -->
+  <div class="app-page-header mb-4">
+    <div class="app-page-header-left">
+      <div class="app-page-icon"><i class="fa fa-truck"></i></div>
+      <div>
+        <h1 class="app-page-title">Fournisseurs</h1>
+        <p class="app-page-subtitle">Achats, paiements et situations</p>
+      </div>
+    </div>
+    <div class="app-page-header-actions">
+      <button class="btn btn-outline-secondary btn-sm" (click)="telechargerPdfTousFournisseurs()">
+        <i class="fa fa-file-pdf-o me-1"></i> Liste PDF
+      </button>
+      <button class="btn btn-primary" (click)="ouvrirFormulaire()">
+        <i class="fa fa-plus me-1"></i> Nouveau fournisseur
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats rapides -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="app-stat-card">
+        <div class="app-stat-icon blue"><i class="fa fa-truck"></i></div>
+        <div class="app-stat-body">
+          <div class="app-stat-label">Fournisseurs</div>
+          <div class="app-stat-value">{{ fournisseurs.length }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="app-stat-card">
+        <div class="app-stat-icon green"><i class="fa fa-shopping-cart"></i></div>
+        <div class="app-stat-body">
+          <div class="app-stat-label">Total achats</div>
+          <div class="app-stat-value">{{ fmt(totalAchatsGlobal) }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="app-stat-card">
+        <div class="app-stat-icon red"><i class="fa fa-exclamation-circle"></i></div>
+        <div class="app-stat-body">
+          <div class="app-stat-label">Dettes totales</div>
+          <div class="app-stat-value">{{ fmt(totalDetteFournisseurs) }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="app-stat-card">
+        <div class="app-stat-icon orange"><i class="fa fa-exclamation-triangle"></i></div>
+        <div class="app-stat-body">
+          <div class="app-stat-label">Avec solde dû</div>
+          <div class="app-stat-value">{{ fournisseursSolde.length }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ ONGLETS ═══════════════ -->
+  <div class="tabs-bar">
+    <button class="tab-btn" [class.active]="ongletActif === 'liste'" (click)="changerOnglet('liste')">
+      <i class="i-Business-Man mr-1"></i> Liste
+    </button>
+    <button class="tab-btn" [class.active]="ongletActif === 'achats'" (click)="changerOnglet('achats')">
+      <i class="i-Shop mr-1"></i> Achats
+    </button>
+    <button class="tab-btn" [class.active]="ongletActif === 'paiements'" (click)="changerOnglet('paiements')">
+      <i class="i-Money-Bag mr-1"></i> Paiements & Avances
+    </button>
+    <button class="tab-btn" [class.active]="ongletActif === 'situation'" (click)="changerOnglet('situation')">
+      <i class="i-Bar-Chart mr-1"></i> Situation
+    </button>
+  </div>
+
+  <!-- ─────────────── SÉLECTEUR FOURNISSEUR (onglets 2,3,4) ─────────────── -->
+  <div class="fournisseur-selector" *ngIf="ongletActif !== 'liste'">
+    <div class="selector-group">
+      <label>Fournisseur</label>
+      <select class="form-control" [(ngModel)]="filtreFournisseurId" (change)="onFournisseurChange()">
+        <option [value]="0">-- Sélectionnez un fournisseur --</option>
+        <option *ngFor="let f of fournisseurs" [value]="f.id">{{ f.nom }} ({{ f.code }})</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       ONGLET 1 — LISTE FOURNISSEURS
+  ══════════════════════════════════════════════════════ -->
+  <div *ngIf="ongletActif === 'liste'" class="tab-content">
+
+    <div class="toolbar mb-3">
+      <div class="search-box">
+        <i class="i-Magnifi-Glass"></i>
+        <input type="text" [(ngModel)]="searchFournisseur" placeholder="Rechercher (nom, code, tél)..." class="form-control" />
+      </div>
+    </div>
+
+    <div class="loading-state" *ngIf="isLoading">
+      <div class="spinner-border text-primary"></div>
+      <span>Chargement...</span>
+    </div>
+
+    <div class="empty-state" *ngIf="!isLoading && !fournisseursFiltres.length">
+      <i class="i-Business-Man"></i>
+      <p>Aucun fournisseur trouvé</p>
+      <button class="btn btn-primary" (click)="ouvrirFormulaire()">Ajouter un fournisseur</button>
+    </div>
+
+    <div class="fournisseurs-grid" *ngIf="!isLoading && fournisseursFiltres.length">
+      <div class="fournisseur-card" *ngFor="let f of fournisseursFiltres">
+
+        <div class="card-top">
+          <div class="avatar" [style.background]="f.actif ? '#2563eb' : '#94a3b8'">
+            {{ getInitiales(f.nom) }}
+          </div>
+          <div class="card-info">
+            <h3 class="fournisseur-nom">{{ f.nom }}</h3>
+            <span class="fournisseur-code">{{ f.code }}</span>
+          </div>
+          <span class="badge" [class.badge-success]="f.actif" [class.badge-secondary]="!f.actif">
+            {{ f.actif ? 'Actif' : 'Inactif' }}
+          </span>
+        </div>
+
+        <div class="card-details">
+          <div class="detail-row" *ngIf="f.telephone">
+            <i class="i-Telephone"></i><span>{{ f.telephone }}</span>
+          </div>
+          <div class="detail-row" *ngIf="f.email">
+            <i class="i-Email"></i><span>{{ f.email }}</span>
+          </div>
+          <div class="detail-row" *ngIf="f.typeProduits">
+            <i class="i-Tag"></i><span>{{ f.typeProduits }}</span>
+          </div>
+          <div class="detail-row" *ngIf="f.conditionsPaiement">
+            <i class="i-Calendar-4"></i><span>{{ f.conditionsPaiement }}</span>
+          </div>
+        </div>
+
+        <div class="card-financial">
+          <div class="financial-item">
+            <span class="fin-label">Total achats</span>
+            <span class="fin-value">{{ fmt(f.totalAchats || 0) }}</span>
+          </div>
+          <div class="financial-item">
+            <span class="fin-label">Solde dû</span>
+            <span class="fin-value" [class.text-danger]="(f.solde || 0) > 0">{{ fmt(f.solde || 0) }}</span>
+          </div>
+        </div>
+
+        <div class="card-actions">
+          <button class="btn btn-sm btn-outline-primary" (click)="ouvrirFormulaire(f)">
+            <i class="i-Pen-2"></i> Modifier
+          </button>
+          <button class="btn btn-sm btn-outline-success" (click)="filtreFournisseurId = f.id; changerOnglet('achats')">
+            <i class="i-Shop"></i> Achats
+          </button>
+          <button class="btn btn-sm btn-outline-info" (click)="filtreFournisseurId = f.id; changerOnglet('situation')">
+            <i class="i-Bar-Chart"></i> Situation
+          </button>
+          <button class="btn btn-sm btn-outline-danger" (click)="confirmerSupprimer(f)">
+            <i class="i-Trash"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       ONGLET 2 — ACHATS
+  ══════════════════════════════════════════════════════ -->
+  <div *ngIf="ongletActif === 'achats'" class="tab-content">
+
+    <div class="toolbar mb-3" *ngIf="filtreFournisseurId">
+      <div class="toolbar-left">
+        <select class="form-control form-control-sm mr-2" [(ngModel)]="filtreStatutAchat">
+          <option value="">Tous les statuts</option>
+          <option value="EN_COURS">En cours</option>
+          <option value="PAYE">Payés</option>
+          <option value="ANNULE">Annulés</option>
+        </select>
+        <button class="btn btn-sm btn-outline-secondary" (click)="chargerAchats()">
+          <i class="i-Repeat-2"></i> Actualiser
+        </button>
+      </div>
+      <div class="toolbar-right">
+        <button class="btn btn-sm btn-outline-secondary mr-2" (click)="telechargerPdfAchats()" [disabled]="!achatsFiltres.length">
+          <i class="i-File-Download mr-1"></i> PDF achats
+        </button>
+        <button class="btn btn-sm btn-primary" (click)="ouvrirAchatModal()">
+          <i class="i-Add mr-1"></i> Nouvel achat
+        </button>
+      </div>
+    </div>
+
+    <!-- Invitation si pas de fournisseur -->
+    <div class="info-prompt" *ngIf="!filtreFournisseurId">
+      <i class="i-Arrow-Up-2"></i>
+      <p>Sélectionnez un fournisseur ci-dessus pour afficher ses achats.</p>
+    </div>
+
+    <!-- Stats achats -->
+    <div class="mini-stats-row" *ngIf="filtreFournisseurId && achatsFiltres.length">
+      <div class="mini-stat">
+        <span class="ms-value">{{ fmt(totalAchatsFiltres) }}</span>
+        <span class="ms-label">Total</span>
+      </div>
+      <div class="mini-stat ms-green">
+        <span class="ms-value">{{ fmt(totalPayeFiltres) }}</span>
+        <span class="ms-label">Payé</span>
+      </div>
+      <div class="mini-stat ms-red">
+        <span class="ms-value">{{ fmt(totalRestantFiltres) }}</span>
+        <span class="ms-label">Restant</span>
+      </div>
+      <div class="mini-stat">
+        <span class="ms-value">{{ achatsFiltres.length }}</span>
+        <span class="ms-label">Achats</span>
+      </div>
+    </div>
+
+    <div class="loading-state" *ngIf="isLoading">
+      <div class="spinner-border text-primary"></div><span>Chargement...</span>
+    </div>
+
+    <div class="empty-state" *ngIf="filtreFournisseurId && !isLoading && !achatsFiltres.length">
+      <i class="i-Shop"></i>
+      <p>Aucun achat trouvé</p>
+      <button class="btn btn-primary" (click)="ouvrirAchatModal()">Enregistrer un achat</button>
+    </div>
+
+    <div class="table-wrapper" *ngIf="filtreFournisseurId && !isLoading && achatsFiltres.length">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>N°</th>
+            <th>Date</th>
+            <th>Produits</th>
+            <th class="text-right">Total</th>
+            <th class="text-right">Payé</th>
+            <th class="text-right">Restant</th>
+            <th class="text-center">Statut</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let achat of achatsFiltres">
+            <td class="font-weight-bold">#{{ achat.id }}</td>
+            <td>{{ formatDate(achat.dateAchat || achat.dateCreation) }}</td>
+            <td>
+              <div class="produits-list">
+                <span class="produit-chip" *ngFor="let l of (achat.lignes || [])">
+                  {{ l.produit?.nom }} ×{{ l.quantite }}
+                </span>
+              </div>
+            </td>
+            <td class="text-right font-weight-bold">{{ fmt(achat.montantTotal) }}</td>
+            <td class="text-right text-success">{{ fmt(achat.montantPaye) }}</td>
+            <td class="text-right" [class.text-danger]="achat.montantRestant > 0">{{ fmt(achat.montantRestant) }}</td>
+            <td class="text-center">
+              <span class="badge" [class]="statutClass(achat.statut)">{{ statutLabel(achat.statut) }}</span>
+            </td>
+            <td>
+              <button class="btn btn-xs btn-success mr-1" (click)="ouvrirPaiementModal(achat)"
+                      *ngIf="achat.statut !== 'PAYE' && achat.statut !== 'ANNULE'"
+                      title="Payer">
+                <i class="i-Money-Bag"></i> Payer
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       ONGLET 3 — PAIEMENTS & AVANCES
+  ══════════════════════════════════════════════════════ -->
+  <div *ngIf="ongletActif === 'paiements'" class="tab-content">
+
+    <div class="info-prompt" *ngIf="!filtreFournisseurId">
+      <i class="i-Arrow-Up-2"></i>
+      <p>Sélectionnez un fournisseur pour voir ses paiements.</p>
+    </div>
+
+    <div *ngIf="filtreFournisseurId">
+      <div class="toolbar mb-3">
+        <div class="toolbar-left">
+          <button class="btn btn-sm btn-outline-secondary" (click)="chargerPaiements()">
+            <i class="i-Repeat-2"></i> Actualiser
+          </button>
+        </div>
+        <div class="toolbar-right">
+          <button class="btn btn-sm btn-outline-primary mr-2" (click)="ouvrirAvanceModal()">
+            <i class="i-Add mr-1"></i> Avance
+          </button>
+          <button class="btn btn-sm btn-primary" (click)="ouvrirPaiementModal()">
+            <i class="i-Add mr-1"></i> Paiement
+          </button>
+        </div>
+      </div>
+
+      <!-- Paiements -->
+      <h5 class="section-title">Paiements</h5>
+      <div class="empty-state-sm" *ngIf="!paiements.length">
+        <i class="i-Money-Bag"></i><span>Aucun paiement enregistré</span>
+      </div>
+      <div class="table-wrapper" *ngIf="paiements.length">
+        <table class="data-table">
+          <thead>
+            <tr><th>Date</th><th class="text-right">Montant</th><th>Mode</th><th>Référence</th><th>Observation</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let p of paiements">
+              <td>{{ formatDate(p.datePaiement) }}</td>
+              <td class="text-right font-weight-bold text-success">{{ fmt(p.montant) }}</td>
+              <td>{{ p.modePaiement }}</td>
+              <td>{{ p.reference || '—' }}</td>
+              <td>{{ p.observation || '—' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Avances -->
+      <h5 class="section-title mt-4">Avances</h5>
+      <div class="empty-state-sm" *ngIf="!avances.length">
+        <i class="i-Wallet"></i><span>Aucune avance enregistrée</span>
+      </div>
+      <div class="table-wrapper" *ngIf="avances.length">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Date dépôt</th>
+              <th class="text-right">Montant</th>
+              <th class="text-right">Utilisé</th>
+              <th class="text-right">Disponible</th>
+              <th>Source</th>
+              <th class="text-center">Statut</th>
+              <th>Motif</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let av of avances">
+              <td>{{ formatDate(av.dateDepot) }}</td>
+              <td class="text-right font-weight-bold">{{ fmt(av.montant) }}</td>
+              <td class="text-right text-warning">{{ fmt(av.montantUtilise) }}</td>
+              <td class="text-right text-success">{{ fmt(av.montantDisponible) }}</td>
+              <td>{{ av.sourceFinancement }}</td>
+              <td class="text-center">
+                <span class="badge" [ngClass]="{
+                  'badge-success': av.statut === 'DISPONIBLE',
+                  'badge-warning': av.statut === 'UTILISE_PARTIELLEMENT',
+                  'badge-secondary': av.statut === 'EPUISE'
+                }">
+                  {{ av.statut === 'DISPONIBLE' ? 'Disponible' : av.statut === 'UTILISE_PARTIELLEMENT' ? 'Partiel' : 'Épuisé' }}
+                </span>
+              </td>
+              <td>{{ av.motif || '—' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       ONGLET 4 — SITUATION
+  ══════════════════════════════════════════════════════ -->
+  <div *ngIf="ongletActif === 'situation'" class="tab-content">
+
+    <div class="info-prompt" *ngIf="!filtreFournisseurId">
+      <i class="i-Arrow-Up-2"></i>
+      <p>Sélectionnez un fournisseur pour voir sa situation.</p>
+    </div>
+
+    <div *ngIf="filtreFournisseurId">
+      <div class="toolbar mb-3">
+        <div class="toolbar-left">
+          <button class="btn btn-sm btn-outline-secondary" (click)="chargerSituation()">
+            <i class="i-Repeat-2"></i> Actualiser
+          </button>
+        </div>
+        <div class="toolbar-right">
+          <button class="btn btn-sm btn-outline-secondary" (click)="telechargerPdfSituation()" [disabled]="!situation">
+            <i class="i-File-Download mr-1"></i> PDF situation
+          </button>
+        </div>
+      </div>
+
+      <div class="loading-state" *ngIf="isLoadingSituation">
+        <div class="spinner-border text-primary"></div><span>Chargement...</span>
+      </div>
+
+      <div *ngIf="!isLoadingSituation && situation">
+
+        <!-- Infos fournisseur -->
+        <div class="situation-header">
+          <div class="avatar-lg" >{{ getInitiales(situation.fournisseur.nom) }}</div>
+          <div class="sit-info">
+            <h2>{{ situation.fournisseur.nom }}</h2>
+            <span class="sit-code">{{ situation.fournisseur.code }}</span>
+            <span class="badge ml-2" [class.badge-success]="situation.fournisseur.actif" [class.badge-secondary]="!situation.fournisseur.actif">
+              {{ situation.fournisseur.actif ? 'Actif' : 'Inactif' }}
+            </span>
+          </div>
+        </div>
+
+        <!-- KPIs financiers -->
+        <div class="kpi-row">
+          <div class="kpi-card kpi-blue">
+            <i class="i-Shop kpi-icon"></i>
+            <div class="kpi-content">
+              <span class="kpi-value">{{ fmt(situation.totalAchats) }}</span>
+              <span class="kpi-label">Total achats</span>
+            </div>
+          </div>
+          <div class="kpi-card kpi-green">
+            <i class="i-Money-Bag kpi-icon"></i>
+            <div class="kpi-content">
+              <span class="kpi-value">{{ fmt(situation.totalPaye) }}</span>
+              <span class="kpi-label">Total payé</span>
+            </div>
+          </div>
+          <div class="kpi-card" [class.kpi-red]="situation.solde > 0" [class.kpi-green]="situation.solde <= 0">
+            <i class="i-Exclamation kpi-icon"></i>
+            <div class="kpi-content">
+              <span class="kpi-value">{{ fmt(situation.solde) }}</span>
+              <span class="kpi-label">Solde dû</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Barre de paiement -->
+        <div class="progress-section" *ngIf="situation.totalAchats > 0">
+          <div class="prog-labels">
+            <span>Taux de paiement</span>
+            <span class="font-weight-bold">{{ ((situation.totalPaye / situation.totalAchats) * 100) | number:'1.0-0' }}%</span>
+          </div>
+          <div class="progress">
+            <div class="progress-bar bg-success"
+                 [style.width]="((situation.totalPaye / situation.totalAchats) * 100) + '%'"></div>
+          </div>
+        </div>
+
+        <!-- Infos contact -->
+        <div class="contact-grid" *ngIf="situation.fournisseur.telephone || situation.fournisseur.email || situation.fournisseur.adresse">
+          <h5 class="section-title">Coordonnées</h5>
+          <div class="contact-items">
+            <div class="contact-item" *ngIf="situation.fournisseur.telephone">
+              <i class="i-Telephone"></i><span>{{ situation.fournisseur.telephone }}</span>
+            </div>
+            <div class="contact-item" *ngIf="situation.fournisseur.email">
+              <i class="i-Email"></i><span>{{ situation.fournisseur.email }}</span>
+            </div>
+            <div class="contact-item" *ngIf="situation.fournisseur.adresse">
+              <i class="i-Map-Marker"></i><span>{{ situation.fournisseur.adresse }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Derniers achats -->
+        <div class="mt-4" *ngIf="situation.achatsRecents?.length">
+          <h5 class="section-title">Derniers achats</h5>
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th class="text-right">Total</th>
+                  <th class="text-right">Payé</th>
+                  <th class="text-right">Restant</th>
+                  <th class="text-center">Statut</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let a of situation.achatsRecents">
+                  <td>{{ formatDate(a.dateAchat || a.dateCreation) }}</td>
+                  <td class="text-right font-weight-bold">{{ fmt(a.montantTotal) }}</td>
+                  <td class="text-right text-success">{{ fmt(a.montantPaye) }}</td>
+                  <td class="text-right" [class.text-danger]="a.montantRestant > 0">{{ fmt(a.montantRestant) }}</td>
+                  <td class="text-center">
+                    <span class="badge" [class]="statutClass(a.statut)">{{ statutLabel(a.statut) }}</span>
+                  </td>
+                  <td>
+                    <button class="btn btn-xs btn-success" (click)="ouvrirPaiementModal(a)"
+                            *ngIf="a.statut !== 'PAYE' && a.statut !== 'ANNULE'">
+                      <i class="i-Money-Bag"></i> Payer
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Derniers paiements -->
+        <div class="mt-4" *ngIf="situation.paiementsRecents?.length">
+          <h5 class="section-title">Derniers paiements</h5>
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr><th>Date</th><th class="text-right">Montant</th><th>Mode</th><th>Référence</th></tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let p of situation.paiementsRecents">
+                  <td>{{ formatDate(p.datePaiement) }}</td>
+                  <td class="text-right font-weight-bold text-success">{{ fmt(p.montant) }}</td>
+                  <td>{{ p.modePaiement }}</td>
+                  <td>{{ p.reference || '—' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="empty-state" *ngIf="!isLoadingSituation && !situation">
+        <i class="i-Bar-Chart"></i>
+        <p>Cliquez sur Actualiser pour charger la situation.</p>
+        <button class="btn btn-primary" (click)="chargerSituation()">Charger la situation</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     MODAL — FOURNISSEUR (créer/modifier)
+══════════════════════════════════════════════════════ -->
+<div class="modal-overlay" *ngIf="showFormModal" (click)="showFormModal = false">
+  <div class="modal-panel modal-lg" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h4>{{ isEditing ? 'Modifier le fournisseur' : 'Nouveau fournisseur' }}</h4>
+      <button class="btn-close" (click)="showFormModal = false"><i class="i-Close-Window"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group col-md-8">
+          <label>Nom <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" [(ngModel)]="fournisseurForm.nom" placeholder="Nom du fournisseur" />
+        </div>
+        <div class="form-group col-md-4">
+          <label>Code <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" [(ngModel)]="fournisseurForm.code" placeholder="Code fournisseur" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group col-md-6">
+          <label>Téléphone</label>
+          <input type="text" class="form-control" [(ngModel)]="fournisseurForm.telephone" placeholder="Ex: 77 000 00 00" />
+        </div>
+        <div class="form-group col-md-6">
+          <label>Email</label>
+          <input type="email" class="form-control" [(ngModel)]="fournisseurForm.email" placeholder="email@exemple.com" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group col-md-6">
+          <label>Adresse</label>
+          <input type="text" class="form-control" [(ngModel)]="fournisseurForm.adresse" placeholder="Adresse complète" />
+        </div>
+        <div class="form-group col-md-6">
+          <label>Site web</label>
+          <input type="text" class="form-control" [(ngModel)]="fournisseurForm.siteWeb" placeholder="www.exemple.com" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group col-md-6">
+          <label>Type de produits</label>
+          <input type="text" class="form-control" [(ngModel)]="fournisseurForm.typeProduits" placeholder="Ex: Alimentaire, Cosmétique..." />
+        </div>
+        <div class="form-group col-md-6">
+          <label>Conditions de paiement</label>
+          <input type="text" class="form-control" [(ngModel)]="fournisseurForm.conditionsPaiement" placeholder="Ex: 30 jours net" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group col-md-4">
+          <label>Contact (nom)</label>
+          <input type="text" class="form-control" [(ngModel)]="fournisseurForm.contactNom" />
+        </div>
+        <div class="form-group col-md-4">
+          <label>Contact (tél)</label>
+          <input type="text" class="form-control" [(ngModel)]="fournisseurForm.contactTelephone" />
+        </div>
+        <div class="form-group col-md-4">
+          <label>Délai livraison (jours)</label>
+          <input type="number" class="form-control" [(ngModel)]="fournisseurForm.delaiLivraison" min="0" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea class="form-control" [(ngModel)]="fournisseurForm.description" rows="2" placeholder="Notes sur le fournisseur..."></textarea>
+      </div>
+      <div class="form-group form-check">
+        <input type="checkbox" class="form-check-input" id="actifCheck" [(ngModel)]="fournisseurForm.actif" />
+        <label class="form-check-label" for="actifCheck">Fournisseur actif</label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline-secondary" (click)="showFormModal = false">Annuler</button>
+      <button class="btn btn-primary" (click)="enregistrerFournisseur()" [disabled]="isSaving">
+        <span *ngIf="isSaving" class="spinner-border spinner-border-sm mr-1"></span>
+        {{ isEditing ? 'Enregistrer' : 'Créer' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     MODAL — NOUVEL ACHAT
+══════════════════════════════════════════════════════ -->
+<div class="modal-overlay" *ngIf="showAchatModal" (click)="showAchatModal = false">
+  <div class="modal-panel modal-xl" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h4><i class="i-Shop mr-2"></i>Nouvel achat fournisseur</h4>
+      <button class="btn-close" (click)="showAchatModal = false"><i class="i-Close-Window"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group col-md-6">
+          <label>Fournisseur <span class="text-danger">*</span></label>
+          <select class="form-control" [(ngModel)]="achatForm.fournisseurId">
+            <option [value]="0">-- Sélectionnez --</option>
+            <option *ngFor="let f of fournisseurs" [value]="f.id">{{ f.nom }}</option>
+          </select>
+        </div>
+        <div class="form-group col-md-6">
+          <label>Commentaire</label>
+          <input type="text" class="form-control" [(ngModel)]="achatForm.commentaire" placeholder="Remarque sur cet achat..." />
+        </div>
+      </div>
+
+      <h5 class="section-title">Lignes d'achat</h5>
+      <div class="ligne-achat" *ngFor="let ligne of achatForm.lignes; let i = index">
+        <div class="form-row align-items-center">
+          <div class="form-group col-md-5">
+            <label *ngIf="i === 0">Produit</label>
+            <select class="form-control" [(ngModel)]="ligne.produitId">
+              <option [value]="0">-- Produit --</option>
+              <option *ngFor="let p of produits" [value]="p.id">{{ p.nom }}</option>
+            </select>
+          </div>
+          <div class="form-group col-md-2">
+            <label *ngIf="i === 0">Quantité</label>
+            <input type="number" class="form-control" [(ngModel)]="ligne.quantite" min="1" />
+          </div>
+          <div class="form-group col-md-2">
+            <label *ngIf="i === 0">Prix achat</label>
+            <input type="number" class="form-control" [(ngModel)]="ligne.prixAchatUnitaire" min="0" />
+          </div>
+          <div class="form-group col-md-2">
+            <label *ngIf="i === 0">Sous-total</label>
+            <input type="text" class="form-control bg-light" readonly [value]="fmt((ligne.quantite || 0) * (ligne.prixAchatUnitaire || 0))" />
+          </div>
+          <div class="form-group col-md-1 d-flex align-items-end">
+            <button class="btn btn-sm btn-outline-danger" (click)="retirerLigne(i)" [disabled]="achatForm.lignes.length === 1">
+              <i class="i-Trash"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn btn-sm btn-outline-primary mb-3" (click)="ajouterLigne()">
+        <i class="i-Add mr-1"></i> Ajouter une ligne
+      </button>
+
+      <div class="achat-total-row">
+        <div class="form-group col-md-4">
+          <label>Montant total</label>
+          <input type="text" class="form-control bg-light font-weight-bold" readonly [value]="fmt(montantTotalAchat)" />
+        </div>
+        <div class="form-group col-md-4">
+          <label>Montant payé maintenant</label>
+          <input type="number" class="form-control" [(ngModel)]="achatForm.montantPaye" min="0" [max]="montantTotalAchat" />
+        </div>
+        <div class="form-group col-md-4">
+          <label>Reste à payer</label>
+          <input type="text" class="form-control bg-light text-danger" readonly
+                 [value]="fmt(montantTotalAchat - (achatForm.montantPaye || 0))" />
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline-secondary" (click)="showAchatModal = false">Annuler</button>
+      <button class="btn btn-primary" (click)="enregistrerAchat()" [disabled]="isSaving">
+        <span *ngIf="isSaving" class="spinner-border spinner-border-sm mr-1"></span>
+        Enregistrer l'achat
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     MODAL — PAIEMENT
+══════════════════════════════════════════════════════ -->
+<div class="modal-overlay" *ngIf="showPaiementModal" (click)="showPaiementModal = false">
+  <div class="modal-panel" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h4><i class="i-Money-Bag mr-2"></i>Enregistrer un paiement</h4>
+      <button class="btn-close" (click)="showPaiementModal = false"><i class="i-Close-Window"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="achat-ref" *ngIf="selectedAchat">
+        <span>Achat #{{ selectedAchat.id }}</span>
+        <span class="font-weight-bold ml-2">Restant : {{ fmt(selectedAchat.montantRestant) }}</span>
+      </div>
+      <div class="form-group">
+        <label>Fournisseur</label>
+        <select class="form-control" [(ngModel)]="paiementForm.fournisseurId" [disabled]="!!selectedAchat">
+          <option *ngFor="let f of fournisseurs" [value]="f.id">{{ f.nom }}</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group col-md-6">
+          <label>Montant <span class="text-danger">*</span></label>
+          <input type="number" class="form-control" [(ngModel)]="paiementForm.montant" min="1" />
+        </div>
+        <div class="form-group col-md-6">
+          <label>Mode de paiement</label>
+          <select class="form-control" [(ngModel)]="paiementForm.modePaiement">
+            <option value="ESPECES">Espèces</option>
+            <option value="VIREMENT">Virement</option>
+            <option value="CHEQUE">Chèque</option>
+            <option value="BANQUE">Banque</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Référence</label>
+        <input type="text" class="form-control" [(ngModel)]="paiementForm.reference" placeholder="N° chèque, virement..." />
+      </div>
+      <div class="form-group">
+        <label>Observation</label>
+        <textarea class="form-control" [(ngModel)]="paiementForm.observation" rows="2"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline-secondary" (click)="showPaiementModal = false">Annuler</button>
+      <button class="btn btn-success" (click)="enregistrerPaiement()" [disabled]="isSaving">
+        <span *ngIf="isSaving" class="spinner-border spinner-border-sm mr-1"></span>
+        Enregistrer le paiement
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     MODAL — AVANCE
+══════════════════════════════════════════════════════ -->
+<div class="modal-overlay" *ngIf="showAvanceModal" (click)="showAvanceModal = false">
+  <div class="modal-panel" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h4><i class="i-Wallet mr-2"></i>Enregistrer une avance</h4>
+      <button class="btn-close" (click)="showAvanceModal = false"><i class="i-Close-Window"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Fournisseur</label>
+        <select class="form-control" [(ngModel)]="avanceForm.fournisseurId">
+          <option *ngFor="let f of fournisseurs" [value]="f.id">{{ f.nom }}</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group col-md-6">
+          <label>Montant <span class="text-danger">*</span></label>
+          <input type="number" class="form-control" [(ngModel)]="avanceForm.montant" min="1" />
+        </div>
+        <div class="form-group col-md-6">
+          <label>Source</label>
+          <select class="form-control" [(ngModel)]="avanceForm.sourceFinancement">
+            <option value="CAISSE">Caisse</option>
+            <option value="BANQUE">Banque</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Motif</label>
+        <input type="text" class="form-control" [(ngModel)]="avanceForm.motif" placeholder="Raison de l'avance..." />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline-secondary" (click)="showAvanceModal = false">Annuler</button>
+      <button class="btn btn-primary" (click)="enregistrerAvance()" [disabled]="isSaving">
+        <span *ngIf="isSaving" class="spinner-border spinner-border-sm mr-1"></span>
+        Enregistrer l'avance
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,268 @@
+<div class="container-fluid py-4 app-page">
+
+  <!-- En-tête -->
+  <div class="app-page-header mb-4">
+    <div class="app-page-header-left">
+      <div class="app-page-icon"><i class="fa fa-money"></i></div>
+      <div>
+        <h1 class="app-page-title">Paiement des Employés</h1>
+        <p class="app-page-subtitle">Salaires et historique des paiements</p>
+      </div>
+    </div>
+    <div class="app-page-header-actions">
+      <button class="btn btn-primary" (click)="ouvrirFormPaiement()">
+        <i class="fa fa-plus me-1"></i> Payer un employé
+      </button>
+    </div>
+  </div>
+
+  <!-- Statistiques -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="app-stat-card">
+        <div class="app-stat-icon blue"><i class="fa fa-list"></i></div>
+        <div class="app-stat-body">
+          <div class="app-stat-label">Total paiements</div>
+          <div class="app-stat-value">{{ stats.totalPaiements }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="app-stat-card">
+        <div class="app-stat-icon green"><i class="fa fa-check-circle"></i></div>
+        <div class="app-stat-body">
+          <div class="app-stat-label">Payés</div>
+          <div class="app-stat-value">{{ stats.totalPaies }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="app-stat-card">
+        <div class="app-stat-icon orange"><i class="fa fa-ban"></i></div>
+        <div class="app-stat-body">
+          <div class="app-stat-label">Annulés</div>
+          <div class="app-stat-value">{{ stats.totalAnnules }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="app-stat-card">
+        <div class="app-stat-icon red"><i class="fa fa-money"></i></div>
+        <div class="app-stat-body">
+          <div class="app-stat-label">Montant total payé</div>
+          <div class="app-stat-value">{{ formatMontant(stats.montantTotalPaye) }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtres -->
+  <div class="app-filter-card mb-4">
+    <div class="row g-2">
+      <div class="col-md-3">
+        <input type="text" class="form-control" placeholder="Rechercher..."
+          [(ngModel)]="searchQuery" />
+      </div>
+      <div class="col-md-3">
+        <select class="form-select" [(ngModel)]="filtreStatut">
+          <option value="">Tous les statuts</option>
+          <option value="PAYE">Payés</option>
+          <option value="ANNULE">Annulés</option>
+        </select>
+    </div>
+      <div class="col-md-3">
+        <select class="form-select" [(ngModel)]="filtreEmployeId">
+          <option [ngValue]="''">Tous les employés</option>
+          <option *ngFor="let e of employes" [ngValue]="e.id">{{ e.nomComplet }}</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tableau des paiements -->
+  <div class="app-table-card">
+    <div class="app-table-header">
+      <div class="app-table-title"><i class="fa fa-list me-2"></i>Historique des paiements</div>
+    </div>
+      <div *ngIf="isLoading" class="text-center p-4">
+        <div class="spinner-border text-primary"></div>
+      </div>
+
+      <table *ngIf="!isLoading" class="table table-hover mb-0">
+        <thead class="thead-light">
+          <tr>
+            <th>#</th>
+            <th>Employé</th>
+            <th>Poste</th>
+            <th>Période</th>
+            <th>Nb mois</th>
+            <th class="text-right">Montant</th>
+            <th>Date paiement</th>
+            <th>Statut</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let p of paginatedPaiements; let i = index"
+              [ngClass]="p.statut === 'ANNULE' ? 'table-row-annule' : ''">
+            <td>{{ (currentPage - 1) * itemsPerPage + i + 1 }}</td>
+            <td>
+              <strong [ngClass]="p.statut === 'ANNULE' ? 'text-muted' : ''">{{ p.employeNomComplet }}</strong>
+            </td>
+            <td>{{ p.employePoste }}</td>
+            <td>
+              {{ p.periodeDebut }}
+              <span *ngIf="p.periodeFin && p.periodeFin !== p.periodeDebut"> → {{ p.periodeFin }}</span>
+            </td>
+            <td class="text-center">{{ p.nombreMois }}</td>
+            <td class="text-right font-weight-bold"
+                [ngClass]="p.statut === 'ANNULE' ? 'text-muted text-decoration-line-through' : 'text-dark'">
+              {{ formatMontant(p.montant) }}
+            </td>
+            <td>{{ p.datePaiement | date:'dd/MM/yyyy HH:mm' }}</td>
+            <td>
+              <!-- Badge statut -->
+              <span *ngIf="p.statut === 'PAYE'"
+                    class="badge badge-pill badge-success px-3 py-2"
+                    style="font-size:0.85rem; font-weight:600; letter-spacing:0.5px;">
+                ✓ Payé
+              </span>
+              <span *ngIf="p.statut === 'ANNULE'"
+                    class="badge badge-pill badge-danger px-3 py-2"
+                    style="font-size:0.85rem; font-weight:600; letter-spacing:0.5px;">
+                ✗ Annulé
+              </span>
+              <!-- Motif annulation -->
+              <div *ngIf="p.statut === 'ANNULE' && p.motifAnnulation"
+                   class="mt-1 small text-danger"
+                   style="font-style:italic; font-size:0.78rem;">
+                <i class="i-Information mr-1"></i>{{ p.motifAnnulation }}
+              </div>
+            </td>
+            <td>
+              <button *ngIf="p.statut === 'PAYE'" class="btn btn-xs btn-outline-danger"
+                title="Annuler le paiement" (click)="confirmerAnnulation(p)">
+                <i class="i-Close-Window"></i> Annuler
+              </button>
+              <span *ngIf="p.statut === 'ANNULE'" class="text-danger small font-italic">Annulé</span>
+            </td>
+          </tr>
+          <tr *ngIf="paiementsFiltres.length === 0">
+            <td colspan="9" class="text-center text-muted py-4">Aucun paiement trouvé.</td>
+          </tr>
+        </tbody>
+      </table>
+  </div>
+
+  <!-- Pagination -->
+  <div class="d-flex justify-content-center mt-3" *ngIf="totalPages > 1">
+    <ul class="pagination pagination-sm">
+      <li class="page-item" [class.disabled]="currentPage === 1">
+        <a class="page-link" (click)="goToPage(currentPage - 1)">«</a>
+      </li>
+      <li class="page-item" *ngFor="let p of pages" [class.active]="p === currentPage">
+        <a class="page-link" (click)="goToPage(p)">{{ p }}</a>
+      </li>
+      <li class="page-item" [class.disabled]="currentPage === totalPages">
+        <a class="page-link" (click)="goToPage(currentPage + 1)">»</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<!-- Modal Paiement -->
+<div class="modal fade show d-block" tabindex="-1" *ngIf="showFormModal" style="background:rgba(0,0,0,0.5)">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="i-Money-2 mr-2"></i> Paiement de salaire</h5>
+        <button type="button" class="close" (click)="fermerModal()"><span>&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <!-- Sélection employé -->
+          <div class="col-md-6 form-group">
+            <label>Employé <span class="text-danger">*</span></label>
+            <select class="form-control" [(ngModel)]="form.employeId">
+              <option [ngValue]="0">— Choisir un employé —</option>
+              <option *ngFor="let e of employes" [ngValue]="e.id">{{ e.nomComplet }} ({{ e.poste }})</option>
+            </select>
+          </div>
+
+          <!-- Nombre de mois -->
+          <div class="col-md-6 form-group">
+            <label>Nombre de mois <span class="text-danger">*</span></label>
+            <select class="form-control" [(ngModel)]="form.nombreMois">
+              <option [ngValue]="1">1 mois</option>
+              <option [ngValue]="2">2 mois</option>
+              <option [ngValue]="3">3 mois</option>
+            </select>
+          </div>
+
+          <!-- Période de début -->
+          <div class="col-md-3 form-group">
+            <label>Mois début <span class="text-danger">*</span></label>
+            <select class="form-control" [(ngModel)]="selectedMoisDebut">
+              <option *ngFor="let m of moisOptions" [value]="m">{{ m }}</option>
+            </select>
+          </div>
+          <div class="col-md-3 form-group">
+            <label>Année début <span class="text-danger">*</span></label>
+            <select class="form-control" [(ngModel)]="selectedAnneeDebut">
+              <option *ngFor="let a of anneeOptions" [value]="a">{{ a }}</option>
+            </select>
+          </div>
+
+          <!-- Période de fin (si > 1 mois) -->
+          <ng-container *ngIf="form.nombreMois > 1">
+            <div class="col-md-3 form-group">
+              <label>Mois fin</label>
+              <select class="form-control" [(ngModel)]="selectedMoisFin">
+                <option *ngFor="let m of moisOptions" [value]="m">{{ m }}</option>
+              </select>
+            </div>
+            <div class="col-md-3 form-group">
+              <label>Année fin</label>
+              <select class="form-control" [(ngModel)]="selectedAnneeFin">
+                <option *ngFor="let a of anneeOptions" [value]="a">{{ a }}</option>
+              </select>
+            </div>
+          </ng-container>
+
+          <!-- Observation -->
+          <div class="col-12 form-group">
+            <label>Observation</label>
+            <textarea class="form-control" [(ngModel)]="form.observation" rows="2" placeholder="Remarques optionnelles..."></textarea>
+          </div>
+        </div>
+
+        <!-- Récapitulatif -->
+        <div class="alert alert-info" *ngIf="form.employeId && form.employeId !== 0">
+          <div class="row">
+            <div class="col-md-6">
+              <p class="mb-1"><strong>Employé :</strong> {{ employeSelectionne?.nomComplet }}</p>
+              <p class="mb-1"><strong>Salaire mensuel :</strong> {{ formatMontant(employeSelectionne?.salaireMensuel || 0) }}</p>
+            </div>
+            <div class="col-md-6 text-right">
+              <p class="mb-1">
+                <strong>Période : </strong>
+                {{ getPeriodeDebut() }}
+                <span *ngIf="form.nombreMois > 1"> → {{ getPeriodeFin() }}</span>
+              </p>
+              <h5 class="text-danger font-weight-bold mb-0">
+                Total : {{ formatMontant(montantCalcule) }}
+              </h5>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="fermerModal()">Annuler</button>
+        <button class="btn btn-success" (click)="confirmerPaiement()" [disabled]="isSaving">
+          <span *ngIf="isSaving" class="spinner-border spinner-border-sm mr-1"></span>
+          <i class="i-Money-2 mr-1" *ngIf="!isSaving"></i> Payer
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,401 @@
+<div class="container-fluid py-4 app-page">
+
+  <!-- En-tête -->
+  <div class="app-page-header mb-4">
+    <div class="app-page-header-left">
+      <div class="app-page-icon"><i class="fa fa-university"></i></div>
+      <div>
+        <h1 class="app-page-title">Gestion Bancaire</h1>
+        <p class="app-page-subtitle">Comptes bancaires et opérations</p>
+      </div>
+    </div>
+    <div class="app-page-header-actions">
+      <button *ngIf="isAdmin()" class="btn btn-primary" (click)="openAddModal()">
+        <i class="fa fa-plus me-1"></i> Nouveau compte
+      </button>
+    </div>
+  </div>
+
+  <!-- MESSAGES -->
+  <div *ngIf="errorMessage" class="alert alert-danger alert-dismissible mb-3">
+    {{ errorMessage }}
+    <button type="button" class="btn-close" (click)="errorMessage=''"></button>
+  </div>
+
+  <!-- Stats -->
+  <div class="row g-3 mb-4">
+    <div class="col-12 col-md-4">
+      <div class="app-stat-card">
+        <div class="app-stat-icon blue"><i class="fa fa-university"></i></div>
+        <div class="app-stat-body">
+          <div class="app-stat-label">Solde total banques</div>
+          <div class="app-stat-value">{{ totalSoldes | number:'1.0-0' }} F</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-md-4">
+      <div class="app-stat-card">
+        <div class="app-stat-icon green"><i class="fa fa-arrow-up"></i></div>
+        <div class="app-stat-body">
+          <div class="app-stat-label">Total versements</div>
+          <div class="app-stat-value">{{ totalVersements | number:'1.0-0' }} F</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-md-4">
+      <div class="app-stat-card">
+        <div class="app-stat-icon red"><i class="fa fa-arrow-down"></i></div>
+        <div class="app-stat-body">
+          <div class="app-stat-label">Total retraits/paiements</div>
+          <div class="app-stat-value">{{ totalRetraits | number:'1.0-0' }} F</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LISTE DES COMPTES -->
+  <div *ngIf="isLoading" class="text-center py-4">
+    <div class="spinner-border text-primary"></div>
+  </div>
+
+  <div *ngIf="!isLoading && comptes.length === 0" class="text-center py-5 text-muted">
+    <i class="i-University" style="font-size:3rem"></i>
+    <p class="mt-2">Aucun compte bancaire enregistré</p>
+    <button *ngIf="isAdmin()" class="btn btn-outline-primary" (click)="openAddModal()">Créer un compte</button>
+  </div>
+
+  <div class="row" *ngIf="!isLoading">
+    <div class="col-lg-6 col-xl-4 mb-4" *ngFor="let compte of comptes">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-white border-0 pb-0 pt-3">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <h6 class="mb-0 fw-bold">{{ compte.nomBanque }}</h6>
+              <small class="text-muted">{{ compte.titulaire || 'Boutique' }}</small>
+            </div>
+            <span class="badge" [class.bg-success]="compte.soldeActuel > 0" [class.bg-danger]="compte.soldeActuel <= 0">
+              {{ compte.soldeActuel | number:'1.0-0' }} F
+            </span>
+          </div>
+        </div>
+        <div class="card-body pt-2">
+          <div *ngIf="compte.numeroCompte" class="text-muted small mb-2">
+            <i class="i-Credit-Card me-1"></i>N° {{ compte.numeroCompte }}
+          </div>
+          <div *ngIf="compte.agence" class="text-muted small mb-2">
+            <i class="i-Map-Marker me-1"></i>{{ compte.agence }}
+          </div>
+
+          <!-- TABLEAU RÉCAPITULATIF -->
+          <table class="table table-sm table-borderless mb-0 mt-2">
+            <tr>
+              <td class="text-muted ps-0">Solde initial</td>
+              <td class="text-end fw-semibold">{{ compte.soldeInitial | number:'1.0-0' }} F</td>
+             </tr>
+            <tr>
+              <td class="text-muted ps-0 text-success">+ Versements</td>
+              <td class="text-end text-success">{{ compte.totalVersements | number:'1.0-0' }} F</td>
+             </tr>
+            <tr>
+              <td class="text-muted ps-0 text-danger">- Retraits</td>
+              <td class="text-end text-danger">{{ compte.totalRetraits | number:'1.0-0' }} F</td>
+             </tr>
+            <tr *ngIf="compte.totalCheques > 0">
+              <td class="text-muted ps-0 text-danger">- Chèques</td>
+              <td class="text-end text-danger">{{ compte.totalCheques | number:'1.0-0' }} F</td>
+             </tr>
+            <tr *ngIf="compte.totalFrais > 0">
+              <td class="text-muted ps-0 text-danger">- Frais</td>
+              <td class="text-end text-danger">{{ compte.totalFrais | number:'1.0-0' }} F</td>
+             </tr>
+            <tr *ngIf="compte.totalBonsCaisse > 0">
+              <td class="text-muted ps-0 text-danger">- Bons de caisse</td>
+              <td class="text-end text-danger">{{ compte.totalBonsCaisse | number:'1.0-0' }} F</td>
+             </tr>
+            <tr class="border-top">
+              <td class="ps-0 fw-bold">= Solde actuel</td>
+              <td class="text-end fw-bold" [class.text-success]="compte.soldeActuel > 0" [class.text-danger]="compte.soldeActuel <= 0">
+                {{ compte.soldeActuel | number:'1.0-0' }} F
+              </td>
+             </tr>
+           </table>
+        </div>
+        <div class="card-footer bg-white border-0 pt-0">
+          <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-outline-primary flex-fill" (click)="openOperationModal(compte)">
+              <i class="i-Add me-1"></i>Opération
+            </button>
+            <button class="btn btn-sm btn-outline-secondary flex-fill" (click)="openHistoriqueModal(compte)">
+              <i class="i-Clock me-1"></i>Historique
+            </button>
+            <button *ngIf="isAdmin()" class="btn btn-sm btn-outline-warning" (click)="openEditModal(compte)">
+              <i class="i-Edit"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODAL CRÉER COMPTE ===================== -->
+<div class="modal fade show d-block" tabindex="-1" *ngIf="showAddModal" style="background:rgba(0,0,0,.5)">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="i-University me-2"></i>Nouveau compte bancaire</h5>
+        <button class="btn-close" (click)="showAddModal=false"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Nom de la banque *</label>
+            <input type="text" class="form-control" [(ngModel)]="compteForm.nomBanque" placeholder="Ex: BDM, Coris Bank...">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Numéro de compte</label>
+            <input type="text" class="form-control" [(ngModel)]="compteForm.numeroCompte" placeholder="N° compte">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Agence</label>
+            <input type="text" class="form-control" [(ngModel)]="compteForm.agence" placeholder="Nom de l'agence">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Titulaire</label>
+            <input type="text" class="form-control" [(ngModel)]="compteForm.titulaire" placeholder="Nom du titulaire">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Solde initial (F)</label>
+            <input type="number" class="form-control" [(ngModel)]="compteForm.soldeInitial" min="0">
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-semibold">Description</label>
+            <textarea class="form-control" [(ngModel)]="compteForm.description" rows="2" placeholder="Notes..."></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline-secondary" (click)="showAddModal=false">Annuler</button>
+        <button class="btn btn-primary" (click)="saveCompte()" [disabled]="isLoading">
+          <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-2"></span>
+          Créer le compte
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODAL MODIFIER COMPTE ===================== -->
+<div class="modal fade show d-block" tabindex="-1" *ngIf="showEditModal" style="background:rgba(0,0,0,.5)">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="i-Edit me-2"></i>Modifier - {{ selectedCompte?.nomBanque }}</h5>
+        <button class="btn-close" (click)="showEditModal=false"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Nom de la banque *</label>
+            <input type="text" class="form-control" [(ngModel)]="compteForm.nomBanque">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Numéro de compte</label>
+            <input type="text" class="form-control" [(ngModel)]="compteForm.numeroCompte">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Agence</label>
+            <input type="text" class="form-control" [(ngModel)]="compteForm.agence">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Titulaire</label>
+            <input type="text" class="form-control" [(ngModel)]="compteForm.titulaire">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Solde initial (F)</label>
+            <input type="number" class="form-control" [(ngModel)]="compteForm.soldeInitial" min="0">
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-semibold">Description</label>
+            <textarea class="form-control" [(ngModel)]="compteForm.description" rows="2"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline-secondary" (click)="showEditModal=false">Annuler</button>
+        <button class="btn btn-primary" (click)="updateCompte()" [disabled]="isLoading">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODAL OPÉRATION ===================== -->
+<div class="modal fade show d-block" tabindex="-1" *ngIf="showOperationModal" style="background:rgba(0,0,0,.5)">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="i-Money-2 me-2"></i>Nouvelle opération - {{ selectedCompte?.nomBanque }}</h5>
+        <button class="btn-close" (click)="showOperationModal=false"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-info mb-3">
+          Solde actuel : <strong>{{ selectedCompte?.soldeActuel | number:'1.0-0' }} F</strong>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Type d'opération *</label>
+          <select class="form-select" [(ngModel)]="operationForm.type">
+            <option *ngFor="let t of typesOperation" [value]="t.value">{{ t.label }}</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Montant (F) *</label>
+          <input type="number" class="form-control" [(ngModel)]="operationForm.montant" min="1">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Motif</label>
+          <input type="text" class="form-control" [(ngModel)]="operationForm.motif" placeholder="Description de l'opération">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Référence</label>
+          <input type="text" class="form-control" [(ngModel)]="operationForm.reference" placeholder="N° chèque, virement...">
+        </div>
+        <div class="alert alert-warning mb-0" *ngIf="isDebit(operationForm.type) && selectedCompte">
+          <i class="i-Warning me-1"></i>
+          Cette opération débitera le compte.
+          Après : <strong>{{ (selectedCompte.soldeActuel - (operationForm.montant||0)) | number:'1.0-0' }} F</strong>
+        </div>
+        <div class="alert alert-success mb-0" *ngIf="!isDebit(operationForm.type) && selectedCompte">
+          <i class="i-Arrow-Up me-1"></i>
+          Après : <strong>{{ (selectedCompte.soldeActuel + (operationForm.montant||0)) | number:'1.0-0' }} F</strong>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline-secondary" (click)="showOperationModal=false">Annuler</button>
+        <button class="btn btn-primary" (click)="enregistrerOperation()" [disabled]="isLoading">
+          <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-2"></span>
+          Enregistrer
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODAL HISTORIQUE ===================== -->
+<div class="modal fade show d-block" tabindex="-1" *ngIf="showHistoriqueModal" style="background:rgba(0,0,0,.5)">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="i-Clock me-2"></i>Historique - {{ selectedCompte?.nomBanque }}</h5>
+        <button class="btn-close" (click)="showHistoriqueModal=false"></button>
+      </div>
+      <div class="modal-body">
+        <!-- FILTRES -->
+        <div class="row mb-3 g-2">
+          <div class="col-md-3">
+            <label class="form-label fw-semibold small">Filtre rapide</label>
+            <select class="form-select form-select-sm" [(ngModel)]="filtreDate" (change)="changerFiltreDate()">
+              <option value="tous">Toutes les opérations</option>
+              <option value="jour">Aujourd'hui</option>
+              <option value="semaine">Cette semaine</option>
+              <option value="mois">Ce mois</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-semibold small">Date début</label>
+            <input type="date" class="form-control form-control-sm" [(ngModel)]="dateDebut" (change)="appliquerPlageDate()">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-semibold small">Date fin</label>
+            <input type="date" class="form-control form-control-sm" [(ngModel)]="dateFin" (change)="appliquerPlageDate()">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-semibold small">&nbsp;</label>
+            <div class="d-flex gap-2">
+              <button class="btn btn-success btn-sm flex-fill" (click)="telechargerCSV()" [disabled]="historiqueFiltre.length === 0">
+                <i class="i-Download me-1"></i> CSV
+              </button>
+              <button class="btn btn-danger btn-sm flex-fill" (click)="telechargerPDF()" [disabled]="historiqueFiltre.length === 0">
+                <i class="i-File-PDF me-1"></i> PDF
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="isLoadingHistorique" class="text-center py-3">
+          <div class="spinner-border text-primary"></div>
+        </div>
+        
+        <div *ngIf="!isLoadingHistorique && historiqueFiltre.length === 0" class="text-center text-muted py-3">
+          Aucune opération trouvée pour cette période
+        </div>
+        
+        <div class="table-responsive" *ngIf="!isLoadingHistorique && historiqueFiltre.length > 0">
+          <table class="table table-hover table-sm align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Motif</th>
+                <th>Référence</th>
+                <th class="text-end">Montant</th>
+                <th class="text-end">Solde avant</th>
+                <th class="text-end">Solde après</th>
+               </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let op of historiqueFiltre">
+                <td><small>{{ op.dateOperation | date:'dd/MM/yy HH:mm' }}</small></td>
+                <td>
+                  <span class="badge" [class.bg-success]="!isDebit(op.type)" [class.bg-danger]="isDebit(op.type)">
+                    {{ getTypeLabel(op.type) }}
+                  </span>
+                </td>
+                <td><small>{{ op.motif }}</small></td>
+                <td><small>{{ op.reference }}</small></td>
+                <td class="text-end fw-semibold" [class.text-success]="!isDebit(op.type)" [class.text-danger]="isDebit(op.type)">
+                  {{ isDebit(op.type) ? '-' : '+' }}{{ op.montant | number:'1.0-0' }} F
+                </td>
+                <td class="text-end"><small>{{ op.soldeAvant | number:'1.0-0' }} F</small></td>
+                <td class="text-end fw-semibold">{{ op.soldeApres | number:'1.0-0' }} F</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- PAGINATION -->
+        <div *ngIf="totalPages > 1" class="d-flex justify-content-between align-items-center mt-3">
+          <div class="text-muted small">
+            Affichage de {{ (pageActuelle-1)*elementsParPage+1 }} à {{ pageActuelle*elementsParPage > totalElements ? totalElements : pageActuelle*elementsParPage }} sur {{ totalElements }} opérations
+          </div>
+          <nav>
+            <ul class="pagination pagination-sm mb-0">
+              <li class="page-item" [class.disabled]="pageActuelle === 1">
+                <a class="page-link" (click)="pagePrecedente()">Précédent</a>
+              </li>
+              <li class="page-item" *ngFor="let page of pages" [class.active]="page === pageActuelle" [class.disabled]="page === -1">
+                <a class="page-link" (click)="page !== -1 && allerPage(page)">
+                  {{ page === -1 ? '...' : page }}
+                </a>
+              </li>
+              <li class="page-item" [class.disabled]="pageActuelle === totalPages">
+                <a class="page-link" (click)="pageSuivante()">Suivant</a>
+              </li>
+            </ul>
+          </nav>
+          <div class="d-flex align-items-center gap-2">
+            <label class="text-muted small mb-0">Lignes :</label>
+            <select class="form-select form-select-sm w-auto" [(ngModel)]="elementsParPage" (change)="pageActuelle=1; appliquerFiltres()">
+              <option [value]="10">10</option>
+              <option [value]="25">25</option>
+              <option [value]="50">50</option>
+              <option [value]="100">100</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="showHistoriqueModal=false">Fermer</button>
+      </div>
+    </div>
+  </div>
+</div>

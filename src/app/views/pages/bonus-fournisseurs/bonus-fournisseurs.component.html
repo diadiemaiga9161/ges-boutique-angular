@@ -1,0 +1,200 @@
+<div class="container-fluid py-4 app-page">
+
+  <!-- En-tête -->
+  <div class="app-page-header mb-4">
+    <div class="app-page-header-left">
+      <div class="app-page-icon"><i class="fa fa-gift"></i></div>
+      <div>
+        <h1 class="app-page-title">Bonus Fournisseurs</h1>
+        <p class="app-page-subtitle">Ristournes, bonus volume, primes objectif</p>
+      </div>
+    </div>
+    <div class="app-page-header-actions">
+      <button class="btn btn-primary" (click)="startCreate()">
+        <i class="fa fa-plus me-1"></i> Nouveau bonus
+      </button>
+    </div>
+  </div>
+
+  <!-- Résumé statistiques -->
+  <div class="row g-3 mb-4" *ngIf="stats">
+    <div class="col-sm-6 col-md-4">
+      <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #28a745 !important;">
+        <div class="card-body">
+          <div class="text-muted small mb-1">Total ce mois</div>
+          <div class="fw-bold fs-5 text-success">{{ formatPrice(stats.totalMois) }}</div>
+          <div class="text-muted small">{{ stats.nombreMois }} bonus enregistrés</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-md-4">
+      <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #007bff !important;">
+        <div class="card-body">
+          <div class="text-muted small mb-1">Total cette année</div>
+          <div class="fw-bold fs-5 text-primary">{{ formatPrice(stats.totalAnnee) }}</div>
+          <div class="text-muted small">{{ anneeStats }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-12 col-md-4 d-flex align-items-center gap-2">
+      <select class="form-select form-select-sm" [(ngModel)]="moisStats" (change)="loadStats()">
+        <option [value]="1">Janvier</option><option [value]="2">Février</option>
+        <option [value]="3">Mars</option><option [value]="4">Avril</option>
+        <option [value]="5">Mai</option><option [value]="6">Juin</option>
+        <option [value]="7">Juillet</option><option [value]="8">Août</option>
+        <option [value]="9">Septembre</option><option [value]="10">Octobre</option>
+        <option [value]="11">Novembre</option><option [value]="12">Décembre</option>
+      </select>
+      <select class="form-select form-select-sm" [(ngModel)]="anneeStats" (change)="loadStats()">
+        <option *ngFor="let a of [2024,2025,2026,2027]" [value]="a">{{ a }}</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Filtres -->
+  <div class="app-filter-card mb-4">
+    <div class="row g-2 align-items-end">
+      <div class="col-sm-4">
+        <label class="form-label small mb-1">Du</label>
+        <input type="date" class="form-control" [(ngModel)]="dateDebut">
+      </div>
+      <div class="col-sm-4">
+        <label class="form-label small mb-1">Au</label>
+        <input type="date" class="form-control" [(ngModel)]="dateFin">
+      </div>
+      <div class="col-sm-4 d-flex gap-2">
+        <button class="btn btn-outline-primary btn-sm" (click)="filtrer()">
+          <i class="fa fa-filter me-1"></i>Filtrer
+        </button>
+        <button class="btn btn-outline-secondary btn-sm" (click)="load()" *ngIf="filtreActif">
+          <i class="fa fa-times me-1"></i>Réinitialiser
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Total affiché -->
+  <div class="alert d-flex justify-content-between align-items-center py-2 mb-3"
+    style="background: #f0fff4; border: 1.5px solid #b7e4c7; border-radius: 12px;">
+    <span class="fw-bold text-success">
+      <i class="fa fa-gift me-1"></i>
+      {{ filtreActif ? 'Total sur la période' : 'Total des bonus' }}
+    </span>
+    <strong class="text-success" style="font-size: 1.1rem">{{ formatPrice(totalBonus()) }}</strong>
+  </div>
+
+  <!-- Tableau -->
+  <div class="card shadow-sm">
+    <div class="card-body p-0">
+      <div *ngIf="loading" class="text-center py-5">
+        <div class="spinner-border text-primary"></div>
+      </div>
+
+      <div *ngIf="!loading && bonus.length === 0" class="text-center py-5 text-muted">
+        <i class="fa fa-gift fa-3x mb-3 d-block"></i>
+        Aucun bonus enregistré
+      </div>
+
+      <div class="table-responsive" *ngIf="!loading && bonus.length > 0">
+        <table class="table table-hover mb-0">
+          <thead style="background: var(--gl-blue-50);">
+            <tr>
+              <th class="ps-3">Date</th>
+              <th>Fournisseur</th>
+              <th>Type</th>
+              <th>Description</th>
+              <th class="text-end">Montant</th>
+              <th class="text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let b of bonus">
+              <td class="ps-3"><small class="text-muted">{{ b.date }}</small></td>
+              <td><strong>{{ b.fournisseurNom }}</strong></td>
+              <td>
+                <span class="badge {{ badgeClass(b.type) }}" style="font-size: 0.78rem;">
+                  {{ b.typeLibelle || b.type }}
+                </span>
+              </td>
+              <td><span class="text-muted small">{{ b.description || '—' }}</span></td>
+              <td class="text-end">
+                <span class="badge" style="background: #f0fff4; color: #155724; font-size: 0.85rem; padding: 6px 10px; border-radius: 8px; border: 1px solid #b7e4c7;">
+                  + {{ formatPrice(b.montant) }}
+                </span>
+              </td>
+              <td class="text-center">
+                <button class="btn btn-sm btn-outline-primary me-1" (click)="startEdit(b)" title="Modifier">
+                  <i class="fa fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger" (click)="supprimer(b)" title="Supprimer">
+                  <i class="fa fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Formulaire -->
+<div class="modal fade show d-block" *ngIf="showForm" style="background: rgba(0,0,0,0.5); z-index: 1050;" (click)="cancel()">
+  <div class="modal-dialog modal-dialog-centered" (click)="$event.stopPropagation()">
+    <div class="modal-content" style="border-radius: 16px; border: none;">
+      <div class="modal-header" style="background: var(--gl-blue-900); border-radius: 16px 16px 0 0;">
+        <h5 class="modal-title text-white">
+          <i class="fa fa-gift me-2"></i>
+          {{ editing ? 'Modifier le bonus' : 'Nouveau bonus fournisseur' }}
+        </h5>
+        <button class="btn-close btn-close-white" (click)="cancel()"></button>
+      </div>
+      <div class="modal-body">
+
+        <div class="mb-3">
+          <label class="form-label fw-bold">Fournisseur *</label>
+          <select class="form-select" [(ngModel)]="form.fournisseurId">
+            <option [value]="0">-- Sélectionner --</option>
+            <option *ngFor="let f of fournisseurs" [value]="f.id">{{ f.nom }}</option>
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-bold">Type de bonus *</label>
+          <select class="form-select" [(ngModel)]="form.type">
+            <option *ngFor="let t of types" [value]="t.value">{{ t.label }}</option>
+          </select>
+        </div>
+
+        <div class="row g-2 mb-3">
+          <div class="col-6">
+            <label class="form-label fw-bold">Date *</label>
+            <input type="date" class="form-control" [(ngModel)]="form.date">
+          </div>
+          <div class="col-6">
+            <label class="form-label fw-bold">Montant (FCFA) *</label>
+            <input type="number" class="form-control" [(ngModel)]="form.montant" min="0" placeholder="0">
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-bold">Description</label>
+          <textarea class="form-control" [(ngModel)]="form.description" rows="2"
+            placeholder="Ex: Ristourne 5% sur commandes du mois..."></textarea>
+        </div>
+
+        <div class="alert alert-success py-2 small mb-0">
+          <i class="fa fa-info-circle me-1"></i>
+          Ce bonus sera comptabilisé comme <strong>revenu supplémentaire</strong> dans le résultat net.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="cancel()">Annuler</button>
+        <button class="btn btn-success" (click)="save()">
+          <i class="fa fa-save me-1"></i>
+          {{ editing ? 'Enregistrer' : 'Ajouter le bonus' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

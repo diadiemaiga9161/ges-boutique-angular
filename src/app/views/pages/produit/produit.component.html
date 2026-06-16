@@ -1,0 +1,1092 @@
+<div class="container-fluid py-4 app-page">
+  <!-- En-tête -->
+  <div class="app-page-header mb-4">
+    <div class="app-page-header-left">
+      <div class="app-page-icon"><i class="fa fa-box"></i></div>
+      <div>
+        <h1 class="app-page-title">Gestion des Produits</h1>
+        <p class="app-page-subtitle">Produits, fournisseurs et catégories</p>
+      </div>
+    </div>
+    <div class="app-page-header-actions">
+      <button class="btn btn-primary" type="button" (click)="openAddModal()" *ngIf="isAdmin">
+        <i class="fa fa-plus me-1"></i> Créer un produit
+      </button>
+      <button class="btn btn-success" type="button" (click)="openImportModal()" *ngIf="isAdmin">
+        <i class="fa fa-upload me-1"></i> Importer Excel
+      </button>
+      <div class="dropdown" *ngIf="isAdmin">
+        <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+          <i class="fa fa-cog me-1"></i> Gestion
+        </button>
+        <ul class="dropdown-menu">
+          <li><a class="dropdown-item" (click)="openAddCategoryModal()"><i class="fa fa-tag me-2"></i>Ajouter catégorie</a></li>
+          <li><a class="dropdown-item" (click)="activeTab = 'categories'"><i class="fa fa-list me-2"></i>Gérer catégories</a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item" (click)="openAddFournisseurModal()"><i class="fa fa-truck me-2"></i>Ajouter fournisseur</a></li>
+          <li><a class="dropdown-item" (click)="activeTab = 'fournisseurs'"><i class="fa fa-users me-2"></i>Gérer fournisseurs</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Messages d'alerte -->
+  <div *ngIf="errorMessage" class="alert alert-danger alert-dismissible fade show" role="alert">
+    <i class="fa fa-exclamation-triangle me-2"></i> {{ errorMessage }}
+    <button type="button" class="btn-close" (click)="errorMessage = ''"></button>
+  </div>
+  <div *ngIf="successMessage" class="alert alert-success alert-dismissible fade show" role="alert">
+    <i class="fa fa-check-circle me-2"></i> {{ successMessage }}
+    <button type="button" class="btn-close" (click)="successMessage = ''"></button>
+  </div>
+
+  <!-- Indicateur de chargement global -->
+  <div *ngIf="isLoading && !showAddModal && !showEditModal && !showDeleteModal && !showAddCategoryModal && !showImportModal && !showImportResultModal && !showAddFournisseurModal && !showEditFournisseurModal && !showAchatModal && !showPaiementModal && !showSituationModal && !showAvanceFournisseurModal" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Chargement...</span></div>
+    <p class="mt-2">Chargement des données...</p>
+  </div>
+
+  <!-- Contenu principal -->
+  <div *ngIf="!isLoading || showAddModal || showEditModal || showDeleteModal || showAddCategoryModal || showImportModal || showImportResultModal || showAddFournisseurModal || showEditFournisseurModal || showAchatModal || showPaiementModal || showSituationModal || showAvanceFournisseurModal">
+
+    <!-- Statistiques avancées (Admin seulement) -->
+    <div class="row g-3 mb-4" *ngIf="isAdmin && statistiques">
+      <div class="col-6 col-md-3">
+        <div class="app-stat-card">
+          <div class="app-stat-icon blue"><i class="fa fa-warehouse"></i></div>
+          <div class="app-stat-body">
+            <div class="app-stat-label">Valeur du stock</div>
+            <div class="app-stat-value">{{ formatPrice(statistiques.valeurTotale) }}</div>
+            <div class="app-stat-sub">{{ statistiques.totalProduits }} produits</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="app-stat-card">
+          <div class="app-stat-icon green"><i class="fa fa-truck"></i></div>
+          <div class="app-stat-body">
+            <div class="app-stat-label">Fournisseurs</div>
+            <div class="app-stat-value">{{ statistiques.totalFournisseurs || 0 }}</div>
+            <div class="app-stat-sub">Partenaires actifs</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="app-stat-card">
+          <div class="app-stat-icon orange"><i class="fa fa-exclamation-triangle"></i></div>
+          <div class="app-stat-body">
+            <div class="app-stat-label">Stock faible</div>
+            <div class="app-stat-value">{{ statistiques.produitsStockFaible }}</div>
+            <div class="app-stat-sub">{{ statistiques.pourcentageStockFaible || 0 }}% du total</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="app-stat-card">
+          <div class="app-stat-icon red"><i class="fa fa-calendar-times"></i></div>
+          <div class="app-stat-body">
+            <div class="app-stat-label">Péremption</div>
+            <div class="app-stat-value">{{ statistiques.produitsPerimes || 0 }}</div>
+            <div class="app-stat-sub">{{ statistiques.produitsProchePeremption || 0 }} proches</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filtres avancés -->
+    <div class="card mb-4" *ngIf="activeTab === 'produits'">
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-3">
+            <div class="input-group">
+              <span class="input-group-text"><i class="fa fa-search"></i></span>
+              <input type="text" class="form-control" placeholder="Rechercher un produit..." [(ngModel)]="searchTerm" (keyup.enter)="searchProducts()">
+              <button class="btn btn-outline-primary" (click)="searchProducts()" *ngIf="searchTerm"><i class="fa fa-search"></i></button>
+            </div>
+          </div>
+          <div class="col-md-2">
+            <select class="form-select" [(ngModel)]="selectedCategoryId" (change)="applyFilters()">
+              <option [ngValue]="null">Toutes catégories</option>
+              <option *ngFor="let cat of categories" [ngValue]="cat.id">{{ cat.nom }}</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <select class="form-select" [(ngModel)]="selectedFournisseurId" (change)="applyFilters()">
+              <option [ngValue]="null">Tous fournisseurs</option>
+              <option *ngFor="let f of fournisseurs" [ngValue]="f.id">{{ f.nom }}</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <select class="form-select" [(ngModel)]="selectedStatutPeremption" (change)="applyFilters()">
+              <option value="all">Tous statuts</option>
+              <option value="valid">Valide</option>
+              <option value="near">Proche péremption</option>
+              <option value="expired">Périmé</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <div class="d-flex gap-2 flex-wrap">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" [(ngModel)]="showLowStockOnly" (change)="applyFilters()" id="lowStockCheck">
+                <label class="form-check-label" for="lowStockCheck">Stock faible</label>
+              </div>
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" [(ngModel)]="showBioOnly" (change)="applyFilters()" id="bioCheck">
+                <label class="form-check-label" for="bioCheck">Bio</label>
+              </div>
+              <button class="btn btn-sm btn-outline-secondary" type="button" (click)="resetFilters()"><i class="fa fa-refresh me-1"></i> Réinitialiser</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Onglets de navigation -->
+    <ul class="nav nav-tabs mb-3">
+      <li class="nav-item">
+        <a class="nav-link" [class.active]="activeTab === 'produits'" (click)="activeTab = 'produits'">
+          <i class="fa fa-box me-1"></i> Produits <span class="badge bg-secondary ms-1">{{ filteredProducts.length }}</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" [class.active]="activeTab === 'fournisseurs'" (click)="activeTab = 'fournisseurs'; loadFournisseurs()">
+          <i class="fa fa-truck me-1"></i> Fournisseurs <span class="badge bg-secondary ms-1">{{ fournisseurs.length }}</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" [class.active]="activeTab === 'categories'" (click)="activeTab = 'categories'">
+          <i class="fa fa-tags me-1"></i> Catégories <span class="badge bg-secondary ms-1">{{ categories.length }}</span>
+        </a>
+      </li>
+    </ul>
+
+    <!-- ==================== TABLEAU DES PRODUITS ==================== -->
+    <div class="card mb-4" *ngIf="activeTab === 'produits'">
+      <div class="card-header bg-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <h5 class="mb-0">Liste des produits</h5>
+        <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
+          <span class="text-muted me-3" *ngIf="filteredProducts.length > 0">Page {{ currentPage }}/{{ totalPages }} ({{ filteredProducts.length }} produits)</span>
+          <button class="btn btn-sm btn-primary" type="button" (click)="openAddModal()" *ngIf="isAdmin"><i class="fa fa-plus me-1"></i> Créer</button>
+          <button class="btn btn-sm btn-outline-success" type="button" (click)="exportProducts()" *ngIf="isAdmin"><i class="fa fa-download me-1"></i> Excel</button>
+          <button class="btn btn-sm btn-outline-info" type="button" (click)="loadData()"><i class="fa fa-refresh me-1"></i> Actualiser</button>
+        </div>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Produit</th>
+                <th>Catégorie</th>
+                <th>Fournisseur</th>
+                <th class="text-end">Prix Achat</th>
+                <th class="text-end">Prix Vente</th>
+                <th class="text-center">Stock</th>
+                <th class="text-center">Péremption</th>
+                <th class="text-center">Bio</th>
+                <th class="text-end">Marge</th>
+                <th class="text-center" *ngIf="isAdmin">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let produit of paginatedProducts" [class.table-warning]="produit.stockFaible && !produit.perime" [class.table-danger]="produit.perime">
+                <td>
+                  <div class="d-flex flex-column">
+                    <strong>{{ produit.nom }}</strong>
+                    <small class="text-muted">{{ produit.description || "Aucune description" | slice:0:50 }}{{ produit.description?.length > 50 ? "..." : "" }}</small>
+                    <small class="text-muted"><i class="fa fa-barcode me-1"></i>{{ produit.codeBarre || "N/A" }} <span *ngIf="produit.lotNumber" class="ms-2">Lot: {{ produit.lotNumber }}</span></small>
+                  </div>
+                </td>
+                <td class="text-center"><span class="badge bg-secondary">{{ produit.categorie.nom }}</span></td>
+                <td class="text-center"><span class="badge bg-info">{{ produit.fournisseur?.nom || "N/A" }}</span></td>
+                <td class="text-end">{{ formatPrice(produit.prixAchat) }}</td>
+                <td class="text-end">{{ formatPrice(produit.prixVente) }}</td>
+                <td class="text-center"><span [class]="'badge ' + getStockStatusClass(produit)">{{ produit.quantite }} {{ produit.uniteMesure || "pcs" }}</span></td>
+                <td class="text-center"><span *ngIf="produit.datePeremption" [class]="'badge ' + getPeremptionStatusClass(produit)">{{ formatDate(produit.datePeremption) }} <small *ngIf="produit.joursAvantPeremption">({{ produit.joursAvantPeremption }}j)</small></span><span *ngIf="!produit.datePeremption" class="text-muted">-</span></td>
+                <td class="text-center"><i class="fa" [class.fa-check-circle]="produit.bio" [class.fa-circle-o]="!produit.bio" [class.text-success]="produit.bio" [class.text-muted]="!produit.bio"></i></td>
+                <td class="text-end">
+                  <div class="d-flex flex-column align-items-end">
+                    <span [class]="produit.tauxMarge > 20 ? 'text-success fw-bold' : produit.tauxMarge > 0 ? 'text-primary fw-bold' : 'text-danger fw-bold'">{{ (produit.tauxMarge || 0).toFixed(1) }}%</span>
+                    <small class="text-muted">{{ formatPrice(produit.marge || 0) }}</small>
+                  </div>
+                </td>
+                <td class="text-center" *ngIf="isAdmin">
+                  <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-primary" type="button" (click)="openEditModal(produit)" title="Modifier"><i class="fa fa-edit me-1"></i> Modifier</button>
+                    <button class="btn btn-outline-info" type="button" (click)="openDetailsModal(produit)" title="Détails"><i class="fa fa-info-circle me-1"></i> Détails</button>
+                    <button class="btn btn-outline-danger" type="button" (click)="openDeleteModal(produit)" title="Supprimer"><i class="fa fa-trash me-1"></i> Supprimer</button>
+                  </div>
+                </td>
+              </tr>
+              <tr *ngIf="filteredProducts.length === 0">
+                <td [attr.colspan]="isAdmin ? 10 : 9" class="text-center py-4">
+                  <i class="fa fa-box fa-3x text-muted mb-3"></i>
+                  <p class="text-muted">Aucun produit trouvé</p>
+                  <button class="btn btn-primary" type="button" (click)="openAddModal()" *ngIf="isAdmin"><i class="fa fa-plus me-1"></i> Créer un produit</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div *ngIf="totalPages > 1" class="card-footer">
+        <nav>
+          <ul class="pagination justify-content-center mb-0">
+            <li class="page-item" [class.disabled]="currentPage === 1"><a class="page-link" (click)="changePage(currentPage - 1)" style="cursor: pointer">Précédent</a></li>
+            <li *ngFor="let page of pageNumbers" class="page-item" [class.active]="currentPage === page"><a class="page-link" (click)="changePage(page)" style="cursor: pointer">{{ page }}</a></li>
+            <li class="page-item" [class.disabled]="currentPage === totalPages"><a class="page-link" (click)="changePage(currentPage + 1)" style="cursor: pointer">Suivant</a></li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+
+    <!-- ==================== TABLEAU DES FOURNISSEURS ==================== -->
+    <div class="card mb-4" *ngIf="activeTab === 'fournisseurs'">
+      <div class="card-header bg-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <h5 class="mb-0">Liste des fournisseurs</h5>
+        <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
+          <button class="btn btn-sm btn-outline-success" type="button" (click)="exportFournisseurs()" *ngIf="isAdmin"><i class="fa fa-download me-1"></i> Excel</button>
+          <button class="btn btn-sm btn-primary" type="button" (click)="openAddFournisseurModal()" *ngIf="isAdmin"><i class="fa fa-plus me-1"></i> Ajouter</button>
+        </div>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Code</th>
+                <th>Nom</th>
+                <th>Contact</th>
+                <th>Téléphone</th>
+                <th>Email</th>
+                <th>Type produits</th>
+                <th class="text-center">Note</th>
+                <th class="text-center">Produits</th>
+                <th class="text-center">Statut</th>
+                <th class="text-center" *ngIf="isAdmin">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let f of fournisseurs">
+                <td class="text-center"><span class="badge bg-secondary">{{ f.code }}</span></td>
+                <td><strong>{{ f.nom }}</strong><br><small class="text-muted">{{ f.contactNom || "Aucun contact" }}</small></td>
+                <td>{{ f.contactTelephone || "-" }}</td>
+                <td>{{ f.telephone || "-" }}</td>
+                <td>{{ f.email || "-" }}</td>
+                <td><small>{{ f.typeProduits || "Non spécifié" }}</small></td>
+                <td class="text-center">
+                  <span *ngIf="f.note">
+                    <i class="fa fa-star text-warning" *ngFor="let i of [].constructor(f.note)"></i>
+                    <i class="fa fa-star-o text-warning" *ngFor="let i of [].constructor(5 - f.note)"></i>
+                  </span>
+                  <span *ngIf="!f.note">-</span>
+                </td>
+                <td class="text-center"><span class="badge bg-info">{{ f.nombreProduits || 0 }}</span></td>
+                <td class="text-center"><span [class]="'badge ' + (f.actif ? 'bg-success' : 'bg-danger')">{{ f.actif ? "Actif" : "Inactif" }}</span></td>
+                <td class="text-center" *ngIf="isAdmin">
+                  <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-primary" type="button" (click)="openEditFournisseurModal(f)" title="Modifier"><i class="fa fa-edit me-1"></i> Modifier</button>
+                    <button class="btn btn-outline-info" type="button" (click)="openSituationModal(f)" title="Situation comptable"><i class="fa fa-chart-line me-1"></i> Situation</button>
+                    <button class="btn btn-outline-success" type="button" (click)="openAchatModal(f)" title="Enregistrer un achat"><i class="fa fa-shopping-cart me-1"></i> Achat</button>
+                    <button class="btn btn-outline-warning" type="button" (click)="openPaiementModal(f)" title="Effectuer un paiement"><i class="fa fa-money me-1"></i> Paiement</button>
+                    <button class="btn btn-outline-primary" type="button" (click)="openAvanceFournisseurModal(f)" title="Enregistrer une avance fournisseur"><i class="fa fa-hand-holding-usd me-1"></i> Avance</button>
+                    <button class="btn btn-outline-info" type="button" (click)="openHistoriqueAvancesModal(f)" title="Voir l'historique des avances"><i class="fa fa-history me-1"></i> Hist. avance</button>
+                    <button class="btn btn-outline-danger" type="button" (click)="openDeleteFournisseurModal(f)" [disabled]="f.nombreProduits > 0" title="Supprimer"><i class="fa fa-trash me-1"></i> Supprimer</button>
+                  </div>
+                </td>
+              </tr>
+              <tr *ngIf="fournisseurs.length === 0">
+                <td [attr.colspan]="isAdmin ? 10 : 9" class="text-center py-4">
+                  <i class="fa fa-truck fa-3x text-muted mb-3"></i>
+                  <p class="text-muted">Aucun fournisseur enregistré</p>
+                  <button class="btn btn-primary" type="button" (click)="openAddFournisseurModal()" *ngIf="isAdmin"><i class="fa fa-plus me-1"></i> Ajouter un fournisseur</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== TABLEAU DES CATÉGORIES ==================== -->
+    <div class="card" *ngIf="activeTab === 'categories'">
+      <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Liste des catégories</h5>
+        <button class="btn btn-sm btn-primary" type="button" (click)="openAddCategoryModal()" *ngIf="isAdmin"><i class="fa fa-plus me-1"></i> Ajouter</button>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Nom</th>
+                <th>Description</th>
+                <th class="text-center">Produits associés</th>
+                <th class="text-center">Date création</th>
+                <th class="text-center" *ngIf="isAdmin">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let cat of categories">
+                <td><strong>{{ cat.nom }}</strong><br><small class="text-muted">ID: {{ cat.id }}</small></td>
+                <td>{{ cat.description || "Aucune description" }}</td>
+                <td class="text-center"><span class="badge" [class.bg-warning]="countProductsForCategory(cat) > 0" [class.bg-success]="countProductsForCategory(cat) === 0">{{ countProductsForCategory(cat) }}</span></td>
+                <td class="text-center"><small>{{ cat.dateCreation | date: "dd/MM/yyyy" }}</small></td>
+                <td class="text-center" *ngIf="isAdmin">
+                  <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-primary" type="button" (click)="startEditCategory(cat)" title="Modifier"><i class="fa fa-edit me-1"></i> Modifier</button>
+                    <button class="btn btn-outline-danger" type="button" (click)="openDeleteCategoryModal(cat)" [disabled]="countProductsForCategory(cat) > 0" title="Supprimer"><i class="fa fa-trash me-1"></i> Supprimer</button>
+                  </div>
+                </td>
+              </tr>
+              <tr *ngIf="categories.length === 0">
+                <td [attr.colspan]="isAdmin ? 5 : 4" class="text-center py-4">
+                  <i class="fa fa-tags fa-3x text-muted mb-3"></i>
+                  <p class="text-muted">Aucune catégorie définie</p>
+                  <button class="btn btn-primary" type="button" (click)="openAddCategoryModal()" *ngIf="isAdmin"><i class="fa fa-plus me-1"></i> Ajouter une catégorie</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL AJOUT PRODUIT ==================== -->
+<div class="modal fade show" [class.d-block]="showAddModal" *ngIf="showAddModal" style="background-color: rgba(0, 0, 0, 0.5); z-index: 1050" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title"><i class="fa fa-plus-circle me-2"></i>Ajouter un nouveau produit alimentaire</h5>
+        <button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button>
+      </div>
+      <div class="modal-body">
+        <form #addForm="ngForm">
+          <div class="row g-3">
+            <div class="col-md-8">
+              <label class="form-label">Nom du produit <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" [(ngModel)]="productForm.nom" name="nom" required minlength="2">
+              <small class="text-danger" *ngIf="addForm.submitted && !productForm.nom">Le nom est requis</small>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Code barre</label>
+              <input type="text" class="form-control" [(ngModel)]="productForm.codeBarre" name="codeBarre">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Description</label>
+              <textarea class="form-control" rows="2" [(ngModel)]="productForm.description" name="description" maxlength="500"></textarea>
+              <small class="text-muted">{{ productForm.description?.length || 0 }}/500 caractères</small>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Catégorie <span class="text-danger">*</span></label>
+              <select class="form-select" [(ngModel)]="productForm.categorieId" name="categorieId" required>
+                <option [ngValue]="0">Sélectionnez une catégorie</option>
+                <option *ngFor="let cat of categories" [ngValue]="cat.id">{{ cat.nom }}</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Fournisseur</label>
+              <select class="form-select" [(ngModel)]="productForm.fournisseurId" name="fournisseurId">
+                <option [ngValue]="null">Aucun fournisseur</option>
+                <option *ngFor="let f of fournisseurs" [ngValue]="f.id">{{ f.nom }}</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Prix achat (XOF) <span class="text-danger">*</span></label>
+              <input type="number" class="form-control" [(ngModel)]="productForm.prixAchat" name="prixAchat" required min="1" step="0.01">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Prix vente (XOF) <span class="text-danger">*</span></label>
+              <input type="number" class="form-control" [(ngModel)]="productForm.prixVente" name="prixVente" required min="1" step="0.01">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Quantité <span class="text-danger">*</span></label>
+              <input type="number" class="form-control" [(ngModel)]="productForm.quantite" name="quantite" required min="0">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Seuil d'alerte</label>
+              <input type="number" class="form-control" [(ngModel)]="productForm.seuilAlerte" name="seuilAlerte" min="0" value="10">
+            </div>
+            <div class="col-12"><hr><h6 class="mb-3">Informations spécifiques (produit alimentaire)</h6></div>
+            <div class="col-md-3"><label class="form-label">Date de création</label><input type="date" class="form-control" [(ngModel)]="productForm.dateCreation" name="dateCreation"></div>
+            <div class="col-md-3"><label class="form-label">Date de péremption</label><input type="date" class="form-control" [(ngModel)]="productForm.datePeremption" name="datePeremption"></div>
+            <div class="col-md-3"><label class="form-label">Numéro de lot</label><input type="text" class="form-control" [(ngModel)]="productForm.lotNumber" name="lotNumber"></div>
+            <div class="col-md-3"><label class="form-label">Conditions stockage</label><input type="text" class="form-control" [(ngModel)]="productForm.conditionsStockage" name="conditionsStockage"></div>
+            <div class="col-md-2"><label class="form-label">Poids/Volume</label><input type="number" class="form-control" [(ngModel)]="productForm.poidsVolume" name="poidsVolume" step="0.01"></div>
+            <div class="col-md-2">
+              <label class="form-label">Unité</label>
+              <select class="form-select" [(ngModel)]="productForm.uniteMesure" name="uniteMesure">
+                <option [ngValue]="null">Sélectionner</option>
+                <option value="kg">kg</option><option value="demi-kg">demi-kg (0.5 kg)</option><option value="quart-kg">quart-kg (0.25 kg)</option>
+                <option value="g">g</option><option value="L">litre</option><option value="ml">millilitre</option>
+                <option value="pce">pièce</option><option value="carton">carton</option><option value="demi-carton">demi-carton</option>
+                <option value="sac">sac</option><option value="demi-sac">demi-sac</option>
+              </select>
+            </div>
+            <div class="col-md-2"><label class="form-label">Origine</label><input type="text" class="form-control" [(ngModel)]="productForm.origine" name="origine"></div>
+            <div class="col-md-3"><div class="form-check mt-4"><input class="form-check-input" type="checkbox" [(ngModel)]="productForm.bio" name="bio" id="bioCheckAdd"><label class="form-check-label" for="bioCheckAdd">Produit Bio</label></div></div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeAllModals()" [disabled]="isLoading">Annuler</button>
+        <button type="button" class="btn btn-primary" (click)="addProduct()" [disabled]="isLoading"><span *ngIf="!isLoading"><i class="fa fa-save me-1"></i> Ajouter</span><span *ngIf="isLoading"><i class="fa fa-spinner fa-spin me-1"></i> Ajout en cours...</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL MODIFICATION PRODUIT ==================== -->
+<div class="modal fade show" [class.d-block]="showEditModal" *ngIf="showEditModal" style="background-color: rgba(0, 0, 0, 0.5); z-index: 1050" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header bg-warning text-white">
+        <h5 class="modal-title"><i class="fa fa-edit me-2"></i>Modifier le produit</h5>
+        <button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button>
+      </div>
+      <div class="modal-body">
+        <form #editForm="ngForm">
+          <div class="row g-3">
+            <div class="col-md-8"><label class="form-label">Nom du produit <span class="text-danger">*</span></label><input type="text" class="form-control" [(ngModel)]="productForm.nom" name="nom" required></div>
+            <div class="col-md-4"><label class="form-label">Code barre</label><input type="text" class="form-control" [(ngModel)]="productForm.codeBarre" name="codeBarre"></div>
+            <div class="col-12"><label class="form-label">Description</label><textarea class="form-control" rows="2" [(ngModel)]="productForm.description" name="description"></textarea></div>
+            <div class="col-md-6"><label class="form-label">Catégorie <span class="text-danger">*</span></label><select class="form-select" [(ngModel)]="productForm.categorieId" name="categorieId" required><option [ngValue]="0">Sélectionnez une catégorie</option><option *ngFor="let cat of categories" [ngValue]="cat.id">{{ cat.nom }}</option></select></div>
+            <div class="col-md-6"><label class="form-label">Fournisseur</label><select class="form-select" [(ngModel)]="productForm.fournisseurId" name="fournisseurId"><option [ngValue]="null">Aucun fournisseur</option><option *ngFor="let f of fournisseurs" [ngValue]="f.id">{{ f.nom }}</option></select></div>
+            <div class="col-md-3"><label class="form-label">Prix achat (XOF)</label><input type="number" class="form-control" [(ngModel)]="productForm.prixAchat" name="prixAchat" required min="1" step="0.01"></div>
+            <div class="col-md-3"><label class="form-label">Prix vente (XOF)</label><input type="number" class="form-control" [(ngModel)]="productForm.prixVente" name="prixVente" required min="1" step="0.01"></div>
+            <div class="col-md-3"><label class="form-label">Quantité</label><input type="number" class="form-control" [(ngModel)]="productForm.quantite" name="quantite" required min="0"></div>
+            <div class="col-md-3"><label class="form-label">Seuil alerte</label><input type="number" class="form-control" [(ngModel)]="productForm.seuilAlerte" name="seuilAlerte" min="0"></div>
+            <div class="col-12"><hr></div>
+            <div class="col-md-3"><label class="form-label">Date création</label><input type="date" class="form-control" [(ngModel)]="productForm.dateCreation" name="dateCreation"></div>
+            <div class="col-md-3"><label class="form-label">Date péremption</label><input type="date" class="form-control" [(ngModel)]="productForm.datePeremption" name="datePeremption"></div>
+            <div class="col-md-3"><label class="form-label">Lot</label><input type="text" class="form-control" [(ngModel)]="productForm.lotNumber" name="lotNumber"></div>
+            <div class="col-md-3"><label class="form-label">Stockage</label><input type="text" class="form-control" [(ngModel)]="productForm.conditionsStockage" name="conditionsStockage"></div>
+            <div class="col-md-2"><label class="form-label">Poids/Volume</label><input type="number" class="form-control" [(ngModel)]="productForm.poidsVolume" name="poidsVolume" step="0.01"></div>
+            <div class="col-md-2"><label class="form-label">Unité</label><select class="form-select" [(ngModel)]="productForm.uniteMesure" name="uniteMesure"><option [ngValue]="null">Sélectionner</option><option value="kg">kg</option><option value="demi-kg">demi-kg (0.5 kg)</option><option value="g">g</option><option value="L">litre</option><option value="ml">millilitre</option><option value="pce">pièce</option><option value="carton">carton</option><option value="demi-carton">demi-carton</option><option value="sac">sac</option></select></div>
+            <div class="col-md-2"><label class="form-label">Origine</label><input type="text" class="form-control" [(ngModel)]="productForm.origine" name="origine"></div>
+            <div class="col-md-3"><div class="form-check mt-4"><input class="form-check-input" type="checkbox" [(ngModel)]="productForm.bio" name="bio" id="bioCheckEdit"><label class="form-check-label" for="bioCheckEdit">Produit Bio</label></div></div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeAllModals()" [disabled]="isLoading">Annuler</button>
+        <button type="button" class="btn btn-warning text-white" (click)="updateProduct()" [disabled]="isLoading"><span *ngIf="!isLoading"><i class="fa fa-save me-1"></i> Modifier</span><span *ngIf="isLoading"><i class="fa fa-spinner fa-spin me-1"></i> Modification en cours...</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL DÉTAILS PRODUIT ==================== -->
+<div class="modal fade show" [class.d-block]="showDetailsModal" *ngIf="showDetailsModal" style="background-color: rgba(0, 0, 0, 0.5); z-index: 1050" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-info text-white"><h5 class="modal-title"><i class="fa fa-info-circle me-2"></i>Détails du produit</h5><button type="button" class="btn-close btn-close-white" (click)="closeDetailsModal()"></button></div>
+      <div class="modal-body">
+        <div *ngIf="selectedProduct" class="product-details">
+          <div class="row mb-3"><div class="col-6"><strong>Nom:</strong> {{ selectedProduct.nom }}</div><div class="col-6"><strong>Code barre:</strong> {{ selectedProduct.codeBarre || "N/A" }}</div></div>
+          <div class="mb-3"><strong>Description:</strong><p>{{ selectedProduct.description || "Aucune description" }}</p></div>
+          <div class="row mb-3"><div class="col-6"><strong>Catégorie:</strong> {{ selectedProduct.categorie.nom }}</div><div class="col-6"><strong>Fournisseur:</strong> {{ selectedProduct.fournisseur?.nom || "Aucun" }}</div></div>
+          <div class="row mb-3"><div class="col-6"><strong>Prix achat:</strong> {{ formatPrice(selectedProduct.prixAchat) }}</div><div class="col-6"><strong>Prix vente:</strong> {{ formatPrice(selectedProduct.prixVente) }}</div></div>
+          <div class="row mb-3"><div class="col-6"><strong>Marge:</strong> {{ formatPrice(selectedProduct.marge || 0) }} ({{ (selectedProduct.tauxMarge || 0).toFixed(1) }}%)</div><div class="col-6"><strong>Quantité:</strong> {{ selectedProduct.quantite }} {{ selectedProduct.uniteMesure || "pcs" }}</div></div>
+          <div class="row mb-3"><div class="col-6"><strong>Date création:</strong> {{ formatDate(selectedProduct.dateCreation) }}</div><div class="col-6"><strong>Date péremption:</strong> <span [class.text-danger]="selectedProduct.perime" [class.text-warning]="selectedProduct.prochePeremption">{{ formatDate(selectedProduct.datePeremption) || "N/A" }}<span *ngIf="selectedProduct.joursAvantPeremption"> ({{ selectedProduct.joursAvantPeremption }}j)</span></span></div></div>
+          <div class="row mb-3"><div class="col-6"><strong>Lot:</strong> {{ selectedProduct.lotNumber || "N/A" }}</div><div class="col-6"><strong>Stockage:</strong> {{ selectedProduct.conditionsStockage || "N/A" }}</div></div>
+          <div class="row mb-3"><div class="col-6"><strong>Poids/Volume:</strong> {{ selectedProduct.poidsVolume ? selectedProduct.poidsVolume + " " + (selectedProduct.uniteMesure || "") : "N/A" }}</div><div class="col-6"><strong>Origine:</strong> {{ selectedProduct.origine || "N/A" }}</div></div>
+          <div class="row"><div class="col-6"><strong>Bio:</strong> <i class="fa" [class.fa-check-circle]="selectedProduct.bio" [class.fa-circle-o]="!selectedProduct.bio" [class.text-success]="selectedProduct.bio" [class.text-muted]="!selectedProduct.bio"></i> {{ selectedProduct.bio ? "Oui" : "Non" }}</div><div class="col-6"><strong>Statut stock:</strong> <span [class]="'badge ' + getStockStatusClass(selectedProduct)">{{ getStockStatusText(selectedProduct) }}</span></div></div>
+        </div>
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-secondary" (click)="closeDetailsModal()">Fermer</button><button type="button" class="btn btn-warning" (click)="openEditModal(selectedProduct!); closeDetailsModal()"><i class="fa fa-edit me-1"></i> Modifier</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL SUPPRESSION PRODUIT ==================== -->
+<div class="modal fade show" [class.d-block]="showDeleteModal" *ngIf="showDeleteModal" style="background-color: rgba(0, 0, 0, 0.5); z-index: 1050" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white"><h5 class="modal-title"><i class="fa fa-exclamation-triangle me-2"></i>Confirmer la suppression</h5><button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button></div>
+      <div class="modal-body text-center">
+        <i class="fa fa-box fa-4x text-danger mb-3"></i>
+        <p class="lead">Supprimer le produit <strong>{{ selectedProduct?.nom }}</strong> ?</p>
+        <div class="alert alert-warning"><p class="mb-1">Catégorie: {{ selectedProduct?.categorie.nom }}</p><p class="mb-1">Fournisseur: {{ selectedProduct?.fournisseur?.nom || "Aucun" }}</p><p class="mb-0">Stock actuel: {{ selectedProduct?.quantite }} {{ selectedProduct?.uniteMesure || "pcs" }}</p></div>
+        <p class="text-danger mt-3">Cette action est irréversible !</p>
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-secondary" (click)="closeAllModals()" [disabled]="isLoading">Annuler</button><button type="button" class="btn btn-danger" (click)="deleteProduct()" [disabled]="isLoading"><span *ngIf="!isLoading"><i class="fa fa-trash me-1"></i> Supprimer</span><span *ngIf="isLoading"><i class="fa fa-spinner fa-spin me-1"></i> Suppression...</span></button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL SITUATION COMPTABLE FOURNISSEUR ==================== -->
+<div class="modal fade show" [class.d-block]="showSituationModal" *ngIf="showSituationModal" style="background-color: rgba(0, 0, 0, 0.5); z-index: 1060" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header bg-info text-white">
+        <h5 class="modal-title"><i class="fa fa-chart-line me-2"></i>Situation comptable - {{ selectedFournisseurForSituation?.nom }}</h5>
+        <button type="button" class="btn-close btn-close-white" (click)="showSituationModal = false"></button>
+      </div>
+      <div class="modal-body">
+        <div *ngIf="isLoadingSituation" class="text-center py-5"><div class="spinner-border text-primary"></div><p>Chargement de la situation...</p></div>
+        <div *ngIf="!isLoadingSituation && fournisseurSituation">
+          <div class="row mb-4">
+            <div class="col-md-4"><div class="card text-white bg-primary"><div class="card-body"><h6 class="card-title">Total achats</h6><p class="card-text h4">{{ formatPrice(fournisseurSituation.totalAchats) }}</p></div></div></div>
+            <div class="col-md-4"><div class="card text-white bg-success"><div class="card-body"><h6 class="card-title">Total payé</h6><p class="card-text h4">{{ formatPrice(fournisseurSituation.totalPaye) }}</p></div></div></div>
+            <div class="col-md-4"><div class="card text-white" [class.bg-danger]="fournisseurSituation.solde > 0" [class.bg-secondary]="fournisseurSituation.solde <= 0"><div class="card-body"><h6 class="card-title">Solde actuel</h6><p class="card-text h4">{{ formatPrice(fournisseurSituation.solde) }}</p></div></div></div>
+          </div>
+          <h6>Achats récents</h6>
+          <div class="table-responsive mb-4">
+            <table class="table table-sm table-bordered">
+              <thead class="table-light"><tr><th>Date</th><th class="text-end">Total</th><th class="text-end">Avance</th><th class="text-end">Payé</th><th class="text-end">Restant</th><th class="text-center">Statut</th><th class="text-center"></th></tr></thead>
+              <tbody>
+                <tr *ngFor="let achat of fournisseurSituation.achatsRecents.slice(0, 5)">
+                  <td>{{ formatDate(achat.dateAchat) }}</td>
+                  <td class="text-end">{{ formatPrice(achat.montantTotal) }}</td>
+                  <td class="text-end text-info">{{ formatPrice(achat.montantAvanceUtilise || 0) }}</td>
+                  <td class="text-end">{{ formatPrice(achat.montantPaye || 0) }}</td>
+                  <td class="text-end fw-bold" [class.text-success]="(achat.montantTotal - achat.montantPaye) <= 0.01" [class.text-danger]="(achat.montantTotal - achat.montantPaye) > 0.01">{{ formatPrice(achat.montantTotal - achat.montantPaye) }}</td>
+                  <td class="text-center"><span class="badge" [class.bg-success]="(achat.montantTotal - achat.montantPaye) <= 0.01" [class.bg-info]="(achat.montantPaye > 0 && (achat.montantTotal - achat.montantPaye) > 0.01)" [class.bg-warning]="(achat.montantPaye === 0 || achat.montantPaye === undefined)">{{ getAchatStatusText(achat) }}</span></td>
+                  <td class="text-center"><div class="d-flex gap-1 justify-content-center"><button class="btn btn-sm btn-outline-warning py-0" title="Retour marchandise" [disabled]="achat.statut === 'ANNULE'" (click)="openRetourAchatModal(achat); showSituationModal=false"><i class="fa fa-undo me-1"></i>Retour</button><button class="btn btn-sm btn-outline-danger py-0" title="Annuler cet achat" [disabled]="achat.statut === 'ANNULE'" (click)="annulerAchat(achat)"><i class="fa fa-ban me-1"></i>Annuler</button></div></td>
+                </tr>
+                <tr *ngIf="fournisseurSituation.achatsRecents.length === 0"><td colspan="7" class="text-center">Aucun achat récent</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <h6>Paiements récents</h6>
+          <div class="table-responsive">
+            <table class="table table-sm table-bordered">
+              <thead class="table-light"><tr><th>Date</th><th class="text-end">Montant</th><th>Mode</th><th>Référence</th></tr></thead>
+              <tbody>
+                <tr *ngFor="let paiement of fournisseurSituation.paiementsRecents.slice(0, 5)">
+                  <td>{{ formatDate(paiement.datePaiement) }}</td>
+                  <td class="text-end">{{ formatPrice(paiement.montant) }}</td>
+                  <td>{{ paiement.modePaiement }}</td>
+                  <td>{{ paiement.reference || "-" }}</td>
+                </tr>
+                <tr *ngIf="fournisseurSituation.paiementsRecents.length === 0"><td colspan="4" class="text-center">Aucun paiement récent</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="showSituationModal = false">Fermer</button>
+        <button class="btn btn-info" (click)="openSituationModal(selectedFournisseurForSituation!)" *ngIf="selectedFournisseurForSituation"><i class="fa fa-refresh me-2"></i> Rafraîchir</button>
+        <button class="btn btn-primary" (click)="openAchatModal(selectedFournisseurForSituation!); showSituationModal = false">Nouvel achat</button>
+        <button class="btn btn-success" (click)="openPaiementModal(selectedFournisseurForSituation!); showSituationModal = false">Effectuer paiement</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL AJOUT FOURNISSEUR ==================== -->
+<div class="modal fade show" [class.d-block]="showAddFournisseurModal" *ngIf="showAddFournisseurModal" style="background-color: rgba(0, 0, 0, 0.5); z-index: 1050" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white"><h5 class="modal-title"><i class="fa fa-truck me-2"></i>Ajouter un fournisseur</h5><button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button></div>
+      <div class="modal-body">
+        <form #fournisseurForm="ngForm">
+          <div class="row g-3">
+            <div class="col-md-6"><label class="form-label">Nom <span class="text-danger">*</span></label><input type="text" class="form-control" [(ngModel)]="fournisseurFormData.nom" name="nom" required></div>
+            <div class="col-md-6"><label class="form-label">Code <span class="text-danger">*</span></label><input type="text" class="form-control" [(ngModel)]="fournisseurFormData.code" name="code" required></div>
+            <div class="col-md-6"><label class="form-label">Téléphone</label><input type="text" class="form-control" [(ngModel)]="fournisseurFormData.telephone" name="telephone"></div>
+            <div class="col-md-6"><label class="form-label">Email</label><input type="email" class="form-control" [(ngModel)]="fournisseurFormData.email" name="email"></div>
+            <div class="col-12"><label class="form-label">Adresse</label><input type="text" class="form-control" [(ngModel)]="fournisseurFormData.adresse" name="adresse"></div>
+            <div class="col-md-6"><label class="form-label">Site web</label><input type="url" class="form-control" [(ngModel)]="fournisseurFormData.siteWeb" name="siteWeb"></div>
+            <div class="col-md-6"><label class="form-label">Type de produits</label><input type="text" class="form-control" [(ngModel)]="fournisseurFormData.typeProduits" name="typeProduits"></div>
+            <div class="col-12"><hr><h6>Contact principal</h6></div>
+            <div class="col-md-4"><label class="form-label">Nom du contact</label><input type="text" class="form-control" [(ngModel)]="fournisseurFormData.contactNom" name="contactNom"></div>
+            <div class="col-md-4"><label class="form-label">Téléphone contact</label><input type="text" class="form-control" [(ngModel)]="fournisseurFormData.contactTelephone" name="contactTelephone"></div>
+            <div class="col-md-4"><label class="form-label">Email contact</label><input type="email" class="form-control" [(ngModel)]="fournisseurFormData.contactEmail" name="contactEmail"></div>
+            <div class="col-md-4"><label class="form-label">Délai livraison (jours)</label><input type="number" class="form-control" [(ngModel)]="fournisseurFormData.delaiLivraison" name="delaiLivraison" min="0"></div>
+            <div class="col-md-4"><label class="form-label">Note (1-5)</label><select class="form-select" [(ngModel)]="fournisseurFormData.note" name="note"><option [ngValue]="null">Sélectionner</option><option [ngValue]="1">1 - Mauvais</option><option [ngValue]="2">2 - Passable</option><option [ngValue]="3">3 - Moyen</option><option [ngValue]="4">4 - Bien</option><option [ngValue]="5">5 - Excellent</option></select></div>
+            <div class="col-md-4"><label class="form-label">Conditions paiement</label><input type="text" class="form-control" [(ngModel)]="fournisseurFormData.conditionsPaiement" name="conditionsPaiement" placeholder="Ex: 30 jours, comptant"></div>
+            <div class="col-12"><label class="form-label">Description</label><textarea class="form-control" rows="3" [(ngModel)]="fournisseurFormData.description" name="description"></textarea></div>
+            <div class="col-12"><div class="form-check"><input class="form-check-input" type="checkbox" [(ngModel)]="fournisseurFormData.actif" name="actif" id="actifCheck" checked><label class="form-check-label" for="actifCheck">Fournisseur actif</label></div></div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-secondary" (click)="closeAllModals()" [disabled]="isLoading">Annuler</button><button type="button" class="btn btn-primary" (click)="addFournisseur()" [disabled]="isLoading"><span *ngIf="!isLoading"><i class="fa fa-save me-1"></i> Ajouter</span><span *ngIf="isLoading"><i class="fa fa-spinner fa-spin me-1"></i> Ajout en cours...</span></button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL MODIFICATION FOURNISSEUR ==================== -->
+<div class="modal fade show" [class.d-block]="showEditFournisseurModal" *ngIf="showEditFournisseurModal" style="background-color: rgba(0, 0, 0, 0.5); z-index: 1050" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header bg-warning text-white"><h5 class="modal-title"><i class="fa fa-edit me-2"></i>Modifier le fournisseur</h5><button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button></div>
+      <div class="modal-body">
+        <form #editFournisseurForm="ngForm">
+          <div class="row g-3">
+            <div class="col-md-6"><label class="form-label">Nom <span class="text-danger">*</span></label><input type="text" class="form-control" [(ngModel)]="fournisseurFormData.nom" name="nom" required></div>
+            <div class="col-md-6"><label class="form-label">Code <span class="text-danger">*</span></label><input type="text" class="form-control" [(ngModel)]="fournisseurFormData.code" name="code" required></div>
+            <div class="col-md-6"><label class="form-label">Téléphone</label><input type="text" class="form-control" [(ngModel)]="fournisseurFormData.telephone" name="telephone"></div>
+            <div class="col-md-6"><label class="form-label">Email</label><input type="email" class="form-control" [(ngModel)]="fournisseurFormData.email" name="email"></div>
+            <div class="col-12"><label class="form-label">Adresse</label><input type="text" class="form-control" [(ngModel)]="fournisseurFormData.adresse" name="adresse"></div>
+            <div class="col-md-6"><label class="form-label">Site web</label><input type="url" class="form-control" [(ngModel)]="fournisseurFormData.siteWeb" name="siteWeb"></div>
+            <div class="col-md-6"><label class="form-label">Type de produits</label><input type="text" class="form-control" [(ngModel)]="fournisseurFormData.typeProduits" name="typeProduits"></div>
+            <div class="col-12"><hr><h6>Contact principal</h6></div>
+            <div class="col-md-4"><label class="form-label">Nom du contact</label><input type="text" class="form-control" [(ngModel)]="fournisseurFormData.contactNom" name="contactNom"></div>
+            <div class="col-md-4"><label class="form-label">Téléphone contact</label><input type="text" class="form-control" [(ngModel)]="fournisseurFormData.contactTelephone" name="contactTelephone"></div>
+            <div class="col-md-4"><label class="form-label">Email contact</label><input type="email" class="form-control" [(ngModel)]="fournisseurFormData.contactEmail" name="contactEmail"></div>
+            <div class="col-md-4"><label class="form-label">Délai livraison (jours)</label><input type="number" class="form-control" [(ngModel)]="fournisseurFormData.delaiLivraison" name="delaiLivraison" min="0"></div>
+            <div class="col-md-4"><label class="form-label">Note (1-5)</label><select class="form-select" [(ngModel)]="fournisseurFormData.note" name="note"><option [ngValue]="null">Sélectionner</option><option [ngValue]="1">1 - Mauvais</option><option [ngValue]="2">2 - Passable</option><option [ngValue]="3">3 - Moyen</option><option [ngValue]="4">4 - Bien</option><option [ngValue]="5">5 - Excellent</option></select></div>
+            <div class="col-md-4"><label class="form-label">Conditions paiement</label><input type="text" class="form-control" [(ngModel)]="fournisseurFormData.conditionsPaiement" name="conditionsPaiement"></div>
+            <div class="col-12"><label class="form-label">Description</label><textarea class="form-control" rows="3" [(ngModel)]="fournisseurFormData.description" name="description"></textarea></div>
+            <div class="col-12"><div class="form-check"><input class="form-check-input" type="checkbox" [(ngModel)]="fournisseurFormData.actif" name="actif" id="actifCheckEdit"><label class="form-check-label" for="actifCheckEdit">Fournisseur actif</label></div></div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-secondary" (click)="closeAllModals()" [disabled]="isLoading">Annuler</button><button type="button" class="btn btn-warning text-white" (click)="updateFournisseur()" [disabled]="isLoading"><span *ngIf="!isLoading"><i class="fa fa-save me-1"></i> Modifier</span><span *ngIf="isLoading"><i class="fa fa-spinner fa-spin me-1"></i> Modification en cours...</span></button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL SUPPRESSION FOURNISSEUR ==================== -->
+<div class="modal fade show" [class.d-block]="showDeleteFournisseurModal" *ngIf="showDeleteFournisseurModal" style="background-color: rgba(0, 0, 0, 0.5); z-index: 1050" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white"><h5 class="modal-title"><i class="fa fa-exclamation-triangle me-2"></i>Confirmer la suppression</h5><button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button></div>
+      <div class="modal-body text-center">
+        <i class="fa fa-truck fa-4x text-danger mb-3"></i>
+        <p class="lead">Supprimer le fournisseur <strong>{{ selectedFournisseur?.nom }}</strong> ?</p>
+        <div class="alert alert-warning"><p><i class="fa fa-info-circle me-2"></i> Code: {{ selectedFournisseur?.code }}</p><p *ngIf="selectedFournisseur?.nombreProduits && selectedFournisseur!.nombreProduits > 0" class="text-danger mb-0"><i class="fa fa-exclamation-triangle me-1"></i> Ce fournisseur a {{ selectedFournisseur?.nombreProduits }} produit(s) associé(s).</p><p *ngIf="!selectedFournisseur?.nombreProduits || selectedFournisseur!.nombreProduits === 0" class="mb-0">Aucun produit associé à ce fournisseur.</p></div>
+        <p class="text-danger">Cette action est irréversible !</p>
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-secondary" (click)="closeAllModals()" [disabled]="isLoading">Annuler</button><button type="button" class="btn btn-danger" (click)="deleteFournisseur()" [disabled]="isLoading || (selectedFournisseur?.nombreProduits || 0) > 0"><span *ngIf="!isLoading"><i class="fa fa-trash me-1"></i> Supprimer</span><span *ngIf="isLoading"><i class="fa fa-spinner fa-spin me-1"></i> Suppression...</span></button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL AJOUT CATÉGORIE ==================== -->
+<div class="modal fade show" [class.d-block]="showAddCategoryModal" *ngIf="showAddCategoryModal" style="background-color: rgba(0, 0, 0, 0.5); z-index: 1050" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-info text-white"><h5 class="modal-title"><i class="fa fa-tag me-2"></i>Ajouter une catégorie</h5><button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button></div>
+      <div class="modal-body"><div class="mb-3"><label class="form-label">Nom <span class="text-danger">*</span></label><input type="text" class="form-control" [(ngModel)]="categoryForm.nom" placeholder="Ex: Produits laitiers"></div><div class="mb-3"><label class="form-label">Description</label><textarea class="form-control" rows="3" [(ngModel)]="categoryForm.description" placeholder="Description de la catégorie"></textarea></div></div>
+      <div class="modal-footer"><button type="button" class="btn btn-secondary" (click)="closeAllModals()">Annuler</button><button type="button" class="btn btn-info text-white" (click)="addCategory()" [disabled]="isLoading"><span *ngIf="!isLoading"><i class="fa fa-save me-1"></i> Ajouter</span><span *ngIf="isLoading"><i class="fa fa-spinner fa-spin me-1"></i> Ajout en cours...</span></button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL ÉDITION CATÉGORIE ==================== -->
+<div class="modal fade show" [class.d-block]="isEditingCategory" *ngIf="isEditingCategory" style="background-color: rgba(0, 0, 0, 0.5); z-index: 1050" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white"><h5 class="modal-title"><i class="fa fa-edit me-2"></i>Modifier la catégorie</h5><button type="button" class="btn-close btn-close-white" (click)="cancelEditCategory()"></button></div>
+      <div class="modal-body"><div *ngIf="selectedCategory"><div class="alert alert-info"><i class="fa fa-info-circle me-2"></i> Catégorie utilisée par {{ countProductsForCategory(selectedCategory) }} produit(s).</div><div class="mb-3"><label class="form-label">Nom <span class="text-danger">*</span></label><input type="text" class="form-control" [(ngModel)]="categoryForm.nom"></div><div class="mb-3"><label class="form-label">Description</label><textarea class="form-control" rows="3" [(ngModel)]="categoryForm.description"></textarea></div></div></div>
+      <div class="modal-footer"><button type="button" class="btn btn-secondary" (click)="cancelEditCategory()">Annuler</button><button type="button" class="btn btn-primary" (click)="updateCategory()" [disabled]="isLoading"><span *ngIf="!isLoading"><i class="fa fa-save me-1"></i> Enregistrer</span><span *ngIf="isLoading"><i class="fa fa-spinner fa-spin me-1"></i> Enregistrement...</span></button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL SUPPRESSION CATÉGORIE ==================== -->
+<div class="modal fade show" [class.d-block]="showDeleteCategoryModal" *ngIf="showDeleteCategoryModal" style="background-color: rgba(0, 0, 0, 0.5); z-index: 1050" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white"><h5 class="modal-title"><i class="fa fa-exclamation-triangle me-2"></i>Supprimer la catégorie</h5><button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button></div>
+      <div class="modal-body text-center"><i class="fa fa-tags fa-4x text-danger mb-3"></i><p class="lead">Supprimer la catégorie <strong>{{ selectedCategory?.nom }}</strong> ?</p><p class="text-muted">{{ selectedCategory?.description }}</p><div class="alert alert-warning">Cette catégorie est utilisée par {{ countProductsForCategory(selectedCategory!) }} produit(s).</div><p class="text-danger" *ngIf="countProductsForCategory(selectedCategory!) > 0">Impossible de supprimer une catégorie liée à des produits.</p></div>
+      <div class="modal-footer"><button type="button" class="btn btn-secondary" (click)="closeAllModals()">Annuler</button><button type="button" class="btn btn-danger" (click)="deleteCategory()" [disabled]="countProductsForCategory(selectedCategory!) > 0 || isLoading"><span *ngIf="!isLoading"><i class="fa fa-trash me-1"></i> Supprimer</span><span *ngIf="isLoading"><i class="fa fa-spinner fa-spin me-1"></i> Suppression...</span></button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL IMPORTATION EXCEL ==================== -->
+<div class="modal fade show" [class.d-block]="showImportModal" *ngIf="showImportModal" style="background-color: rgba(0, 0, 0, 0.5); z-index: 1050" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white"><h5 class="modal-title"><i class="fa fa-file-excel me-2"></i>Importer des produits</h5><button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button></div>
+      <div class="modal-body">
+        <div class="row"><div class="col-md-6"><div class="mb-3"><label class="form-label">Fichier Excel/CSV</label><input type="file" class="form-control" accept=".xlsx,.xls,.csv" (change)="onFileSelected($event)" [disabled]="isImporting"><div class="form-text">Formats supportés: .xlsx, .xls, .csv (max 10MB)</div></div><div *ngIf="selectedFile" class="alert alert-info"><i class="fa fa-file me-2"></i> {{ selectedFile.name }}<br><small>{{ (selectedFile.size / 1024).toFixed(2) }} KB</small></div></div><div class="col-md-6"><div class="alert alert-warning"><h6><i class="fa fa-exclamation-triangle me-2"></i>Format attendu :</h6><ul class="small"><li><strong>Nom*</strong>, <strong>Catégorie*</strong>, Fournisseur</li><li><strong>PrixAchat*</strong>, <strong>PrixVente*</strong>, <strong>Quantite*</strong></li><li>DatePeremption (JJ/MM/AAAA)</li><li>LotNumber, ConditionsStockage</li><li>PoidsVolume, UniteMesure, Bio (oui/non), Origine</li></ul></div></div></div>
+      </div>
+      <div class="modal-footer"><button class="btn btn-outline-success me-auto" (click)="downloadTemplate()" [disabled]="isImporting"><i class="fa fa-download me-1"></i> Télécharger le template</button><button class="btn btn-secondary" (click)="closeAllModals()" [disabled]="isImporting">Annuler</button><button class="btn btn-success" (click)="importProducts()" [disabled]="!selectedFile || isImporting"><span *ngIf="!isImporting"><i class="fa fa-upload me-1"></i> Importer</span><span *ngIf="isImporting"><i class="fa fa-spinner fa-spin me-1"></i> Import en cours...</span></button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL RÉSULTATS IMPORTATION ==================== -->
+<div class="modal fade show" [class.d-block]="showImportResultModal" *ngIf="showImportResultModal" style="background-color: rgba(0, 0, 0, 0.5); z-index: 1050" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header" [class.bg-success]="importResult?.failed === 0" [class.bg-warning]="importResult?.failed && importResult.failed > 0"><h5 class="modal-title text-white"><i class="fa fa-chart-bar me-2"></i>Résultats de l'importation</h5><button type="button" class="btn-close btn-close-white" (click)="closeImportResultModal()"></button></div>
+      <div class="modal-body">
+        <div class="row text-center"><div class="col-4"><div class="border-end"><h3 class="text-success">{{ importResult?.success || 0 }}</h3><small>Succès</small></div></div><div class="col-4"><div class="border-end"><h3 class="text-danger">{{ importResult?.failed || 0 }}</h3><small>Échecs</small></div></div><div class="col-4"><h3 class="text-primary">{{ importResult?.total || 0 }}</h3><small>Total</small></div></div>
+        <div *ngIf="importResult?.errors && importResult.errors.length > 0" class="mt-3"><h6>Erreurs rencontrées :</h6><div class="alert alert-danger"><ul class="mb-0 small"><li *ngFor="let err of importResult.errors">{{ err }}</li></ul></div></div>
+        <div *ngIf="importResult?.success && importResult.success > 0" class="mt-3 alert alert-success"><i class="fa fa-check-circle me-2"></i> {{ importResult.success }} produit(s) importé(s) avec succès.</div>
+      </div>
+      <div class="modal-footer"><button class="btn btn-primary" (click)="closeImportResultModal(); loadData()"><i class="fa fa-check me-1"></i> OK</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL AJOUT ACHAT FOURNISSEUR ==================== -->
+<!-- ==================== MODAL AJOUT ACHAT FOURNISSEUR (MODIFIÉ AVEC BANQUE) ==================== -->
+<div class="modal fade show" [class.d-block]="showAchatModal" *ngIf="showAchatModal" style="background-color: rgba(0, 0, 0, 0.5); z-index: 1060" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title"><i class="fa fa-shopping-cart me-2"></i>Enregistrer un achat - {{ selectedFournisseurForAchat?.nom }}</h5>
+        <button type="button" class="btn-close btn-close-white" (click)="showAchatModal = false"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-md-7">
+            <h6>Ajouter un produit</h6>
+            <ul class="nav nav-tabs mb-3">
+              <li class="nav-item"><a class="nav-link" [class.active]="!tempLigneAchat.nouveauProduitNom" (click)="tempLigneAchat.nouveauProduitNom = undefined"><i class="fa fa-box me-1"></i> Produit existant</a></li>
+              <li class="nav-item"><a class="nav-link" [class.active]="tempLigneAchat.nouveauProduitNom" (click)="tempLigneAchat.nouveauProduitNom = 'new'"><i class="fa fa-plus-circle me-1"></i> Nouveau produit</a></li>
+            </ul>
+            <div *ngIf="!tempLigneAchat.nouveauProduitNom" class="row g-2 mb-3">
+              <div class="col-md-12">
+                <label class="form-label small">Sélectionner un produit</label>
+                <select class="form-select" [(ngModel)]="tempLigneAchat.produitId" (change)="onProduitSelectionne($event)">
+                  <option [ngValue]="null">-- Choisir un produit --</option>
+                  <option *ngFor="let p of produitsDropdown" [ngValue]="p.id">{{ p.nom }} - {{ formatPrice(p.prixAchat) }}</option>
+                </select>
+                <small class="text-muted" *ngIf="tempLigneAchat.produitNom">Produit sélectionné: <strong>{{ tempLigneAchat.produitNom }}</strong></small>
+              </div>
+            </div>
+            <div *ngIf="tempLigneAchat.nouveauProduitNom" class="row g-2 mb-3">
+              <div class="col-md-6"><label class="form-label small">Nom du nouveau produit <span class="text-danger">*</span></label><input type="text" class="form-control form-control-sm" [(ngModel)]="tempLigneAchat.nouveauProduitNom" placeholder="Nom du produit"></div>
+              <div class="col-md-6"><label class="form-label small">Catégorie <span class="text-danger">*</span></label><select class="form-select form-select-sm" [(ngModel)]="tempLigneAchat.nouvelleCategorieId"><option [ngValue]="null">Sélectionnez une catégorie</option><option *ngFor="let cat of categoriesPourNouveauProduit" [ngValue]="cat.id">{{ cat.nom }}</option></select></div>
+              <div class="col-md-4"><label class="form-label small">Code barre</label><input type="text" class="form-control form-control-sm" [(ngModel)]="tempLigneAchat.codeBarre" placeholder="Code barre"></div>
+              <div class="col-md-4"><label class="form-label small">Unité de mesure</label><select class="form-select form-select-sm" [(ngModel)]="tempLigneAchat.uniteMesure"><option [ngValue]="null">Sélectionner</option><option value="kg">kg</option><option value="g">g</option><option value="L">litre</option><option value="ml">millilitre</option><option value="pce">pièce</option><option value="carton">carton</option><option value="sac">sac</option></select></div>
+              <div class="col-md-4"><label class="form-label small">Origine</label><input type="text" class="form-control form-control-sm" [(ngModel)]="tempLigneAchat.origine" placeholder="Origine"></div>
+              <div class="col-md-6"><label class="form-label small">Description</label><textarea class="form-control form-control-sm" rows="2" [(ngModel)]="tempLigneAchat.description" placeholder="Description du produit"></textarea></div>
+              <div class="col-md-3"><label class="form-label small">Prix de vente (optionnel)</label><input type="number" class="form-control form-control-sm" [(ngModel)]="tempLigneAchat.prixVente" step="0.01" placeholder="Auto calculé"></div>
+              <div class="col-md-3"><label class="form-label small">Seuil d'alerte</label><input type="number" class="form-control form-control-sm" [(ngModel)]="tempLigneAchat.seuilAlerte" placeholder="10"></div>
+              <div class="col-md-12"><div class="form-check"><input class="form-check-input" type="checkbox" [(ngModel)]="tempLigneAchat.bio" id="bioCheckAchat"><label class="form-check-label small" for="bioCheckAchat">Produit Bio</label></div></div>
+            </div>
+            <div class="row g-2 mb-3">
+              <div class="col-md-3"><label class="form-label small">Quantité <span class="text-danger">*</span></label><input type="number" class="form-control form-control-sm" [(ngModel)]="tempLigneAchat.quantite" min="1"></div>
+              <div class="col-md-3"><label class="form-label small">Prix achat unitaire <span class="text-danger">*</span></label><input type="number" class="form-control form-control-sm" [(ngModel)]="tempLigneAchat.prixAchatUnitaire" step="0.01"></div>
+              <div class="col-md-3 d-flex align-items-end"><button class="btn btn-sm btn-success w-100" (click)="ajouterLigneAchat()"><i class="fa fa-plus me-1"></i> Ajouter</button></div>
+            </div>
+            <hr><h6>Produits de l'achat</h6>
+            <div class="table-responsive"><table class="table table-sm table-bordered"><thead><tr><th>Produit</th><th>Qté</th><th>Prix unitaire</th><th>Sous-total</th><th></th></tr></thead><tbody><tr *ngFor="let ligne of achatForm.lignes; let i = index"><td><span *ngIf="ligne.produitId">Produit sélectionné</span><span *ngIf="!ligne.produitId && ligne.nouveauProduitNom"><strong>{{ ligne.nouveauProduitNom }}</strong> (nouveau)</span></td><td class="text-center">{{ ligne.quantite }}</td><td class="text-end">{{ formatPrice(ligne.prixAchatUnitaire) }}</td><td class="text-end">{{ formatPrice(ligne.quantite * ligne.prixAchatUnitaire) }}</td><td class="text-center"><button class="btn btn-sm btn-danger" (click)="supprimerLigneAchat(i)"><i class="fa fa-trash"></i></button></td></tr><tr *ngIf="achatForm.lignes.length === 0"><td colspan="5" class="text-center text-muted py-3"><i class="fa fa-info-circle me-1"></i> Aucun produit ajouté</td></tr></tbody><tfoot><tr class="table-active"><th colspan="3" class="text-end">Total :</th><th colspan="2">{{ formatPrice(calculerTotalAchat()) }}</th></tr></tfoot></table></div>
+          </div>
+          <div class="col-md-5">
+            <div class="card bg-light">
+              <div class="card-body">
+                <h6>Récapitulatif</h6>
+                <div class="alert alert-success py-2 mb-2" *ngIf="avanceFournisseurDisponible > 0">
+                  <i class="fa fa-hand-holding-usd me-1"></i><strong>Avance disponible :</strong> {{ formatPrice(avanceFournisseurDisponible) }}
+                </div>
+                <div class="mb-2" *ngIf="avanceFournisseurDisponible > 0">
+                  <label class="form-label fw-semibold text-success">Déduire de l'avance</label>
+                  <input type="number" class="form-control" [(ngModel)]="avanceFournisseurUtilisee" [max]="Math.min(avanceFournisseurDisponible, calculerTotalAchat())" min="0" step="0.01">
+                  <small class="text-muted">Max : {{ formatPrice(Math.min(avanceFournisseurDisponible, calculerTotalAchat())) }}</small>
+                </div>
+                
+                <!-- MODIFICATION: Ajout du mode de paiement (Espèces ou Banque) -->
+                <div class="mb-2">
+                  <label class="form-label fw-semibold">Mode de paiement immédiat</label>
+                  <select class="form-select" [(ngModel)]="achatForm.modePaiementImmediat">
+                    <option value="ESPECES">Espèces (Caisse)</option>
+                    <option value="BANQUE">Virement bancaire</option>
+                  </select>
+                </div>
+                
+                <div class="mb-2" *ngIf="achatForm.modePaiementImmediat === 'BANQUE'">
+                  <label class="form-label fw-semibold">Compte bancaire</label>
+                  <select class="form-select" [(ngModel)]="achatForm.compteIdPaiement">
+                    <option [ngValue]="null">-- Choisir un compte --</option>
+                    <option *ngFor="let c of comptes" [ngValue]="c.id">
+                      {{ c.nomBanque }} — Solde: {{ formatPrice(c.soldeActuel) }}
+                    </option>
+                  </select>
+                </div>
+                
+                <div class="mb-2">
+                  <label class="form-label">Montant payé immédiatement</label>
+                  <input type="number" class="form-control" [(ngModel)]="achatForm.montantPaye" step="0.01" min="0">
+                  <small class="text-muted" *ngIf="achatForm.modePaiementImmediat === 'ESPECES'">Le montant sera déduit de la caisse</small>
+                  <small class="text-muted" *ngIf="achatForm.modePaiementImmediat === 'BANQUE'">Le montant sera déduit du compte bancaire</small>
+                </div>
+                <!-- FIN MODIFICATION -->
+                
+                <div class="mb-2">
+                  <label class="form-label">Commentaire</label>
+                  <textarea class="form-control" rows="2" [(ngModel)]="achatForm.commentaire" placeholder="Optionnel..."></textarea>
+                </div>
+                <div class="alert alert-info mt-2">
+                  <strong>À payer après :</strong><br>
+                  {{ formatPrice(calculerTotalAchat() - (achatForm.montantPaye || 0) - (avanceFournisseurUtilisee || 0)) }}
+                </div>
+                <div class="alert alert-primary mt-2" *ngIf="(avanceFournisseurUtilisee || 0) > 0">
+                  <i class="fa fa-check-circle me-1"></i> Avance utilisée : {{ formatPrice(avanceFournisseurUtilisee || 0) }} (déjà payé)
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="showAchatModal = false" [disabled]="isLoading">Annuler</button>
+        <button class="btn btn-primary" (click)="creerAchat()" [disabled]="isLoading || achatForm.lignes.length === 0">
+          <span *ngIf="!isLoading"><i class="fa fa-save me-1"></i> Enregistrer l'achat</span>
+          <span *ngIf="isLoading"><i class="fa fa-spinner fa-spin me-1"></i> Enregistrement...</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ==================== MODAL PAIEMENT FOURNISSEUR (AVEC SÉLECTEUR D'ACHAT) - MODE PAYSAGE ==================== -->
+<div class="modal fade show" [class.d-block]="showPaiementModal" *ngIf="showPaiementModal" style="background-color: rgba(0, 0, 0, 0.5); z-index: 1060" tabindex="-1">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content shadow-lg">
+      <div class="modal-header bg-gradient-success text-white py-3">
+        <div class="d-flex align-items-center">
+          <div class="rounded-circle bg-white bg-opacity-25 p-2 me-3">
+            <i class="fa fa-money fa-lg text-white"></i>
+          </div>
+          <div>
+            <h5 class="modal-title fw-bold mb-0">Paiement fournisseur</h5>
+            <small class="opacity-75">{{ selectedFournisseurForPaiement?.nom }}</small>
+          </div>
+        </div>
+        <button type="button" class="btn-close btn-close-white" (click)="closePaiementModal()"></button>
+      </div>
+
+      <div class="modal-body p-4">
+        <div class="row">
+          <!-- Colonne gauche - Informations et sélection achat -->
+          <div class="col-md-5">
+            <!-- Informations du fournisseur -->
+            <div class="card bg-light border-0 mb-4">
+              <div class="card-body p-3">
+                <div class="row">
+                  <div class="col-6">
+                    <small class="text-muted">Code fournisseur</small>
+                    <div class="fw-bold">{{ selectedFournisseurForPaiement?.code }}</div>
+                  </div>
+                  <div class="col-6">
+                    <small class="text-muted">Contact</small>
+                    <div class="fw-bold">{{ selectedFournisseurForPaiement?.contactNom || 'Non renseigné' }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sélecteur d'achat à payer -->
+            <div class="mb-3">
+              <label class="form-label fw-semibold">
+                <i class="fa fa-shopping-cart me-1"></i> Achat à payer
+              </label>
+              <select class="form-select" [(ngModel)]="paiementForm.achatCibleId" (change)="onAchatSelectionnePourPaiement()">
+                <option [ngValue]="null">-- Payer tous les achats (FIFO) --</option>
+                <option *ngFor="let achat of achatsNonPayes" [ngValue]="achat.id">
+                  Achat #{{ achat.id }} - {{ formatDate(achat.dateAchat) }} - Restant: {{ formatPrice(achat.montantTotal - achat.montantPaye) }}
+                </option>
+              </select>
+              <small class="text-muted">Sélectionnez un achat spécifique ou laissez par défaut pour payer les plus anciens</small>
+            </div>
+
+            <!-- Mode de paiement -->
+            <div class="mb-4">
+              <label class="form-label fw-semibold">
+                <i class="fa fa-credit-card me-1"></i> Mode de paiement
+              </label>
+              <div class="row g-2">
+                <div class="col-6" *ngFor="let mode of modesPaiement">
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="modePaiement" 
+                      [value]="mode.value" [(ngModel)]="paiementForm.modePaiement"
+                      id="mode_{{mode.value}}">
+                    <label class="form-check-label w-100 p-2 rounded-3 text-center"
+                      [class.bg-primary]="paiementForm.modePaiement === mode.value"
+                      [class.text-white]="paiementForm.modePaiement === mode.value"
+                      [class.bg-light]="paiementForm.modePaiement !== mode.value"
+                      for="mode_{{mode.value}}"
+                      style="cursor: pointer; border-radius: 10px;">
+                      <i class="fa" [class.fa-money]="mode.value === 'ESPECES'"></i>
+                      {{ mode.label }}
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div class="alert alert-warning mt-2 py-2" *ngIf="paiementForm.modePaiement === 'ESPECES'">
+                <i class="fa fa-exclamation-triangle me-1"></i> Le montant sera déduit de la caisse (sortie d'espèces).
+              </div>
+              <div class="alert alert-info mt-2 py-2" *ngIf="paiementForm.modePaiement === 'BANQUE'">
+                <i class="fa fa-university me-1"></i> Le montant sera déduit du compte bancaire sélectionné.
+              </div>
+            </div>
+
+            <!-- Sélecteur de compte bancaire -->
+            <div class="mb-3" *ngIf="paiementForm.modePaiement === 'BANQUE'">
+              <label class="form-label fw-semibold">
+                <i class="fa fa-university me-1"></i> Compte bancaire *
+              </label>
+              <select class="form-select" [(ngModel)]="paiementForm.compteId">
+                <option [ngValue]="undefined">-- Choisir un compte --</option>
+                <option *ngFor="let c of comptes" [ngValue]="c.id">
+                  {{ c.nomBanque }} — Solde: {{ formatPrice(c.soldeActuel) }}
+                </option>
+              </select>
+            </div>
+
+            <!-- Référence -->
+            <div class="mb-3" *ngIf="paiementForm.modePaiement !== 'ESPECES'">
+              <label class="form-label fw-semibold">
+                <i class="fa fa-hashtag me-1"></i> Référence (chèque, virement)
+              </label>
+              <input type="text" class="form-control" [(ngModel)]="paiementForm.reference"
+                placeholder="N° chèque, ref virement..." style="border-radius: 10px;">
+            </div>
+
+            <!-- Observation -->
+            <div class="mb-3">
+              <label class="form-label fw-semibold">
+                <i class="fa fa-comment me-1"></i> Observation
+              </label>
+              <textarea class="form-control" rows="2" [(ngModel)]="paiementForm.observation"
+                placeholder="Optionnel..." style="border-radius: 10px;"></textarea>
+            </div>
+          </div>
+
+          <!-- Colonne droite - Montants -->
+          <div class="col-md-7">
+            <!-- Montant restant dû -->
+            <div class="alert alert-warning rounded-3 mb-4" *ngIf="montantMaxPaiement > 0">
+              <div class="d-flex align-items-center justify-content-between">
+                <div>
+                  <i class="fa fa-exclamation-triangle fa-lg me-2"></i>
+                  <strong>Montant total à payer</strong>
+                </div>
+                <div class="fs-3 fw-bold text-danger">{{ formatPrice(montantMaxPaiement) }}</div>
+              </div>
+            </div>
+
+            <!-- Montant à payer -->
+            <div class="mb-4">
+              <label class="form-label fw-semibold">
+                <i class="fa fa-tag text-success me-1"></i> Montant à payer <span class="text-danger">*</span>
+              </label>
+              <div class="input-group input-group-lg">
+                <span class="input-group-text bg-success text-white">XOF</span>
+                <input type="number" class="form-control form-control-lg" 
+                  [(ngModel)]="paiementForm.montant" 
+                  (input)="onMontantChange()"
+                  [max]="montantMaxPaiement"
+                  step="0.01" min="0.01"
+                  style="border-radius: 0 12px 12px 0;">
+              </div>
+              <div class="mt-3 d-flex gap-2 flex-wrap">
+                <button type="button" class="btn btn-sm btn-outline-secondary" 
+                  (click)="setMontant(montantMaxPaiement)"
+                  [disabled]="!montantMaxPaiement">
+                  <i class="fa fa-check-circle me-1"></i> Tout payer
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" 
+                  (click)="setMontant(montantMaxPaiement / 2)"
+                  [disabled]="!montantMaxPaiement">
+                  <i class="fa fa-percent me-1"></i> 50%
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" 
+                  (click)="setMontant(montantMaxPaiement / 4)"
+                  [disabled]="!montantMaxPaiement">
+                  <i class="fa fa-percent me-1"></i> 25%
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" 
+                  (click)="setMontant(montantMaxPaiement / 10)"
+                  [disabled]="!montantMaxPaiement">
+                  <i class="fa fa-percent me-1"></i> 10%
+                </button>
+              </div>
+            </div>
+
+            <!-- Résumé du paiement -->
+            <div class="mt-4 p-4 bg-light rounded-3">
+              <div class="row text-center">
+                <div class="col-6 border-end">
+                  <small class="text-muted">Nouveau solde après paiement</small>
+                  <div class="fw-bold fs-2" [class.text-success]="nouveauSolde <= 0" [class.text-warning]="nouveauSolde > 0">
+                    {{ formatPrice(nouveauSolde) }}
+                  </div>
+                </div>
+                <div class="col-6">
+                  <small class="text-muted">Montant à payer</small>
+                  <div class="fw-bold fs-2 text-primary">{{ formatPrice(paiementForm.montant || 0) }}</div>
+                </div>
+              </div>
+              <div class="row mt-3 pt-3 border-top">
+                <div class="col-12 text-center">
+                  <small class="text-muted">Paiement en cours</small>
+                  <div class="progress mt-2" style="height: 8px;" *ngIf="montantMaxPaiement > 0">
+                    <div class="progress-bar bg-success" 
+                      [style.width.%]="((paiementForm.montant || 0) / montantMaxPaiement) * 100">
+                    </div>
+                  </div>
+                  <small class="text-muted d-block mt-1">
+                    {{ ((paiementForm.montant || 0) / (montantMaxPaiement || 1) * 100).toFixed(0) }}% du total
+                  </small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer py-3 bg-light">
+        <button type="button" class="btn btn-secondary px-4" (click)="closePaiementModal()" [disabled]="isLoading">
+          <i class="fa fa-times me-2"></i>Annuler
+        </button>
+        <button type="button" class="btn btn-success px-4" (click)="effectuerPaiement()" 
+          [disabled]="isLoading || !paiementForm.montant || paiementForm.montant <= 0 || paiementForm.montant > montantMaxPaiement">
+          <span *ngIf="!isLoading">
+            <i class="fa fa-check me-2"></i>Enregistrer le paiement
+          </span>
+          <span *ngIf="isLoading">
+            <i class="fa fa-spinner fa-spin me-2"></i>Enregistrement...
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ==================== MODAL HISTORIQUE AVANCES FOURNISSEUR ==================== -->
+<div class="modal fade show d-block" tabindex="-1" *ngIf="showHistoriqueAvancesModal" style="background-color: rgba(0,0,0,.5); z-index: 1060">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content shadow-lg">
+      <div class="modal-header bg-info text-white"><div class="d-flex align-items-center"><i class="fa fa-history fa-lg me-3"></i><div><h5 class="modal-title fw-bold mb-0">Historique des avances</h5><small class="opacity-75">{{ selectedFournisseurForHistorique?.nom }}</small></div></div><button type="button" class="btn-close btn-close-white" (click)="showHistoriqueAvancesModal=false"></button></div>
+      <div class="modal-body">
+        <div class="alert alert-primary d-flex justify-content-between align-items-center mb-3"><div><i class="fa fa-wallet me-2"></i><strong>Solde avance disponible chez ce fournisseur</strong></div><span class="badge bg-primary fs-6">{{ formatPrice(getTotalAvancesDisponibles()) }}</span></div>
+        <div *ngIf="isLoadingAvance" class="text-center py-4"><div class="spinner-border text-info"></div><div class="mt-2 text-muted">Chargement...</div></div>
+        <div *ngIf="!isLoadingAvance && historiqueAvancesFournisseur.length === 0" class="text-center text-muted py-4"><i class="fa fa-inbox fa-3x mb-3 d-block opacity-50"></i>Aucune avance enregistrée pour ce fournisseur.</div>
+        <div class="table-responsive" *ngIf="!isLoadingAvance && historiqueAvancesFournisseur.length > 0"><table class="table table-hover table-sm"><thead class="table-light"><tr><th>Date</th><th class="text-end">Montant initial</th><th class="text-end">Utilisé</th><th class="text-end text-success fw-bold">Disponible</th><th>Source</th><th>Statut</th><th>Motif</th></tr></thead><tbody><tr *ngFor="let avance of historiqueAvancesFournisseur" [class.table-success]="(avance.montantDisponible || 0) > 0" [class.table-secondary]="(avance.montantDisponible || 0) <= 0"><td><small>{{ formatDate(avance.dateDepot) }}</small></td><td class="text-end">{{ formatPrice(avance.montant) }}</td><td class="text-end text-warning">{{ formatPrice(avance.montantUtilise) }}</td><td class="text-end fw-bold" [class.text-success]="avance.montantDisponible > 0" [class.text-muted]="avance.montantDisponible <= 0">{{ formatPrice(avance.montantDisponible) }}</td><td><span class="badge" [class.bg-info]="avance.sourceFinancement === 'CAISSE'" [class.bg-primary]="avance.sourceFinancement === 'BANQUE'">{{ avance.sourceFinancement === 'CAISSE' ? 'Caisse' : 'Banque' }}</span></td><td><span class="badge" [class.bg-success]="avance.statut === 'DISPONIBLE'" [class.bg-secondary]="avance.statut === 'EPUISE'" [class.bg-warning]="avance.statut === 'UTILISE_PARTIELLEMENT'">{{ avance.statut === 'DISPONIBLE' ? 'Disponible' : avance.statut === 'EPUISE' ? 'Épuisée' : 'Partielle' }}</span></td><td><small class="text-muted">{{ avance.motif || '-' }}</small></td></tr></tbody><tfoot class="table-light fw-bold"><tr><td>Total</td><td class="text-end">{{ formatPrice(getSumAvances('montant')) }}</td><td class="text-end text-warning">{{ formatPrice(getSumAvances('montantUtilise')) }}</td><td class="text-end text-success">{{ formatPrice(getTotalAvancesDisponibles()) }}</td><td colspan="3"></td></tr></tfoot></table></div>
+      </div>
+      <div class="modal-footer"><button class="btn btn-outline-secondary" (click)="showHistoriqueAvancesModal=false">Fermer</button><button class="btn btn-primary" (click)="openAvanceFournisseurModal(selectedFournisseurForHistorique!); showHistoriqueAvancesModal=false" *ngIf="selectedFournisseurForHistorique"><i class="fa fa-plus me-1"></i> Nouvelle avance</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL AVANCE FOURNISSEUR ==================== -->
+<div class="modal fade show d-block" tabindex="-1" *ngIf="showAvanceFournisseurModal" style="background-color: rgba(0,0,0,.5); z-index: 1060">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow-lg">
+      <div class="modal-header bg-primary text-white"><div class="d-flex align-items-center"><i class="fa fa-hand-holding-usd fa-lg me-3"></i><div><h5 class="modal-title fw-bold mb-0">Avance fournisseur</h5><small class="opacity-75">{{ selectedFournisseurForAvance?.nom }}</small></div></div><button type="button" class="btn-close btn-close-white" (click)="showAvanceFournisseurModal=false"></button></div>
+      <div class="modal-body p-4"><div class="alert alert-info mb-3"><i class="fa fa-info-circle me-1"></i> L'avance sera déduite automatiquement lors des prochains achats avec ce fournisseur.</div><div class="mb-3"><label class="form-label fw-semibold">Montant de l'avance (F) *</label><input type="number" class="form-control form-control-lg" [(ngModel)]="avanceFournisseurForm.montant" min="1" step="0.01" placeholder="Ex: 500000"></div><div class="mb-3"><label class="form-label fw-semibold">Source du financement *</label><div class="d-flex gap-3"><div class="form-check"><input class="form-check-input" type="radio" id="src_caisse" name="sourceFinancement" value="CAISSE" [(ngModel)]="avanceFournisseurForm.sourceFinancement"><label class="form-check-label" for="src_caisse"><i class="fa fa-cash-register me-1"></i> Caisse</label></div><div class="form-check"><input class="form-check-input" type="radio" id="src_banque" name="sourceFinancement" value="BANQUE" [(ngModel)]="avanceFournisseurForm.sourceFinancement"><label class="form-check-label" for="src_banque"><i class="fa fa-university me-1"></i> Banque</label></div></div></div><div class="mb-3" *ngIf="avanceFournisseurForm.sourceFinancement === 'BANQUE'"><label class="form-label fw-semibold">Compte bancaire *</label><select class="form-select" [(ngModel)]="avanceFournisseurForm.compteId"><option [ngValue]="undefined">-- Choisir un compte --</option><option *ngFor="let c of comptes" [ngValue]="c.id">{{ c.nomBanque }} — Solde: {{ formatPrice(c.soldeActuel) }}</option></select></div><div class="mb-3"><label class="form-label fw-semibold">Motif</label><input type="text" class="form-control" [(ngModel)]="avanceFournisseurForm.motif" placeholder="Ex: Commande prévue, approvisionnement..."></div><div class="alert alert-warning mb-0" *ngIf="avanceFournisseurForm.sourceFinancement === 'CAISSE'"><i class="fa fa-exclamation-triangle me-1"></i> Le montant sera prélevé de la caisse (sortie d'espèces).</div></div>
+      <div class="modal-footer"><button class="btn btn-outline-secondary" (click)="showAvanceFournisseurModal=false" [disabled]="isLoading">Annuler</button><button class="btn btn-primary" (click)="submitAvanceFournisseur()" [disabled]="isLoading"><span *ngIf="!isLoading"><i class="fa fa-check me-1"></i> Enregistrer l'avance</span><span *ngIf="isLoading"><i class="fa fa-spinner fa-spin me-1"></i> Enregistrement...</span></button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODAL RETOUR ACHAT FOURNISSEUR ==================== -->
+<div class="modal fade show d-block" tabindex="-1" *ngIf="showRetourAchatModal" style="background-color: rgba(0,0,0,.5); z-index: 1065">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content shadow-lg">
+      <div class="modal-header bg-warning text-white"><div class="d-flex align-items-center"><i class="fa fa-undo fa-lg me-3"></i><div><h5 class="modal-title fw-bold mb-0">Retour marchandise fournisseur</h5><small class="opacity-75">Achat du {{ formatDate(selectedAchatPourRetour?.dateAchat) }}</small></div></div><button type="button" class="btn-close btn-close-white" (click)="showRetourAchatModal=false"></button></div>
+      <div class="modal-body">
+        <div class="alert alert-light border mb-3 d-flex justify-content-between align-items-center"><div><small class="text-muted">Total achat</small><div class="fw-bold">{{ formatPrice(selectedAchatPourRetour?.montantTotal) }}</div></div><div><small class="text-muted">Déjà payé</small><div class="text-success fw-bold">{{ formatPrice(selectedAchatPourRetour?.montantPaye) }}</div></div><div><small class="text-muted">Restant dû</small><div class="text-danger fw-bold">{{ formatPrice((selectedAchatPourRetour?.montantTotal || 0) - (selectedAchatPourRetour?.montantPaye || 0)) }}</div></div></div>
+        <h6 class="fw-semibold mb-2">Sélectionner les produits à retourner</h6>
+        <div class="table-responsive mb-3"><table class="table table-sm table-bordered align-middle"><thead class="table-light"><tr><th style="width:32px"></th><th>Produit</th><th class="text-center" style="width:90px">Qté max</th><th class="text-center" style="width:110px">Qté retournée</th><th class="text-end" style="width:110px">Prix unit.</th><th class="text-end" style="width:110px">Sous-total</th></tr></thead><tbody><tr *ngFor="let ligne of retourAchatLignes" [class.table-warning]="ligne.selected"><td class="text-center"><input type="checkbox" class="form-check-input" [(ngModel)]="ligne.selected"></td><td>{{ ligne.produitNom }}</td><td class="text-center text-muted">{{ ligne.quantiteMax }}</td><td class="text-center"><input type="number" class="form-control form-control-sm text-center" [(ngModel)]="ligne.quantiteRetournee" [disabled]="!ligne.selected" min="1" [max]="ligne.quantiteMax" step="1"></td><td class="text-end">{{ formatPrice(ligne.prixUnitaire) }}</td><td class="text-end fw-bold">{{ ligne.selected && ligne.quantiteRetournee > 0 ? formatPrice(ligne.quantiteRetournee * ligne.prixUnitaire) : '-' }}</td></tr></tbody><tfoot class="table-light fw-bold" *ngIf="totalRetourAchat > 0"><tr><td colspan="5" class="text-end">Total retour</td><td class="text-end text-warning">{{ formatPrice(totalRetourAchat) }}</td></tr></tfoot></table></div>
+        <div class="mb-3"><label class="form-label fw-semibold">Mode de remboursement *</label><div class="d-flex gap-3"><div class="form-check"><input class="form-check-input" type="radio" id="retour_caisse" name="retourMode" value="CAISSE" [(ngModel)]="retourAchatModeRemboursement"><label class="form-check-label" for="retour_caisse"><i class="fa fa-cash-register me-1"></i> Caisse</label></div><div class="form-check"><input class="form-check-input" type="radio" id="retour_banque" name="retourMode" value="BANQUE" [(ngModel)]="retourAchatModeRemboursement"><label class="form-check-label" for="retour_banque"><i class="fa fa-university me-1"></i> Banque</label></div></div></div>
+        <div class="mb-3" *ngIf="retourAchatModeRemboursement === 'BANQUE'"><label class="form-label fw-semibold">Compte bancaire *</label><select class="form-select" [(ngModel)]="retourAchatCompteId"><option [ngValue]="undefined">-- Choisir un compte --</option><option *ngFor="let c of comptes" [ngValue]="c.id">{{ c.nomBanque }} — Solde: {{ formatPrice(c.soldeActuel) }}</option></select></div>
+        <div class="mb-3"><label class="form-label fw-semibold">Motif du retour</label><input type="text" class="form-control" [(ngModel)]="retourAchatMotif" placeholder="Ex: Produit défectueux, mauvaise livraison..."></div>
+        <div class="alert alert-info mb-0" *ngIf="totalRetourAchat > 0"><i class="fa fa-info-circle me-2"></i><ng-container *ngIf="totalRetourAchat <= ((selectedAchatPourRetour?.montantTotal || 0) - (selectedAchatPourRetour?.montantPaye || 0)); else excessTemplate"><strong>Dette réduite de {{ formatPrice(totalRetourAchat) }}</strong> — aucun remboursement en espèces.</ng-container><ng-template #excessTemplate>Dette soldée + remboursement de <strong>{{ formatPrice(totalRetourAchat - ((selectedAchatPourRetour?.montantTotal || 0) - (selectedAchatPourRetour?.montantPaye || 0))) }}</strong> vers {{ retourAchatModeRemboursement === 'CAISSE' ? 'la caisse' : 'la banque' }}.</ng-template></div>
+      </div>
+      <div class="modal-footer"><button class="btn btn-outline-secondary" (click)="showRetourAchatModal=false" [disabled]="isLoading">Annuler</button><button class="btn btn-warning" (click)="submitRetourAchat()" [disabled]="isLoading || totalRetourAchat <= 0"><span *ngIf="!isLoading"><i class="fa fa-undo me-1"></i> Confirmer le retour</span><span *ngIf="isLoading"><i class="fa fa-spinner fa-spin me-1"></i> Traitement...</span></button></div>
+    </div>
+  </div>
+</div>
