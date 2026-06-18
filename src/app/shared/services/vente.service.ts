@@ -18,6 +18,7 @@ export enum ModePaiement {
   ESPECES = 'ESPECES',
   ORANGE_MONEY = 'ORANGE_MONEY',
   MOOV_MONEY = 'MOOV_MONEY',
+  WAVE_MONEY = 'WAVE_MONEY',
   CARTE_BANCAIRE = 'CARTE_BANCAIRE',
   VIREMENT = 'VIREMENT'
 }
@@ -1305,7 +1306,7 @@ export class VenteService {
   getModePaiementLabel(mode: string | ModePaiement): string {
     const labels: Record<string, string> = {
       'ESPECES': 'Espèces', 'ORANGE_MONEY': 'Orange Money', 'MOOV_MONEY': 'Moov Money',
-      'CARTE_BANCAIRE': 'Carte Bancaire', 'VIREMENT': 'Virement'
+      'WAVE_MONEY': 'Wave', 'CARTE_BANCAIRE': 'Carte Bancaire', 'VIREMENT': 'Virement'
     };
     return labels[String(mode)] || String(mode);
   }
@@ -1313,13 +1314,13 @@ export class VenteService {
   getModePaiementClass(mode: string | ModePaiement): string {
     const modes: Record<string, string> = {
       'ESPECES': 'bg-success', 'ORANGE_MONEY': 'bg-warning text-dark',
-      'MOOV_MONEY': 'bg-info', 'CARTE_BANCAIRE': 'bg-primary', 'VIREMENT': 'bg-secondary'
+      'MOOV_MONEY': 'bg-info', 'WAVE_MONEY': 'bg-purple text-white', 'CARTE_BANCAIRE': 'bg-primary', 'VIREMENT': 'bg-secondary'
     };
     return modes[String(mode)] || 'bg-secondary';
   }
 
   getModePaiementOptions(): ModePaiement[] {
-    return [ModePaiement.ESPECES, ModePaiement.ORANGE_MONEY, ModePaiement.MOOV_MONEY, ModePaiement.CARTE_BANCAIRE, ModePaiement.VIREMENT];
+    return [ModePaiement.ESPECES, ModePaiement.ORANGE_MONEY, ModePaiement.MOOV_MONEY, ModePaiement.WAVE_MONEY, ModePaiement.CARTE_BANCAIRE, ModePaiement.VIREMENT];
   }
 
   getVendeurDisplay(vente: VenteMap): string {

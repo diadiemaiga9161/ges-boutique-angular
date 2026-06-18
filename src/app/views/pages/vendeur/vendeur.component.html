@@ -148,16 +148,19 @@
         
         <div class="form-group">
           <label for="newTelephone">Téléphone *</label>
-          <input 
-            type="tel" 
-            id="newTelephone"
-            [(ngModel)]="newVendeur.telephone"
-            placeholder="0612345678"
-            maxlength="10"
-          >
-          <div *ngIf="newVendeur.telephone && !validatePhone(newVendeur.telephone)" class="validation-error">
-            Veuillez saisir un numéro de téléphone valide (10 chiffres)
+          <div style="display:flex;gap:6px;align-items:center">
+            <select [(ngModel)]="selectedCountryCode" style="flex:0 0 auto;padding:6px 4px;border:1px solid #ced4da;border-radius:4px;font-size:14px">
+              <option *ngFor="let c of countryCodes" [value]="c.code">{{ c.flag }} {{ c.code }}</option>
+            </select>
+            <input
+              type="tel"
+              id="newTelephone"
+              [(ngModel)]="newVendeurPhoneNumber"
+              placeholder="6 12 34 56 78"
+              style="flex:1"
+            >
           </div>
+          <small class="text-muted">Numéro complet : {{ selectedCountryCode }}{{ newVendeurPhoneNumber }}</small>
         </div>
         
         <div class="form-group">

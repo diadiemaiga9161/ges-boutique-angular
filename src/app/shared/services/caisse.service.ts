@@ -37,6 +37,7 @@ export enum ModePaiementCaisse {
   ESPECES = 'ESPECES',
   ORANGE_MONEY = 'ORANGE_MONEY',
   MOOV_MONEY = 'MOOV_MONEY',
+  WAVE_MONEY = 'WAVE_MONEY',
   CARTE_BANCAIRE = 'CARTE_BANCAIRE',
   VIREMENT = 'VIREMENT',
   CHEQUE = 'CHEQUE',
@@ -1206,6 +1207,7 @@ export class CaisseService {
       'ESPECES': 'Espèces',
       'ORANGE_MONEY': 'Orange Money',
       'MOOV_MONEY': 'Moov Money',
+      'WAVE_MONEY': 'Wave',
       'CARTE_BANCAIRE': 'Carte',
       'VIREMENT': 'Virement',
       'CHEQUE': 'Chèque',
@@ -1219,6 +1221,7 @@ export class CaisseService {
       case 'ESPECES': return 'badge bg-success';
       case 'ORANGE_MONEY': return 'badge bg-warning text-dark';
       case 'MOOV_MONEY': return 'badge bg-info';
+      case 'WAVE_MONEY': return 'badge bg-purple text-white';
       case 'CARTE_BANCAIRE': return 'badge bg-primary';
       default: return 'badge bg-secondary';
     }

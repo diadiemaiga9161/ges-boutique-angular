@@ -23,6 +23,7 @@ import { BeneficesComponent } from './benefices/benefices.component';
 import { TransfertsComponent } from './transferts/transferts.component';
 import { BonusFournisseursComponent } from './bonus-fournisseurs/bonus-fournisseurs.component';
 import { ResultatNetComponent } from './resultat-net/resultat-net.component';
+import { MobileMoneyComponent } from './mobile-money/mobile-money.component';
 
 const routes: Routes = [
     {
@@ -114,6 +115,10 @@ const routes: Routes = [
     {
         path: 'resultat-net',
         component: ResultatNetComponent
+    },
+    {
+        path: 'mobile-money',
+        component: MobileMoneyComponent
     },
 ];
 

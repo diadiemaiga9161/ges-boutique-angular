@@ -3,6 +3,42 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UserService, User, UserUpdate } from '../../../shared/services/user.service';
+
+export const COUNTRY_CODES = [
+  { code: '+223', flag: '🇲🇱', name: 'Mali' },
+  { code: '+225', flag: '🇨🇮', name: "Côte d'Ivoire" },
+  { code: '+226', flag: '🇧🇫', name: 'Burkina Faso' },
+  { code: '+221', flag: '🇸🇳', name: 'Sénégal' },
+  { code: '+227', flag: '🇳🇪', name: 'Niger' },
+  { code: '+228', flag: '🇹🇬', name: 'Togo' },
+  { code: '+229', flag: '🇧🇯', name: 'Bénin' },
+  { code: '+224', flag: '🇬🇳', name: 'Guinée' },
+  { code: '+245', flag: '🇬🇼', name: 'Guinée-Bissau' },
+  { code: '+222', flag: '🇲🇷', name: 'Mauritanie' },
+  { code: '+220', flag: '🇬🇲', name: 'Gambie' },
+  { code: '+232', flag: '🇸🇱', name: 'Sierra Leone' },
+  { code: '+231', flag: '🇱🇷', name: 'Libéria' },
+  { code: '+233', flag: '🇬🇭', name: 'Ghana' },
+  { code: '+234', flag: '🇳🇬', name: 'Nigeria' },
+  { code: '+237', flag: '🇨🇲', name: 'Cameroun' },
+  { code: '+243', flag: '🇨🇩', name: 'RD Congo' },
+  { code: '+242', flag: '🇨🇬', name: 'Congo' },
+  { code: '+241', flag: '🇬🇦', name: 'Gabon' },
+  { code: '+236', flag: '🇨🇫', name: 'Centrafrique' },
+  { code: '+235', flag: '🇹🇩', name: 'Tchad' },
+  { code: '+212', flag: '🇲🇦', name: 'Maroc' },
+  { code: '+213', flag: '🇩🇿', name: 'Algérie' },
+  { code: '+216', flag: '🇹🇳', name: 'Tunisie' },
+  { code: '+20',  flag: '🇪🇬', name: 'Égypte' },
+  { code: '+33',  flag: '🇫🇷', name: 'France' },
+  { code: '+32',  flag: '🇧🇪', name: 'Belgique' },
+  { code: '+41',  flag: '🇨🇭', name: 'Suisse' },
+  { code: '+1',   flag: '🇺🇸', name: 'USA' },
+  { code: '+44',  flag: '🇬🇧', name: 'Royaume-Uni' },
+  { code: '+351', flag: '🇵🇹', name: 'Portugal' },
+  { code: '+34',  flag: '🇪🇸', name: 'Espagne' },
+  { code: '+55',  flag: '🇧🇷', name: 'Brésil' },
+];
 import { AuthService } from '../../../shared/services/auth.service';
 import Swal from 'sweetalert2';
 
@@ -43,7 +79,12 @@ export class VendeurComponent implements OnInit {
     role: 'VENDEUR' as 'VENDEUR'
   };
   showCreateForm: boolean = false;
-  
+
+  // Indicatif pays
+  countryCodes = COUNTRY_CODES;
+  selectedCountryCode = '+223';
+  newVendeurPhoneNumber = '';
+
   // Force de mot de passe
   passwordStrength: number = 0;
   passwordStrengthText: string = '';
@@ -379,7 +420,7 @@ export class VendeurComponent implements OnInit {
             password: this.newVendeur.password,
             nomComplet: this.newVendeur.nomComplet,
             email: this.newVendeur.email,
-            telephone: this.newVendeur.telephone,
+            telephone: this.getFullPhone(),
             role: this.newVendeur.role
           };
 
@@ -438,8 +479,8 @@ export class VendeurComponent implements OnInit {
       return false;
     }
 
-    if (!this.newVendeur.telephone.trim() || !this.validatePhone(this.newVendeur.telephone)) {
-      Swal.fire('Erreur', 'Veuillez saisir un numéro de téléphone valide (10 chiffres)', 'error');
+    if (!this.newVendeurPhoneNumber.trim()) {
+      Swal.fire('Erreur', 'Veuillez saisir un numéro de téléphone', 'error');
       return false;
     }
 
@@ -480,6 +521,11 @@ export class VendeurComponent implements OnInit {
     this.showPassword = !this.showPassword;
   }
 
+  getFullPhone(): string {
+    const num = this.newVendeurPhoneNumber.replace(/^0/, '');
+    return this.selectedCountryCode + num;
+  }
+
   resetNewVendeurForm(): void {
     this.newVendeur = {
       username: '',
@@ -490,6 +536,8 @@ export class VendeurComponent implements OnInit {
       telephone: '',
       role: 'VENDEUR'
     };
+    this.newVendeurPhoneNumber = '';
+    this.selectedCountryCode = '+223';
     this.passwordStrength = 0;
     this.passwordStrengthText = '';
     this.showPassword = false;

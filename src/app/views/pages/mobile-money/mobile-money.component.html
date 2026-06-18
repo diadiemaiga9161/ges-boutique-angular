@@ -1,0 +1,236 @@
+<div class="main-content-wrap d-flex flex-column">
+  <div class="breadcrumb">
+    <h1>Mobile Money</h1>
+    <ul>
+      <li><a href="#">Tableau de bord</a></li>
+      <li>Mobile Money</li>
+    </ul>
+  </div>
+
+  <!-- Onglets -->
+  <ul class="nav nav-tabs mb-3">
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="activeTab === 'operations'" (click)="activeTab = 'operations'; chargerDonnees()" style="cursor:pointer">
+        Opérations
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="activeTab === 'resume'" (click)="activeTab = 'resume'; chargerResume()" style="cursor:pointer">
+        Résumé
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="activeTab === 'telecharger'" (click)="activeTab = 'telecharger'" style="cursor:pointer">
+        Télécharger
+      </a>
+    </li>
+  </ul>
+
+  <!-- ===== ONGLET OPÉRATIONS ===== -->
+  <div *ngIf="activeTab === 'operations'">
+    <div class="row mb-3">
+      <!-- Filtre opérateur -->
+      <div class="col-md-6">
+        <div class="btn-group w-100" role="group">
+          <button *ngFor="let op of [{v:'TOUS',l:'Tous'},{v:'ORANGE_MONEY',l:'🟠 Orange'},{v:'MOOV_MONEY',l:'🔵 Moov'},{v:'WAVE_MONEY',l:'🌊 Wave'}]"
+            type="button" class="btn btn-sm"
+            [class.btn-primary]="type === op.v"
+            [class.btn-outline-primary]="type !== op.v"
+            (click)="type = op.v; chargerDonnees()">
+            {{ op.l }}
+          </button>
+        </div>
+      </div>
+      <!-- Filtre période -->
+      <div class="col-md-6">
+        <div class="btn-group w-100" role="group">
+          <button *ngFor="let p of periodes" type="button" class="btn btn-sm"
+            [class.btn-secondary]="periode === p.value"
+            [class.btn-outline-secondary]="periode !== p.value"
+            (click)="periode = p.value; chargerDonnees()">
+            {{ p.label }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Totaux -->
+    <div class="row mb-3">
+      <div class="col-md-3">
+        <div class="card bg-warning">
+          <div class="card-body text-center p-2">
+            <div class="text-dark fw-bold small">🟠 Orange Money</div>
+            <div class="fw-bold text-dark fs-5">{{ formatMontant(totalOrange) }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card bg-info">
+          <div class="card-body text-center p-2">
+            <div class="text-white fw-bold small">🔵 Moov Money</div>
+            <div class="fw-bold text-white fs-5">{{ formatMontant(totalMoov) }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card" style="background:#7c3aed">
+          <div class="card-body text-center p-2">
+            <div class="text-white fw-bold small">🌊 Wave</div>
+            <div class="fw-bold text-white fs-5">{{ formatMontant(totalWave) }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card bg-success">
+          <div class="card-body text-center p-2">
+            <div class="text-white small">Total {{ periodeLabel() }} ({{ nombreOperations }} op.)</div>
+            <div class="fw-bold text-white fs-5">{{ formatMontant(totalGlobal) }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="loading" class="text-center py-4">
+      <div class="spinner-border text-primary" role="status"></div>
+    </div>
+
+    <!-- Table -->
+    <div *ngIf="!loading" class="card">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>N° Vente</th>
+                <th>Date</th>
+                <th>Client</th>
+                <th>Vendeur</th>
+                <th>Opérateur</th>
+                <th>Référence</th>
+                <th class="text-end">Montant</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let op of operations">
+                <td>{{ op.numeroVente }}</td>
+                <td>{{ op.dateVente | date:'dd/MM/yyyy HH:mm' }}</td>
+                <td>{{ op.clientNom || '-' }}</td>
+                <td>{{ op.vendeurNom || '-' }}</td>
+                <td>
+                  <span [class]="modeBadgeClass(op.modePaiement)" [style]="modeBadgeStyle(op.modePaiement)">
+                    {{ modeIcon(op.modePaiement) }} {{ operateurLabel(op.modePaiement) }}
+                  </span>
+                </td>
+                <td>{{ op.referencePaiement || '-' }}</td>
+                <td class="text-end fw-bold">{{ formatMontant(op.montantTotal) }}</td>
+              </tr>
+              <tr *ngIf="operations.length === 0">
+                <td colspan="7" class="text-center text-muted py-4">Aucune opération pour cette période</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== ONGLET RÉSUMÉ ===== -->
+  <div *ngIf="activeTab === 'resume'">
+    <div class="row">
+      <div class="col-md-6 mb-3" *ngFor="let p of resumePeriodes">
+        <div class="card h-100">
+          <div class="card-header fw-bold">📅 {{ p.label }}</div>
+          <div class="card-body">
+            <div class="row text-center mb-2">
+              <div class="col-4">
+                <div class="small text-muted fw-bold">🟠 Orange ({{ getResume(p.key).nombreOrange }})</div>
+                <div class="fw-bold">{{ formatMontant(getResume(p.key).orangeMoney) }}</div>
+              </div>
+              <div class="col-4">
+                <div class="small text-muted fw-bold">🔵 Moov ({{ getResume(p.key).nombreMoov }})</div>
+                <div class="fw-bold">{{ formatMontant(getResume(p.key).moovMoney) }}</div>
+              </div>
+              <div class="col-4">
+                <div class="small text-muted fw-bold">🌊 Wave ({{ getResume(p.key).nombreWave }})</div>
+                <div class="fw-bold">{{ formatMontant(getResume(p.key).waveMoney) }}</div>
+              </div>
+            </div>
+            <div class="text-center border-top pt-2">
+              <div class="small text-muted">Total ({{ getResume(p.key).nombreTotal }} opérations)</div>
+              <div class="fw-bold fs-5 text-success">{{ formatMontant(getResume(p.key).total) }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== ONGLET TÉLÉCHARGEMENT ===== -->
+  <div *ngIf="activeTab === 'telecharger'">
+    <div class="row mb-3">
+      <div class="col-12">
+        <div class="btn-group" role="group">
+          <button *ngFor="let p of periodes" type="button" class="btn btn-sm"
+            [class.btn-secondary]="periode === p.value"
+            [class.btn-outline-secondary]="periode !== p.value"
+            (click)="periode = p.value">
+            {{ p.label }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <!-- Tous -->
+      <div class="col-md-3 mb-3">
+        <div class="card h-100 border-success" style="cursor:pointer" (click)="exportCsv('TOUS')">
+          <div class="card-body text-center">
+            <div class="display-4 mb-2">📥</div>
+            <h6 class="fw-bold">Tous les opérateurs</h6>
+            <p class="text-muted small">Orange + Moov + Wave</p>
+            <p class="small text-muted">{{ periodeLabel() }}</p>
+            <span class="badge bg-success">Télécharger CSV</span>
+          </div>
+        </div>
+      </div>
+      <!-- Orange -->
+      <div class="col-md-3 mb-3">
+        <div class="card h-100 border-warning" style="cursor:pointer" (click)="exportCsv('ORANGE_MONEY')">
+          <div class="card-body text-center">
+            <div class="display-4 mb-2">🟠</div>
+            <h6 class="fw-bold">Orange Money</h6>
+            <p class="text-muted small">{{ periodeLabel() }}</p>
+            <p class="fw-bold text-warning">{{ formatMontant(totalOrange) }}</p>
+            <span class="badge bg-warning text-dark">Télécharger CSV</span>
+          </div>
+        </div>
+      </div>
+      <!-- Moov -->
+      <div class="col-md-3 mb-3">
+        <div class="card h-100 border-info" style="cursor:pointer" (click)="exportCsv('MOOV_MONEY')">
+          <div class="card-body text-center">
+            <div class="display-4 mb-2">🔵</div>
+            <h6 class="fw-bold">Moov Money</h6>
+            <p class="text-muted small">{{ periodeLabel() }}</p>
+            <p class="fw-bold text-info">{{ formatMontant(totalMoov) }}</p>
+            <span class="badge bg-info text-white">Télécharger CSV</span>
+          </div>
+        </div>
+      </div>
+      <!-- Wave -->
+      <div class="col-md-3 mb-3">
+        <div class="card h-100" style="cursor:pointer;border-color:#7c3aed" (click)="exportCsv('WAVE_MONEY')">
+          <div class="card-body text-center">
+            <div class="display-4 mb-2">🌊</div>
+            <h6 class="fw-bold">Wave</h6>
+            <p class="text-muted small">{{ periodeLabel() }}</p>
+            <p class="fw-bold" style="color:#7c3aed">{{ formatMontant(totalWave) }}</p>
+            <span class="badge text-white" style="background:#7c3aed">Télécharger CSV</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

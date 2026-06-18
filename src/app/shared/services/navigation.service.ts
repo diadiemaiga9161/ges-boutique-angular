@@ -230,6 +230,13 @@ export class NavigationService {
             icon: 'i-Business-Man',
             state: '/pages/fournisseurs'
         },
+        {
+            name: 'Mobile Money',
+            description: 'Suivi Orange Money, Moov Money et Wave',
+            type: 'link',
+            icon: 'i-Money-Bag',
+            state: '/pages/mobile-money'
+        },
          {
             name: 'Profil',
             description: 'Mon profil et paramètres',
