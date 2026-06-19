@@ -2,6 +2,7 @@ import { Component, HostListener, OnInit, OnDestroy } from '@angular/core';
 import { IMenuItem, NavigationService } from '../../../../services/navigation.service';
 import { SearchService } from '../../../../services/search.service';
 import { AuthService } from '../../../../services/auth.service';
+import { LanguageService, Language } from '../../../../services/language.service';
 
 import {
   Router,
@@ -40,7 +41,8 @@ selectedItem: IMenuItem;
       private router: Router,
       public navService: NavigationService,
       private authService: AuthService,
-      private boutiqueService: BoutiqueService
+      private boutiqueService: BoutiqueService,
+      public langService: LanguageService
     ) {
       this.notifications = [
         {
@@ -224,6 +226,10 @@ selectedItem: IMenuItem;
 
   logout(): void {
     this.authService.signout();
+  }
+
+  setLang(code: string): void {
+    this.langService.setLanguage(code);
   }
 
 }

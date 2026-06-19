@@ -7,6 +7,7 @@ import { SearchModule } from './components/search/search.module';
 import { SharedComponentsModule } from './components/shared-components.module';
 import { SharedDirectivesModule } from './directives/shared-directives.module';
 import { SharedPipesModule } from './pipes/shared-pipes.module';
+import { TranslateModule } from '@ngx-translate/core';
 
 @NgModule({
   imports: [
@@ -17,7 +18,11 @@ import { SharedPipesModule } from './pipes/shared-pipes.module';
     SharedComponentsModule,
     SharedDirectivesModule,
     SharedPipesModule,
-    RouterModule
+    RouterModule,
+    TranslateModule
+  ],
+  exports: [
+    TranslateModule
   ]
 })
 export class SharedModule { }

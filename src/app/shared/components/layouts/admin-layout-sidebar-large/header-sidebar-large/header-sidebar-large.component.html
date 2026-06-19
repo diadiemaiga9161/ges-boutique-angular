@@ -15,9 +15,29 @@
     </div>
   </div>
 
-  <!-- Right: user + logout -->
+  <!-- Right: langue + user + logout -->
   <div class="header-part-right d-flex align-items-center gap-3 pe-3">
     <app-notification-bell></app-notification-bell>
+
+    <!-- Sélecteur de langue -->
+    <div class="dropdown lang-dropdown">
+      <button class="lang-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="{{ 'LANG.SELECT' | translate }}">
+        <span class="lang-flag">{{ langService.getCurrentLanguage().flag }}</span>
+        <span class="lang-code d-none d-md-inline">{{ langService.getCurrentCode().toUpperCase() }}</span>
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end lang-menu">
+        <li *ngFor="let lang of langService.languages">
+          <button class="dropdown-item lang-item"
+                  [class.active]="lang.code === langService.getCurrentCode()"
+                  (click)="setLang(lang.code)">
+            <span class="lang-item-flag">{{ lang.flag }}</span>
+            <span class="lang-item-name">{{ lang.name }}</span>
+            <i class="i-Yes ms-auto text-success" *ngIf="lang.code === langService.getCurrentCode()"></i>
+          </button>
+        </li>
+      </ul>
+    </div>
+
     <div class="header-user d-none d-md-flex align-items-center gap-2">
       <div class="header-avatar" [class.header-avatar--photo]="userPhoto">
         <img *ngIf="userPhoto" [src]="userPhoto" alt="photo" class="header-avatar-img">
@@ -28,9 +48,54 @@
         <p class="header-role">{{ currentUserRole }}</p>
       </div>
     </div>
-    <button class="header-logout-btn" (click)="logout()" title="Déconnexion">
+    <button class="header-logout-btn" (click)="logout()" title="{{ 'PROFILE.LOGOUT' | translate }}">
       <i class="i-Lock-User"></i>
-      <span class="d-none d-sm-inline ms-1">Quitter</span>
+      <span class="d-none d-sm-inline ms-1">{{ 'PROFILE.LOGOUT' | translate }}</span>
     </button>
   </div>
 </div>
+
+<style>
+  .lang-dropdown { position: relative; }
+  .lang-btn {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 8px;
+    padding: 5px 10px;
+    color: inherit;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.85rem;
+    transition: background 0.15s;
+  }
+  .lang-btn:hover { background: rgba(255,255,255,0.15); }
+  .lang-flag { font-size: 1.1rem; line-height: 1; }
+  .lang-code { font-weight: 600; font-size: 0.78rem; letter-spacing: 0.5px; }
+  .lang-menu {
+    min-width: 160px;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    border: 1px solid #e2e8f0;
+    padding: 4px;
+  }
+  .lang-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    width: 100%;
+    text-align: left;
+    border: none;
+    background: none;
+    cursor: pointer;
+    transition: background 0.12s;
+  }
+  .lang-item:hover { background: #f1f5f9; }
+  .lang-item.active { background: #eff6ff; color: #1a56db; font-weight: 600; }
+  .lang-item-flag { font-size: 1rem; }
+  .lang-item-name { flex: 1; }
+</style>

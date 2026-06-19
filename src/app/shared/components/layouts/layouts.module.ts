@@ -18,6 +18,7 @@ import { SharedDirectivesModule } from '../../directives/shared-directives.modul
 import { FormsModule } from '@angular/forms';
 import { NotificationBellComponent } from '../notification-bell/notification-bell.component';
 import { LoadingBarComponent } from '../loading-bar/loading-bar.component';
+import { TranslateModule } from '@ngx-translate/core';
 
 // Regular components for declaration
 const components = [
@@ -46,6 +47,7 @@ const standaloneComponents = [
     SharedDirectivesModule,
     NgScrollbarModule,
     CommonModule,
+    TranslateModule,
     ...standaloneComponents,
   ],
   declarations: components,
