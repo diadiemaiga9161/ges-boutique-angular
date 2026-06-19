@@ -237,6 +237,13 @@ export class NavigationService {
             icon: 'i-Money-Bag',
             state: '/pages/mobile-money'
         },
+        {
+            name: 'Design Factures',
+            description: 'Choisir le style visuel des factures (3 templates)',
+            type: 'link',
+            icon: 'i-Pen-2',
+            state: '/pages/facture-design'
+        },
          {
             name: 'Profil',
             description: 'Mon profil et paramètres',

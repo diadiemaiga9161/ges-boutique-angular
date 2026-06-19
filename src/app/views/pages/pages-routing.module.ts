@@ -24,6 +24,7 @@ import { TransfertsComponent } from './transferts/transferts.component';
 import { BonusFournisseursComponent } from './bonus-fournisseurs/bonus-fournisseurs.component';
 import { ResultatNetComponent } from './resultat-net/resultat-net.component';
 import { MobileMoneyComponent } from './mobile-money/mobile-money.component';
+import { FactureDesignComponent } from './facture-design/facture-design.component';
 
 const routes: Routes = [
     {
@@ -119,6 +120,10 @@ const routes: Routes = [
     {
         path: 'mobile-money',
         component: MobileMoneyComponent
+    },
+    {
+        path: 'facture-design',
+        component: FactureDesignComponent
     },
 ];
 

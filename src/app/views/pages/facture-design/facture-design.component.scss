@@ -1,0 +1,51 @@
+// ===== APERÇU MINIATURE COMMUN =====
+.design-preview {
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  overflow: hidden;
+  font-size: 9px;
+}
+
+.dp-client { padding: 4px 8px; }
+.dp-table { width: 100%; border-collapse: collapse; font-size: 9px;
+  th, td { padding: 3px 6px; text-align: left; }
+}
+.dp-row-even { background: #f8fafc; }
+.dp-total { padding: 5px 8px; font-weight: 700; font-size: 10px; text-align: right; }
+.dp-qr { display: flex; flex-direction: column; align-items: center;
+  padding: 6px; border-top: 1px dashed #cbd5e1; }
+.dp-qr-box { font-size: 14px; padding: 2px 4px; border: 1px solid #94a3b8; border-radius: 3px; }
+.dp-qr-text { font-size: 7px; color: #94a3b8; margin-top: 2px; }
+
+// ===== DESIGN 1 — CLASSIQUE =====
+.dp-header--blue { background: #1e40af; color: #fff; display: flex;
+  justify-content: space-between; padding: 6px 8px; }
+.dp-boutique { font-weight: 700; }
+.dp-num { opacity: .85; }
+.dp-thead--blue { background: #1e40af; color: #fff; }
+.dp-total--blue { background: #eff6ff; color: #1e40af; }
+
+// ===== DESIGN 2 — MODERNE =====
+.dp-header--dark { background: #0f172a; display: flex;
+  justify-content: space-between; padding: 6px 8px; }
+.dp-boutique--gold { color: #f59e0b; font-weight: 700; }
+.dp-num--gold { color: #f59e0b; }
+.dp-stripe-gold { height: 3px; background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+.dp-client--light { background: #f8fafc; padding: 4px 8px; }
+.dp-thead--dark { background: #0f172a; color: #fff; }
+.dp-total--dark { background: #0f172a; color: #fff; padding: 5px 8px;
+  font-weight: 700; font-size: 10px; text-align: right; }
+.dp-qr--dark { background: #0f172a; border-color: #334155; }
+.dp-qr-box--gold { border-color: #f59e0b; color: #f59e0b; }
+
+// ===== DESIGN 3 — MINIMALISTE =====
+.dp-header--minimal { display: flex; justify-content: space-between;
+  align-items: flex-start; padding: 6px 8px; background: #fff; }
+.dp-divider--black { height: 1px; background: #18181b; }
+.dp-table--minimal {
+  thead tr { th { border-bottom: 1px solid #18181b; } }
+  tbody td { border-bottom: 1px solid #f4f4f5; }
+}
+.dp-total--minimal { padding: 5px 8px; font-size: 10px; text-align: right; }
+.dp-qr--minimal { border-color: #71717a; }
+.dp-qr-box--minimal { border-color: #18181b; color: #18181b; }

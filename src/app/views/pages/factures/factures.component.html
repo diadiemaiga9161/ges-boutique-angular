@@ -173,46 +173,155 @@
   </div>
 
   <!-- ==================== MODALES (inchangées) ==================== -->
-  <!-- MODALE DÉTAIL -->
+  <!-- MODALE DÉTAIL (3 DESIGNS) -->
   <div class="facture-modal" [class.show]="showDetailModal" *ngIf="showDetailModal && selectedFacture">
-    <div class="modal-content modal-detail">
-      <div class="modal-header">
-        <h3><i class="fa fa-file-text-o"></i> Détails de la facture</h3>
-        <span class="close" (click)="closeAllModals()">&times;</span>
+    <div class="modal-content modal-detail modal-detail--full">
+
+      <!-- En-tête modal -->
+      <div class="modal-header" [class.bg-primary]="design===1" [class.bg-dark]="design===2" [class.bg-light]="design===3"
+           [class.text-white]="design===1||design===2">
+        <h3 class="mb-0" style="font-size:1rem">
+          <i class="fa fa-file-text-o me-2"></i>{{ selectedFacture.numeroFacture }}
+        </h3>
+        <span class="close" (click)="closeAllModals()" [style.color]="design===3?'#18181b':'#fff'">&times;</span>
       </div>
-      <div class="detail-section">
-        <div class="detail-row"><span class="detail-label">Numéro :</span><span class="detail-value">{{ selectedFacture.numeroFacture }}</span></div>
-        <div class="detail-row"><span class="detail-label">Client :</span><span class="detail-value">{{ selectedFacture.clientNom || 'Client divers' }} {{ selectedFacture.clientPrenom || '' }}</span></div>
-        <div class="detail-row"><span class="detail-label">Téléphone :</span><span class="detail-value">{{ selectedFacture.clientTelephone || '-' }}</span></div>
-        <div class="detail-row"><span class="detail-label">Adresse :</span><span class="detail-value">{{ selectedFacture.clientAdresse || '-' }}</span></div>
-        <div class="detail-row"><span class="detail-label">Statut :</span><span class="detail-value"><span [class]="'badge ' + getStatusBadgeClass(selectedFacture.statut)">{{ getStatusText(selectedFacture.statut) }}</span></span></div>
-        <div class="detail-row"><span class="detail-label">Date :</span><span class="detail-value">{{ formatDateShort(selectedFacture.dateCreation) }}</span></div>
-        <div class="detail-row"><span class="detail-label">Total :</span><span class="detail-value text-primary fw-bold">{{ formatPrice(selectedFacture.montantTotal) }}</span></div>
-      </div>
-      <div class="detail-section" *ngIf="selectedFacture.lignes.length">
-        <h4><i class="fa fa-list"></i> Articles</h4>
-        <div class="lines-list">
-          <div class="lines-header"><span>Désignation</span><span>Qté</span><span>Prix U.</span><span>Total</span></div>
-          <div *ngFor="let l of selectedFacture.lignes" class="line-item">
-            <span class="line-designation">{{ l.designation }}</span>
-            <span class="line-quantite">{{ l.quantite }}</span>
-            <span class="line-prix">{{ formatPrice(l.prixUnitaire) }}</span>
-            <span class="line-total">{{ formatPrice(l.sousTotal ?? 0) }}</span>
+
+      <!-- ╔═══════════════════════════════╗ -->
+      <!-- ║  DESIGN 1 — CLASSIQUE (bleu)  ║ -->
+      <!-- ╚═══════════════════════════════╝ -->
+      <div *ngIf="design === 1" class="fd fd--classic p-0">
+        <div class="fd-header-banner fd-header-banner--blue">
+          <div class="fd-boutique">{{ authService.getUser()?.nomComplet || 'Ma Boutique' }}</div>
+          <div class="fd-badge-status">
+            <span [class]="'badge ' + getStatusBadgeClass(selectedFacture.statut)">{{ getStatusText(selectedFacture.statut) }}</span>
           </div>
         </div>
-      </div>
-      <div class="detail-section" *ngIf="selectedFacture.notes">
-        <h4><i class="fa fa-sticky-note"></i> Notes</h4>
-        <p class="notes-text">{{ selectedFacture.notes }}</p>
-      </div>
-      <!-- QR Code téléchargement -->
-      <div class="detail-section qr-section">
-        <h4><i class="fa fa-qrcode"></i> QR Code — Accès direct à la facture</h4>
-        <div class="qr-wrapper">
-          <img [src]="getQrCodeUrl(selectedFacture)" alt="QR Code facture" class="qr-img">
-          <p class="qr-hint">Scannez ce code pour télécharger le PDF directement (sans connexion)</p>
+        <div class="fd-meta fd-meta--blue p-3">
+          <div class="row g-2">
+            <div class="col-6"><small class="text-muted">Client</small><div class="fw-semibold">{{ selectedFacture.clientNom || 'Client divers' }} {{ selectedFacture.clientPrenom || '' }}</div></div>
+            <div class="col-6"><small class="text-muted">Date</small><div class="fw-semibold">{{ formatDateShort(selectedFacture.dateCreation) }}</div></div>
+            <div class="col-6" *ngIf="selectedFacture.clientTelephone"><small class="text-muted">Téléphone</small><div>{{ selectedFacture.clientTelephone }}</div></div>
+            <div class="col-6" *ngIf="selectedFacture.clientAdresse"><small class="text-muted">Adresse</small><div>{{ selectedFacture.clientAdresse }}</div></div>
+          </div>
+        </div>
+        <table class="table table-sm table-hover mb-0 px-2" *ngIf="selectedFacture.lignes.length">
+          <thead class="table-primary"><tr><th>Désignation</th><th class="text-center">Qté</th><th class="text-end">P.U</th><th class="text-end">Total</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let l of selectedFacture.lignes">
+              <td>{{ l.designation }}</td><td class="text-center">{{ l.quantite }}</td>
+              <td class="text-end">{{ formatPrice(l.prixUnitaire) }}</td>
+              <td class="text-end fw-bold">{{ formatPrice(l.sousTotal ?? 0) }}</td>
+            </tr>
+          </tbody>
+        </table>
+        <div *ngIf="selectedFacture.notes" class="px-3 py-2 bg-light fst-italic text-muted small">{{ selectedFacture.notes }}</div>
+        <div class="fd-total-bar fd-total-bar--blue">
+          <span>Total à payer</span><span class="fd-total-amount">{{ formatPrice(selectedFacture.montantTotal) }}</span>
+        </div>
+        <!-- QR Code — pied de page Design 1 -->
+        <div class="fd-qr-footer fd-qr-footer--blue">
+          <div class="text-muted small mb-2">Scanner pour télécharger le PDF de la facture</div>
+          <div *ngIf="qrLoading" class="text-center py-2"><div class="spinner-border spinner-border-sm text-primary"></div></div>
+          <img *ngIf="!qrLoading && qrDataUrl" [src]="qrDataUrl" alt="QR Code" class="fd-qr-img">
+          <div class="fd-qr-num mt-1">{{ selectedFacture.numeroFacture }}</div>
         </div>
       </div>
+
+      <!-- ╔══════════════════════════════════╗ -->
+      <!-- ║  DESIGN 2 — MODERNE (noir/doré)  ║ -->
+      <!-- ╚══════════════════════════════════╝ -->
+      <div *ngIf="design === 2" class="fd fd--modern p-0">
+        <div class="fd-header-banner fd-header-banner--dark">
+          <div>
+            <div class="fd-boutique fd-boutique--gold">{{ authService.getUser()?.nomComplet || 'Ma Boutique' }}</div>
+            <div style="font-size:11px;color:#94a3b8">Facture Officielle</div>
+          </div>
+          <div>
+            <span [class]="'badge ' + getStatusBadgeClass(selectedFacture.statut)">{{ getStatusText(selectedFacture.statut) }}</span>
+          </div>
+        </div>
+        <div class="fd-gold-stripe"></div>
+        <div class="row g-0 p-3 bg-light">
+          <div class="col-6">
+            <div class="fd-block-label">CLIENT</div>
+            <div class="fw-bold">{{ selectedFacture.clientNom || 'Client divers' }} {{ selectedFacture.clientPrenom || '' }}</div>
+            <div *ngIf="selectedFacture.clientTelephone" class="text-muted small">{{ selectedFacture.clientTelephone }}</div>
+          </div>
+          <div class="col-6 text-end">
+            <div class="fd-block-label">DATE</div>
+            <div class="fw-bold">{{ formatDateShort(selectedFacture.dateCreation) }}</div>
+          </div>
+        </div>
+        <div *ngIf="selectedFacture.notes" class="px-3 py-2 small" style="background:#fff7ed;border-left:3px solid #f59e0b">
+          <i class="fa fa-info-circle me-1" style="color:#f59e0b"></i>{{ selectedFacture.notes }}
+        </div>
+        <table class="table table-sm mb-0" *ngIf="selectedFacture.lignes.length">
+          <thead style="background:#0f172a;color:#fff"><tr><th>Désignation</th><th class="text-center">Qté</th><th class="text-end">P.U</th><th class="text-end">Total</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let l of selectedFacture.lignes">
+              <td>{{ l.designation }}</td><td class="text-center">{{ l.quantite }}</td>
+              <td class="text-end">{{ formatPrice(l.prixUnitaire) }}</td>
+              <td class="text-end fw-bold" style="color:#b45309">{{ formatPrice(l.sousTotal ?? 0) }}</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="fd-total-bar" style="background:#0f172a;color:#f59e0b">
+          <span style="letter-spacing:.05em">TOTAL À PAYER</span>
+          <span class="fd-total-amount" style="color:#f59e0b">{{ formatPrice(selectedFacture.montantTotal) }}</span>
+        </div>
+        <!-- QR Code — pied de page Design 2 -->
+        <div class="fd-qr-footer" style="background:#0f172a;border-color:#334155">
+          <div class="small mb-2" style="color:#f59e0b">Scanner pour télécharger le PDF de la facture</div>
+          <div *ngIf="qrLoading" class="text-center py-2"><div class="spinner-border spinner-border-sm text-warning"></div></div>
+          <img *ngIf="!qrLoading && qrDataUrl" [src]="qrDataUrl" alt="QR Code" class="fd-qr-img" style="border:3px solid #f59e0b;border-radius:6px">
+          <div class="fd-qr-num mt-1" style="color:#f59e0b">{{ selectedFacture.numeroFacture }}</div>
+        </div>
+      </div>
+
+      <!-- ╔══════════════════════════════════╗ -->
+      <!-- ║  DESIGN 3 — MINIMALISTE (B&W)    ║ -->
+      <!-- ╚══════════════════════════════════╝ -->
+      <div *ngIf="design === 3" class="fd fd--minimal p-0">
+        <div class="fd-header-banner fd-header-banner--minimal">
+          <div class="fd-boutique" style="color:#18181b;font-size:1.1rem;font-weight:700">{{ authService.getUser()?.nomComplet || 'Ma Boutique' }}</div>
+          <div>
+            <span [class]="'badge ' + getStatusBadgeClass(selectedFacture.statut)">{{ getStatusText(selectedFacture.statut) }}</span>
+          </div>
+        </div>
+        <div class="fd-line--black"></div>
+        <div class="p-3">
+          <div class="row g-2">
+            <div class="col-6"><small class="text-muted">Client</small><div class="fw-semibold">{{ selectedFacture.clientNom || 'Client divers' }} {{ selectedFacture.clientPrenom || '' }}</div></div>
+            <div class="col-6 text-end"><small class="text-muted">Date</small><div class="fw-semibold">{{ formatDateShort(selectedFacture.dateCreation) }}</div></div>
+            <div class="col-6" *ngIf="selectedFacture.clientTelephone"><small class="text-muted">Téléphone</small><div>{{ selectedFacture.clientTelephone }}</div></div>
+          </div>
+        </div>
+        <div *ngIf="selectedFacture.notes" class="px-3 pb-2 small text-muted fst-italic" style="border-left:2px solid #e4e4e7;margin:0 12px">{{ selectedFacture.notes }}</div>
+        <table class="table table-sm table-borderless mb-0" *ngIf="selectedFacture.lignes.length">
+          <thead><tr style="border-bottom:2px solid #18181b"><th>Désignation</th><th class="text-center">Qté</th><th class="text-end">P.U</th><th class="text-end">Total</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let l of selectedFacture.lignes" style="border-bottom:1px solid #f4f4f5">
+              <td>{{ l.designation }}</td><td class="text-center">{{ l.quantite }}</td>
+              <td class="text-end">{{ formatPrice(l.prixUnitaire) }}</td>
+              <td class="text-end fw-bold">{{ formatPrice(l.sousTotal ?? 0) }}</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="fd-line--black mx-3"></div>
+        <div class="fd-total-bar" style="background:#fff;color:#18181b;border-top:none">
+          <span>Total à payer</span>
+          <span class="fd-total-amount" style="color:#18181b">{{ formatPrice(selectedFacture.montantTotal) }}</span>
+        </div>
+        <!-- QR Code — pied de page Design 3 -->
+        <div class="fd-qr-footer" style="border-color:#18181b">
+          <div class="text-muted small mb-2">Scanner pour télécharger le PDF de la facture</div>
+          <div *ngIf="qrLoading" class="text-center py-2"><div class="spinner-border spinner-border-sm"></div></div>
+          <img *ngIf="!qrLoading && qrDataUrl" [src]="qrDataUrl" alt="QR Code" class="fd-qr-img" style="border:2px solid #18181b;border-radius:4px">
+          <div class="fd-qr-num mt-1" style="color:#71717a">{{ selectedFacture.numeroFacture }}</div>
+        </div>
+      </div>
+
+      <!-- Boutons d'action -->
       <div class="modal-actions">
         <button class="btn-primary" (click)="imprimerFacture(selectedFacture)"><i class="fa fa-print"></i> Imprimer</button>
         <button class="btn-success" (click)="telechargerPdfServeur(selectedFacture)"><i class="fa fa-download"></i> Télécharger PDF</button>

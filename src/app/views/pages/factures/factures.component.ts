@@ -1,6 +1,8 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { Subscription } from 'rxjs';
 import Swal from 'sweetalert2';
 
@@ -8,6 +10,7 @@ import { AuthService, User } from '../../../shared/services/auth.service';
 import { FactureService, Facture, FactureRequest, LigneFactureRequest, StatistiquesFactures, FactureStatut, FactureRemiseType } from '../../../shared/services/facture.service';
 import { ClientService, Client } from '../../../shared/services/client.service';
 import { ProductService, Produit } from '../../../shared/services/product.service';
+import { FactureDesignService, DesignFacture } from '../../../shared/services/facture-design.service';
 
 @Component({
   selector: 'app-factures',
@@ -79,6 +82,11 @@ export class FacturesComponent implements OnInit, OnDestroy {
   showDetailModal: boolean = false;
   showEditModal: boolean = false;
 
+  // Design facture
+  design: DesignFacture = 1;
+  qrDataUrl: SafeUrl | null = null;
+  qrLoading = false;
+
 
   private subscriptions: Subscription[] = [];
 
@@ -90,9 +98,13 @@ export class FacturesComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private clientService: ClientService,
     private productService: ProductService,
+    private designService: FactureDesignService,
+    private http: HttpClient,
+    private sanitizer: DomSanitizer
   ) {}
 
   ngOnInit(): void {
+    this.design = this.designService.getDesign();
     this.initDates();
     this.loadData();
     this.loadClients();
@@ -499,8 +511,25 @@ export class FacturesComponent implements OnInit, OnDestroy {
   }
 
   viewFacture(facture: Facture): void {
+    this.design = this.designService.getDesign();
     this.selectedFacture = facture;
+    this.qrDataUrl = null;
     this.showDetailModal = true;
+    this.loadQrBlob(facture.id);
+  }
+
+  private loadQrBlob(factureId: number): void {
+    this.qrLoading = true;
+    const token = this.authService.getToken() || '';
+    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+    this.http.get(`/api/caisse/factures/${factureId}/qrcode`, { headers, responseType: 'blob' }).subscribe({
+      next: blob => {
+        const url = URL.createObjectURL(blob);
+        this.qrDataUrl = this.sanitizer.bypassSecurityTrustUrl(url);
+        this.qrLoading = false;
+      },
+      error: () => { this.qrLoading = false; }
+    });
   }
 
   imprimerFacture(facture: Facture): void { this.factureService.imprimerFacture(facture); }
