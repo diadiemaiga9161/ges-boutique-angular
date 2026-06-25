@@ -166,7 +166,7 @@
         <div class="dropdown" *ngIf="showClientDropdown && clientsFiltres.length">
           <div class="dropdown-item" *ngFor="let c of clientsFiltres" (mousedown)="selectionnerClient(c)">
             <strong>{{ c.nom }} {{ c.prenom }}</strong>
-            <span class="dropdown-sub">{{ (c as any).numeroTelephone }}</span>
+            <span class="dropdown-sub">{{ c.numeroTelephone }}</span>
           </div>
         </div>
       </div>
@@ -219,9 +219,9 @@
               title="Prix original : {{ formatMontant(l.prixOriginal) }}">✏️</span>
           </div>
           <div class="qty-ctrl">
-            <button (click)="l.quantite > 1 ? l.quantite-- : null">−</button>
+            <button (click)="l.quantite = l.quantite > 1 ? l.quantite - 1 : 1">−</button>
             <input type="number" [(ngModel)]="l.quantite" min="1" />
-            <button (click)="l.quantite++">+</button>
+            <button (click)="l.quantite = l.quantite + 1">+</button>
           </div>
           <span class="ligne-sous">{{ formatMontant(l.prixUnitaire * l.quantite) }}</span>
           <button class="btn-remove-ligne" (click)="supprimerLigne(i)">✕</button>
