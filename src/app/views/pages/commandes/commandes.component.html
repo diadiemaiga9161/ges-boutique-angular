@@ -1,0 +1,307 @@
+<div class="cmd-page">
+
+  <!-- ====== EN-TÊTE ====== -->
+  <div class="cmd-header">
+    <div>
+      <h1 class="cmd-title">
+        <i class="i-clipboard"></i>
+        Gestion des Commandes
+      </h1>
+      <p class="cmd-subtitle">Créez, gérez et validez vos bons de commande</p>
+    </div>
+    <button class="btn-primary" (click)="ouvrirCreer()">
+      <i class="i-plus"></i> Nouvelle commande
+    </button>
+  </div>
+
+  <!-- ====== STATS ====== -->
+  <div class="cmd-stats">
+    <div class="stat-card stat-blue">
+      <div class="stat-icon">📋</div>
+      <div>
+        <p class="stat-label">Brouillons</p>
+        <p class="stat-value">{{ nbBrouillons }}</p>
+      </div>
+    </div>
+    <div class="stat-card stat-green">
+      <div class="stat-icon">✅</div>
+      <div>
+        <p class="stat-label">Validées</p>
+        <p class="stat-value">{{ nbValidees }}</p>
+      </div>
+    </div>
+    <div class="stat-card stat-purple">
+      <div class="stat-icon">💰</div>
+      <div>
+        <p class="stat-label">CA Validées</p>
+        <p class="stat-value">{{ formatMontant(totalValidees) }}</p>
+      </div>
+    </div>
+    <div class="stat-card stat-gray">
+      <div class="stat-icon">📦</div>
+      <div>
+        <p class="stat-label">Total</p>
+        <p class="stat-value">{{ commandes.length }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== FILTRES ====== -->
+  <div class="cmd-filters">
+    <input class="cmd-search" type="text" placeholder="🔍 Rechercher (N°, client...)"
+      [(ngModel)]="searchTerm" (ngModelChange)="appliquerFiltres()" />
+    <div class="filter-tabs">
+      <button [class.active]="statutFilter === ''" (click)="statutFilter=''; appliquerFiltres()">Toutes</button>
+      <button [class.active]="statutFilter === 'BROUILLON'" (click)="statutFilter='BROUILLON'; appliquerFiltres()">
+        Brouillons
+      </button>
+      <button [class.active]="statutFilter === 'VALIDEE'" (click)="statutFilter='VALIDEE'; appliquerFiltres()">
+        Validées
+      </button>
+    </div>
+  </div>
+
+  <!-- ====== LISTE ====== -->
+  <div class="cmd-loading" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Chargement...</p>
+  </div>
+
+  <div class="cmd-empty" *ngIf="!isLoading && commandesFiltrees.length === 0">
+    <p>📋 Aucune commande trouvée</p>
+    <button class="btn-primary" (click)="ouvrirCreer()">Créer une commande</button>
+  </div>
+
+  <div class="cmd-grid" *ngIf="!isLoading && commandesFiltrees.length > 0">
+    <div class="cmd-card" *ngFor="let c of commandesFiltrees" [class.cmd-card--validee]="c.statut === StatutCommande.VALIDEE">
+
+      <!-- Badge statut -->
+      <div class="cmd-card__top">
+        <div>
+          <span class="cmd-numero">{{ c.numeroCommande }}</span>
+          <span class="cmd-badge" [class.badge-brouillon]="c.statut === StatutCommande.BROUILLON"
+            [class.badge-validee]="c.statut === StatutCommande.VALIDEE">
+            {{ c.statut === StatutCommande.VALIDEE ? '✅ Validée' : '📝 Brouillon' }}
+          </span>
+        </div>
+        <span class="cmd-date">{{ formatDate(c.dateCommande) }}</span>
+      </div>
+
+      <!-- Client + montant -->
+      <div class="cmd-card__body">
+        <div class="cmd-info-row">
+          <i class="i-user"></i>
+          <span>{{ getClientNom(c) }}</span>
+          <span *ngIf="c.clientTelephone" class="cmd-tel">· {{ c.clientTelephone }}</span>
+        </div>
+        <div class="cmd-info-row">
+          <i class="i-cart"></i>
+          <span>{{ c.lignes?.length || 0 }} produit(s)</span>
+          <strong class="cmd-total">{{ formatMontant(c.montantTotal) }}</strong>
+        </div>
+        <div class="cmd-info-row" *ngIf="c.estCredit">
+          <i class="i-credit"></i>
+          <span class="text-orange">Crédit · Versé : {{ formatMontant(c.montantVerse) }}</span>
+          <span class="text-red">· Reste : {{ formatMontant(c.montantRestant) }}</span>
+        </div>
+        <div class="cmd-paiement">
+          <span>{{ c.modePaiement }}</span>
+        </div>
+        <p class="cmd-notes" *ngIf="c.notes">{{ c.notes }}</p>
+        <p class="cmd-vente-ref" *ngIf="c.venteId">Vente liée : #{{ c.venteId }}</p>
+      </div>
+
+      <!-- Lignes produits (aperçu) -->
+      <div class="cmd-card__lignes" *ngIf="c.lignes && c.lignes.length">
+        <div class="ligne-apercu" *ngFor="let l of c.lignes.slice(0, 3)">
+          <span class="ligne-nom">{{ l.produit?.nom || l.produitNom }}</span>
+          <span class="ligne-qty">x{{ l.quantite }}</span>
+          <span class="ligne-prix">{{ formatMontant(l.prixUnitaire) }}</span>
+          <span class="ligne-sous">= {{ formatMontant((l.sousTotal || l.prixUnitaire * l.quantite)) }}</span>
+        </div>
+        <p class="plus-lignes" *ngIf="c.lignes.length > 3">+ {{ c.lignes.length - 3 }} autre(s)...</p>
+      </div>
+
+      <!-- Actions -->
+      <div class="cmd-card__actions">
+        <button class="btn-action btn-pdf" (click)="imprimerFacture(c)" title="Bon de commande PDF">
+          🖨️ Facture
+        </button>
+        <button class="btn-action btn-edit" (click)="ouvrirModifier(c)" title="Modifier">
+          ✏️ Modifier
+        </button>
+        <button class="btn-action btn-validate" (click)="valider(c)"
+          *ngIf="c.statut === StatutCommande.BROUILLON" title="Valider la commande">
+          ✅ Valider
+        </button>
+        <button class="btn-action btn-delete" (click)="supprimer(c)"
+          *ngIf="c.statut === StatutCommande.BROUILLON" title="Supprimer">
+          🗑️
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ====================================================
+     MODAL COMMANDE (Créer / Modifier)
+======================================================= -->
+<div class="modal-backdrop" *ngIf="showModal" (click)="fermerModal()"></div>
+<div class="modal-panel" *ngIf="showModal">
+  <div class="modal-header">
+    <h2>{{ editingId ? 'Modifier la commande' : 'Nouvelle commande' }}</h2>
+    <button class="modal-close" (click)="fermerModal()">✕</button>
+  </div>
+
+  <div class="modal-body">
+
+    <!-- SECTION CLIENT -->
+    <div class="form-section">
+      <h3 class="section-title">👤 Client</h3>
+      <div class="search-wrapper" style="position:relative">
+        <input type="text" class="form-input" placeholder="Rechercher un client..."
+          [(ngModel)]="searchClient" (input)="filtrerClients()" (blur)="showClientDropdown = false" />
+        <button *ngIf="form.clientId" class="btn-clear-client" (click)="effacerClient()">✕</button>
+        <div class="dropdown" *ngIf="showClientDropdown && clientsFiltres.length">
+          <div class="dropdown-item" *ngFor="let c of clientsFiltres" (mousedown)="selectionnerClient(c)">
+            <strong>{{ c.nom }} {{ c.prenom }}</strong>
+            <span class="dropdown-sub">{{ (c as any).numeroTelephone }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="client-manual" *ngIf="!form.clientId">
+        <div class="two-cols">
+          <div class="form-group">
+            <label>Nom</label>
+            <input type="text" class="form-input" [(ngModel)]="form.clientNom" placeholder="Nom client" />
+          </div>
+          <div class="form-group">
+            <label>Prénom</label>
+            <input type="text" class="form-input" [(ngModel)]="form.clientPrenom" placeholder="Prénom" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Téléphone</label>
+          <input type="text" class="form-input" [(ngModel)]="form.clientTelephone" placeholder="Numéro de téléphone" />
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION PRODUITS -->
+    <div class="form-section">
+      <h3 class="section-title">📦 Produits</h3>
+      <div class="search-wrapper" style="position:relative">
+        <input type="text" class="form-input" placeholder="🔍 Ajouter un produit..."
+          [(ngModel)]="searchProduit" (input)="filtrerProduits()" (blur)="showProduitDropdown = false" />
+        <div class="dropdown" *ngIf="showProduitDropdown && produitsFiltres.length">
+          <div class="dropdown-item" *ngFor="let p of produitsFiltres" (mousedown)="selectionnerProduit(p)">
+            <strong>{{ p.nom }}</strong>
+            <span class="dropdown-sub">Stock: {{ p.quantite }} · {{ formatMontant(p.prixVente) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tableau lignes -->
+      <div class="lignes-table" *ngIf="lignesForm.length > 0">
+        <div class="lignes-header">
+          <span>Produit</span>
+          <span>Prix unitaire</span>
+          <span>Qté</span>
+          <span>Sous-total</span>
+          <span></span>
+        </div>
+        <div class="ligne-row" *ngFor="let l of lignesForm; let i = index">
+          <span class="ligne-nom">{{ l.produitNom }}</span>
+          <div class="prix-editable">
+            <input type="number" class="prix-input" [(ngModel)]="l.prixUnitaire" min="0" />
+            <span class="prix-original" *ngIf="l.prixUnitaire !== l.prixOriginal"
+              title="Prix original : {{ formatMontant(l.prixOriginal) }}">✏️</span>
+          </div>
+          <div class="qty-ctrl">
+            <button (click)="l.quantite > 1 ? l.quantite-- : null">−</button>
+            <input type="number" [(ngModel)]="l.quantite" min="1" />
+            <button (click)="l.quantite++">+</button>
+          </div>
+          <span class="ligne-sous">{{ formatMontant(l.prixUnitaire * l.quantite) }}</span>
+          <button class="btn-remove-ligne" (click)="supprimerLigne(i)">✕</button>
+        </div>
+      </div>
+
+      <div class="lignes-vide" *ngIf="lignesForm.length === 0">
+        Aucun produit ajouté
+      </div>
+
+      <!-- Total -->
+      <div class="total-bar" *ngIf="lignesForm.length > 0">
+        <span>Total</span>
+        <strong>{{ formatMontant(totalCommande) }}</strong>
+      </div>
+    </div>
+
+    <!-- SECTION PAIEMENT -->
+    <div class="form-section">
+      <h3 class="section-title">💳 Paiement</h3>
+      <div class="two-cols">
+        <div class="form-group">
+          <label>Mode de paiement *</label>
+          <select class="form-input" [(ngModel)]="form.modePaiement">
+            <option value="ESPECES">Espèces</option>
+            <option value="ORANGE_MONEY">Orange Money</option>
+            <option value="MOOV_MONEY">Moov Money</option>
+            <option value="WAVE_MONEY">Wave</option>
+            <option value="CARTE_BANCAIRE">Carte bancaire</option>
+            <option value="VIREMENT">Virement</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Référence paiement</label>
+          <input type="text" class="form-input" [(ngModel)]="form.referencePaiement" placeholder="N° transaction..." />
+        </div>
+      </div>
+
+      <!-- Crédit partiel -->
+      <div class="credit-toggle">
+        <label class="toggle-label">
+          <input type="checkbox" [(ngModel)]="form.estCredit" />
+          <span class="toggle-switch"></span>
+          Paiement partiel (crédit)
+        </label>
+      </div>
+
+      <div class="credit-section" *ngIf="form.estCredit">
+        <div class="two-cols">
+          <div class="form-group">
+            <label>Montant versé maintenant</label>
+            <input type="number" class="form-input" [(ngModel)]="form.montantVerse" min="0" />
+          </div>
+          <div class="form-group">
+            <label>Reste à payer</label>
+            <input type="number" class="form-input" [value]="resteAPayer" disabled />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Date d'échéance</label>
+          <input type="date" class="form-input" [(ngModel)]="form.dateEcheance" />
+        </div>
+      </div>
+    </div>
+
+    <!-- NOTES -->
+    <div class="form-section">
+      <div class="form-group">
+        <label>Notes / Observations</label>
+        <textarea class="form-input form-textarea" [(ngModel)]="form.notes" placeholder="Notes optionnelles..." rows="2"></textarea>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="modal-footer">
+    <button class="btn-secondary" (click)="fermerModal()" [disabled]="isSubmitting">Annuler</button>
+    <button class="btn-primary" (click)="enregistrer()" [disabled]="isSubmitting || lignesForm.length === 0">
+      <span *ngIf="!isSubmitting">{{ editingId ? 'Enregistrer' : 'Créer la commande' }}</span>
+      <span *ngIf="isSubmitting">...</span>
+    </button>
+  </div>
+</div>

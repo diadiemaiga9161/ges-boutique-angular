@@ -18,11 +18,12 @@ import { AuthService } from '../../../shared/services/auth.service';
 import Swal from 'sweetalert2';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-fournisseurs',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslateModule],
   templateUrl: './fournisseurs.component.html',
   styleUrls: ['./fournisseurs.component.scss']
 })

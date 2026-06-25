@@ -16,13 +16,14 @@ import { environment } from '../../../../environments/environment';
 import Swal from 'sweetalert2';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-comptes',
   templateUrl: './comptes.component.html',
   styleUrls: ['./comptes.component.scss'],
   standalone: true,
-  imports: [CommonModule, FormsModule, DecimalPipe]
+  imports: [CommonModule, FormsModule, DecimalPipe, TranslateModule]
 })
 export class ComptesComponent implements OnInit {
 

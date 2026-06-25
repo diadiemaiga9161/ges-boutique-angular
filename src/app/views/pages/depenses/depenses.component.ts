@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import Swal from 'sweetalert2';
 import { Depense, DepenseRequest, DepenseService } from '../../../shared/services/depense.service';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-depenses',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslateModule],
   templateUrl: './depenses.component.html',
   styleUrls: ['./depenses.component.scss']
 })

@@ -52,6 +52,10 @@ export interface LigneVenteRequest {
   prixUnitaire?: number | null;
   remisePourcentage?: number | null;
   remiseMontant?: number | null;
+  prixAchat?: number | null;
+  niveauId?: number | null;     // ID du ProduitNiveau vendu (cascade stock)
+  niveauNom?: string | null;
+  niveauFacteur?: number | null;
 }
 
 export interface VenteRequest {

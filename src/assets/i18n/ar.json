@@ -65,7 +65,7 @@
     "EXPENSES": "المصروفات", "NET_RESULT": "الصافي", "SUPPLIERS": "الموردون",
     "MOBILE_MONEY": "موبايل موني", "INVOICE_DESIGN": "تصميم الفواتير",
     "REPORT": "تقرير", "PROMO": "العروض", "CREDIT_PAYMENT": "تسوية الائتمان",
-    "NOTIFICATIONS": "الإشعارات"
+    "ORDERS": "الطلبات", "NOTIFICATIONS": "الإشعارات"
   },
   "PROFILE": {
     "TITLE": "ملفي الشخصي",

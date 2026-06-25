@@ -2,13 +2,13 @@
 
   <!-- HEADER -->
   <div class="breadcrumb d-flex align-items-center mb-3">
-    <h1 class="page-title m-0"><i class="i-Arrow-Right text-primary me-2"></i>Transferts entre boutiques</h1>
+    <h1 class="page-title m-0"><i class="i-Arrow-Right text-primary me-2"></i>{{ 'TRANSFERS.TITLE' | translate }}</h1>
     <div class="ms-auto d-flex gap-2">
       <button class="btn btn-outline-secondary btn-sm" (click)="afficherFormPartenaire ? afficherFormPartenaire=false : nouveauPartenaire()">
         <i class="i-Shop-2 me-1"></i> Boutiques partenaires
       </button>
       <button class="btn btn-primary btn-sm" (click)="nouveauTransfert()">
-        <i class="i-Add me-1"></i> Nouveau transfert
+        <i class="i-Add me-1"></i> {{ 'TRANSFERS.NEW' | translate }}
       </button>
     </div>
   </div>
@@ -170,7 +170,7 @@
       </table>
       <div class="text-center py-5 text-muted" *ngIf="transferts.length === 0">
         <i class="i-Arrow-Right fs-1"></i>
-        <p class="mt-2">Aucun transfert</p>
+        <p class="mt-2">{{ 'TRANSFERS.EMPTY' | translate }}</p>
       </div>
     </div>
   </div>

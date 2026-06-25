@@ -7,8 +7,10 @@ import { ClientService, Client, AvanceClient, AvanceClientRequest, HistoriqueAva
 import { AuthService } from '../../../shared/services/auth.service';
 import { VenteService, VenteMap } from '../../../shared/services/vente.service';
 import { CaisseService } from '../../../shared/services/caisse.service';
+import { DesignFacture, FactureDesignService } from '../../../shared/services/facture-design.service';
 import { forkJoin } from 'rxjs';
 import Swal from 'sweetalert2';
+import { TranslateModule } from '@ngx-translate/core';
 
 interface HistoriquePaiementEntry {
   date: string;
@@ -24,7 +26,7 @@ interface HistoriquePaiementEntry {
 @Component({
   selector: 'app-clients',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslateModule],
   templateUrl: './clients.component.html',
   styleUrls: ['./clients.component.scss']
 })
@@ -80,6 +82,7 @@ export class ClientsComponent implements OnInit {
   ventesClientDiversFiltered: VenteMap[] = [];
 
   // Modal détails vente
+  design: DesignFacture = 1;
   showDetailModal: boolean = false;
   selectedVenteDetail: VenteMap | null = null;
 
@@ -114,10 +117,12 @@ export class ClientsComponent implements OnInit {
     private clientService: ClientService,
     private authService: AuthService,
     private venteService: VenteService,
-    private caisseService: CaisseService
+    private caisseService: CaisseService,
+    private designService: FactureDesignService
   ) {}
 
   ngOnInit(): void {
+    this.design = this.designService.getDesign();
     this.loadClients();
   }
 

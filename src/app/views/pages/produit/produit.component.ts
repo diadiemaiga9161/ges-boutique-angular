@@ -30,13 +30,14 @@ import { AuthService } from '../../../shared/services/auth.service';
 import { CompteService, Compte } from '../../../shared/services/compte.service';
 import { environment } from '../../../../environments/environment';
 import Swal from 'sweetalert2';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-produit',
   templateUrl: './produit.component.html',
   styleUrls: ['./produit.component.scss'],
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule]
+  imports: [CommonModule, FormsModule, RouterModule, TranslateModule]
 })
 export class ProduitComponent implements OnInit, OnDestroy {
   private wsSubs: Subscription[] = [];

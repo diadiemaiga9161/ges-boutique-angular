@@ -51,6 +51,7 @@ export class NavigationService {
         { name: 'NAV.PRODUCTS',        type: 'link', icon: 'i-Clothing-Store',   state: '/pages/produit' },
         { name: 'NAV.SALES',           type: 'link', icon: 'i-Money-2',           state: '/pages/vente' },
         { name: 'NAV.CREDIT_PAYMENT',  type: 'link', icon: 'i-Credit-Card',       state: '/pages/reglement-credits' },
+        { name: 'NAV.ORDERS',          type: 'link', icon: 'i-File-Clipboard-File--Text', state: '/pages/commandes' },
         { name: 'NAV.PROFILE',         type: 'link', icon: 'i-Administrator',     state: '/pages/profile' },
         { name: 'NAV.CLIENTS',         type: 'link', icon: 'i-Business-ManWoman', state: '/pages/client' },
     ];
@@ -64,6 +65,7 @@ export class NavigationService {
         { name: 'NAV.INVOICES',      type: 'link', icon: 'i-Receipt-3',         state: '/pages/facture' },
         { name: 'NAV.CAISSE',        type: 'link', icon: 'i-Cash-register-2',   state: '/pages/caisse' },
         { name: 'NAV.CREDIT_PAYMENT',type: 'link', icon: 'i-Credit-Card',       state: '/pages/reglement-credits' },
+        { name: 'NAV.ORDERS',        type: 'link', icon: 'i-File-Clipboard-File--Text', state: '/pages/commandes' },
         { name: 'NAV.INVENTORY',     type: 'link', icon: 'i-Bar-Chart',         state: '/pages/inventaire' },
         { name: 'NAV.SELLERS',       type: 'link', icon: 'i-Administrator',     state: '/pages/vendeur' },
         { name: 'NAV.CLIENTS',       type: 'link', icon: 'i-Business-ManWoman', state: '/pages/client' },

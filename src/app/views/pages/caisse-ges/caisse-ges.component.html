@@ -4,7 +4,7 @@
     <div class="app-page-header-left">
       <div class="app-page-icon"><i class="bi bi-safe2"></i></div>
       <div>
-        <h1 class="app-page-title">Gestion de la Caisse</h1>
+        <h1 class="app-page-title">{{ 'CAISSE.TITLE' | translate }}</h1>
         <p class="app-page-subtitle"><i class="bi bi-calendar me-1"></i> {{ formatDateLong(dateActuelle) }}</p>
       </div>
     </div>
@@ -81,7 +81,7 @@
  <div class="d-flex align-items-center mb-2">
  <i class="bi bi-safe2-fill fs-3 me-3 opacity-75"></i>
  <div>
- <div class="text-uppercase fw-semibold small opacity-75 mb-1">Caisse Totale</div>
+ <div class="text-uppercase fw-semibold small opacity-75 mb-1">{{ 'CAISSE.BALANCE' | translate }}</div>
  <div class="fs-2 fw-bold">{{ formatPrice(soldeActuel) }}</div>
  </div>
  </div>
@@ -192,7 +192,7 @@
  <div class="card-body">
  <div class="d-flex justify-content-between align-items-start">
  <div>
- <h6 class="card-title mb-2"> Revenus</h6>
+ <h6 class="card-title mb-2">{{ 'CAISSE.INCOME' | translate }}</h6>
  <h3 class="mb-0">{{ formatPrice(revenusJour) }}</h3>
  <small>Aujourd'hui</small>
  </div>

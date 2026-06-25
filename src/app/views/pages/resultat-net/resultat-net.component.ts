@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { ResultatNetService, ResultatNet } from '../../../shared/services/resultat-net.service';
+import { TranslateModule } from '@ngx-translate/core';
 
 type Periode = 'JOURNALIER' | 'MENSUEL' | 'ANNUEL';
 
@@ -11,7 +12,7 @@ type Periode = 'JOURNALIER' | 'MENSUEL' | 'ANNUEL';
   templateUrl: './resultat-net.component.html',
   styleUrls: ['./resultat-net.component.scss'],
   standalone: true,
-  imports: [CommonModule, FormsModule]
+  imports: [CommonModule, FormsModule, TranslateModule]
 })
 export class ResultatNetComponent implements OnInit, OnDestroy {
 

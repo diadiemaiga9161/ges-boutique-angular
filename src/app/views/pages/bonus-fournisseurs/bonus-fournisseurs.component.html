@@ -5,13 +5,13 @@
     <div class="app-page-header-left">
       <div class="app-page-icon"><i class="fa fa-gift"></i></div>
       <div>
-        <h1 class="app-page-title">Bonus Fournisseurs</h1>
-        <p class="app-page-subtitle">Ristournes, bonus volume, primes objectif</p>
+        <h1 class="app-page-title">{{ 'SUPPLIER_BONUS.TITLE' | translate }}</h1>
+        <p class="app-page-subtitle">{{ 'SUPPLIER_BONUS.SUBTITLE' | translate }}</p>
       </div>
     </div>
     <div class="app-page-header-actions">
       <button class="btn btn-primary" (click)="startCreate()">
-        <i class="fa fa-plus me-1"></i> Nouveau bonus
+        <i class="fa fa-plus me-1"></i> {{ 'SUPPLIER_BONUS.NEW' | translate }}
       </button>
     </div>
   </div>
@@ -92,7 +92,7 @@
 
       <div *ngIf="!loading && bonus.length === 0" class="text-center py-5 text-muted">
         <i class="fa fa-gift fa-3x mb-3 d-block"></i>
-        Aucun bonus enregistré
+        {{ 'SUPPLIER_BONUS.EMPTY' | translate }}
       </div>
 
       <div class="table-responsive" *ngIf="!loading && bonus.length > 0">

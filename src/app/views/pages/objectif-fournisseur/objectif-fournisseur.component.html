@@ -4,8 +4,8 @@
     <div class="app-page-header-left">
       <div class="app-page-icon"><i class="fa fa-trophy"></i></div>
       <div>
-        <h1 class="app-page-title">Objectifs Fournisseurs</h1>
-        <p class="app-page-subtitle">Suivi des objectifs et bonus fournisseurs</p>
+        <h1 class="app-page-title">{{ 'SUPPLIER_OBJ.TITLE' | translate }}</h1>
+        <p class="app-page-subtitle">{{ 'SUPPLIER_OBJ.SUBTITLE' | translate }}</p>
       </div>
     </div>
   </div>
@@ -118,7 +118,7 @@
         </div>
         <div class="col-md-2 text-right">
           <button class="btn btn-primary btn-sm" (click)="ouvrirFormulaire()">
-            <i class="i-Add mr-1"></i> Nouvel objectif
+            <i class="i-Add mr-1"></i> {{ 'SUPPLIER_OBJ.NEW' | translate }}
           </button>
         </div>
       </div>
@@ -149,7 +149,7 @@
       </div>
       <div class="text-center py-5 text-muted" *ngIf="!isLoading && !objectifsFiltres.length">
         <i class="i-Trophy" style="font-size:3rem;opacity:.3"></i>
-        <p class="mt-2">Aucun objectif pour cette période</p>
+        <p class="mt-2">{{ 'SUPPLIER_OBJ.EMPTY' | translate }}</p>
         <button class="btn btn-primary btn-sm" (click)="ouvrirFormulaire()">Créer le premier objectif</button>
       </div>
       <div class="table-responsive" *ngIf="!isLoading && objectifsFiltres.length">

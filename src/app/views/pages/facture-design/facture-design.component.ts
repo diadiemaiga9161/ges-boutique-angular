@@ -1,11 +1,12 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FactureDesignService, DesignFacture, DESIGNS, DesignInfo } from '../../../shared/services/facture-design.service';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-facture-design',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslateModule],
   templateUrl: './facture-design.component.html',
   styleUrls: ['./facture-design.component.scss']
 })

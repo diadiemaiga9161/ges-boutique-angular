@@ -11,20 +11,20 @@
             <div class="nav-item-hold" routerLink="{{ item.state }}" (click)="closeChildNav()"
               >
               <i [class]="'nav-icon ' + item.icon"></i>
-              <span class="nav-text">{{ item.name }}</span>
+              <span class="nav-text">{{ item.name | translate }}</span>
             </div>
           }
           @if (!item.disabled && item.type === 'dropDown') {
             <div class="nav-item-hold" (mouseenter)="selectItem(item)">
               <i [class]="'nav-icon ' + item.icon"></i>
-              <span class="nav-text">{{ item.name }}</span>
+              <span class="nav-text">{{ item.name | translate }}</span>
             </div>
           }
           @if (!item.disabled && item.type === 'extLink') {
             <div class="nav-item-hold">
               <a [href]="item.state" target="_blank">
                 <i [class]="'nav-icon ' + item.icon"></i>
-                <span class="nav-text">{{ item.name }}</span>
+                <span class="nav-text">{{ item.name | translate }}</span>
               </a>
             </div>
           }
@@ -58,7 +58,7 @@
             @if (item.icon) {
               <i [class]="'nav-icon ' + item.icon"></i>
             }
-            <span class="item-name lvl1">{{ item.name }}</span>
+            <span class="item-name lvl1">{{ item.name | translate }}</span>
           </a>
         }
         @if (item.type === 'dropDown') {
@@ -67,7 +67,7 @@
               @if (item.icon) {
                 <i [class]="'nav-icon ' + item.icon"></i>
               }
-              <span class="item-name">{{ item.name }}</span>
+              <span class="item-name">{{ item.name | translate }}</span>
               <i class="dd-arrow i-Arrow-Down"></i>
             </a>
             <ng-container *ngTemplateOutlet="menuTemplate; context: { parentItem: item }"></ng-container>

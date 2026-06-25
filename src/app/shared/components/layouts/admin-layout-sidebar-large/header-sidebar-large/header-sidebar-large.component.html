@@ -19,15 +19,16 @@
   <div class="header-part-right d-flex align-items-center gap-3 pe-3">
     <app-notification-bell></app-notification-bell>
 
-    <!-- Sélecteur de langue -->
-    <div class="dropdown lang-dropdown">
-      <button class="lang-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="{{ 'LANG.SELECT' | translate }}">
+    <!-- Sélecteur de langue (Angular pur, sans Bootstrap JS) -->
+    <div class="lang-dropdown" style="position:relative">
+      <button class="lang-btn" type="button" (click)="toggleLangMenu($event)" title="{{ 'LANG.SELECT' | translate }}">
         <span class="lang-flag">{{ langService.getCurrentLanguage().flag }}</span>
         <span class="lang-code d-none d-md-inline">{{ langService.getCurrentCode().toUpperCase() }}</span>
+        <i class="i-Arrow-Down-2" style="font-size:0.65rem;opacity:0.7"></i>
       </button>
-      <ul class="dropdown-menu dropdown-menu-end lang-menu">
+      <ul *ngIf="showLangMenu" class="lang-menu" (click)="$event.stopPropagation()">
         <li *ngFor="let lang of langService.languages">
-          <button class="dropdown-item lang-item"
+          <button class="lang-item"
                   [class.active]="lang.code === langService.getCurrentCode()"
                   (click)="setLang(lang.code)">
             <span class="lang-item-flag">{{ lang.flag }}</span>
@@ -74,11 +75,18 @@
   .lang-flag { font-size: 1.1rem; line-height: 1; }
   .lang-code { font-weight: 600; font-size: 0.78rem; letter-spacing: 0.5px; }
   .lang-menu {
-    min-width: 160px;
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    z-index: 9999;
+    min-width: 170px;
+    background: #fff;
     border-radius: 10px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.18);
     border: 1px solid #e2e8f0;
     padding: 4px;
+    list-style: none;
+    margin: 0;
   }
   .lang-item {
     display: flex;

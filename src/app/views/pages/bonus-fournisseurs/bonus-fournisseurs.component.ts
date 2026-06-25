@@ -10,11 +10,12 @@ import {
   TypeBonus
 } from '../../../shared/services/bonus-fournisseur.service';
 import { ProductService } from '../../../shared/services/product.service';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-bonus-fournisseurs',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslateModule],
   templateUrl: './bonus-fournisseurs.component.html',
   styleUrls: ['./bonus-fournisseurs.component.scss']
 })

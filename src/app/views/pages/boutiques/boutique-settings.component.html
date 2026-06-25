@@ -4,14 +4,14 @@
     <div class="app-page-header-left">
       <div class="app-page-icon"><i class="fa fa-store"></i></div>
       <div>
-        <h1 class="app-page-title">Paramètres de la Boutique</h1>
-        <p class="app-page-subtitle">Informations, logo et configuration</p>
+        <h1 class="app-page-title">{{ 'BOUTIQUE_SETTINGS.TITLE' | translate }}</h1>
+        <p class="app-page-subtitle">{{ 'BOUTIQUE_SETTINGS.SUBTITLE' | translate }}</p>
       </div>
     </div>
   </div>
   <div class="card mx-auto" style="max-width: 800px;">
     <div class="card-body">
-      <h5 class="card-title mb-4">Paramètres de la boutique</h5>
+      <h5 class="card-title mb-4">{{ 'BOUTIQUE_SETTINGS.TITLE' | translate }}</h5>
 
       <div *ngIf="isLoading" class="alert alert-info">
         Chargement des informations de la boutique ID 1...
@@ -28,32 +28,32 @@
       <form (ngSubmit)="save()">
         <!-- Informations de base de la boutique -->
         <div class="section mb-4">
-          <h6 class="section-title">Informations générales</h6>
+          <h6 class="section-title">{{ 'BOUTIQUE_SETTINGS.SUBTITLE' | translate }}</h6>
 
           <div class="row">
             <div class="col-md-6 mb-3">
-              <label class="form-label">Nom</label>
+              <label class="form-label">{{ 'BOUTIQUE_SETTINGS.NAME' | translate }}</label>
               <input class="form-control" [(ngModel)]="model.nom" name="nom" required>
             </div>
             <div class="col-md-6 mb-3">
-              <label class="form-label">Téléphone</label>
+              <label class="form-label">{{ 'BOUTIQUE_SETTINGS.PHONE' | translate }}</label>
               <input class="form-control" [(ngModel)]="model.telephone" name="telephone">
             </div>
           </div>
 
           <div class="row">
             <div class="col-md-6 mb-3">
-              <label class="form-label">Email</label>
+              <label class="form-label">{{ 'CLIENTS.EMAIL' | translate }}</label>
               <input class="form-control" [(ngModel)]="model.email" name="email" type="email">
             </div>
             <div class="col-md-6 mb-3">
-              <label class="form-label">Adresse</label>
+              <label class="form-label">{{ 'BOUTIQUE_SETTINGS.ADDRESS' | translate }}</label>
               <input class="form-control" [(ngModel)]="model.adresse" name="adresse">
             </div>
           </div>
 
           <div class="mb-3">
-            <label class="form-label fw-semibold">Logo de la boutique</label>
+            <label class="form-label fw-semibold">{{ 'BOUTIQUE_SETTINGS.LOGO' | translate }}</label>
             <div class="d-flex align-items-center gap-3 flex-wrap">
               <div *ngIf="previewLogo" class="border rounded p-1" style="background:#f8f9fa;">
                 <img [src]="previewLogo" alt="logo" style="height:70px; max-width:160px; object-fit:contain;">
@@ -117,6 +117,28 @@
             </div>
           </div>
 
+          <!-- Conditionnement multi-niveaux -->
+          <div class="mb-4">
+            <div class="d-flex align-items-center justify-content-between">
+              <div>
+                <h6 class="mb-1"><i class="i-Box3 me-1"></i> Conditionnement multi-niveaux</h6>
+                <small class="text-muted">
+                  Vendre par niveau (Carton → Cartouche → Pièce) avec stock cascade automatique.
+                  <br>Quand un niveau est épuisé, une unité du niveau supérieur est décomposée automatiquement.
+                </small>
+              </div>
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox"
+                       id="conditionnementToggle" [(ngModel)]="conditionnementActif"
+                       name="conditionnement" (change)="toggleConditionnement()">
+                <label class="form-check-label" for="conditionnementToggle">
+                  <span *ngIf="conditionnementActif" class="badge bg-success">Activé</span>
+                  <span *ngIf="!conditionnementActif" class="badge bg-secondary">Désactivé</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
           <!-- Couleur globale -->
           <div class="mb-3">
             <h6 class="mb-3">Couleur principale</h6>
@@ -145,13 +167,13 @@
         <!-- Boutons d'action -->
         <div class="d-flex gap-2 justify-content-end">
           <button class="btn btn-primary" type="submit" [disabled]="isSaving || isLoading">
-            <i class="fas fa-save me-2"></i>{{ isSaving ? 'Enregistrement...' : 'Enregistrer' }}
+            <i class="fas fa-save me-2"></i>{{ isSaving ? ('COMMON.LOADING' | translate) : ('COMMON.SAVE' | translate) }}
           </button>
           <button class="btn btn-warning" type="button" (click)="resetDefaults()" [disabled]="isSaving || isLoading">
-            <i class="fas fa-undo me-2"></i>Réinitialiser
+            <i class="fas fa-undo me-2"></i>{{ 'EXPENSES.RESET' | translate }}
           </button>
           <button class="btn btn-light" type="button" (click)="cancel()" [disabled]="isSaving">
-            <i class="fas fa-times me-2"></i>Annuler
+            <i class="fas fa-times me-2"></i>{{ 'COMMON.CANCEL' | translate }}
           </button>
         </div>
       </form>

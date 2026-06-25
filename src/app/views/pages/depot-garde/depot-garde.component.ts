@@ -13,11 +13,12 @@ import {
   RetraitGlobalRequest
 } from '../../../shared/services/depot-garde.service';
 import Swal from 'sweetalert2';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-depot-garde',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslateModule],
   templateUrl: './depot-garde.component.html',
   styleUrls: ['./depot-garde.component.scss']
 })

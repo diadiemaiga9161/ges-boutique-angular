@@ -107,22 +107,31 @@
             <div class="input-border"></div>
           </div>
 
-          <!-- Téléphone -->
+          <!-- Téléphone avec indicatif pays -->
           <div class="col-md-6 mb-3">
             <label class="form-label">
               <i class="fas fa-phone-alt"></i>
               Téléphone <span class="required">*</span>
             </label>
-            <input type="tel"
-                   class="form-control"
-                   name="telephone"
-                   [(ngModel)]="updateData.telephone"
-                   pattern="[0-9]{10}"
-                   required
-                   placeholder="0123456789"
-                   autocomplete="tel" />
+            <div class="input-group">
+              <select class="form-select country-code-select"
+                      name="countryCode"
+                      [(ngModel)]="selectedCountryCode"
+                      style="max-width:115px; flex-shrink:0">
+                <option *ngFor="let c of countryCodes" [value]="c.code">
+                  {{ c.flag }} {{ c.code }}
+                </option>
+              </select>
+              <input type="tel"
+                     class="form-control"
+                     name="telephone"
+                     [(ngModel)]="updateData.telephone"
+                     required
+                     placeholder="123456789"
+                     autocomplete="tel" />
+            </div>
             <div class="input-border"></div>
-            <small class="form-text">10 chiffres requis</small>
+            <small class="form-text">Numéro complet : {{ getFullPhone() }}</small>
           </div>
 
           <!-- Mot de passe -->

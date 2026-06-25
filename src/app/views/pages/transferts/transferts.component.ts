@@ -6,13 +6,14 @@ import {
   TransfertService, TransfertStock, BoutiquePartenaire, TransfertRequest
 } from '../../../shared/services/transfert.service';
 import { ProductService } from '../../../shared/services/product.service';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-transferts',
   templateUrl: './transferts.component.html',
   styleUrls: ['./transferts.component.scss'],
   standalone: true,
-  imports: [CommonModule, FormsModule]
+  imports: [CommonModule, FormsModule, TranslateModule]
 })
 export class TransfertsComponent implements OnInit {
 

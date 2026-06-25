@@ -4,11 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
 import { BoutiqueService, BoutiqueInfo } from '../../../shared/services/boutique.service';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-boutique-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslateModule],
   templateUrl: './boutique-settings.component.html',
   styleUrls: ['./boutique-settings.component.scss']
 })
@@ -36,6 +37,9 @@ export class BoutiqueSettingsComponent implements OnInit {
   // Nouvelles propriétés pour la personnalisation globale
   isDarkMode: boolean = false;
   selectedGlobalColor: string = '#2a63ff'; // Couleur par défaut
+
+  // Fonctionnalités optionnelles
+  conditionnementActif: boolean = false;
 
   // Palette de couleurs disponibles
   colorPalette = [
@@ -86,22 +90,21 @@ export class BoutiqueSettingsComponent implements OnInit {
   }
 
   private loadPreferences() {
-    // Charger depuis localStorage
     const savedDarkMode = localStorage.getItem('darkMode');
     const savedGlobalColor = localStorage.getItem('globalColor');
-
-    if (savedDarkMode) {
-      this.isDarkMode = savedDarkMode === 'true';
-    }
-
-    if (savedGlobalColor) {
-      this.selectedGlobalColor = savedGlobalColor;
-    }
+    if (savedDarkMode) this.isDarkMode = savedDarkMode === 'true';
+    if (savedGlobalColor) this.selectedGlobalColor = savedGlobalColor;
+    this.conditionnementActif = localStorage.getItem('feat_conditionnement') === 'true';
   }
 
   private savePreferences() {
     localStorage.setItem('darkMode', this.isDarkMode.toString());
     localStorage.setItem('globalColor', this.selectedGlobalColor);
+  }
+
+  toggleConditionnement(): void {
+    this.conditionnementActif = !this.conditionnementActif;
+    localStorage.setItem('feat_conditionnement', String(this.conditionnementActif));
   }
 
   toggleDarkMode() {

@@ -4,8 +4,8 @@
     <div class="app-page-header-left">
       <div class="app-page-icon"><i class="fa fa-file-text"></i></div>
       <div>
-        <h1 class="app-page-title">Gestion des Factures</h1>
-        <p class="app-page-subtitle">Créer, consulter et gérer les factures</p>
+        <h1 class="app-page-title">{{ 'NAV.INVOICES' | translate }}</h1>
+        <p class="app-page-subtitle">{{ 'INVOICES.SUBTITLE' | translate }}</p>
       </div>
     </div>
   </div>
@@ -107,7 +107,7 @@
     <i class="fa fa-check-circle"></i> {{ successMessage }}
   </div>
   <div *ngIf="isLoading" class="loading">
-    <i class="fa fa-spinner fa-spin"></i> Chargement des factures...
+    <i class="fa fa-spinner fa-spin"></i> {{ 'COMMON.LOADING' | translate }}
   </div>
 
   <!-- Cartes factures -->
@@ -127,7 +127,7 @@
         <span class="fc-date"><i class="fa fa-calendar-o"></i> {{ formatDateShort(facture.dateCreation) }}</span>
       </div>
       <div class="fc-card-actions">
-        <button class="fc-btn fc-btn--pdf" (click)="telechargerPdfServeur(facture); $event.stopPropagation()" title="Télécharger PDF">
+        <button class="fc-btn fc-btn--pdf" (click)="exporterPdf(facture); $event.stopPropagation()" title="Télécharger PDF (modèle actif)">
           <i class="fa fa-download"></i> PDF
         </button>
         <button class="fc-btn fc-btn--view" (click)="ouvrirPdfServeur(facture); $event.stopPropagation()" title="Voir PDF">
@@ -165,10 +165,10 @@
   
   <div *ngIf="!isLoading && factures.length === 0" class="empty-state">
     <i class="fa fa-receipt fa-4x mb-3"></i>
-    <h4>Aucune facture trouvée</h4>
-    <p>Commencez par créer votre première facture</p>
+    <h4>{{ 'INVOICES.EMPTY' | translate }}</h4>
+    <p>{{ 'INVOICES.SUBTITLE' | translate }}</p>
     <button (click)="openCreateModal()" class="btn-primary mt-3">
-      <i class="fa fa-plus"></i> Créer une facture
+      <i class="fa fa-plus"></i> {{ 'COMMON.ADD' | translate }}
     </button>
   </div>
 
@@ -324,7 +324,7 @@
       <!-- Boutons d'action -->
       <div class="modal-actions">
         <button class="btn-primary" (click)="imprimerFacture(selectedFacture)"><i class="fa fa-print"></i> Imprimer</button>
-        <button class="btn-success" (click)="telechargerPdfServeur(selectedFacture)"><i class="fa fa-download"></i> Télécharger PDF</button>
+        <button class="btn-success" (click)="exporterPdf(selectedFacture)"><i class="fa fa-download"></i> Télécharger PDF</button>
         <button class="btn-primary" (click)="ouvrirPdfServeur(selectedFacture)"><i class="fa fa-eye"></i> Voir PDF</button>
         <button class="btn-warning" *ngIf="selectedFacture.statut === 'BROUILLON' && isAdmin" (click)="openEditModal(selectedFacture); closeAllModals()">
           <i class="fa fa-edit"></i> Modifier

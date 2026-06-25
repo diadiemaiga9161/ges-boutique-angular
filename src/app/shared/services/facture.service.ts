@@ -4,6 +4,7 @@ import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { AuthService } from './auth.service';
 import { BoutiqueService, BoutiqueInfo } from './boutique.service';
+import { FactureDesignService, DesignFacture } from './facture-design.service';
 import { environment } from '../../../environments/environment';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -109,7 +110,8 @@ export class FactureService {
   constructor(
     private http: HttpClient,
     private authService: AuthService,
-    private boutiqueService: BoutiqueService
+    private boutiqueService: BoutiqueService,
+    private designService: FactureDesignService
   ) { }
 
   private getAuthHeaders(): HttpHeaders {
@@ -263,93 +265,135 @@ export class FactureService {
 
   exportFactureToPDF(facture: Facture): void {
     if (!facture) throw new Error('Aucune facture à exporter');
+    const design = this.designService.getDesign();
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
     const boutique = this.boutiqueService.getInfo();
-    const entreprise = {
+    const E = {
       nom: boutique.nom || this.BOUTIQUE_NOM,
       adresse: boutique.adresse || this.BOUTIQUE_ADRESSE,
       telephone: boutique.telephone || this.BOUTIQUE_TELEPHONE,
       email: boutique.email || this.BOUTIQUE_EMAIL
     };
+    const W = doc.internal.pageSize.getWidth();
+    const H = doc.internal.pageSize.getHeight();
+    const logo = this.LOGO_BASE64;
 
-    // Ajout du logo en haut à gauche
-    const logoImg = this.LOGO_BASE64;
-    doc.addImage(logoImg, 'PNG', 15, 10, 30, 30);
+    if (design === 1) {
+      // ── Design 1 : Classique bleu ──
+      doc.setFillColor(30, 64, 175);
+      doc.rect(0, 0, W, 40, 'F');
+      try { doc.addImage(logo, 'PNG', 10, 5, 25, 25); } catch {}
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(16); doc.setFont(undefined, 'bold');
+      doc.text(E.nom, W / 2, 15, { align: 'center' });
+      doc.setFontSize(8); doc.setFont(undefined, 'normal');
+      doc.text(`${E.adresse} | ${E.telephone} | ${E.email}`, W / 2, 23, { align: 'center' });
+      doc.setFontSize(14); doc.setFont(undefined, 'bold');
+      doc.text('FACTURE', W / 2, 33, { align: 'center' });
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(10); doc.setFont(undefined, 'bold');
+      doc.text(`N° ${facture.numeroFacture}`, 15, 50);
+      doc.setFont(undefined, 'normal'); doc.setFontSize(8); doc.setTextColor(100);
+      doc.text(`Date : ${this.formatDateForExport(facture.dateCreation)}`, W - 15, 50, { align: 'right' });
+      doc.text(`Statut : ${this.getStatutText(facture.statut)}`, W - 15, 56, { align: 'right' });
+      doc.setDrawColor(30, 64, 175); doc.setLineWidth(0.5); doc.line(15, 58, W - 15, 58);
+      doc.setTextColor(0); doc.setFontSize(9);
+      doc.text(`Client : ${facture.clientNom || 'Client divers'} ${facture.clientPrenom || ''}`, 15, 65);
+      if (facture.clientTelephone) doc.text(`Tél : ${facture.clientTelephone}`, 15, 71);
+      if (facture.utilisateurNom) doc.text(`Vendeur : ${facture.utilisateurNom}`, W - 15, 65, { align: 'right' });
+      const tableData = facture.lignes.map(l => [l.designation || 'Produit', l.quantite.toString(), this.formatPlainNumber(l.prixUnitaire) + ' F', l.remisePourcentage ? l.remisePourcentage + '%' : (l.remiseMontant ? this.formatPlainNumber(l.remiseMontant) + ' F' : '-'), this.formatPlainNumber(l.sousTotal || l.quantite * l.prixUnitaire) + ' F']);
+      autoTable(doc, { startY: 77, head: [['Désignation', 'Qté', 'Prix U.', 'Remise', 'Total']], body: tableData, theme: 'striped', styles: { fontSize: 8, cellPadding: 2 }, headStyles: { fillColor: [30, 64, 175], textColor: 255, fontStyle: 'bold' }, columnStyles: { 1: { halign: 'center' }, 2: { halign: 'right' }, 3: { halign: 'right' }, 4: { halign: 'right' } } });
+      let fy = (doc as any).lastAutoTable.finalY + 6;
+      doc.setFontSize(9); doc.setTextColor(0);
+      if (facture.montantRemiseTotal > 0) doc.text(`Remise : -${this.formatPlainNumber(facture.montantRemiseTotal)} F`, W - 15, fy, { align: 'right' });
+      if (facture.remiseGlobale > 0) { fy += 6; doc.text(`Remise globale : ${this.formatPlainNumber(facture.remiseGlobale)}${facture.typeRemiseGlobale === FactureRemiseType.POURCENTAGE ? '%' : ' F'}`, W - 15, fy, { align: 'right' }); }
+      fy += 8;
+      doc.setFillColor(30, 64, 175); doc.rect(W - 65, fy - 5, 50, 10, 'F');
+      doc.setTextColor(255); doc.setFontSize(11); doc.setFont(undefined, 'bold');
+      doc.text(`${this.formatPlainNumber(facture.montantTotal)} FCFA`, W - 15, fy + 2, { align: 'right' });
+      doc.setTextColor(255); doc.setFontSize(7); doc.setFont(undefined, 'normal');
+      doc.text('TOTAL', W - 63, fy + 2);
 
-    doc.setFontSize(18);
-    doc.setTextColor(40, 40, 40);
-    doc.text(entreprise.nom, doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
-    doc.setFontSize(9);
-    doc.setTextColor(100, 100, 100);
-    doc.text(entreprise.adresse, doc.internal.pageSize.getWidth() / 2, 27, { align: 'center' });
-    doc.text(`Tel: ${entreprise.telephone}`, doc.internal.pageSize.getWidth() / 2, 34, { align: 'center' });
-    doc.text(`Email: ${entreprise.email}`, doc.internal.pageSize.getWidth() / 2, 41, { align: 'center' });
-    doc.setFontSize(16);
-    doc.setTextColor(0, 0, 0);
-    doc.text('FACTURE', doc.internal.pageSize.getWidth() / 2, 53, { align: 'center' });
-    doc.setFontSize(12);
-    doc.text(`N° ${facture.numeroFacture}`, doc.internal.pageSize.getWidth() / 2, 61, { align: 'center' });
-    doc.setFontSize(8);
-    doc.setTextColor(120, 120, 120);
-    doc.text(`Généré le ${this.formatDateTimeForExport(new Date().toISOString())}`, doc.internal.pageSize.getWidth() - 20, 53, { align: 'right' });
+    } else if (design === 2) {
+      // ── Design 2 : Moderne sombre + doré ──
+      doc.setFillColor(15, 23, 42);
+      doc.rect(0, 0, W, H, 'F');
+      doc.setFillColor(245, 158, 11);
+      doc.rect(0, 0, W, 6, 'F');
+      try { doc.addImage(logo, 'PNG', 10, 12, 22, 22); } catch {}
+      doc.setTextColor(245, 158, 11);
+      doc.setFontSize(16); doc.setFont(undefined, 'bold');
+      doc.text(E.nom, W / 2, 18, { align: 'center' });
+      doc.setTextColor(148, 163, 184); doc.setFontSize(7); doc.setFont(undefined, 'normal');
+      doc.text(`${E.adresse} | ${E.telephone} | ${E.email}`, W / 2, 25, { align: 'center' });
+      doc.setTextColor(255); doc.setFontSize(13); doc.setFont(undefined, 'bold');
+      doc.text('FACTURE', W / 2, 34, { align: 'center' });
+      doc.setFillColor(245, 158, 11); doc.rect(15, 38, W - 30, 0.5, 'F');
+      doc.setTextColor(245, 158, 11); doc.setFontSize(10); doc.setFont(undefined, 'bold');
+      doc.text(`N° ${facture.numeroFacture}`, 15, 46);
+      doc.setFont(undefined, 'normal'); doc.setFontSize(8); doc.setTextColor(148, 163, 184);
+      doc.text(`Date : ${this.formatDateForExport(facture.dateCreation)} | Statut : ${this.getStatutText(facture.statut)}`, W - 15, 46, { align: 'right' });
+      doc.setTextColor(255); doc.setFontSize(9);
+      doc.text(`Client : ${facture.clientNom || 'Client divers'} ${facture.clientPrenom || ''}`, 15, 56);
+      if (facture.clientTelephone) doc.text(`Tél : ${facture.clientTelephone}`, 15, 62);
+      if (facture.utilisateurNom) doc.text(`Vendeur : ${facture.utilisateurNom}`, W - 15, 56, { align: 'right' });
+      const tableData2 = facture.lignes.map(l => [l.designation || 'Produit', l.quantite.toString(), this.formatPlainNumber(l.prixUnitaire) + ' F', l.remisePourcentage ? l.remisePourcentage + '%' : (l.remiseMontant ? this.formatPlainNumber(l.remiseMontant) + ' F' : '-'), this.formatPlainNumber(l.sousTotal || l.quantite * l.prixUnitaire) + ' F']);
+      autoTable(doc, { startY: 68, head: [['Désignation', 'Qté', 'Prix U.', 'Remise', 'Total']], body: tableData2, theme: 'plain', styles: { fontSize: 8, cellPadding: 2.5, textColor: [255, 255, 255] }, headStyles: { fillColor: [30, 41, 59], textColor: [245, 158, 11], fontStyle: 'bold' }, alternateRowStyles: { fillColor: [30, 41, 59] }, bodyStyles: { fillColor: [15, 23, 42] }, columnStyles: { 1: { halign: 'center' }, 2: { halign: 'right' }, 3: { halign: 'right' }, 4: { halign: 'right' } } });
+      let fy2 = (doc as any).lastAutoTable.finalY + 6;
+      doc.setTextColor(148, 163, 184); doc.setFontSize(9);
+      if (facture.montantRemiseTotal > 0) doc.text(`Remise : -${this.formatPlainNumber(facture.montantRemiseTotal)} F`, W - 15, fy2, { align: 'right' });
+      fy2 += 8;
+      doc.setFillColor(245, 158, 11); doc.rect(W - 70, fy2 - 6, 55, 12, 'F');
+      doc.setTextColor(15, 23, 42); doc.setFontSize(11); doc.setFont(undefined, 'bold');
+      doc.text(`${this.formatPlainNumber(facture.montantTotal)} FCFA`, W - 17, fy2 + 2, { align: 'right' });
+      doc.setTextColor(148, 163, 184); doc.setFontSize(7); doc.setFont(undefined, 'normal');
+      doc.text('TOTAL', W - 68, fy2 + 2);
+      doc.setFillColor(245, 158, 11); doc.rect(0, H - 4, W, 4, 'F');
 
-    let y = 75;
-    doc.setFontSize(9);
-    doc.setTextColor(0, 0, 0);
-    doc.text(`Client : ${facture.clientNom || 'Client divers'} ${facture.clientPrenom || ''}`, 20, y);
-    if (facture.clientTelephone) doc.text(`Tél : ${facture.clientTelephone}`, 20, y + 5);
-    if (facture.clientAdresse) doc.text(`Adresse : ${facture.clientAdresse}`, 20, y + 10);
-    if (facture.utilisateurNom) doc.text(`Vendeur : ${facture.utilisateurNom}`, 140, y);
-    doc.text(`Date : ${this.formatDateForExport(facture.dateCreation)}`, 140, y + 5);
-    doc.text(`Statut : ${this.getStatutText(facture.statut)}`, 140, y + 10);
-
-    const tableData = facture.lignes.map(l => [
-      l.designation || 'Produit',
-      l.quantite.toString(),
-      this.formatPlainNumber(l.prixUnitaire),
-      l.remisePourcentage ? `${l.remisePourcentage}%` : (l.remiseMontant ? this.formatPlainNumber(l.remiseMontant) : '-'),
-      this.formatPlainNumber(l.sousTotal || l.quantite * l.prixUnitaire)
-    ]);
-
-    autoTable(doc, {
-      startY: y + 20,
-      head: [['Désignation', 'Qté', 'Prix U.', 'Remise', 'Total']],
-      body: tableData,
-      theme: 'striped',
-      styles: { fontSize: 8, cellPadding: 2 },
-      headStyles: { fillColor: [52, 73, 94], textColor: 255, fontSize: 8, fontStyle: 'bold' },
-      columnStyles: { 0: { cellWidth: 80 }, 1: { cellWidth: 20, halign: 'center' }, 2: { cellWidth: 30, halign: 'right' }, 3: { cellWidth: 30, halign: 'right' }, 4: { cellWidth: 35, halign: 'right' } }
-    });
-
-    let finalY = (doc as any).lastAutoTable.finalY || 120;
-    doc.setFontSize(9);
-    doc.setTextColor(0, 0, 0);
-    doc.text(`Sous-total : ${this.formatPlainNumber(facture.montantTotal + facture.montantRemiseTotal)}`, 150, finalY + 5, { align: 'right' });
-    if (facture.montantRemiseTotal > 0) doc.text(`Remise : -${this.formatPlainNumber(facture.montantRemiseTotal)}`, 150, finalY + 12, { align: 'right' });
-    if (facture.remiseGlobale > 0) {
-      const remiseType = facture.typeRemiseGlobale === FactureRemiseType.POURCENTAGE ? '%' : ' FCFA';
-      doc.text(`Remise globale : ${this.formatPlainNumber(facture.remiseGlobale)}${remiseType}`, 150, finalY + 19, { align: 'right' });
+    } else {
+      // ── Design 3 : Minimaliste noir & blanc ──
+      try { doc.addImage(logo, 'PNG', 10, 8, 20, 20); } catch {}
+      doc.setTextColor(24, 24, 27); doc.setFontSize(16); doc.setFont(undefined, 'bold');
+      doc.text(E.nom, W / 2, 15, { align: 'center' });
+      doc.setFontSize(7); doc.setFont(undefined, 'normal'); doc.setTextColor(100);
+      doc.text(`${E.adresse}  |  ${E.telephone}  |  ${E.email}`, W / 2, 21, { align: 'center' });
+      doc.setDrawColor(24, 24, 27); doc.setLineWidth(1); doc.line(15, 26, W - 15, 26);
+      doc.setLineWidth(0.2); doc.line(15, 27.5, W - 15, 27.5);
+      doc.setTextColor(24, 24, 27); doc.setFontSize(14); doc.setFont(undefined, 'bold');
+      doc.text('FACTURE', 15, 37);
+      doc.setFontSize(9); doc.setFont(undefined, 'normal'); doc.setTextColor(80);
+      doc.text(`N° ${facture.numeroFacture}`, 15, 44);
+      doc.text(`Date : ${this.formatDateForExport(facture.dateCreation)}`, W - 15, 37, { align: 'right' });
+      doc.text(`Statut : ${this.getStatutText(facture.statut)}`, W - 15, 44, { align: 'right' });
+      doc.setDrawColor(200); doc.setLineWidth(0.3); doc.line(15, 48, W - 15, 48);
+      doc.setTextColor(24, 24, 27); doc.setFontSize(9);
+      doc.text(`Client : ${facture.clientNom || 'Client divers'} ${facture.clientPrenom || ''}`, 15, 55);
+      if (facture.clientTelephone) doc.text(`Tél : ${facture.clientTelephone}`, 15, 61);
+      if (facture.utilisateurNom) doc.text(`Vendeur : ${facture.utilisateurNom}`, W - 15, 55, { align: 'right' });
+      const tableData3 = facture.lignes.map(l => [l.designation || 'Produit', l.quantite.toString(), this.formatPlainNumber(l.prixUnitaire) + ' F', l.remisePourcentage ? l.remisePourcentage + '%' : (l.remiseMontant ? this.formatPlainNumber(l.remiseMontant) + ' F' : '-'), this.formatPlainNumber(l.sousTotal || l.quantite * l.prixUnitaire) + ' F']);
+      autoTable(doc, { startY: 66, head: [['Désignation', 'Qté', 'Prix U.', 'Remise', 'Total']], body: tableData3, theme: 'grid', styles: { fontSize: 8, cellPadding: 2, textColor: [24, 24, 27] }, headStyles: { fillColor: [24, 24, 27], textColor: [255, 255, 255], fontStyle: 'bold' }, alternateRowStyles: { fillColor: [248, 248, 248] }, columnStyles: { 1: { halign: 'center' }, 2: { halign: 'right' }, 3: { halign: 'right' }, 4: { halign: 'right' } } });
+      let fy3 = (doc as any).lastAutoTable.finalY + 6;
+      doc.setFontSize(9); doc.setTextColor(80);
+      if (facture.montantRemiseTotal > 0) doc.text(`Remise : -${this.formatPlainNumber(facture.montantRemiseTotal)} F`, W - 15, fy3, { align: 'right' });
+      fy3 += 6;
+      doc.setDrawColor(24, 24, 27); doc.setLineWidth(0.8); doc.line(W - 70, fy3, W - 15, fy3);
+      doc.setTextColor(24, 24, 27); doc.setFontSize(12); doc.setFont(undefined, 'bold');
+      doc.text(`${this.formatPlainNumber(facture.montantTotal)} FCFA`, W - 15, fy3 + 8, { align: 'right' });
+      doc.setFontSize(7); doc.setFont(undefined, 'normal'); doc.setTextColor(100);
+      doc.text('TOTAL À PAYER', W - 68, fy3 + 8);
+      doc.setDrawColor(24, 24, 27); doc.setLineWidth(1); doc.line(15, H - 18, W - 15, H - 18);
+      doc.setLineWidth(0.2); doc.line(15, H - 16.5, W - 15, H - 16.5);
     }
-    doc.setFontSize(12);
-    doc.setFont(undefined, 'bold');
-    doc.setTextColor(39, 174, 96);
-    doc.text(`TOTAL À PAYER : ${this.formatPlainNumber(facture.montantTotal)}`, 150, finalY + 30, { align: 'right' });
-    doc.setFont(undefined, 'normal');
-    doc.setTextColor(0, 0, 0);
-    if (facture.notes) {
-      doc.setFontSize(8);
-      doc.setTextColor(100, 100, 100);
-      const splitNotes = doc.splitTextToSize(`Notes : ${facture.notes}`, 170);
-      doc.text(splitNotes, 20, finalY + 45);
+
+    // Notes + pied de page communs
+    const lastY = (doc as any).lastAutoTable?.finalY || 150;
+    if (facture.notes && lastY + 20 < H - 25) {
+      doc.setFontSize(8); doc.setTextColor(100); doc.setFont(undefined, 'normal');
+      doc.text(`Notes : ${facture.notes}`, 15, lastY + 18);
     }
-    const pageCount = doc.getNumberOfPages();
-    for (let i = 1; i <= pageCount; i++) {
-      doc.setPage(i);
-      doc.setFontSize(8);
-      doc.setTextColor(120, 120, 120);
-      doc.text(`Page ${i} / ${pageCount}`, doc.internal.pageSize.getWidth() - 20, doc.internal.pageSize.getHeight() - 10);
-      doc.text('Merci de votre confiance !', doc.internal.pageSize.getWidth() / 2, doc.internal.pageSize.getHeight() - 10, { align: 'center' });
-    }
+    doc.setFontSize(7); doc.setTextColor(150); doc.setFont(undefined, 'normal');
+    doc.text('Merci de votre confiance !', W / 2, H - 8, { align: 'center' });
+
     doc.save(`Facture_${facture.numeroFacture}_${this.formatDateForFileName(new Date().toISOString())}.pdf`);
   }
 

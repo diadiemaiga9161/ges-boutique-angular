@@ -83,7 +83,8 @@
     "REPORT": "Rapport",
     "PROMO": "Promotions",
     "NOTIFICATIONS": "Notifications",
-    "CREDIT_PAYMENT": "Règlement Crédits"
+    "CREDIT_PAYMENT": "Règlement Crédits",
+    "ORDERS": "Commandes"
   },
   "PROFILE": {
     "TITLE": "Mon Profil",

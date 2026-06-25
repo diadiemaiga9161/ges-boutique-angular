@@ -32,9 +32,17 @@ export class ConnexionComponent implements OnInit {
     this.boutiqueName = this.boutiqueService.getInfo().nom || 'Boutique';
   }
 
+  private resolveIdentifier(identifier: string): string {
+    const trimmed = identifier.trim();
+    if (/^[\d\s+\-().]{6,}$/.test(trimmed)) {
+      return trimmed.replace(/[\s\-().]/g, '');
+    }
+    return trimmed;
+  }
+
   login() {
     if (!this.username.trim()) {
-      this.showMessage('Veuillez saisir votre nom d\'utilisateur', true);
+      this.showMessage('Veuillez saisir votre identifiant (email, téléphone ou nom d\'utilisateur)', true);
       return;
     }
 
@@ -44,7 +52,7 @@ export class ConnexionComponent implements OnInit {
     }
 
     const credentials: LoginCredentials = {
-      username: this.username.trim(),
+      username: this.resolveIdentifier(this.username),
       password: this.password
     };
 

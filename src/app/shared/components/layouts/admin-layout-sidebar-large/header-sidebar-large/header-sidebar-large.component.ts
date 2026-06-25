@@ -1,4 +1,4 @@
-import { Component, HostListener, OnInit, OnDestroy } from '@angular/core';
+import { Component, ElementRef, HostListener, OnInit, OnDestroy } from '@angular/core';
 import { IMenuItem, NavigationService } from '../../../../services/navigation.service';
 import { SearchService } from '../../../../services/search.service';
 import { AuthService } from '../../../../services/auth.service';
@@ -36,13 +36,16 @@ selectedItem: IMenuItem;
   logoPath: string = 'assets/images/logo.png';
   userPhoto: string | null = null;
   private userSub?: Subscription;
+  showLangMenu = false;
+
     constructor(
       public searchService: SearchService,
       private router: Router,
       public navService: NavigationService,
       private authService: AuthService,
       private boutiqueService: BoutiqueService,
-      public langService: LanguageService
+      public langService: LanguageService,
+      private elRef: ElementRef
     ) {
       this.notifications = [
         {
@@ -230,6 +233,19 @@ selectedItem: IMenuItem;
 
   setLang(code: string): void {
     this.langService.setLanguage(code);
+    this.showLangMenu = false;
+  }
+
+  toggleLangMenu(event: Event): void {
+    event.stopPropagation();
+    this.showLangMenu = !this.showLangMenu;
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: Event): void {
+    if (!this.elRef.nativeElement.contains(event.target)) {
+      this.showLangMenu = false;
+    }
   }
 
 }

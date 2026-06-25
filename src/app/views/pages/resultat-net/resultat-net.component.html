@@ -2,8 +2,8 @@
   <div class="page-header">
     <div class="page-header-content d-flex align-items-center justify-content-between">
       <div>
-        <h4 class="page-title mb-1">Résultat Net</h4>
-        <p class="page-subtitle text-muted mb-0">Bénéfices + Bonus Fournisseurs − Dépenses</p>
+        <h4 class="page-title mb-1">{{ 'NET_RESULT.TITLE' | translate }}</h4>
+        <p class="page-subtitle text-muted mb-0">{{ 'NET_RESULT.SUBTITLE' | translate }}</p>
       </div>
     </div>
   </div>
@@ -17,15 +17,15 @@
           <button class="btn btn-sm"
             [class.btn-primary]="periodeActive === 'JOURNALIER'"
             [class.btn-outline-primary]="periodeActive !== 'JOURNALIER'"
-            (click)="selectionner('JOURNALIER')">Journalier</button>
+            (click)="selectionner('JOURNALIER')">{{ 'BENEFITS.DAILY' | translate }}</button>
           <button class="btn btn-sm"
             [class.btn-primary]="periodeActive === 'MENSUEL'"
             [class.btn-outline-primary]="periodeActive !== 'MENSUEL'"
-            (click)="selectionner('MENSUEL')">Mensuel</button>
+            (click)="selectionner('MENSUEL')">{{ 'BENEFITS.MONTHLY' | translate }}</button>
           <button class="btn btn-sm"
             [class.btn-primary]="periodeActive === 'ANNUEL'"
             [class.btn-outline-primary]="periodeActive !== 'ANNUEL'"
-            (click)="selectionner('ANNUEL')">Annuel</button>
+            (click)="selectionner('ANNUEL')">{{ 'REPORTS.REVENUE' | translate }} Annuel</button>
         </div>
 
         <!-- Filtres -->
@@ -34,7 +34,7 @@
             <div class="d-flex align-items-center gap-2">
               <label class="text-muted small mb-0">Date :</label>
               <input type="date" class="form-control form-control-sm" [(ngModel)]="dateJour" style="width:160px">
-              <button class="btn btn-sm btn-primary" (click)="charger()">Actualiser</button>
+              <button class="btn btn-sm btn-primary" (click)="charger()">{{ 'COMMON.REFRESH' | translate }}</button>
             </div>
           </ng-container>
           <ng-container *ngIf="periodeActive === 'MENSUEL'">
@@ -46,7 +46,7 @@
               <select class="form-control form-control-sm" [(ngModel)]="anneeSelect" style="width:90px">
                 <option *ngFor="let a of annees" [value]="a">{{ a }}</option>
               </select>
-              <button class="btn btn-sm btn-primary" (click)="charger()">Actualiser</button>
+              <button class="btn btn-sm btn-primary" (click)="charger()">{{ 'COMMON.REFRESH' | translate }}</button>
             </div>
           </ng-container>
           <ng-container *ngIf="periodeActive === 'ANNUEL'">
@@ -55,7 +55,7 @@
               <select class="form-control form-control-sm" [(ngModel)]="anneeSelect" style="width:90px">
                 <option *ngFor="let a of annees" [value]="a">{{ a }}</option>
               </select>
-              <button class="btn btn-sm btn-primary" (click)="charger()">Actualiser</button>
+              <button class="btn btn-sm btn-primary" (click)="charger()">{{ 'COMMON.REFRESH' | translate }}</button>
             </div>
           </ng-container>
         </div>
@@ -99,7 +99,7 @@
                   <i class="i-Money-2 text-success"></i>
                 </div>
                 <div>
-                  <p class="text-muted small mb-1">Bénéfices ventes</p>
+                  <p class="text-muted small mb-1">{{ 'BENEFITS.GROSS' | translate }}</p>
                   <h5 class="mb-0 text-success">{{ fmt(data.benefices) }}</h5>
                 </div>
               </div>
@@ -114,7 +114,7 @@
                   <i class="i-Gift-Box text-primary"></i>
                 </div>
                 <div>
-                  <p class="text-muted small mb-1">Bonus fournisseurs</p>
+                  <p class="text-muted small mb-1">{{ 'SUPPLIER_BONUS.TITLE' | translate }}</p>
                   <h5 class="mb-0 text-primary">+ {{ fmt(data.bonusFournisseurs) }}</h5>
                   <span class="badge bg-primary-soft text-primary small">{{ pctBonus }}% du revenu</span>
                 </div>
@@ -130,7 +130,7 @@
                   <i class="i-Billing text-danger"></i>
                 </div>
                 <div>
-                  <p class="text-muted small mb-1">Dépenses</p>
+                  <p class="text-muted small mb-1">{{ 'NET_RESULT.EXPENSES' | translate }}</p>
                   <h5 class="mb-0 text-danger">− {{ fmt(data.depenses) }}</h5>
                   <span class="badge bg-danger-soft text-danger small">{{ pctDepenses }}% du revenu</span>
                 </div>
@@ -143,29 +143,29 @@
       <!-- Formule visuelle -->
       <div class="card border-0 shadow-sm">
         <div class="card-header bg-transparent border-0 pt-3 pb-0">
-          <h6 class="card-title mb-0">Décomposition du résultat</h6>
+          <h6 class="card-title mb-0">{{ 'NET_RESULT.NET' | translate }}</h6>
         </div>
         <div class="card-body">
           <div class="formule-ligne">
             <div class="formule-item">
-              <span class="formule-label text-success">Bénéfices</span>
+              <span class="formule-label text-success">{{ 'BENEFITS.GROSS' | translate }}</span>
               <span class="formule-valeur text-success fw-bold">{{ fmt(data.benefices) }}</span>
             </div>
             <div class="formule-op text-muted">+</div>
             <div class="formule-item">
-              <span class="formule-label text-primary">Bonus</span>
+              <span class="formule-label text-primary">{{ 'SUPPLIER_BONUS.VALUE' | translate }}</span>
               <span class="formule-valeur text-primary fw-bold">{{ fmt(data.bonusFournisseurs) }}</span>
             </div>
             <div class="formule-op text-muted">−</div>
             <div class="formule-item">
-              <span class="formule-label text-danger">Dépenses</span>
+              <span class="formule-label text-danger">{{ 'NET_RESULT.EXPENSES' | translate }}</span>
               <span class="formule-valeur text-danger fw-bold">{{ fmt(data.depenses) }}</span>
             </div>
             <div class="formule-op text-muted">=</div>
             <div class="formule-item formule-total"
               [class.bg-success-soft]="data.etat === 'GAIN'"
               [class.bg-danger-soft]="data.etat === 'PERTE'">
-              <span class="formule-label" [class.text-success]="data.etat === 'GAIN'" [class.text-danger]="data.etat === 'PERTE'">Résultat Net</span>
+              <span class="formule-label" [class.text-success]="data.etat === 'GAIN'" [class.text-danger]="data.etat === 'PERTE'">{{ 'NET_RESULT.NET' | translate }}</span>
               <span class="formule-valeur fw-bold fs-5"
                 [class.text-success]="data.etat === 'GAIN'"
                 [class.text-danger]="data.etat === 'PERTE'">{{ fmt(data.resultatNet) }}</span>
@@ -176,7 +176,7 @@
           <div class="mt-3">
             <div class="mb-2">
               <div class="d-flex justify-content-between small mb-1">
-                <span class="text-success">Bénéfices</span>
+                <span class="text-success">{{ 'BENEFITS.GROSS' | translate }}</span>
                 <span class="text-success">{{ fmt(data.benefices) }}</span>
               </div>
               <div class="progress" style="height:8px">
@@ -187,7 +187,7 @@
             </div>
             <div class="mb-2">
               <div class="d-flex justify-content-between small mb-1">
-                <span class="text-primary">Bonus fournisseurs</span>
+                <span class="text-primary">{{ 'SUPPLIER_BONUS.TITLE' | translate }}</span>
                 <span class="text-primary">{{ fmt(data.bonusFournisseurs) }}</span>
               </div>
               <div class="progress" style="height:8px">
@@ -196,7 +196,7 @@
             </div>
             <div>
               <div class="d-flex justify-content-between small mb-1">
-                <span class="text-danger">Dépenses</span>
+                <span class="text-danger">{{ 'NET_RESULT.EXPENSES' | translate }}</span>
                 <span class="text-danger">{{ fmt(data.depenses) }}</span>
               </div>
               <div class="progress" style="height:8px">
@@ -212,7 +212,7 @@
     <!-- Etat vide -->
     <div *ngIf="!data && !isLoading && !erreur" class="text-center py-5 text-muted">
       <i class="i-Line-Chart" style="font-size:3rem;opacity:.3"></i>
-      <p class="mt-2">Sélectionnez une période pour voir le résultat net</p>
+      <p class="mt-2">{{ 'NET_RESULT.TITLE' | translate }}</p>
     </div>
 
   </div>

@@ -5,6 +5,7 @@ import { EmployeService, Employe } from '../../../shared/services/employe.servic
 import { PaiementEmployeService, PaiementEmploye, PaiementEmployeRequest, StatsPaiementEmploye } from '../../../shared/services/paiement-employe.service';
 import { AuthService } from '../../../shared/services/auth.service';
 import Swal from 'sweetalert2';
+import { TranslateModule } from '@ngx-translate/core';
 
 const MOIS_LABELS = [
   'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
@@ -14,7 +15,7 @@ const MOIS_LABELS = [
 @Component({
   selector: 'app-paiement-employe',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslateModule],
   templateUrl: './paiement-employe.component.html',
   styleUrls: ['./paiement-employe.component.scss']
 })

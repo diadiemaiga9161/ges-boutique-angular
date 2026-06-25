@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { AuthService } from '../../../shared/services/auth.service';
+import { TranslateModule } from '@ngx-translate/core';
 
 interface OperationMM {
   id: number;
@@ -29,7 +30,7 @@ interface ResumeMM {
 @Component({
   selector: 'app-mobile-money',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslateModule],
   templateUrl: './mobile-money.component.html',
   styleUrls: ['./mobile-money.component.scss']
 })

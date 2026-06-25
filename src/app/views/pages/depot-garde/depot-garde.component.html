@@ -5,13 +5,13 @@
     <div class="app-page-header-left">
       <div class="app-page-icon"><i class="fa fa-archive"></i></div>
       <div>
-        <h1 class="app-page-title">Dépôts Garde</h1>
-        <p class="app-page-subtitle">Argent confié pour garde — hors caisse</p>
+        <h1 class="app-page-title">{{ 'SAFE.TITLE' | translate }}</h1>
+        <p class="app-page-subtitle">{{ 'SAFE.SUBTITLE' | translate }}</p>
       </div>
     </div>
     <div class="app-page-header-actions">
       <button class="btn btn-primary" (click)="ouvrirFormCreation()">
-        <i class="fa fa-plus me-1"></i> Nouveau dépôt
+        <i class="fa fa-plus me-1"></i> {{ 'SAFE.NEW' | translate }}
       </button>
     </div>
   </div>
@@ -22,7 +22,7 @@
       <div class="app-stat-card">
         <div class="app-stat-icon blue"><i class="fa fa-archive"></i></div>
         <div class="app-stat-body">
-          <div class="app-stat-label">Total dépôts</div>
+          <div class="app-stat-label">{{ 'SAFE.TOTAL' | translate }}</div>
           <div class="app-stat-value">{{ stats.totalDepots }}</div>
         </div>
       </div>
@@ -31,7 +31,7 @@
       <div class="app-stat-card">
         <div class="app-stat-icon green"><i class="fa fa-check-circle"></i></div>
         <div class="app-stat-body">
-          <div class="app-stat-label">Actifs</div>
+          <div class="app-stat-label">{{ 'SAFE.ACTIVE' | translate }}</div>
           <div class="app-stat-value">{{ stats.totalActifs }}</div>
         </div>
       </div>
@@ -49,7 +49,7 @@
       <div class="app-stat-card">
         <div class="app-stat-icon purple"><i class="fa fa-times-circle"></i></div>
         <div class="app-stat-body">
-          <div class="app-stat-label">Clôturés</div>
+          <div class="app-stat-label">{{ 'SAFE.RETURNED' | translate }}</div>
           <div class="app-stat-value">{{ stats.totalClotures }}</div>
         </div>
       </div>
@@ -227,7 +227,7 @@
             </td>
           </tr>
           <tr *ngIf="depotsFiltres.length === 0">
-            <td colspan="10" class="text-center text-muted py-4">Aucun dépôt trouvé.</td>
+            <td colspan="10" class="text-center text-muted py-4">{{ 'SAFE.EMPTY' | translate }}</td>
           </tr>
         </tbody>
       </table>

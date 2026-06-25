@@ -4,7 +4,7 @@
     <div class="app-page-header-left">
       <div class="app-page-icon"><i class="fa fa-shopping-cart"></i></div>
       <div>
-        <h1 class="app-page-title">Gestion des Ventes</h1>
+        <h1 class="app-page-title">{{ 'SALES.TITLE' | translate }}</h1>
         <p class="app-page-subtitle">{{ filteredVentes.length }} vente(s) · CA: {{ formatPrice(chiffreAffaireTotal) }}</p>
       </div>
     </div>
@@ -118,9 +118,9 @@
       <div class="app-stat-card">
         <div class="app-stat-icon blue"><i class="fa fa-chart-line"></i></div>
         <div class="app-stat-body">
-          <div class="app-stat-label">CA Total</div>
+          <div class="app-stat-label">{{ 'NET_RESULT.REVENUE' | translate }}</div>
           <div class="app-stat-value">{{ formatPrice(chiffreAffaireTotal) }}</div>
-          <div class="app-stat-sub">Toutes ventes</div>
+          <div class="app-stat-sub">{{ 'SALES.ALL' | translate }}</div>
         </div>
       </div>
     </div>
@@ -128,7 +128,7 @@
       <div class="app-stat-card">
         <div class="app-stat-icon green"><i class="fa fa-trophy"></i></div>
         <div class="app-stat-body">
-          <div class="app-stat-label">Bénéfice Total</div>
+          <div class="app-stat-label">{{ 'BENEFITS.GROSS' | translate }}</div>
           <div class="app-stat-value">{{ formatPrice(beneficeTotal) }}</div>
           <div class="app-stat-sub">Marge: {{ margeMoyenne | number:'1.1-1' }}%</div>
         </div>
@@ -138,9 +138,9 @@
       <div class="app-stat-card">
         <div class="app-stat-icon teal"><i class="fa fa-calendar-day"></i></div>
         <div class="app-stat-body">
-          <div class="app-stat-label">CA Aujourd'hui</div>
+          <div class="app-stat-label">{{ 'NET_RESULT.REVENUE' | translate }} - {{ 'SALES.TODAY' | translate }}</div>
           <div class="app-stat-value">{{ formatPrice(chiffreAffaireJour) }}</div>
-          <div class="app-stat-sub">Ventes du jour</div>
+          <div class="app-stat-sub">{{ 'SALES.TODAY' | translate }}</div>
         </div>
       </div>
     </div>
@@ -148,7 +148,7 @@
       <div class="app-stat-card">
         <div class="app-stat-icon orange"><i class="fa fa-coins"></i></div>
         <div class="app-stat-body">
-          <div class="app-stat-label">Bénéfice Aujourd'hui</div>
+          <div class="app-stat-label">{{ 'BENEFITS.GROSS' | translate }} - {{ 'SALES.TODAY' | translate }}</div>
           <div class="app-stat-value">{{ formatPrice(beneficeJour) }}</div>
           <div class="app-stat-sub">Marge: {{ margeJour | number:'1.1-1' }}%</div>
         </div>
@@ -158,7 +158,7 @@
       <div class="app-stat-card">
         <div class="app-stat-icon purple"><i class="fa fa-shopping-cart"></i></div>
         <div class="app-stat-body">
-          <div class="app-stat-label">Total ventes</div>
+          <div class="app-stat-label">{{ 'SALES.TOTAL' | translate }}</div>
           <div class="app-stat-value">{{ filteredVentes.length }}</div>
         </div>
       </div>
@@ -167,7 +167,7 @@
       <div class="app-stat-card">
         <div class="app-stat-icon blue"><i class="fa fa-money"></i></div>
         <div class="app-stat-body">
-          <div class="app-stat-label">Montant total</div>
+          <div class="app-stat-label">{{ 'COMMON.AMOUNT' | translate }}</div>
           <div class="app-stat-value">{{ formatPrice(getMontantTotal()) }}</div>
         </div>
       </div>
@@ -176,7 +176,7 @@
       <div class="app-stat-card">
         <div class="app-stat-icon green"><i class="fa fa-money-bill"></i></div>
         <div class="app-stat-body">
-          <div class="app-stat-label">Ventes comptant</div>
+          <div class="app-stat-label">{{ 'SALES.CASH' | translate }}</div>
           <div class="app-stat-value">{{ formatPrice(getMontantComptant()) }}</div>
         </div>
       </div>
@@ -185,7 +185,7 @@
       <div class="app-stat-card">
         <div class="app-stat-icon orange"><i class="fa fa-credit-card"></i></div>
         <div class="app-stat-body">
-          <div class="app-stat-label">Crédits en cours</div>
+          <div class="app-stat-label">{{ 'SALES.CREDIT' | translate }}</div>
           <div class="app-stat-value">{{ formatPrice(getMontantDuTotal()) }}</div>
         </div>
       </div>
@@ -197,36 +197,36 @@
       <!-- Boutons de période rapide -->
       <div class="d-flex gap-2 flex-wrap mb-3">
         <button class="btn btn-sm btn-outline-primary" (click)="filterToday()">
-          <i class="fa fa-sun-o me-1"></i>Aujourd'hui
+          <i class="fa fa-sun-o me-1"></i>{{ 'SALES.TODAY' | translate }}
         </button>
         <button class="btn btn-sm btn-outline-primary" (click)="filterWeek()">
-          <i class="fa fa-calendar-week me-1"></i>Cette semaine
+          <i class="fa fa-calendar-week me-1"></i>{{ 'SALES.WEEK' | translate }}
         </button>
         <button class="btn btn-sm btn-outline-primary" (click)="filterMonth()">
-          <i class="fa fa-calendar me-1"></i>Ce mois
+          <i class="fa fa-calendar me-1"></i>{{ 'SALES.MONTH' | translate }}
         </button>
         <button class="btn btn-sm btn-outline-secondary ms-auto" (click)="resetFilters()">
-          <i class="fa fa-times me-1"></i>Tout voir
+          <i class="fa fa-times me-1"></i>{{ 'SALES.ALL' | translate }}
         </button>
       </div>
       <div class="row g-2 align-items-center">
         <div class="col-12 col-sm-6 col-md-2">
           <div class="input-group">
             <span class="input-group-text"><i class="fa fa-search"></i></span>
-            <input type="text" class="form-control" placeholder="Rechercher..."
+            <input type="text" class="form-control" [placeholder]="'COMMON.SEARCH' | translate"
                    [(ngModel)]="searchTerm" (keyup.enter)="applyFilters()" (input)="applyFilters()">
           </div>
         </div>
         <div class="col-6 col-sm-3 col-md-2">
           <select class="form-select" [(ngModel)]="typeVenteFilter" (change)="applyFilters()">
-            <option value="">Tous types</option>
-            <option value="COMPTANT">Comptant</option>
-            <option value="CREDIT">Crédit</option>
+            <option value="">{{ 'COMMON.ALL' | translate }}</option>
+            <option value="COMPTANT">{{ 'SALES.CASH' | translate }}</option>
+            <option value="CREDIT">{{ 'SALES.CREDIT' | translate }}</option>
           </select>
         </div>
         <div class="col-6 col-sm-3 col-md-2">
           <select class="form-select" [(ngModel)]="modePaiementFilter" (change)="applyFilters()">
-            <option value="">Tous modes</option>
+            <option value="">{{ 'COMMON.ALL' | translate }}</option>
             <option *ngFor="let mode of getModePaiementOptions()" [value]="mode">
               {{ getModePaiementLabel(mode) }}
             </option>
@@ -253,7 +253,7 @@
   <div class="app-table-card">
     <div class="app-table-header">
       <div class="app-table-title">
-        <i class="fa fa-list me-2"></i>Liste des ventes
+        <i class="fa fa-list me-2"></i>{{ 'SALES.TITLE' | translate }}
         <span class="app-table-count">{{ filteredVentes.length }}</span>
       </div>
       <span class="text-muted small">Page {{ currentPage }} sur {{ totalPages }}</span>
@@ -263,16 +263,16 @@
         <thead>
           <tr>
             <th>N° Vente</th>
-            <th>Date</th>
-            <th>Type</th>
-            <th>Client</th>
+            <th>{{ 'COMMON.DATE' | translate }}</th>
+            <th>{{ 'COMMON.STATUS' | translate }}</th>
+            <th>{{ 'CLIENTS.NAME' | translate }}</th>
             <th>Vendeur</th>
-            <th>Produits</th>
-            <th class="text-end">Montant</th>
-            <th class="text-end">Restant dû</th>
-            <th>Paiement</th>
-            <th>Statut</th>
-            <th class="text-center">Actions</th>
+            <th>{{ 'PRODUCTS.NAME' | translate }}</th>
+            <th class="text-end">{{ 'COMMON.AMOUNT' | translate }}</th>
+            <th class="text-end">{{ 'SALES.REMAINING' | translate }}</th>
+            <th>{{ 'SALES.PAYMENT_MODE' | translate }}</th>
+            <th>{{ 'COMMON.STATUS' | translate }}</th>
+            <th class="text-center">{{ 'COMMON.ACTIONS' | translate }}</th>
           </tr>
         </thead>
         <tbody>
@@ -302,8 +302,8 @@
             <td colspan="11" class="text-center py-5">
               <div class="app-empty-state">
                 <i class="fa fa-shopping-cart fa-3x mb-3"></i>
-                <p>Aucune vente trouvée</p>
-                <button class="btn btn-primary" (click)="openNewVenteModal()"><i class="fa fa-plus me-1"></i> Nouvelle vente</button>
+                <p>{{ 'PROMO.EMPTY' | translate }}</p>
+                <button class="btn btn-primary" (click)="openNewVenteModal()"><i class="fa fa-plus me-1"></i> {{ 'SALES.NEW' | translate }}</button>
               </div>
             </td>
           </tr>
@@ -389,6 +389,45 @@
 </div>
 
 <!-- ==================== TOUTES LES AUTRES MODALES (garder le reste identique) ==================== -->
+
+<!-- ==================== MODALE SÉLECTION NIVEAU CONDITIONNEMENT ==================== -->
+<div class="modal fade show" [class.d-block]="showNiveauModal" *ngIf="showNiveauModal"
+     style="background-color: rgba(0,0,0,0.6); z-index: 1060;" tabindex="-1" (click)="showNiveauModal=false; produitEnAttente=null">
+  <div class="modal-dialog modal-sm modal-dialog-centered" (click)="$event.stopPropagation()">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white py-2">
+        <h6 class="modal-title"><i class="fa fa-layer-group me-2"></i>Choisir le niveau — {{ produitEnAttente?.nom }}</h6>
+        <button type="button" class="btn-close btn-close-white" (click)="showNiveauModal=false; produitEnAttente=null"></button>
+      </div>
+      <div class="modal-body p-2">
+        <div *ngIf="loadingNiveaux" class="text-center py-3">
+          <div class="spinner-border spinner-border-sm text-primary"></div>
+        </div>
+        <div *ngIf="!loadingNiveaux">
+          <div *ngFor="let n of niveauxDisponibles"
+               class="card mb-2 border-primary cursor-pointer"
+               style="cursor:pointer"
+               (click)="choisirNiveauPourVente(n)">
+            <div class="card-body py-2 px-3 d-flex justify-content-between align-items-center">
+              <div>
+                <div class="fw-bold">{{ n.nom }}</div>
+                <small class="text-muted">1 parent = {{ n.facteur }} {{ n.nom }} · Achat: {{ n.prixAchat | number }} FCFA</small><br>
+                <small [class]="(n.stock || 0) > 0 ? 'text-success' : 'text-warning'">
+                  Stock: {{ n.stock || 0 }} <span class="text-muted">(cascade auto si épuisé)</span>
+                </small>
+              </div>
+              <div class="text-primary fw-bold">{{ n.prixVente | number }} FCFA</div>
+            </div>
+          </div>
+          <button class="btn btn-outline-secondary btn-sm w-100 mt-2"
+                  (click)="addProduitSansNiveau(produitEnAttente!); showNiveauModal=false; produitEnAttente=null">
+            Vendre sans niveau (produit de base)
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- ==================== MODALE NOUVELLE VENTE (COMPTANT) ==================== -->
 <div class="modal fade show" [class.d-block]="showNewVenteModal" *ngIf="showNewVenteModal" 
@@ -492,6 +531,7 @@
                     <div class="d-flex justify-content-between align-items-start">
                       <div>
                         <strong>{{ produit.nom }}</strong>
+                        <span *ngIf="produit.niveauNom" class="badge bg-primary ms-2" style="font-size:0.7rem">{{ produit.niveauNom }}</span>
                         <div class="d-flex gap-2 mt-1">
                           <div class="input-group input-group-sm" style="width: 150px;">
                             <span class="input-group-text">Prix</span>
@@ -746,6 +786,7 @@
                     <div class="d-flex justify-content-between align-items-start">
                       <div>
                         <strong>{{ produit.nom }}</strong>
+                        <span *ngIf="produit.niveauNom" class="badge bg-primary ms-2" style="font-size:0.7rem">{{ produit.niveauNom }}</span>
                         <div class="d-flex gap-2 mt-1">
                           <div class="input-group input-group-sm" style="width: 150px;">
                             <span class="input-group-text">Prix</span>
@@ -887,228 +928,182 @@
 <!-- ==================== MODALE DÉTAILS VENTE ==================== -->
 <div class="modal fade show" [class.d-block]="showVenteDetailModal" *ngIf="showVenteDetailModal"
   style="background-color: rgba(0,0,0,0.5); z-index: 1050;" tabindex="-1" (click)="closeAllModals()">
-  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" (click)="$event.stopPropagation()">
-    <div class="modal-content">
-      <div class="modal-header" [ngClass]="{
-        'bg-success': selectedVente && !selectedVente.estCredit,
-        'bg-warning': selectedVente && selectedVente.estCredit && !selectedVente.creditRegle,
-        'bg-info': selectedVente && selectedVente.estCredit && selectedVente.creditRegle
-      }" class="text-white">
-        <h5 class="modal-title">
-          <i class="fa fa-info-circle me-2"></i>
-          Détails de la vente {{ selectedVente?.numeroVente }}
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" (click)="$event.stopPropagation()">
+    <div class="modal-content" [style.background]="design === 2 ? '#0f172a' : '#fff'">
+      <div class="modal-header" [style.background]="design === 2 ? '#0f172a' : (design === 3 ? '#fff' : '#1e40af')"
+           [style.border-bottom]="design === 3 ? '2px solid #18181b' : 'none'">
+        <h5 class="modal-title" [style.color]="design === 2 ? '#f59e0b' : (design === 3 ? '#18181b' : '#fff')">
+          <i class="fa fa-receipt me-2"></i>Reçu · {{ selectedVente?.numeroVente }}
         </h5>
-        <button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button>
+        <button type="button" class="btn-close" [class.btn-close-white]="design !== 3" (click)="closeAllModals()"></button>
       </div>
 
-      <div class="modal-body">
-        <div *ngIf="selectedVente" class="row">
-          <!-- Colonne gauche : Informations générales -->
-          <div class="col-md-6">
-            <div class="card mb-3">
-              <div class="card-header bg-primary text-white">
-                <h6 class="mb-0"><i class="fa fa-info-circle me-2"></i>Informations générales</h6>
+      <div class="modal-body p-0" *ngIf="selectedVente">
+
+        <!-- ══ DESIGN 1 — CLASSIQUE ══ -->
+        <ng-container *ngIf="design === 1">
+          <div class="facture-doc facture-doc--classic" style="max-width:100%;margin:0;border-radius:0;box-shadow:none">
+            <div class="fd-meta--blue">
+              <div class="fd-meta-row">
+                <span class="fd-meta-label">Date</span>
+                <span class="fd-meta-val">{{ formatDate(selectedVente.dateVente) }}</span>
               </div>
-              <div class="card-body">
-                <table class="table table-sm">
-                  <tr>
-                    <th style="width: 40%">N° Vente:</th>
-                    <td><strong>{{ selectedVente.numeroVente }}</strong></td>
-                  </tr>
-                  <tr>
-                    <th>Date:</th>
-                    <td>{{ formatDate(selectedVente.dateVente) }}</td>
-                  </tr>
-                  <tr>
-                    <th>Type:</th>
-                    <td>
-                      <span [class]="'badge ' + getVenteTypeBadgeClass(selectedVente)">
-                        <i class="fa {{ getVenteTypeIcon(selectedVente) }} me-1"></i>
-                        {{ getVenteTypeLabel(selectedVente) }}
-                      </span>
-                    </td>
-                  </tr>
-                  <tr>
-                    <th>Vendeur:</th>
-                    <td>
-                      <div><strong>{{ getVendeurDisplay(selectedVente) }}</strong></div>
-                      <small class="text-muted">{{ getVendeurRole(selectedVente) }}</small>
-                    </td>
-                  </tr>
-                  <tr *ngIf="getVendeurTelephone(selectedVente)">
-                    <th>Tél. vendeur:</th>
-                    <td>{{ getVendeurTelephone(selectedVente) }}</td>
-                  </tr>
-                  <tr *ngIf="getVendeurEmail(selectedVente)">
-                    <th>Email vendeur:</th>
-                    <td>{{ getVendeurEmail(selectedVente) }}</td>
-                  </tr>
-                </table>
+              <div class="fd-meta-row">
+                <span class="fd-meta-label">Statut</span>
+                <span class="fd-meta-val">{{ getVenteTypeLabel(selectedVente) }}</span>
+              </div>
+              <div class="fd-meta-row">
+                <span class="fd-meta-label">Paiement</span>
+                <span class="fd-meta-val">{{ getModePaiementLabel(selectedVente.modePaiement) }}</span>
+              </div>
+              <div class="fd-meta-row">
+                <span class="fd-meta-label">Vendeur</span>
+                <span class="fd-meta-val">{{ getVendeurDisplay(selectedVente) }}</span>
+              </div>
+              <div class="fd-meta-row" *ngIf="selectedVente.referencePaiement">
+                <span class="fd-meta-label">Référence</span>
+                <span class="fd-meta-val">{{ selectedVente.referencePaiement }}</span>
               </div>
             </div>
-
-            <!-- Informations client (pour crédit) -->
-            <div class="card mb-3" *ngIf="selectedVente.estCredit">
-              <div class="card-header bg-warning text-white">
-                <h6 class="mb-0"><i class="fa fa-user me-2"></i>Informations client</h6>
+            <div class="fd-credit-block" *ngIf="selectedVente.estCredit">
+              <div class="fd-credit-row">
+                <span class="fd-credit-label">Client</span>
+                <span class="fd-credit-val">{{ selectedVente.clientNom }} {{ selectedVente.clientPrenom }}</span>
               </div>
-              <div class="card-body">
-                <table class="table table-sm">
-                  <tr>
-                    <th style="width: 40%">Nom:</th>
-                    <td><strong>{{ selectedVente.clientNom || 'N/A' }}</strong></td>
-                  </tr>
-                  <tr>
-                    <th>Téléphone:</th>
-                    <td>{{ selectedVente.clientTelephone || '-' }}</td>
-                  </tr>
-                  <tr>
-                    <th>Date échéance:</th>
-                    <td>{{ formatDate(selectedVente.dateEcheance || '') }}</td>
-                  </tr>
-                  <tr>
-                    <th>Statut crédit:</th>
-                    <td>
-                      <span [class]="getCreditStatusClass(selectedVente)">
-                        {{ getCreditStatusText(selectedVente) }}
-                      </span>
-                    </td>
-                  </tr>
-                  <tr *ngIf="selectedVente.creditRegle">
-                    <th>Date règlement:</th>
-                    <td>{{ formatDate(selectedVente.dateReglement || '') }}</td>
-                  </tr>
-                </table>
+              <div class="fd-credit-row" *ngIf="selectedVente.clientTelephone">
+                <span class="fd-credit-label">Tél</span>
+                <span class="fd-credit-val">{{ selectedVente.clientTelephone }}</span>
               </div>
+              <div class="fd-credit-row" *ngIf="selectedVente.dateEcheance">
+                <span class="fd-credit-label">Échéance</span>
+                <span class="fd-credit-val">{{ formatDate(selectedVente.dateEcheance || '') }}</span>
+              </div>
+              <div class="fd-credit-row">
+                <span class="fd-credit-label">Versé</span>
+                <span class="fd-credit-val">{{ formatPrice(selectedVente.montantVerse || 0) }}</span>
+              </div>
+              <div class="fd-credit-row" *ngIf="!selectedVente.creditRegle">
+                <span class="fd-credit-label">Reste dû</span>
+                <span class="fd-credit-val">{{ formatPrice(selectedVente.montantRestant || 0) }}</span>
+              </div>
+            </div>
+            <table class="fd-table">
+              <thead><tr class="fd-thead--blue">
+                <th>Article</th><th class="fd-center">Qté</th><th class="fd-right">PU</th><th class="fd-right">Total</th>
+              </tr></thead>
+              <tbody>
+                <tr *ngFor="let p of selectedVente.produits || []; let i = index" [class.fd-row-even]="i % 2 === 0">
+                  <td>{{ p.produitNom }}</td>
+                  <td class="fd-center">{{ p.quantite }}</td>
+                  <td class="fd-right">{{ formatPrice(p.prixUnitaire || 0) }}</td>
+                  <td class="fd-right fd-bold">{{ formatPrice(p.sousTotal) }}</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="fd-total--blue">
+              <span *ngIf="selectedVente.montantRemiseTotal > 0">Remise: -{{ formatPrice(selectedVente.montantRemiseTotal) }}</span>
+              <span *ngIf="!(selectedVente.montantRemiseTotal > 0)">Total</span>
+              <span class="fd-total-val">{{ formatPrice(selectedVente.montantTotal) }}</span>
             </div>
           </div>
+        </ng-container>
 
-          <!-- Colonne droite : Informations paiement -->
-          <div class="col-md-6">
-            <div class="card mb-3">
-              <div class="card-header bg-success text-white">
-                <h6 class="mb-0"><i class="fa fa-credit-card me-2"></i>Informations paiement</h6>
+        <!-- ══ DESIGN 2 — MODERNE ══ -->
+        <ng-container *ngIf="design === 2">
+          <div class="facture-doc facture-doc--modern" style="max-width:100%;margin:0;border-radius:0;box-shadow:none">
+            <div class="fd-gold-stripe"></div>
+            <div class="fd-meta--modern">
+              <div class="fd-meta-block">
+                <div class="fd-meta-block-title">DATE</div>
+                <div class="fd-meta-block-val">{{ formatDate(selectedVente.dateVente) }}</div>
+                <div class="fd-meta-block-sub">{{ getVenteTypeLabel(selectedVente) }}</div>
               </div>
-              <div class="card-body">
-                <table class="table table-sm">
-                  <tr>
-                    <th style="width: 40%">Mode paiement:</th>
-                    <td>
-                      <span [class]="'badge ' + getModePaiementClass(selectedVente.modePaiement)">
-                        {{ getModePaiementLabel(selectedVente.modePaiement) }}
-                      </span>
-                    </td>
-                  </tr>
-                  <tr *ngIf="selectedVente.referencePaiement">
-                    <th>Référence:</th>
-                    <td>{{ selectedVente.referencePaiement }}</td>
-                  </tr>
-                  <tr>
-                    <th>Sous-total:</th>
-                    <td class="text-end">{{ formatPrice((selectedVente.montantTotal || 0) +
-                      (selectedVente.montantRemiseTotal || 0)) }}</td>
-                  </tr>
-                  <tr *ngIf="selectedVente.montantRemiseTotal && selectedVente.montantRemiseTotal > 0">
-                    <th class="text-danger">Remise:</th>
-                    <td class="text-end text-danger">-{{ formatPrice(selectedVente.montantRemiseTotal) }}</td>
-                  </tr>
-                  <tr>
-                    <th><strong>TOTAL:</strong></th>
-                    <td class="text-end"><strong class="text-primary">{{ formatPrice(selectedVente.montantTotal)
-                        }}</strong></td>
-                  </tr>
-                  <tr *ngIf="selectedVente.estCredit && !selectedVente.creditRegle">
-                    <th class="text-warning">Montant versé:</th>
-                    <td class="text-end text-success">{{ formatPrice(selectedVente.montantVerse || 0) }}</td>
-                  </tr>
-                  <tr *ngIf="selectedVente.estCredit && !selectedVente.creditRegle">
-                    <th class="text-warning">Reste à payer:</th>
-                    <td class="text-end text-warning fw-bold">{{ formatPrice(selectedVente.montantRestant ||
-                      selectedVente.montantTotal) }}</td>
-                  </tr>
-                </table>
+              <div class="fd-meta-block fd-meta-block--right">
+                <div class="fd-meta-block-title">VENDEUR</div>
+                <div class="fd-meta-block-val">{{ getVendeurDisplay(selectedVente) }}</div>
+                <div class="fd-meta-block-sub">{{ getModePaiementLabel(selectedVente.modePaiement) }}</div>
               </div>
             </div>
-
-            <!-- Historique des règlements (pour crédit) -->
-            <div class="card mb-3"
-              *ngIf="selectedVente.estCredit && selectedVente.montantVerse && selectedVente.montantVerse > 0">
-              <div class="card-header bg-info text-white">
-                <h6 class="mb-0"><i class="fa fa-history me-2"></i>Historique des règlements</h6>
-              </div>
-              <div class="card-body">
-                <div class="alert alert-success">
-                  <div class="d-flex justify-content-between">
-                    <span>Montant total réglé:</span>
-                    <strong>{{ formatPrice(selectedVente.montantVerse) }}</strong>
-                  </div>
-                  <div class="d-flex justify-content-between mt-2">
-                    <span>Date dernier règlement:</span>
-                    <strong>{{ formatDate(selectedVente.dateReglement || '') }}</strong>
-                  </div>
-                </div>
-              </div>
+            <div class="fd-notes--modern" *ngIf="selectedVente.estCredit">
+              <i class="fa fa-user" style="color:#f59e0b"></i>
+              <span>{{ selectedVente.clientNom }} {{ selectedVente.clientPrenom }}
+                <span *ngIf="selectedVente.clientTelephone"> · {{ selectedVente.clientTelephone }}</span>
+                <span *ngIf="!selectedVente.creditRegle"> · Reste: {{ formatPrice(selectedVente.montantRestant || 0) }}</span>
+              </span>
+            </div>
+            <table class="fd-table">
+              <thead><tr class="fd-thead--dark">
+                <th>Article</th><th class="fd-center">Qté</th><th class="fd-right fd-gold-text">PU</th><th class="fd-right fd-gold-text">Total</th>
+              </tr></thead>
+              <tbody>
+                <tr *ngFor="let p of selectedVente.produits || []; let i = index" [class.fd-row-even]="i % 2 === 0">
+                  <td style="color:#e2e8f0">{{ p.produitNom }}</td>
+                  <td class="fd-center" style="color:#94a3b8">{{ p.quantite }}</td>
+                  <td class="fd-right" style="color:#94a3b8">{{ formatPrice(p.prixUnitaire || 0) }}</td>
+                  <td class="fd-right fd-bold" style="color:#f59e0b">{{ formatPrice(p.sousTotal) }}</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="fd-total--dark" style="color:#f59e0b">
+              <span *ngIf="selectedVente.montantRemiseTotal > 0" style="font-size:12px;color:#94a3b8">Remise: -{{ formatPrice(selectedVente.montantRemiseTotal) }}</span>
+              <span *ngIf="!(selectedVente.montantRemiseTotal > 0)" style="color:#94a3b8">TOTAL</span>
+              <span class="fd-total-val">{{ formatPrice(selectedVente.montantTotal) }}</span>
             </div>
           </div>
+        </ng-container>
 
-          <!-- Détail des produits (sur toute la largeur) -->
-          <div class="col-12">
-            <div class="card">
-              <div class="card-header bg-secondary text-white">
-                <h6 class="mb-0"><i class="fa fa-shopping-basket me-2"></i>Détail des produits vendus</h6>
+        <!-- ══ DESIGN 3 — MINIMALISTE ══ -->
+        <ng-container *ngIf="design === 3">
+          <div class="facture-doc facture-doc--minimal" style="max-width:100%;margin:0;border-radius:0;box-shadow:none">
+            <div class="fd-meta--minimal">
+              <div class="fd-meta-row">
+                <span class="fd-meta-label">Date</span>
+                <span class="fd-meta-val">{{ formatDate(selectedVente.dateVente) }}</span>
               </div>
-              <div class="card-body">
-                <div class="table-responsive">
-                  <table class="table table-sm table-bordered">
-                    <thead class="table-light">
-                      <tr>
-                        <th>Produit</th>
-                        <th class="text-center">Quantité</th>
-                        <th class="text-end">Prix unitaire</th>
-                        <th class="text-end">Remise</th>
-                        <th class="text-end">Prix après remise</th>
-                        <th class="text-end">Sous-total</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr *ngFor="let produit of selectedVente.produits || []">
-                        <td>
-                          <strong>{{ produit.produitNom || produit.nom || 'Produit' }}</strong>
-                          <small *ngIf="produit.codeBarre" class="d-block text-muted">
-                            Code: {{ produit.codeBarre }}
-                          </small>
-                        </td>
-                        <td class="text-center">{{ produit.quantite }}</td>
-                        <td class="text-end">{{ formatPrice(produit.prixUnitaire || produit.prixVente || 0) }}</td>
-                        <td class="text-end">
-                          <span *ngIf="produit.remisePourcentage && produit.remisePourcentage > 0" class="text-danger">
-                            -{{ produit.remisePourcentage }}%
-                          </span>
-                          <span *ngIf="produit.remiseMontant && produit.remiseMontant > 0" class="text-danger">
-                            -{{ formatPrice(produit.remiseMontant) }}
-                          </span>
-                          <span *ngIf="!produit.remisePourcentage && !produit.remiseMontant">-</span>
-                        </td>
-                        <td class="text-end">{{ formatPrice(produit.prixApresRemise || produit.prixUnitaire ||
-                          produit.prixVente || 0) }}</td>
-                        <td class="text-end"><strong>{{ formatPrice(produit.sousTotal) }}</strong></td>
-                      </tr>
-                    </tbody>
-                    <tfoot class="table-light">
-                      <tr>
-                        <td colspan="5" class="text-end"><strong>TOTAL</strong></td>
-                        <td class="text-end"><strong>{{ formatPrice(selectedVente.montantTotal) }}</strong></td>
-                      </tr>
-                    </tfoot>
-                  </table>
-                </div>
+              <div class="fd-meta-row">
+                <span class="fd-meta-label">Statut</span>
+                <span class="fd-meta-val">{{ getVenteTypeLabel(selectedVente) }}</span>
+              </div>
+              <div class="fd-meta-row">
+                <span class="fd-meta-label">Paiement</span>
+                <span class="fd-meta-val">{{ getModePaiementLabel(selectedVente.modePaiement) }}</span>
+              </div>
+              <div class="fd-meta-row">
+                <span class="fd-meta-label">Vendeur</span>
+                <span class="fd-meta-val">{{ getVendeurDisplay(selectedVente) }}</span>
               </div>
             </div>
+            <div class="fd-notes--minimal" *ngIf="selectedVente.estCredit">
+              Client: {{ selectedVente.clientNom }} {{ selectedVente.clientPrenom }}
+              <span *ngIf="!selectedVente.creditRegle"> — Reste: {{ formatPrice(selectedVente.montantRestant || 0) }}</span>
+            </div>
+            <div class="fd-divider--black" style="margin:0"></div>
+            <table class="fd-table fd-table--minimal">
+              <thead><tr>
+                <th>Article</th><th class="fd-center">Qté</th><th class="fd-right">PU</th><th class="fd-right">Total</th>
+              </tr></thead>
+              <tbody>
+                <tr *ngFor="let p of selectedVente.produits || []">
+                  <td>{{ p.produitNom }}</td>
+                  <td class="fd-center">{{ p.quantite }}</td>
+                  <td class="fd-right">{{ formatPrice(p.prixUnitaire || 0) }}</td>
+                  <td class="fd-right fd-bold">{{ formatPrice(p.sousTotal) }}</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="fd-divider--black" style="margin:0"></div>
+            <div class="fd-total--minimal">
+              <span *ngIf="selectedVente.montantRemiseTotal > 0">Remise: -{{ formatPrice(selectedVente.montantRemiseTotal) }}</span>
+              <span *ngIf="!(selectedVente.montantRemiseTotal > 0)">Total</span>
+              <span class="fd-total-val">{{ formatPrice(selectedVente.montantTotal) }}</span>
+            </div>
           </div>
-        </div>
+        </ng-container>
+
       </div>
 
-      <div class="modal-footer">
+      <div class="modal-footer" [style.background]="design === 2 ? '#0f172a' : '#fff'"
+           [style.border-top]="design === 2 ? '1px solid #334155' : ''">
         <button type="button" class="btn btn-secondary" (click)="closeAllModals()">Fermer</button>
         <button type="button" class="btn btn-warning"
                 *ngIf="selectedVente && !selectedVente.annulee"

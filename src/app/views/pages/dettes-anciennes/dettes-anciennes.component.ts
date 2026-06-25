@@ -6,11 +6,12 @@ import { FormsModule } from '@angular/forms';
 import Swal from 'sweetalert2';
 import { DetteAncienneService, DetteAncienne, ReglementDette, DetteAncienneRequest, ReglementDetteRequest } from '../../../shared/services/dette-ancienne.service';
 import { ClientService, Client } from '../../../shared/services/client.service';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-dettes-anciennes',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslateModule],
   templateUrl: './dettes-anciennes.component.html',
   styleUrls: ['./dettes-anciennes.component.scss']
 })

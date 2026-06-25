@@ -12,11 +12,12 @@ import { ProductService } from '../../../shared/services/product.service';
 import Swal from 'sweetalert2';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-objectif-fournisseur',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslateModule],
   templateUrl: './objectif-fournisseur.component.html',
   styleUrls: ['./objectif-fournisseur.component.scss']
 })

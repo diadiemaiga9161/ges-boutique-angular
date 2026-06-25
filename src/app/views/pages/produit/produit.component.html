@@ -4,13 +4,13 @@
     <div class="app-page-header-left">
       <div class="app-page-icon"><i class="fa fa-box"></i></div>
       <div>
-        <h1 class="app-page-title">Gestion des Produits</h1>
-        <p class="app-page-subtitle">Produits, fournisseurs et catégories</p>
+        <h1 class="app-page-title">{{ 'PRODUCTS.TITLE' | translate }}</h1>
+        <p class="app-page-subtitle">{{ 'PRODUCTS.SUBTITLE' | translate }}</p>
       </div>
     </div>
     <div class="app-page-header-actions">
       <button class="btn btn-primary" type="button" (click)="openAddModal()" *ngIf="isAdmin">
-        <i class="fa fa-plus me-1"></i> Créer un produit
+        <i class="fa fa-plus me-1"></i> {{ 'PRODUCTS.ADD' | translate }}
       </button>
       <button class="btn btn-success" type="button" (click)="openImportModal()" *ngIf="isAdmin">
         <i class="fa fa-upload me-1"></i> Importer Excel

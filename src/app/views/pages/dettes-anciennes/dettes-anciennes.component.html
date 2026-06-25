@@ -6,13 +6,13 @@
       <div class="app-page-header-left">
         <div class="app-page-icon"><i class="fas fa-file-invoice-dollar"></i></div>
         <div>
-          <h1 class="app-page-title">Dettes Anciennes</h1>
-          <p class="app-page-subtitle">Dettes antérieures des clients et règlements</p>
+          <h1 class="app-page-title">{{ 'DEBTS.TITLE' | translate }}</h1>
+          <p class="app-page-subtitle">{{ 'DEBTS.SUBTITLE' | translate }}</p>
         </div>
       </div>
       <div class="app-page-header-actions">
         <button class="btn btn-primary" (click)="openNouvelleDette()">
-          <i class="fas fa-plus-circle me-1"></i> Nouvelle Dette
+          <i class="fas fa-plus-circle me-1"></i> {{ 'DEBTS.NEW' | translate }}
         </button>
         <button class="btn btn-outline-secondary" (click)="refresh()">
           <i class="fas fa-sync-alt me-1"></i> Actualiser

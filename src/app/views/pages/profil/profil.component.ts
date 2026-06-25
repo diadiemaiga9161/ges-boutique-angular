@@ -3,12 +3,49 @@ import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../shared/services/auth.service';
+import { TranslateModule } from '@ngx-translate/core';
+
+export const COUNTRY_CODES = [
+  { code: '+223', flag: '🇲🇱', name: 'Mali' },
+  { code: '+225', flag: '🇨🇮', name: 'Côte d\'Ivoire' },
+  { code: '+226', flag: '🇧🇫', name: 'Burkina Faso' },
+  { code: '+227', flag: '🇳🇪', name: 'Niger' },
+  { code: '+228', flag: '🇹🇬', name: 'Togo' },
+  { code: '+229', flag: '🇧🇯', name: 'Bénin' },
+  { code: '+221', flag: '🇸🇳', name: 'Sénégal' },
+  { code: '+224', flag: '🇬🇳', name: 'Guinée' },
+  { code: '+222', flag: '🇲🇷', name: 'Mauritanie' },
+  { code: '+245', flag: '🇬🇼', name: 'Guinée-Bissau' },
+  { code: '+232', flag: '🇸🇱', name: 'Sierra Leone' },
+  { code: '+231', flag: '🇱🇷', name: 'Libéria' },
+  { code: '+233', flag: '🇬🇭', name: 'Ghana' },
+  { code: '+234', flag: '🇳🇬', name: 'Nigeria' },
+  { code: '+237', flag: '🇨🇲', name: 'Cameroun' },
+  { code: '+235', flag: '🇹🇩', name: 'Tchad' },
+  { code: '+236', flag: '🇨🇫', name: 'Centrafrique' },
+  { code: '+241', flag: '🇬🇦', name: 'Gabon' },
+  { code: '+242', flag: '🇨🇬', name: 'Congo' },
+  { code: '+243', flag: '🇨🇩', name: 'RD Congo' },
+  { code: '+212', flag: '🇲🇦', name: 'Maroc' },
+  { code: '+213', flag: '🇩🇿', name: 'Algérie' },
+  { code: '+216', flag: '🇹🇳', name: 'Tunisie' },
+  { code: '+20',  flag: '🇪🇬', name: 'Égypte' },
+  { code: '+33',  flag: '🇫🇷', name: 'France' },
+  { code: '+1',   flag: '🇺🇸', name: 'USA / Canada' },
+  { code: '+44',  flag: '🇬🇧', name: 'Royaume-Uni' },
+  { code: '+32',  flag: '🇧🇪', name: 'Belgique' },
+  { code: '+41',  flag: '🇨🇭', name: 'Suisse' },
+  { code: '+351', flag: '🇵🇹', name: 'Portugal' },
+  { code: '+34',  flag: '🇪🇸', name: 'Espagne' },
+  { code: '+49',  flag: '🇩🇪', name: 'Allemagne' },
+  { code: '+86',  flag: '🇨🇳', name: 'Chine' },
+];
 
 @Component({
   selector: 'app-profil',
   templateUrl: './profil.component.html',
   styleUrls: ['./profil.component.scss'],
-  imports: [FormsModule, CommonModule]
+  imports: [FormsModule, CommonModule, TranslateModule]
 })
 export class ProfilComponent implements OnInit {
   user: any = null;
@@ -19,6 +56,9 @@ export class ProfilComponent implements OnInit {
     telephone: '',
     password: ''
   };
+
+  selectedCountryCode = '+223';
+  readonly countryCodes = COUNTRY_CODES;
 
   message: string = '';
   isError: boolean = false;
@@ -55,13 +95,7 @@ export class ProfilComponent implements OnInit {
       next: (userData) => {
         this.user = userData;
         this.photoPreview = userData.photo || null;
-
-        this.updateData = {
-          nomComplet: userData.nomComplet || '',
-          email: userData.email || '',
-          telephone: userData.telephone || '',
-          password: ''
-        };
+        this.fillForm(userData);
 
         this.isLoading = false;
         this.showForm = true;
@@ -78,12 +112,7 @@ export class ProfilComponent implements OnInit {
           if (cachedUser) {
             this.user = cachedUser;
             this.photoPreview = cachedUser.photo || null;
-            this.updateData = {
-              nomComplet: cachedUser.nomComplet || '',
-              email: cachedUser.email || '',
-              telephone: cachedUser.telephone || '',
-              password: ''
-            };
+            this.fillForm(cachedUser);
             this.showForm = true;
             this.message = 'Données en cache (connectez-vous pour actualiser)';
           } else {
@@ -94,6 +123,24 @@ export class ProfilComponent implements OnInit {
         }
       }
     });
+  }
+
+  private fillForm(user: any): void {
+    const tel = user.telephone || '';
+    const matched = COUNTRY_CODES.find(c => tel.startsWith(c.code));
+    if (matched) {
+      this.selectedCountryCode = matched.code;
+      this.updateData = { nomComplet: user.nomComplet || '', email: user.email || '', telephone: tel.slice(matched.code.length).trim(), password: '' };
+    } else {
+      this.updateData = { nomComplet: user.nomComplet || '', email: user.email || '', telephone: tel, password: '' };
+    }
+    this.isLoading = false;
+    this.showForm = true;
+    this.message = '';
+  }
+
+  getFullPhone(): string {
+    return this.selectedCountryCode + this.updateData.telephone.replace(/^0+/, '');
   }
 
   onPhotoSelected(event: Event): void {
@@ -188,8 +235,9 @@ export class ProfilComponent implements OnInit {
     if (this.updateData.email !== this.user.email) {
       updatePayload.email = this.updateData.email;
     }
-    if (this.updateData.telephone !== this.user.telephone) {
-      updatePayload.telephone = this.updateData.telephone;
+    const fullPhone = this.getFullPhone();
+    if (fullPhone !== this.user.telephone) {
+      updatePayload.telephone = fullPhone;
     }
     if (this.updateData.password) {
       updatePayload.password = this.updateData.password;
@@ -257,8 +305,7 @@ export class ProfilComponent implements OnInit {
   }
 
   private validatePhone(phone: string): boolean {
-    const re = /^[0-9]{10}$/;
-    return re.test(phone);
+    return /^[0-9]{6,15}$/.test(phone.trim());
   }
 
   togglePasswordVisibility(): void {
@@ -295,6 +342,6 @@ export class ProfilComponent implements OnInit {
            !!this.updateData.email?.trim() &&
            !!this.updateData.telephone?.trim() &&
            this.validateEmail(this.updateData.email) &&
-           this.validatePhone(this.updateData.telephone);
+           this.validatePhone(this.updateData.telephone.trim());
   }
 }

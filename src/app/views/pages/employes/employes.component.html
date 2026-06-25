@@ -4,13 +4,13 @@
     <div class="app-page-header-left">
       <div class="app-page-icon"><i class="fa fa-id-badge"></i></div>
       <div>
-        <h1 class="app-page-title">Gestion des Employés</h1>
-        <p class="app-page-subtitle">Personnel, postes et informations</p>
+        <h1 class="app-page-title">{{ 'EMPLOYEES.TITLE' | translate }}</h1>
+        <p class="app-page-subtitle">{{ 'EMPLOYEES.SUBTITLE' | translate }}</p>
       </div>
     </div>
     <div class="app-page-header-actions">
       <button class="btn btn-primary" (click)="ouvrirFormAjout()">
-        <i class="fa fa-plus me-1"></i> Nouvel employé
+        <i class="fa fa-plus me-1"></i> {{ 'EMPLOYEES.NEW' | translate }}
       </button>
     </div>
   </div>
@@ -63,13 +63,13 @@
               <span *ngIf="emp.statut === 'ACTIF'"
                     class="badge badge-pill badge-success"
                     style="font-size:0.85rem; padding:6px 14px; font-weight:600; letter-spacing:0.3px;">
-                <i class="i-Check mr-1"></i> Actif
+                <i class="i-Check mr-1"></i> {{ 'EMPLOYEES.ACTIVE' | translate }}
               </span>
               <!-- Statut INACTIF -->
               <span *ngIf="emp.statut === 'INACTIF'"
                     class="badge badge-pill badge-danger"
                     style="font-size:0.85rem; padding:6px 14px; font-weight:600; letter-spacing:0.3px;">
-                <i class="i-Close-Window mr-1"></i> Inactif
+                <i class="i-Close-Window mr-1"></i> {{ 'EMPLOYEES.INACTIVE' | translate }}
               </span>
             </td>
             <td>
@@ -90,7 +90,7 @@
             </td>
           </tr>
           <tr *ngIf="filteredEmployes.length === 0">
-            <td colspan="8" class="text-center text-muted py-4">Aucun employé trouvé.</td>
+            <td colspan="8" class="text-center text-muted py-4">{{ 'EMPLOYEES.EMPTY' | translate }}</td>
           </tr>
         </tbody>
       </table>

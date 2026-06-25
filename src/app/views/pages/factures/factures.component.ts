@@ -11,11 +11,12 @@ import { FactureService, Facture, FactureRequest, LigneFactureRequest, Statistiq
 import { ClientService, Client } from '../../../shared/services/client.service';
 import { ProductService, Produit } from '../../../shared/services/product.service';
 import { FactureDesignService, DesignFacture } from '../../../shared/services/facture-design.service';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-factures',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslateModule],
   templateUrl: './factures.component.html',
   styleUrls: ['./factures.component.scss']
 })
@@ -533,7 +534,7 @@ export class FacturesComponent implements OnInit, OnDestroy {
   }
 
   imprimerFacture(facture: Facture): void { this.factureService.imprimerFacture(facture); }
-  exportFacturePDF(facture: Facture): void { this.factureService.exportFactureToPDF(facture); }
+  exporterPdf(facture: Facture): void { this.factureService.exportFactureToPDF(facture); }
   ouvrirPdfServeur(facture: Facture): void { window.open('/api/caisse/factures/' + facture.id + '/pdf/view', '_blank'); }
   telechargerPdfServeur(facture: Facture): void { window.open('/api/caisse/factures/' + facture.id + '/pdf', '_blank'); }
   getQrCodeUrl(facture: Facture): string { return '/api/caisse/factures/' + facture.id + '/qrcode'; }

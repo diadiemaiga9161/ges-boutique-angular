@@ -3,11 +3,11 @@
   <!-- HEADER -->
   <div class="breadcrumb d-flex align-items-center mb-3">
     <h1 class="page-title m-0">
-      <i class="i-Money-2 text-success me-2"></i> Bénéfices
+      <i class="i-Money-2 text-success me-2"></i> {{ 'BENEFITS.TITLE' | translate }}
     </h1>
     <div class="ms-auto d-flex gap-2 align-items-center">
       <button class="btn btn-outline-danger btn-sm" (click)="exporterPDF()" [disabled]="!data || isLoading">
-        <i class="i-File-PDF"></i> Télécharger PDF
+        <i class="i-File-PDF"></i> {{ 'COMMON.DOWNLOAD' | translate }} PDF
       </button>
     </div>
   </div>
@@ -18,19 +18,19 @@
       <div class="d-flex flex-wrap gap-2 align-items-center">
         <button class="btn btn-sm" [class.btn-primary]="periodeActive==='JOURNALIER'"
           [class.btn-outline-primary]="periodeActive!=='JOURNALIER'" (click)="selectionner('JOURNALIER')">
-          <i class="i-Calendar me-1"></i> Aujourd'hui
+          <i class="i-Calendar me-1"></i> {{ 'SALES.TODAY' | translate }}
         </button>
         <button class="btn btn-sm" [class.btn-primary]="periodeActive==='HEBDOMADAIRE'"
           [class.btn-outline-primary]="periodeActive!=='HEBDOMADAIRE'" (click)="selectionner('HEBDOMADAIRE')">
-          <i class="i-Calendar me-1"></i> Cette semaine
+          <i class="i-Calendar me-1"></i> {{ 'SALES.WEEK' | translate }}
         </button>
         <button class="btn btn-sm" [class.btn-primary]="periodeActive==='MENSUEL'"
           [class.btn-outline-primary]="periodeActive!=='MENSUEL'" (click)="selectionner('MENSUEL')">
-          <i class="i-Calendar me-1"></i> Ce mois
+          <i class="i-Calendar me-1"></i> {{ 'SALES.MONTH' | translate }}
         </button>
         <button class="btn btn-sm" [class.btn-primary]="periodeActive==='ANNUEL'"
           [class.btn-outline-primary]="periodeActive!=='ANNUEL'" (click)="selectionner('ANNUEL')">
-          <i class="i-Calendar me-1"></i> Cette année
+          <i class="i-Calendar me-1"></i> {{ 'BENEFITS.DAILY' | translate }} / Année
         </button>
 
         <!-- Filtre date pour journalier -->
@@ -62,7 +62,7 @@
   <!-- CHARGEMENT -->
   <div *ngIf="isLoading" class="text-center py-5">
     <div class="spinner-border text-success"></div>
-    <p class="mt-2 text-muted">Calcul des bénéfices…</p>
+    <p class="mt-2 text-muted">{{ 'COMMON.LOADING' | translate }}</p>
   </div>
 
   <!-- ERREUR -->
@@ -84,7 +84,7 @@
               <div class="rounded-circle bg-success bg-opacity-10 p-2 me-2">
                 <i class="i-Money-2 text-success fs-5"></i>
               </div>
-              <span class="text-muted small">Bénéfice total</span>
+              <span class="text-muted small">{{ 'BENEFITS.GROSS' | translate }}</span>
             </div>
             <h3 class="fw-bold text-success mb-0">{{ fmt(data.beneficeTotal) }}</h3>
           </div>
@@ -99,7 +99,7 @@
               <div class="rounded-circle bg-primary bg-opacity-10 p-2 me-2">
                 <i class="i-Cash-Register text-primary fs-5"></i>
               </div>
-              <span class="text-muted small">Chiffre d'affaires</span>
+              <span class="text-muted small">{{ 'NET_RESULT.REVENUE' | translate }}</span>
             </div>
             <h3 class="fw-bold text-primary mb-0">{{ fmt(data.chiffreAffaireTotal) }}</h3>
           </div>
@@ -114,7 +114,7 @@
               <div class="rounded-circle p-2 me-2" style="background:rgba(139,92,246,.1)">
                 <i class="i-Receipt-4 fs-5" style="color:#8b5cf6"></i>
               </div>
-              <span class="text-muted small">Ventes</span>
+              <span class="text-muted small">{{ 'SALES.TITLE' | translate }}</span>
             </div>
             <h3 class="fw-bold mb-0" style="color:#8b5cf6">{{ data.nombreVentes }}</h3>
           </div>
@@ -129,7 +129,7 @@
               <div class="rounded-circle p-2 me-2" style="background:rgba(245,158,11,.1)">
                 <i class="i-Line-Chart fs-5" style="color:#f59e0b"></i>
               </div>
-              <span class="text-muted small">Marge / Évolution</span>
+              <span class="text-muted small">{{ 'BENEFITS.GROSS' | translate }} / Évolution</span>
             </div>
             <h3 class="fw-bold mb-1" style="color:#f59e0b">{{ data.margeMoyenne.toFixed(1) }} %</h3>
             <span class="badge" [class]="evolution >= 0 ? 'bg-success' : 'bg-danger'">
@@ -146,7 +146,7 @@
     <div class="card shadow-sm mb-4" *ngIf="data.lignes.length > 0">
       <div class="card-header bg-white d-flex align-items-center">
         <i class="i-Bar-Chart me-2 text-success"></i>
-        <strong>Évolution des bénéfices</strong>
+        <strong>{{ 'BENEFITS.TITLE' | translate }} - Évolution</strong>
       </div>
       <div class="card-body" style="height:320px">
         <canvas #beneficeChart></canvas>
@@ -156,15 +156,15 @@
     <!-- TABLEAU DÉTAIL -->
     <div class="card shadow-sm" *ngIf="data.lignes.length > 0">
       <div class="card-header bg-white">
-        <strong><i class="i-File-Pie me-2 text-success"></i>Détail par période</strong>
+        <strong><i class="i-File-Pie me-2 text-success"></i>{{ 'COMMON.DETAILS' | translate }}</strong>
       </div>
       <div class="card-body p-0">
         <table class="table table-hover mb-0">
           <thead class="table-light">
             <tr>
-              <th>Période</th>
-              <th class="text-end">Bénéfice</th>
-              <th class="text-end">Ventes</th>
+              <th>{{ 'COMMON.DATE' | translate }}</th>
+              <th class="text-end">{{ 'BENEFITS.GROSS' | translate }}</th>
+              <th class="text-end">{{ 'SALES.TITLE' | translate }}</th>
             </tr>
           </thead>
           <tbody>
@@ -178,7 +178,7 @@
           </tbody>
           <tfoot class="table-light fw-bold">
             <tr>
-              <td>TOTAL</td>
+              <td>{{ 'BENEFITS.TOTAL' | translate }}</td>
               <td class="text-end text-success">{{ fmt(data.beneficeTotal) }}</td>
               <td class="text-end">{{ data.nombreVentes }}</td>
             </tr>
@@ -190,7 +190,7 @@
     <!-- Aucune donnée -->
     <div *ngIf="data.lignes.length === 0 && data.beneficeTotal === 0" class="text-center py-5">
       <i class="i-Money-2 fs-1 text-muted"></i>
-      <p class="text-muted mt-2">Aucune vente pour cette période</p>
+      <p class="text-muted mt-2">{{ 'PROMO.EMPTY' | translate }}</p>
     </div>
 
   </ng-container>

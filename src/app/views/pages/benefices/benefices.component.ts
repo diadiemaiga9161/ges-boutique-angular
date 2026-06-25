@@ -5,6 +5,7 @@ import { Chart, registerables } from 'chart.js';
 import { Subscription } from 'rxjs';
 import { BeneficeService, BeneficeData } from '../../../shared/services/benefice.service';
 import Swal from 'sweetalert2';
+import { TranslateModule } from '@ngx-translate/core';
 
 Chart.register(...registerables);
 
@@ -15,7 +16,7 @@ type Periode = 'JOURNALIER' | 'HEBDOMADAIRE' | 'MENSUEL' | 'ANNUEL';
   templateUrl: './benefices.component.html',
   styleUrls: ['./benefices.component.scss'],
   standalone: true,
-  imports: [CommonModule, FormsModule]
+  imports: [CommonModule, FormsModule, TranslateModule]
 })
 export class BeneficesComponent implements OnInit, OnDestroy {
 

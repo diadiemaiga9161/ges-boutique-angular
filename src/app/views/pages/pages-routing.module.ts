@@ -27,6 +27,7 @@ import { MobileMoneyComponent } from './mobile-money/mobile-money.component';
 import { FactureDesignComponent } from './facture-design/facture-design.component';
 import { PromotionsComponent } from './promotions/promotions.component';
 import { ReglementCreditsComponent } from './reglement-credits/reglement-credits.component';
+import { CommandesComponent } from './commandes/commandes.component';
 
 const routes: Routes = [
     {
@@ -131,6 +132,10 @@ const routes: Routes = [
     {
         path: 'reglement-credits',
         component: ReglementCreditsComponent
+    },
+    {
+        path: 'commandes',
+        component: CommandesComponent
     },
 ];
 

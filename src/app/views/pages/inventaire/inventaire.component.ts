@@ -9,14 +9,16 @@ import Swal from 'sweetalert2';
 import { InventaireService, MouvementStock, ProduitStock, StatistiquesInventaire, TypeMouvement, MouvementRequest, AjustementRequest } from '../../../shared/services/inventaire.service';
 import { ProductService, Produit, Categorie } from '../../../shared/services/product.service';
 import { AuthService } from '../../../shared/services/auth.service';
+import { ProduitNiveau, ProduitNiveauService } from '../../../shared/services/produit-niveau.service';
 import * as XLSX from 'xlsx';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-inventaire',
   templateUrl: './inventaire.component.html',
   styleUrls: ['./inventaire.component.scss'],
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule]
+  imports: [CommonModule, FormsModule, RouterModule, TranslateModule]
 })
 export class InventaireComponent implements OnInit {
   // Données
@@ -107,13 +109,21 @@ export class InventaireComponent implements OnInit {
   // Déclaration pour le template
   TypeMouvement = TypeMouvement;
 
+  // Niveaux conditionnement
+  niveauxMap: { [produitId: number]: ProduitNiveau[] } = {};
+  niveauxLoadingMap: { [produitId: number]: boolean } = {};
+  expandedProduitId: number | null = null;
+  searchNiveaux: string = '';
+  showNiveauxSection: boolean = false;
+
   private subscriptions: Subscription[] = [];
 
   constructor(
     private inventaireService: InventaireService,
     private productService: ProductService,
     private authService: AuthService,
-    private ws: WebSocketService
+    private ws: WebSocketService,
+    private niveauService: ProduitNiveauService
   ) {}
 
   ngOnInit(): void {
@@ -1103,5 +1113,50 @@ export class InventaireComponent implements OnInit {
       this.selectedProduitNom = '';
     }
     this.appliquerFiltres();
+  }
+
+  // ─── Niveaux conditionnement ──────────────────────────────────────────────
+
+  get produitsFiltresNiveaux(): Produit[] {
+    const term = this.searchNiveaux.toLowerCase().trim();
+    if (!term) return this.produits;
+    return this.produits.filter(p => p.nom.toLowerCase().includes(term));
+  }
+
+  toggleNiveaux(produit: Produit): void {
+    if (this.expandedProduitId === produit.id) {
+      this.expandedProduitId = null;
+      return;
+    }
+    this.expandedProduitId = produit.id;
+    if (!this.niveauxMap[produit.id]) {
+      this.niveauxLoadingMap[produit.id] = true;
+      this.niveauService.getNiveaux(produit.id).subscribe({
+        next: niveaux => {
+          this.niveauxMap[produit.id] = niveaux;
+          this.niveauxLoadingMap[produit.id] = false;
+        },
+        error: () => { this.niveauxLoadingMap[produit.id] = false; }
+      });
+    }
+  }
+
+  decomposerNiveau(niveau: ProduitNiveau, produit: Produit): void {
+    this.niveauService.decomposer(niveau.id!).subscribe({
+      next: res => {
+        this.niveauxMap[produit.id] = res.niveaux;
+        const idx = this.produits.findIndex(p => p.id === produit.id);
+        if (idx >= 0) this.produits[idx] = { ...this.produits[idx], quantite: res.produitQuantite };
+        Swal.fire({ icon: 'success', title: res.message || 'Décomposition effectuée', timer: 2000, showConfirmButton: false });
+      },
+      error: e => Swal.fire({ icon: 'error', title: 'Erreur', text: e.message || 'Décomposition impossible' })
+    });
+  }
+
+  niveauStockClass(n: ProduitNiveau): string {
+    const s = n.stock ?? 0;
+    if (s === 0) return 'badge bg-danger';
+    if (s <= 5) return 'badge bg-warning text-dark';
+    return 'badge bg-success';
   }
 }

@@ -4,22 +4,22 @@
     <div class="app-page-header-left">
       <div class="app-page-icon"><i class="fa fa-boxes"></i></div>
       <div>
-        <h1 class="app-page-title">Gestion de l'Inventaire</h1>
-        <p class="app-page-subtitle">Mouvements de stock entrants et sortants</p>
+        <h1 class="app-page-title">{{ 'INVENTORY.TITLE' | translate }}</h1>
+        <p class="app-page-subtitle">{{ 'INVENTORY.SUBTITLE' | translate }}</p>
       </div>
     </div>
     <div class="app-page-header-actions">
       <button class="btn btn-info text-white" (click)="openExportModal()">
-        <i class="fa fa-download me-1"></i> Exporter
+        <i class="fa fa-download me-1"></i> {{ 'COMMON.DOWNLOAD' | translate }}
       </button>
       <button class="btn btn-success" (click)="openEntreeModal()" *ngIf="isAdmin">
-        <i class="fa fa-plus-circle me-1"></i> Entrée Stock
+        <i class="fa fa-plus-circle me-1"></i> {{ 'INVENTORY.IN' | translate }}
       </button>
       <button class="btn btn-danger" (click)="openSortieModal()" *ngIf="isAdmin">
-        <i class="fa fa-minus-circle me-1"></i> Sortie Stock
+        <i class="fa fa-minus-circle me-1"></i> {{ 'INVENTORY.OUT' | translate }}
       </button>
       <button class="btn btn-warning text-white" (click)="openAjustementModal()" *ngIf="isAdmin">
-        <i class="fa fa-adjust me-1"></i> Ajuster Stock
+        <i class="fa fa-adjust me-1"></i> {{ 'INVENTORY.CORRECTION' | translate }}
       </button>
     </div>
   </div>
@@ -29,23 +29,23 @@
     <div class="col-12 d-flex flex-wrap gap-2 align-items-center justify-content-between">
       <div class="btn-group flex-wrap" role="group">
         <button type="button" class="btn btn-secondary" (click)="loadTousMouvements()">
-          <i class="fa fa-list me-1"></i> Tout afficher
+          <i class="fa fa-list me-1"></i> {{ 'COMMON.ALL' | translate }}
         </button>
         <button type="button" class="btn btn-outline-primary" (click)="chargerParPeriode('jour')">
-          <i class="fa fa-calendar-day me-1"></i> Aujourd'hui
+          <i class="fa fa-calendar-day me-1"></i> {{ 'SALES.TODAY' | translate }}
         </button>
         <button type="button" class="btn btn-outline-primary" (click)="chargerParPeriode('semaine')">
-          <i class="fa fa-calendar-week me-1"></i> Cette semaine
+          <i class="fa fa-calendar-week me-1"></i> {{ 'SALES.WEEK' | translate }}
         </button>
         <button type="button" class="btn btn-outline-primary" (click)="chargerParPeriode('mois')">
-          <i class="fa fa-calendar-alt me-1"></i> Ce mois
+          <i class="fa fa-calendar-alt me-1"></i> {{ 'SALES.MONTH' | translate }}
         </button>
         <button type="button" class="btn btn-outline-primary" (click)="chargerParPeriode('annee')">
-          <i class="fa fa-calendar-year me-1"></i> Cette année
+          <i class="fa fa-calendar-year me-1"></i> {{ 'BENEFITS.DAILY' | translate }} / Année
         </button>
       </div>
-      <button type="button" class="btn btn-outline-success" (click)="loadTousMouvements()" title="Actualiser la liste">
-        <i class="fa fa-sync-alt me-1"></i> Actualiser
+      <button type="button" class="btn btn-outline-success" (click)="loadTousMouvements()" [title]="'COMMON.REFRESH' | translate">
+        <i class="fa fa-sync-alt me-1"></i> {{ 'COMMON.REFRESH' | translate }}
       </button>
     </div>
   </div>
@@ -80,7 +80,7 @@
           <div class="card-body">
             <div class="d-flex justify-content-between align-items-center">
               <div>
-                <h6 class="text-muted mb-1">Stock faible</h6>
+                <h6 class="text-muted mb-1">{{ 'INVENTORY.LOW_STOCK' | translate }}</h6>
                 <h3 class="mb-0 text-warning">{{ statistiques.produitsStockFaible }}</h3>
               </div>
               <div class="rounded-circle bg-warning bg-opacity-10 p-3">
@@ -95,7 +95,7 @@
           <div class="card-body">
             <div class="d-flex justify-content-between align-items-center">
               <div>
-                <h6 class="text-muted mb-1">En rupture</h6>
+                <h6 class="text-muted mb-1">{{ 'PRODUCTS.OUT_OF_STOCK' | translate }}</h6>
                 <h3 class="mb-0 text-danger">{{ statistiques.produitsRupture }}</h3>
               </div>
               <div class="rounded-circle bg-danger bg-opacity-10 p-3">
@@ -110,7 +110,7 @@
           <div class="card-body">
             <div class="d-flex justify-content-between align-items-center">
               <div>
-                <h6 class="text-muted mb-1">Valeur totale</h6>
+                <h6 class="text-muted mb-1">{{ 'ACCOUNTS.BALANCE' | translate }}</h6>
                 <h3 class="mb-0 text-primary">{{ formatPrice(statistiques.valeurTotaleStock) }}</h3>
               </div>
               <div class="rounded-circle bg-primary bg-opacity-10 p-3">
@@ -125,7 +125,7 @@
           <div class="card-body">
             <div class="d-flex justify-content-between align-items-center">
               <div>
-                <h6 class="text-muted mb-1">Variation nette</h6>
+                <h6 class="text-muted mb-1">{{ 'INVENTORY.MOVEMENT' | translate }}</h6>
                 <h3 class="mb-0" 
                     [class.text-success]="statistiques.variationNet > 0"
                     [class.text-danger]="statistiques.variationNet < 0"
@@ -149,25 +149,25 @@
           <div class="card-header bg-warning text-white">
             <h5 class="mb-0">
               <i class="fa fa-exclamation-triangle me-2"></i>
-              Produits en stock faible ({{ produitsStockFaible.length }})
+              {{ 'INVENTORY.LOW_STOCK' | translate }} ({{ produitsStockFaible.length }})
             </h5>
           </div>
           <div class="card-body">
             <div *ngIf="produitsStockFaible.length === 0" class="text-center py-3 text-muted">
               <i class="fa fa-check-circle fa-3x mb-2 text-success"></i>
-              <p class="mb-0">Aucun produit en stock faible</p>
+              <p class="mb-0">{{ 'PRODUCTS.LOW_STOCK' | translate }}</p>
             </div>
             
             <div *ngIf="produitsStockFaible.length > 0" class="table-responsive">
               <table class="table table-hover">
                 <thead class="table-light">
                   <tr>
-                    <th>Produit</th>
-                    <th>Catégorie</th>
-                    <th class="text-end">Stock actuel</th>
-                    <th class="text-end">Seuil alerte</th>
-                    <th class="text-center">Statut</th>
-                    <th class="text-center">Actions</th>
+                    <th>{{ 'INVENTORY.PRODUCT' | translate }}</th>
+                    <th>{{ 'PRODUCTS.CATEGORY' | translate }}</th>
+                    <th class="text-end">{{ 'PRODUCTS.STOCK' | translate }}</th>
+                    <th class="text-end">{{ 'PRODUCTS.ALERT_THRESHOLD' | translate }}</th>
+                    <th class="text-center">{{ 'COMMON.STATUS' | translate }}</th>
+                    <th class="text-center">{{ 'COMMON.ACTIONS' | translate }}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -188,19 +188,19 @@
                     <td class="text-center">
                       <div class="d-flex gap-1 justify-content-center flex-wrap">
                         <button class="btn btn-sm btn-outline-success"
-                                title="Faire une entrée pour ce produit"
+                                [title]="'INVENTORY.IN' | translate"
                                 (click)="openEntreeModal(produit)">
-                          <i class="fa fa-plus me-1"></i> Entrée
+                          <i class="fa fa-plus me-1"></i> {{ 'INVENTORY.IN' | translate }}
                         </button>
                         <button class="btn btn-sm btn-outline-info"
-                                title="Voir l'historique du produit"
+                                [title]="'INVENTORY.HISTORY' | translate"
                                 (click)="openHistoriqueModal(produit)">
-                          <i class="fa fa-history me-1"></i> Historique
+                          <i class="fa fa-history me-1"></i> {{ 'INVENTORY.HISTORY' | translate }}
                         </button>
                         <button class="btn btn-sm btn-outline-warning"
-                                title="Ajuster le stock"
+                                [title]="'INVENTORY.CORRECTION' | translate"
                                 (click)="openAjustementModal(produit)">
-                          <i class="fa fa-adjust me-1"></i> Ajuster
+                          <i class="fa fa-adjust me-1"></i> {{ 'INVENTORY.CORRECTION' | translate }}
                         </button>
                       </div>
                     </td>
@@ -255,23 +255,23 @@
     <div class="card border-0 shadow-sm mb-4">
       <div class="card-header bg-white">
         <h5 class="mb-0">
-          <i class="fa fa-filter me-2"></i> Filtres
+          <i class="fa fa-filter me-2"></i> {{ 'COMMON.FILTER' | translate }}
         </h5>
       </div>
       <div class="card-body">
         <div class="row g-3">
           <div class="col-md-2">
-            <label class="form-label fw-semibold">Date de début</label>
+            <label class="form-label fw-semibold">{{ 'REPORTS.START_DATE' | translate }}</label>
             <input type="date" class="form-control" [(ngModel)]="dateDebut">
           </div>
           <div class="col-md-2">
-            <label class="form-label fw-semibold">Date de fin</label>
+            <label class="form-label fw-semibold">{{ 'REPORTS.END_DATE' | translate }}</label>
             <input type="date" class="form-control" [(ngModel)]="dateFin">
           </div>
           <div class="col-md-3">
-            <label class="form-label fw-semibold">Produit</label>
+            <label class="form-label fw-semibold">{{ 'INVENTORY.PRODUCT' | translate }}</label>
             <select class="form-select" [(ngModel)]="selectedProduitId" (change)="onProduitChange()">
-              <option [value]="null">Tous les produits</option>
+              <option [value]="null">{{ 'COMMON.ALL' | translate }}</option>
               <option *ngFor="let produit of produits" [value]="produit.id">
                 {{ produit.nom }} (Stock: {{ produit.quantite }})
               </option>
@@ -287,27 +287,27 @@
             </select>
           </div> -->
           <div class="col-md-3">
-            <label class="form-label fw-semibold">Type de mouvement</label>
+            <label class="form-label fw-semibold">{{ 'INVENTORY.MOVEMENT' | translate }}</label>
             <select class="form-select" [(ngModel)]="typeMouvementFilter" (change)="onFilterChange()">
-              <option [value]="null">Tous les types</option>
+              <option [value]="null">{{ 'COMMON.ALL' | translate }}</option>
               <option *ngFor="let type of getTypeMouvementOptions()" [value]="type">
                 {{ getTypeMouvementLabel(type) }}
               </option>
             </select>
           </div>
           <div class="col-md-10">
-            <label class="form-label fw-semibold">Recherche</label>
+            <label class="form-label fw-semibold">{{ 'COMMON.SEARCH' | translate }}</label>
             <div class="input-group">
-              <input type="text" class="form-control" placeholder="Rechercher par produit, motif ou utilisateur..." 
+              <input type="text" class="form-control" [placeholder]="'COMMON.SEARCH' | translate"
                      [(ngModel)]="searchTerm" (input)="onFilterChange()">
               <button class="btn btn-primary" type="button" (click)="rechercherMouvements()">
-                <i class="fa fa-search me-1"></i> Rechercher
+                <i class="fa fa-search me-1"></i> {{ 'COMMON.SEARCH' | translate }}
               </button>
             </div>
           </div>
           <div class="col-md-2 d-flex align-items-end">
             <button class="btn btn-outline-secondary w-100" type="button" (click)="resetFilters()">
-              <i class="fa fa-refresh me-1"></i> Réinitialiser
+              <i class="fa fa-refresh me-1"></i> {{ 'EXPENSES.RESET' | translate }}
             </button>
           </div>
         </div>
@@ -325,7 +325,7 @@
     <div class="card border-0 shadow-sm">
       <div class="card-header bg-white d-flex justify-content-between align-items-center flex-wrap gap-2">
         <h5 class="mb-0">
-          <i class="fa fa-list me-2"></i> Historique des mouvements
+          <i class="fa fa-list me-2"></i> {{ 'INVENTORY.HISTORY' | translate }}
         </h5>
         <div class="d-flex align-items-center gap-3">
           <span class="badge bg-secondary">{{ mouvementsFiltres.length }} mouvement(s)</span>
@@ -337,17 +337,17 @@
           <table class="table table-hover mb-0">
             <thead class="table-light">
               <tr>
-                <th style="min-width: 150px">Date</th>
-                <th style="min-width: 180px">Produit</th>
-                <th style="min-width: 100px">Catégorie</th>
-                <th style="min-width: 100px">Type</th>
-                <th class="text-end" style="min-width: 80px">Quantité</th>
+                <th style="min-width: 150px">{{ 'COMMON.DATE' | translate }}</th>
+                <th style="min-width: 180px">{{ 'INVENTORY.PRODUCT' | translate }}</th>
+                <th style="min-width: 100px">{{ 'PRODUCTS.CATEGORY' | translate }}</th>
+                <th style="min-width: 100px">{{ 'INVENTORY.MOVEMENT' | translate }}</th>
+                <th class="text-end" style="min-width: 80px">{{ 'INVENTORY.QUANTITY' | translate }}</th>
                 <th class="text-end" style="min-width: 80px">Avant</th>
                 <th class="text-end" style="min-width: 80px">Après</th>
                 <th class="text-end" style="min-width: 80px">Variation</th>
                 <th style="min-width: 120px">Utilisateur</th>
-                <th style="min-width: 150px">Motif</th>
-                <th class="text-center" style="min-width: 80px">Actions</th>
+                <th style="min-width: 150px">{{ 'INVENTORY.REASON' | translate }}</th>
+                <th class="text-center" style="min-width: 80px">{{ 'COMMON.ACTIONS' | translate }}</th>
               </tr>
             </thead>
             <tbody>
@@ -413,8 +413,8 @@
                 <td class="text-center">
                   <button class="btn btn-sm btn-outline-info"
                           (click)="openHistoriqueModal(mouvement.produit)"
-                          title="Voir l'historique du produit">
-                    <i class="fa fa-history"></i> Historique
+                          [title]="'INVENTORY.HISTORY' | translate">
+                    <i class="fa fa-history"></i> {{ 'INVENTORY.HISTORY' | translate }}
                   </button>
                 </td>
               </tr>
@@ -476,7 +476,7 @@
     <div class="modal-content">
       <div class="modal-header bg-success text-white">
         <h5 class="modal-title">
-          <i class="fa fa-plus-circle me-2"></i> Entrée de Stock
+          <i class="fa fa-plus-circle me-2"></i> {{ 'INVENTORY.IN' | translate }}
         </h5>
         <button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button>
       </div>
@@ -564,14 +564,14 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" (click)="closeAllModals()" [disabled]="isLoading">
-          Annuler
+          {{ 'COMMON.CANCEL' | translate }}
         </button>
         <button type="button" class="btn btn-success" (click)="enregistrerEntree()" [disabled]="isLoading || entreeForm.produitId === 0">
           <span *ngIf="!isLoading">
-            <i class="fa fa-save me-1"></i> Enregistrer
+            <i class="fa fa-save me-1"></i> {{ 'COMMON.SAVE' | translate }}
           </span>
           <span *ngIf="isLoading">
-            <span class="spinner-border spinner-border-sm me-1"></span> Enregistrement...
+            <span class="spinner-border spinner-border-sm me-1"></span> {{ 'COMMON.LOADING' | translate }}
           </span>
         </button>
       </div>
@@ -586,7 +586,7 @@
     <div class="modal-content">
       <div class="modal-header bg-danger text-white">
         <h5 class="modal-title">
-          <i class="fa fa-minus-circle me-2"></i> Sortie de Stock
+          <i class="fa fa-minus-circle me-2"></i> {{ 'INVENTORY.OUT' | translate }}
         </h5>
         <button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button>
       </div>
@@ -662,14 +662,14 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" (click)="closeAllModals()" [disabled]="isLoading">
-          Annuler
+          {{ 'COMMON.CANCEL' | translate }}
         </button>
         <button type="button" class="btn btn-danger" (click)="enregistrerSortie()" [disabled]="isLoading || sortieForm.produitId === 0">
           <span *ngIf="!isLoading">
-            <i class="fa fa-save me-1"></i> Enregistrer
+            <i class="fa fa-save me-1"></i> {{ 'COMMON.SAVE' | translate }}
           </span>
           <span *ngIf="isLoading">
-            <span class="spinner-border spinner-border-sm me-1"></span> Enregistrement...
+            <span class="spinner-border spinner-border-sm me-1"></span> {{ 'COMMON.LOADING' | translate }}
           </span>
         </button>
       </div>
@@ -684,7 +684,7 @@
     <div class="modal-content">
       <div class="modal-header bg-warning text-white">
         <h5 class="modal-title">
-          <i class="fa fa-adjust me-2"></i> Ajustement de Stock
+          <i class="fa fa-adjust me-2"></i> {{ 'INVENTORY.CORRECTION' | translate }}
         </h5>
         <button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button>
       </div>
@@ -790,7 +790,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" (click)="closeAllModals()" [disabled]="isLoading">
-          Annuler
+          {{ 'COMMON.CANCEL' | translate }}
         </button>
         <button type="button" class="btn btn-warning" (click)="ajusterStock()" [disabled]="isLoading || ajustementForm.produitId === 0">
           <span *ngIf="!isLoading">
@@ -812,7 +812,7 @@
     <div class="modal-content">
       <div class="modal-header bg-info text-white">
         <h5 class="modal-title">
-          <i class="fa fa-download me-2"></i> Exporter les mouvements
+          <i class="fa fa-download me-2"></i> {{ 'COMMON.DOWNLOAD' | translate }}
         </h5>
         <button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button>
       </div>
@@ -856,14 +856,14 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" (click)="closeAllModals()">
-          Annuler
+          {{ 'COMMON.CANCEL' | translate }}
         </button>
         <button type="button" class="btn btn-info text-white" (click)="exporterMouvements()" [disabled]="isLoading">
           <span *ngIf="!isLoading">
-            <i class="fa fa-download me-1"></i> Exporter
+            <i class="fa fa-download me-1"></i> {{ 'COMMON.DOWNLOAD' | translate }}
           </span>
           <span *ngIf="isLoading">
-            <span class="spinner-border spinner-border-sm me-1"></span> Export...
+            <span class="spinner-border spinner-border-sm me-1"></span> {{ 'COMMON.LOADING' | translate }}
           </span>
         </button>
       </div>
@@ -961,8 +961,63 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" (click)="closeAllModals()">
-          <i class="fa fa-times me-1"></i> Fermer
+          <i class="fa fa-times me-1"></i> {{ 'COMMON.CLOSE' | translate }}
         </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ SECTION NIVEAUX CONDITIONNEMENT ═══════════════════════ -->
+<div class="card mt-4">
+  <div class="card-header d-flex align-items-center justify-content-between" style="cursor:pointer"
+       (click)="showNiveauxSection = !showNiveauxSection">
+    <h6 class="mb-0"><i class="i-Box3 me-2"></i>Niveaux de conditionnement</h6>
+    <i class="i-Arrow-Down-2" [style.transform]="showNiveauxSection ? 'rotate(180deg)' : ''"></i>
+  </div>
+
+  <div *ngIf="showNiveauxSection" class="card-body">
+    <input type="text" class="form-control mb-3" placeholder="Rechercher un produit..."
+           [(ngModel)]="searchNiveaux">
+
+    <div *ngFor="let produit of produitsFiltresNiveaux" class="border rounded mb-2 overflow-hidden">
+      <!-- En-tête produit -->
+      <div class="d-flex align-items-center justify-content-between px-3 py-2 bg-light"
+           style="cursor:pointer" (click)="toggleNiveaux(produit)">
+        <div>
+          <strong>{{ produit.nom }}</strong>
+          <span class="badge bg-secondary ms-2">Stock: {{ produit.quantite }}</span>
+        </div>
+        <i class="i-Arrow-Down-2" [style.transform]="expandedProduitId === produit.id ? 'rotate(180deg)' : ''"></i>
+      </div>
+
+      <!-- Niveaux -->
+      <div *ngIf="expandedProduitId === produit.id" class="px-3 py-2">
+        <div *ngIf="niveauxLoadingMap[produit.id]" class="text-center py-2">
+          <div class="spinner-border spinner-border-sm text-primary"></div>
+        </div>
+
+        <ng-container *ngIf="!niveauxLoadingMap[produit.id]">
+          <p *ngIf="!niveauxMap[produit.id]?.length" class="text-muted small mb-0">
+            Aucun niveau de conditionnement pour ce produit.
+          </p>
+
+          <div *ngFor="let niveau of niveauxMap[produit.id]; let i = index"
+               class="d-flex align-items-center justify-content-between py-2 border-bottom">
+            <div class="d-flex align-items-center gap-2">
+              <span [class]="niveauStockClass(niveau)">{{ niveau.stock ?? 0 }}</span>
+              <span class="fw-semibold">{{ niveau.nom }}</span>
+              <small class="text-muted">
+                (1 {{ i === 0 ? produit.nom : niveauxMap[produit.id][i-1].nom }} = {{ niveau.facteur }} {{ niveau.nom }})
+              </small>
+            </div>
+            <button class="btn btn-sm btn-outline-primary"
+                    (click)="decomposerNiveau(niveau, produit)">
+              <i class="i-Scissors me-1"></i>
+              Prendre 1 {{ i === 0 ? produit.nom : niveauxMap[produit.id][i-1].nom }}
+            </button>
+          </div>
+        </ng-container>
       </div>
     </div>
   </div>

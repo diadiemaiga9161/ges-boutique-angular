@@ -4,19 +4,19 @@
     <div class="app-page-header-left">
       <div class="app-page-icon"><i class="fas fa-chart-line"></i></div>
       <div>
-        <h1 class="app-page-title">Tableau de Bord</h1>
-        <p class="app-page-subtitle">Vue d'ensemble de votre activité</p>
+        <h1 class="app-page-title">{{ 'REPORTS.TITLE' | translate }}</h1>
+        <p class="app-page-subtitle">{{ 'REPORTS.SUBTITLE' | translate }}</p>
       </div>
     </div>
     <div class="app-page-header-actions" *ngIf="isAdmin">
       <button class="btn btn-primary" (click)="genererRapportJour()">
-        <i class="fas fa-calendar-day me-1"></i> Aujourd'hui
+        <i class="fas fa-calendar-day me-1"></i> {{ 'REPORTS.DAILY' | translate }}
       </button>
       <button class="btn btn-success" (click)="genererRapportSemaine()">
-        <i class="fas fa-calendar-week me-1"></i> Cette semaine
+        <i class="fas fa-calendar-week me-1"></i> {{ 'REPORTS.WEEKLY' | translate }}
       </button>
       <button class="btn btn-info" (click)="genererRapportMois()">
-        <i class="fas fa-calendar-alt me-1"></i> Ce mois
+        <i class="fas fa-calendar-alt me-1"></i> {{ 'REPORTS.MONTHLY' | translate }}
       </button>
     </div>
   </div>

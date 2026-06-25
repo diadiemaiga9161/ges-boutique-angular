@@ -24,13 +24,16 @@ import {
 import { ProductService, Produit, RetourVenteRequest, RetourVente, Categorie } from '../../../shared/services/product.service';
 import { AuthService, User } from '../../../shared/services/auth.service';
 import { ClientService } from '../../../shared/services/client.service';
+import { DesignFacture, FactureDesignService } from '../../../shared/services/facture-design.service';
+import { ProduitNiveau, ProduitNiveauService } from '../../../shared/services/produit-niveau.service';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-ventes',
   templateUrl: './ventes.component.html',
   styleUrls: ['./ventes.component.scss'],
   standalone: true,
-  imports: [CommonModule, FormsModule]
+  imports: [CommonModule, FormsModule, TranslateModule]
 })
 export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('modalBackdrop') modalBackdrop!: ElementRef;
@@ -206,6 +209,7 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
   factureDateCustom: string = '';
   venteForFacture: VenteMap | null = null;
 
+  design: DesignFacture = 1;
   selectedVente: VenteMap | null = null;
   selectedCredit: VenteMap | null = null;
   creditDetailVente: VenteMap | null = null;
@@ -232,7 +236,17 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
     codeBarre?: string;
     modifierPrix: boolean;
     categorie?: Categorie;
+    niveauId?: number;
+    niveauNom?: string;
+    niveauPrixAchat?: number;
+    niveauFacteurTotal?: number;
   }> = [];
+
+  // Conditionnement niveaux
+  showNiveauModal: boolean = false;
+  produitEnAttente: Produit | null = null;
+  niveauxDisponibles: ProduitNiveau[] = [];
+  loadingNiveaux: boolean = false;
 
   searchProduit: string = '';
 
@@ -262,10 +276,13 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
     private elementRef: ElementRef,
     private cdr: ChangeDetectorRef,
     private clientService: ClientService,
-    private ws: WebSocketService
+    private ws: WebSocketService,
+    private designService: FactureDesignService,
+    private niveauService: ProduitNiveauService
   ) {}
 
   ngOnInit(): void {
+    this.design = this.designService.getDesign();
     this.loadData();
     this.loadProduits();
     this.loadCategories();
@@ -1235,6 +1252,67 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
       return;
     }
 
+    // Vérifier les niveaux de conditionnement (si fonctionnalité activée)
+    const conditionnementActif = localStorage.getItem('feat_conditionnement') === 'true';
+    if (!conditionnementActif) {
+      this.addProduitSansNiveau(produit);
+      return;
+    }
+
+    this.loadingNiveaux = true;
+    this.niveauService.getNiveaux(produit.id).subscribe({
+      next: niveaux => {
+        this.loadingNiveaux = false;
+        if (niveaux.length > 0) {
+          this.niveauxDisponibles = niveaux;
+          this.produitEnAttente = produit;
+          this.showNiveauModal = true;
+          this.cdr.detectChanges();
+        } else {
+          this.addProduitSansNiveau(produit);
+        }
+      },
+      error: () => {
+        this.loadingNiveaux = false;
+        this.addProduitSansNiveau(produit);
+      }
+    });
+  }
+
+  choisirNiveauPourVente(niveau: ProduitNiveau): void {
+    const produit = this.produitEnAttente;
+    if (!produit) return;
+    const facteurTotal = this.niveauService.calculerFacteurTotal(this.niveauxDisponibles, niveau.ordre);
+    this.showNiveauModal = false;
+    this.produitEnAttente = null;
+    this.addProduitAvecNiveau(produit, niveau, facteurTotal);
+  }
+
+  private addProduitAvecNiveau(produit: Produit, niveau: ProduitNiveau, facteurTotal: number): void {
+    const existingIndex = this.produitsPanier.findIndex(p => p.id === produit.id && p.niveauId === niveau.id);
+    if (existingIndex >= 0) {
+      this.produitsPanier[existingIndex].quantite++;
+      if (this.venteForm.lignes[existingIndex]) this.venteForm.lignes[existingIndex].quantite++;
+      if (this.creditForm.lignes[existingIndex]) this.creditForm.lignes[existingIndex].quantite++;
+      this.cdr.detectChanges();
+      return;
+    }
+
+    this.venteForm.lignes.push({ produitId: produit.id, quantite: 1, prixUnitaire: niveau.prixVente, niveauId: niveau.id, niveauNom: niveau.nom, prixAchat: niveau.prixAchat, niveauFacteur: facteurTotal });
+    this.creditForm.lignes.push({ produitId: produit.id, quantite: 1, prixUnitaire: niveau.prixVente, niveauId: niveau.id, niveauNom: niveau.nom, prixAchat: niveau.prixAchat, niveauFacteur: facteurTotal });
+    this.produitsPanier.push({
+      id: produit.id, nom: produit.nom,
+      prixAchat: niveau.prixAchat, prixVente: niveau.prixVente, prixModifie: niveau.prixVente,
+      quantite: 1, quantiteDisponible: produit.quantite,
+      codeBarre: produit.codeBarre, modifierPrix: false, categorie: produit.categorie,
+      niveauId: niveau.id, niveauNom: niveau.nom, niveauPrixAchat: niveau.prixAchat, niveauFacteurTotal: facteurTotal
+    });
+    this.searchProduit = '';
+    this.cdr.detectChanges();
+  }
+
+  addProduitSansNiveau(produit: Produit): void {
+
     const existingIndex = this.produitsPanier.findIndex(p => p.id === produit.id);
 
     if (existingIndex >= 0) {
@@ -1571,7 +1649,11 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
         quantite: Math.max(1, Number(produit.quantite) || 1),
         prixUnitaire: Number(prixUnitaire) || 0,
         remisePourcentage: remise?.type === RemiseType.POURCENTAGE ? remise.valeur : null,
-        remiseMontant: remise?.type === RemiseType.MONTANT_FIXE ? remise.valeur : null
+        remiseMontant: remise?.type === RemiseType.MONTANT_FIXE ? remise.valeur : null,
+        prixAchat: produit.niveauPrixAchat || null,
+        niveauId: produit.niveauId || null,
+        niveauNom: produit.niveauNom || null,
+        niveauFacteur: produit.niveauFacteurTotal || null
       };
     });
 

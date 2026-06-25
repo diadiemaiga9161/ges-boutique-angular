@@ -3,6 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UserService, User, UserUpdate } from '../../../shared/services/user.service';
+import { TranslateModule } from '@ngx-translate/core';
 
 export const COUNTRY_CODES = [
   { code: '+223', flag: '🇲🇱', name: 'Mali' },
@@ -46,7 +47,7 @@ import Swal from 'sweetalert2';
   selector: 'app-vendeur',
   templateUrl: './vendeur.component.html',
   styleUrls: ['./vendeur.component.scss'],
-  imports: [CommonModule, FormsModule]
+  imports: [CommonModule, FormsModule, TranslateModule]
 })
 export class VendeurComponent implements OnInit {
   // Liste des utilisateurs

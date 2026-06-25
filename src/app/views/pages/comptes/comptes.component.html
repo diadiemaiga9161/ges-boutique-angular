@@ -5,13 +5,13 @@
     <div class="app-page-header-left">
       <div class="app-page-icon"><i class="fa fa-university"></i></div>
       <div>
-        <h1 class="app-page-title">Gestion Bancaire</h1>
-        <p class="app-page-subtitle">Comptes bancaires et opérations</p>
+        <h1 class="app-page-title">{{ 'ACCOUNTS.TITLE' | translate }}</h1>
+        <p class="app-page-subtitle">{{ 'ACCOUNTS.SUBTITLE' | translate }}</p>
       </div>
     </div>
     <div class="app-page-header-actions">
       <button *ngIf="isAdmin()" class="btn btn-primary" (click)="openAddModal()">
-        <i class="fa fa-plus me-1"></i> Nouveau compte
+        <i class="fa fa-plus me-1"></i> {{ 'ACCOUNTS.NEW' | translate }}
       </button>
     </div>
   </div>
@@ -60,7 +60,7 @@
 
   <div *ngIf="!isLoading && comptes.length === 0" class="text-center py-5 text-muted">
     <i class="i-University" style="font-size:3rem"></i>
-    <p class="mt-2">Aucun compte bancaire enregistré</p>
+    <p class="mt-2">{{ 'ACCOUNTS.EMPTY' | translate }}</p>
     <button *ngIf="isAdmin()" class="btn btn-outline-primary" (click)="openAddModal()">Créer un compte</button>
   </div>
 

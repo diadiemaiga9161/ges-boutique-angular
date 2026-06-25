@@ -4,11 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { EmployeService, Employe, EmployeRequest } from '../../../shared/services/employe.service';
 import { AuthService } from '../../../shared/services/auth.service';
 import Swal from 'sweetalert2';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-employes',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslateModule],
   templateUrl: './employes.component.html',
   styleUrls: ['./employes.component.scss']
 })

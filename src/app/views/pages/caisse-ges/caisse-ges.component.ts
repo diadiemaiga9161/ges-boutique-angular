@@ -26,6 +26,7 @@ import {
 } from '../../../shared/services/caisse.service';
 import { AuthService, User } from '../../../shared/services/auth.service';
 import { CompteService, Compte } from '../../../shared/services/compte.service';
+import { TranslateModule } from '@ngx-translate/core';
 
 interface CaisseSession {
   dateOuverture: string;
@@ -41,7 +42,7 @@ interface CaisseSession {
 @Component({
   selector: 'app-caisse-ges',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslateModule],
   templateUrl: './caisse-ges.component.html'
 })
 export class CaisseGesComponent implements OnInit, OnDestroy {

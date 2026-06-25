@@ -5,8 +5,8 @@
     <div class="app-page-header-left">
       <div class="app-page-icon"><i class="fa fa-money"></i></div>
       <div>
-        <h1 class="app-page-title">Paiement des Employés</h1>
-        <p class="app-page-subtitle">Salaires et historique des paiements</p>
+        <h1 class="app-page-title">{{ 'EMPLOYEE_PAY.TITLE' | translate }}</h1>
+        <p class="app-page-subtitle">{{ 'EMPLOYEE_PAY.SUBTITLE' | translate }}</p>
       </div>
     </div>
     <div class="app-page-header-actions">
@@ -148,7 +148,7 @@
             </td>
           </tr>
           <tr *ngIf="paiementsFiltres.length === 0">
-            <td colspan="9" class="text-center text-muted py-4">Aucun paiement trouvé.</td>
+            <td colspan="9" class="text-center text-muted py-4">{{ 'EMPLOYEE_PAY.EMPTY' | translate }}</td>
           </tr>
         </tbody>
       </table>

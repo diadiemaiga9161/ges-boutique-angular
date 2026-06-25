@@ -15,6 +15,7 @@ import {
 } from '../../../shared/services/rapport.service';
 import { AuthService } from '../../../shared/services/auth.service';
 import { CaisseService, CreditInfo, SituationCredits } from '../../../shared/services/caisse.service';
+import { TranslateModule } from '@ngx-translate/core';
 
 Chart.register(...registerables);
 
@@ -23,7 +24,7 @@ Chart.register(...registerables);
   templateUrl: './rapports.component.html',
   styleUrls: ['./rapports.component.scss'],
   standalone: true,
-  imports: [CommonModule, FormsModule]
+  imports: [CommonModule, FormsModule, TranslateModule]
 })
 export class RapportsComponent implements OnInit, OnDestroy, AfterViewInit {
   
