@@ -1,0 +1,227 @@
+.promo-form-card {
+  border: 1.5px solid #e2e8f0;
+  border-radius: 16px;
+}
+
+.promo-card {
+  border-radius: 16px;
+  border: 1.5px solid #e2e8f0;
+  transition: box-shadow 0.2s, transform 0.2s;
+
+  &:hover {
+    box-shadow: 0 8px 24px rgba(0,0,0,0.1) !important;
+    transform: translateY(-2px);
+  }
+
+  &.promo-expired {
+    opacity: 0.65;
+  }
+}
+
+.promo-titre {
+  font-size: 1rem;
+  color: #1e293b;
+  max-width: 65%;
+  word-break: break-word;
+}
+
+.promo-reduction-badge {
+  display: inline-flex;
+  align-items: center;
+  background: linear-gradient(135deg, #16a34a, #22c55e);
+  color: white;
+  font-weight: 700;
+  font-size: 0.92rem;
+  padding: 5px 14px;
+  border-radius: 20px;
+}
+
+.promo-dates {
+  font-size: 0.82rem;
+}
+
+// Modal WhatsApp
+.modal-backdrop-custom {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1040;
+}
+
+.modal-whatsapp {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+  padding: 1rem;
+
+  .modal-dialog {
+    margin: 0;
+    width: 100%;
+    max-width: 620px;
+    max-height: calc(100dvh - 2rem);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .modal-content {
+    max-height: calc(100dvh - 2rem);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: 16px;
+  }
+
+  .modal-header.bg-success {
+    flex-shrink: 0;
+    background: linear-gradient(135deg, #16a34a, #22c55e) !important;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .modal-body {
+    flex: 1 1 auto;
+    overflow-y: auto;
+  }
+
+  .modal-footer {
+    flex-shrink: 0;
+  }
+}
+
+// Bulle WhatsApp
+.whatsapp-preview {
+  background: #f0fdf4;
+  border-radius: 12px;
+  padding: 12px;
+  border: 1px solid #bbf7d0;
+}
+
+.whatsapp-bubble {
+  background: #dcfce7;
+  border-radius: 12px 12px 12px 0;
+  padding: 12px 16px;
+  white-space: pre-line;
+  font-size: 0.88rem;
+  color: #14532d;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+// Stats mini
+.stat-mini {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 10px 8px;
+  border: 1.5px solid #e2e8f0;
+
+  .stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1e293b;
+  }
+
+  .stat-label {
+    font-size: 0.75rem;
+    color: #64748b;
+  }
+
+  &.stat-green { border-color: #bbf7d0; .stat-value { color: #16a34a; } }
+  &.stat-orange { border-color: #fed7aa; .stat-value { color: #ea580c; } }
+}
+
+// Liste clients WhatsApp
+.clients-wa-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.client-wa-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  gap: 8px;
+}
+
+.client-wa-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.client-wa-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #16a34a, #22c55e);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.client-wa-nom {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.client-wa-tel {
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+.wa-send-btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+  background: #25D366;
+  border-color: #25D366;
+
+  &:hover {
+    background: #128C7E;
+    border-color: #128C7E;
+  }
+}
+
+// Responsive
+@media (max-width: 576px) {
+  .modal-whatsapp {
+    padding: 0.5rem;
+
+    .modal-dialog {
+      max-width: 100%;
+      max-height: calc(100dvh - 1rem);
+    }
+
+    .modal-content {
+      max-height: calc(100dvh - 1rem);
+      border-radius: 12px;
+    }
+  }
+
+  .client-wa-item {
+    flex-direction: column;
+    align-items: flex-start;
+
+    .wa-send-btn {
+      width: 100%;
+      text-align: center;
+    }
+  }
+
+  .promo-card .card-footer .d-flex {
+    .btn { flex: 1 1 auto; }
+  }
+}
