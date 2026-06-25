@@ -48,210 +48,40 @@ export class NavigationService {
     selectedItem: IMenuItem;
 
     private vendeurMenu: IMenuItem[] = [
-        {
-            name: 'Produit',
-            description: 'Parcourir les produits de votre boutique',
-            type: 'link',
-            icon: 'i-Clothing-Store',
-            state: '/pages/produit'
-        },
-        {
-            name: 'Vente',
-            description: 'Accéder au point de vente',
-            type: 'link',
-            icon: 'i-Money-2',
-            state: '/pages/vente'
-        },
-        {
-            name: 'Profil',
-            description: 'Gérer votre profil vendeur',
-            type: 'link',
-            icon: 'i-Administrator',
-            state: '/pages/profile'
-        },
-           {
-            name: 'Clients',
-            description: 'Gérer les comptes vendeurs',
-            type: 'link',
-            icon: 'i-Business-ManWoman',
-            state: '/pages/client'
-        },
+        { name: 'NAV.PRODUCTS',        type: 'link', icon: 'i-Clothing-Store',   state: '/pages/produit' },
+        { name: 'NAV.SALES',           type: 'link', icon: 'i-Money-2',           state: '/pages/vente' },
+        { name: 'NAV.CREDIT_PAYMENT',  type: 'link', icon: 'i-Credit-Card',       state: '/pages/reglement-credits' },
+        { name: 'NAV.PROFILE',         type: 'link', icon: 'i-Administrator',     state: '/pages/profile' },
+        { name: 'NAV.CLIENTS',         type: 'link', icon: 'i-Business-ManWoman', state: '/pages/client' },
     ];
 
     private adminMenu: IMenuItem[] = [
-        {
-            name: 'Produit',
-            description: 'Parcourir les produits de la boutique',
-            type: 'link',
-            icon: 'i-Clothing-Store',
-            state: '/pages/produit'
-        },
-        {
-            name: 'Rapport',
-            description: 'Voir les rapports détaillés',
-            type: 'link',
-            icon: 'i-Receipt-4',
-            state: '/pages/rapport'
-        },
-        {
-            name: 'Bénéfices',
-            description: 'Voir les bénéfices par période',
-            type: 'link',
-            icon: 'i-Money-2',
-            state: '/pages/benefices'
-        },
-        {
-            name: 'Transferts',
-            description: 'Transférer des produits entre boutiques',
-            type: 'link',
-            icon: 'i-Arrow-Right',
-            state: '/pages/transferts'
-        },
-        {
-            name: 'Vente',
-            description: 'Accéder au point de vente',
-            type: 'link',
-            icon: 'i-Money-2',
-            state: '/pages/vente'
-        },
-         {
-            name: 'Factures',
-            description: 'Consulter et gérer le stock',
-            type: 'link',
-            icon: 'i-Receipt-3',
-            state: '/pages/facture'
-        },
-        {
-            name: 'Caisse',
-            description: 'Gérer la caisse et les paiements',
-            type: 'link',
-            icon: 'i-Cash-register-2',
-            state: '/pages/caisse'
-        },
-        {
-            name: 'Inventaire',
-            description: 'Consulter et gérer le stock',
-            type: 'link',
-            icon: 'i-Bar-Chart',
-            state: '/pages/inventaire'
-        },
-        {
-            name: 'Vendeurs',
-            description: 'Gérer les comptes vendeurs',
-            type: 'link',
-            icon: 'i-Administrator',
-            state: '/pages/vendeur'
-        },
-
-        {
-            name: 'Clients',
-            description: 'Gérer les comptes vendeurs',
-            type: 'link',
-            icon: 'i-Business-ManWoman',
-            state: '/pages/client'
-        },
-        {
-            name: 'Dettes',
-            description: 'Gérer les dettes des clients',
-            type: 'link',
-            icon: 'i-Money-2',
-            state: '/pages/dettes'
-        },
-
-        {
-            name: 'Banque',
-            description: 'Gérer les comptes bancaires',
-            type: 'link',
-            icon: 'i-University',
-            state: '/pages/comptes'
-        },
-        {
-            name: 'Boutique',
-            description: 'Paramètres de la boutique',
-            type: 'link',
-            icon: 'i-Shop-2',
-            state: '/pages/boutique'
-        },
-
-       
-        {
-            name: 'Employés',
-            description: 'Gérer les employés',
-            type: 'link',
-            icon: 'i-Business-Man',
-            state: '/pages/employes'
-        },
-        {
-            name: 'Paiement Employés',
-            description: 'Payer les salaires des employés',
-            type: 'link',
-            icon: 'i-Money-Bag',
-            state: '/pages/paiement-employe'
-        },
-        {
-            name: 'Dépôts Garde',
-            description: 'Argent confié par des tiers pour garde',
-            type: 'link',
-            icon: 'i-Safe-Box',
-            state: '/pages/depot-garde'
-        },
-        {
-            name: 'Objectifs Fournisseurs',
-            description: 'Suivi quantités et bonus par objectif mensuel',
-            type: 'link',
-            icon: 'i-Target',
-            state: '/pages/objectif-fournisseur'
-        },
-        {
-            name: 'Bonus Fournisseurs',
-            description: 'Ristournes, bonus volume, primes objectif',
-            type: 'link',
-            icon: 'i-Gift-Box',
-            state: '/pages/bonus-fournisseurs'
-        },
-        {
-            name: 'Dépenses',
-            description: 'Enregistrer les dépenses de la boutique',
-            type: 'link',
-            icon: 'i-Billing',
-            state: '/pages/depenses'
-        },
-        {
-            name: 'Résultat Net',
-            description: 'Bénéfices + Bonus − Dépenses = Gain ou Perte',
-            type: 'link',
-            icon: 'i-Line-Chart',
-            state: '/pages/resultat-net'
-        },
-        {
-            name: 'Fournisseurs',
-            description: 'Gestion des fournisseurs, achats et situation',
-            type: 'link',
-            icon: 'i-Business-Man',
-            state: '/pages/fournisseurs'
-        },
-        {
-            name: 'Mobile Money',
-            description: 'Suivi Orange Money, Moov Money et Wave',
-            type: 'link',
-            icon: 'i-Money-Bag',
-            state: '/pages/mobile-money'
-        },
-        {
-            name: 'Design Factures',
-            description: 'Choisir le style visuel des factures (3 templates)',
-            type: 'link',
-            icon: 'i-Pen-2',
-            state: '/pages/facture-design'
-        },
-         {
-            name: 'Profil',
-            description: 'Mon profil et paramètres',
-            type: 'link',
-            icon: 'i-Administrator',
-            state: '/pages/profile'
-        },
-
+        { name: 'NAV.PRODUCTS',      type: 'link', icon: 'i-Clothing-Store',   state: '/pages/produit' },
+        { name: 'NAV.REPORT',        type: 'link', icon: 'i-Receipt-4',         state: '/pages/rapport' },
+        { name: 'NAV.BENEFITS',      type: 'link', icon: 'i-Money-2',           state: '/pages/benefices' },
+        { name: 'NAV.TRANSFERS',     type: 'link', icon: 'i-Arrow-Right',       state: '/pages/transferts' },
+        { name: 'NAV.SALES',         type: 'link', icon: 'i-Money-2',           state: '/pages/vente' },
+        { name: 'NAV.INVOICES',      type: 'link', icon: 'i-Receipt-3',         state: '/pages/facture' },
+        { name: 'NAV.CAISSE',        type: 'link', icon: 'i-Cash-register-2',   state: '/pages/caisse' },
+        { name: 'NAV.CREDIT_PAYMENT',type: 'link', icon: 'i-Credit-Card',       state: '/pages/reglement-credits' },
+        { name: 'NAV.INVENTORY',     type: 'link', icon: 'i-Bar-Chart',         state: '/pages/inventaire' },
+        { name: 'NAV.SELLERS',       type: 'link', icon: 'i-Administrator',     state: '/pages/vendeur' },
+        { name: 'NAV.CLIENTS',       type: 'link', icon: 'i-Business-ManWoman', state: '/pages/client' },
+        { name: 'NAV.DEBTS',         type: 'link', icon: 'i-Money-2',           state: '/pages/dettes' },
+        { name: 'NAV.BANK',          type: 'link', icon: 'i-University',        state: '/pages/comptes' },
+        { name: 'NAV.SHOP',          type: 'link', icon: 'i-Shop-2',            state: '/pages/boutique' },
+        { name: 'NAV.EMPLOYEES',     type: 'link', icon: 'i-Business-Man',      state: '/pages/employes' },
+        { name: 'NAV.EMPLOYEE_PAY',  type: 'link', icon: 'i-Money-Bag',         state: '/pages/paiement-employe' },
+        { name: 'NAV.SAFE',          type: 'link', icon: 'i-Safe-Box',          state: '/pages/depot-garde' },
+        { name: 'NAV.SUPPLIER_OBJ',  type: 'link', icon: 'i-Target',            state: '/pages/objectif-fournisseur' },
+        { name: 'NAV.SUPPLIER_BONUS',type: 'link', icon: 'i-Gift-Box',          state: '/pages/bonus-fournisseurs' },
+        { name: 'NAV.EXPENSES',      type: 'link', icon: 'i-Billing',           state: '/pages/depenses' },
+        { name: 'NAV.NET_RESULT',    type: 'link', icon: 'i-Line-Chart',        state: '/pages/resultat-net' },
+        { name: 'NAV.SUPPLIERS',     type: 'link', icon: 'i-Business-Man',      state: '/pages/fournisseurs' },
+        { name: 'NAV.MOBILE_MONEY',  type: 'link', icon: 'i-Money-Bag',         state: '/pages/mobile-money' },
+        { name: 'NAV.INVOICE_DESIGN',type: 'link', icon: 'i-Pen-2',             state: '/pages/facture-design' },
+        // { name: 'NAV.PROMO',         type: 'link', icon: 'i-Tag-2',             state: '/pages/promotions' }, // PROMOTIONS désactivées sur web — gérer depuis l'app mobile
+        { name: 'NAV.PROFILE',       type: 'link', icon: 'i-Administrator',     state: '/pages/profile' },
     ];
 
     menuItems = new BehaviorSubject<IMenuItem[]>([]);

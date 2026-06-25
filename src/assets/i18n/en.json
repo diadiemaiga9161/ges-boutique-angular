@@ -38,7 +38,15 @@
   "NAV": {
     "PRODUCTS": "Products", "SALES": "Sales", "CLIENTS": "Clients",
     "CAISSE": "Cash Register", "INVENTORY": "Inventory", "REPORTS": "Reports",
-    "PROFILE": "Profile", "MORE": "More"
+    "PROFILE": "Profile", "MORE": "More", "BENEFITS": "Benefits",
+    "TRANSFERS": "Transfers", "INVOICES": "Invoices", "SELLERS": "Sellers",
+    "DEBTS": "Debts", "BANK": "Bank", "SHOP": "Shop", "EMPLOYEES": "Employees",
+    "EMPLOYEE_PAY": "Employee Pay", "SAFE": "Safe Deposits",
+    "SUPPLIER_OBJ": "Supplier Targets", "SUPPLIER_BONUS": "Supplier Bonuses",
+    "EXPENSES": "Expenses", "NET_RESULT": "Net Result", "SUPPLIERS": "Suppliers",
+    "MOBILE_MONEY": "Mobile Money", "INVOICE_DESIGN": "Invoice Design",
+    "REPORT": "Report", "PROMO": "Promotions", "CREDIT_PAYMENT": "Credit Settlement",
+    "NOTIFICATIONS": "Notifications"
   },
   "PROFILE": {
     "TITLE": "My Profile", "FULL_NAME": "Full name", "EMAIL": "Email",
@@ -100,5 +108,114 @@
   "FORGOT_PASSWORD": {
     "TITLE": "Forgot password", "EMAIL_LABEL": "Email address",
     "SUBMIT": "Send reset link", "BACK": "Back to login"
+  },
+  "EXPENSES": {
+    "TITLE": "Expenses", "SUBTITLE": "Automatic cash deduction",
+    "NEW": "New expense", "EDIT": "Edit expense",
+    "NAME": "Expense name", "REASON": "Reason / Description",
+    "TOTAL": "Total expenses", "PERIOD_TOTAL": "Period total",
+    "EMPTY": "No expenses recorded", "RESET": "Reset",
+    "ADJUST_INFO": "Cash will be adjusted automatically",
+    "DEDUCT_INFO": "Amount will be automatically deducted from cash"
+  },
+  "SELLERS": {
+    "TITLE": "User Management", "SUBTITLE": "Administrators, sellers and access",
+    "TOTAL_USERS": "Total Users", "ADMINS": "Administrators",
+    "SELLERS": "Sellers", "ACTIVE": "Active", "NEW": "New seller",
+    "EMPTY": "No users registered", "ROLE": "Role",
+    "COUNTRY_CODE": "Country code", "ACTIVATE": "Activate", "DEACTIVATE": "Deactivate"
+  },
+  "DEBTS": {
+    "TITLE": "Old Debts", "SUBTITLE": "Management of prior receivables",
+    "NEW": "New debt", "CREDITOR": "Creditor", "PAID": "Paid",
+    "REMAINING": "Remaining", "PAID_STATUS": "Paid", "PARTIAL": "Partial",
+    "PENDING": "Pending", "SETTLE": "Settle", "EMPTY": "No debts recorded"
+  },
+  "ACCOUNTS": {
+    "TITLE": "Bank Accounts", "SUBTITLE": "Manage your bank treasury",
+    "NEW": "New account", "NAME": "Account name", "BALANCE": "Balance",
+    "DEPOSIT": "Deposit", "WITHDRAW": "Withdrawal", "HISTORY": "History",
+    "EMPTY": "No accounts registered"
+  },
+  "EMPLOYEES": {
+    "TITLE": "Employees", "SUBTITLE": "Staff management",
+    "NEW": "New employee", "NAME": "Name", "POST": "Position",
+    "SALARY": "Salary", "START_DATE": "Hire date",
+    "ACTIVE": "Active", "INACTIVE": "Inactive", "EMPTY": "No employees registered"
+  },
+  "EMPLOYEE_PAY": {
+    "TITLE": "Employee Payroll", "SUBTITLE": "Salaries and advances",
+    "PAY": "Pay", "ADVANCE": "Advance", "SALARY": "Salary",
+    "MONTH": "Month", "PAID": "Paid", "PENDING": "Pending",
+    "HISTORY": "Payment history", "EMPTY": "No payments recorded"
+  },
+  "SAFE": {
+    "TITLE": "Safe Deposits", "SUBTITLE": "Goods deposit management",
+    "NEW": "New deposit", "DEPOSITOR": "Depositor", "PRODUCT": "Product",
+    "QUANTITY": "Quantity", "ACTIVE": "Active", "RETURNED": "Returned",
+    "EMPTY": "No deposits recorded"
+  },
+  "SUPPLIER_OBJ": {
+    "TITLE": "Supplier Targets", "SUBTITLE": "Purchase target tracking",
+    "NEW": "New target", "SUPPLIER": "Supplier", "TARGET": "Target",
+    "ACHIEVED": "Achieved", "PROGRESS": "Progress", "EMPTY": "No targets defined"
+  },
+  "SUPPLIERS": {
+    "TITLE": "Suppliers", "SUBTITLE": "Manage your suppliers",
+    "NEW": "New supplier", "NAME": "Name", "PHONE": "Phone",
+    "ADDRESS": "Address", "EMPTY": "No suppliers registered"
+  },
+  "BENEFITS": {
+    "TITLE": "Benefits", "SUBTITLE": "Profit analysis",
+    "GROSS": "Gross profit", "NET": "Net profit",
+    "EXPENSES": "Expenses", "DAILY": "Daily", "MONTHLY": "Monthly", "TOTAL": "Total"
+  },
+  "TRANSFERS": {
+    "TITLE": "Transfers", "SUBTITLE": "Money transfer management",
+    "NEW": "New transfer", "FROM": "From", "TO": "To",
+    "TYPE": "Type", "EMPTY": "No transfers recorded"
+  },
+  "SUPPLIER_BONUS": {
+    "TITLE": "Supplier Bonuses", "SUBTITLE": "Supplier advantages and discounts",
+    "NEW": "New bonus", "SUPPLIER": "Supplier",
+    "TYPE": "Type", "VALUE": "Value", "EMPTY": "No bonuses recorded"
+  },
+  "NET_RESULT": {
+    "TITLE": "Net Result", "SUBTITLE": "Full financial analysis",
+    "REVENUE": "Revenue", "COST": "Cost of goods",
+    "GROSS": "Gross margin", "EXPENSES": "Expenses", "NET": "Net result"
+  },
+  "MOBILE_MONEY": {
+    "TITLE": "Mobile Money", "SUBTITLE": "Orange, Moov, Wave",
+    "OPERATIONS": "Operations", "SUMMARY": "Summary",
+    "DOWNLOAD": "Download", "ALL": "All", "EXPORT_CSV": "Export CSV"
+  },
+  "INVOICE_DESIGN": {
+    "TITLE": "Invoice Design", "SUBTITLE": "Choose your invoice template",
+    "CLASSIC": "Classic", "CLASSIC_DESC": "Blue header, professional style",
+    "MODERN": "Modern", "MODERN_DESC": "Dark and elegant design",
+    "MINIMAL": "Minimalist", "MINIMAL_DESC": "Clean and simple",
+    "SELECTED": "Selected", "SELECT": "Choose"
+  },
+  "INVOICES": {
+    "TITLE": "Invoices", "SUBTITLE": "Your invoice history",
+    "NUMBER": "Invoice #", "CLIENT": "Client", "PAYMENT": "Payment",
+    "DESIGN": "Design", "PRINT": "Print", "DOWNLOAD_PDF": "Download PDF",
+    "EMPTY": "No invoices", "DETAIL": "Invoice detail"
+  },
+  "PROMO": {
+    "TITLE": "Promotions", "SUBTITLE": "Manage your offers and notify clients via WhatsApp",
+    "NEW": "New promotion", "NAME": "Title", "DESC": "Description",
+    "START": "Start date", "END": "End date", "TYPE": "Discount type",
+    "PERCENT": "Percentage (%)", "FIXED": "Fixed amount (FCFA)", "VALUE": "Value",
+    "ACTIVE": "Active", "WHATSAPP": "Send WhatsApp",
+    "STATUS_ACTIVE": "Active", "STATUS_UPCOMING": "Upcoming",
+    "STATUS_EXPIRED": "Expired", "STATUS_INACTIVE": "Inactive", "EMPTY": "No promotions",
+    "PREVIEW": "Message preview:", "TOTAL_CLIENTS": "Total clients",
+    "WITH_PHONE": "With number", "WITHOUT_PHONE": "No number", "SEND": "Send"
+  },
+  "BOUTIQUE_SETTINGS": {
+    "TITLE": "Shop Settings", "SUBTITLE": "Information and configuration",
+    "NAME": "Shop name", "ADDRESS": "Address", "PHONE": "Phone", "LOGO": "Logo"
   }
 }

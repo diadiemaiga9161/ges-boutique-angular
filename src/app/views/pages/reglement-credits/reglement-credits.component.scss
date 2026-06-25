@@ -1,0 +1,154 @@
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: #fff;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  border: 1px solid #e8eef8;
+  box-shadow: 0 1px 4px rgba(8,22,72,.06);
+}
+.stat-icon {
+  width: 48px; height: 48px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem; flex-shrink: 0;
+}
+.bg-primary-soft { background: #eff6ff; }
+.bg-warning-soft { background: #fffbeb; }
+.bg-danger-soft  { background: #fef2f2; }
+.stat-value { font-size: 1.25rem; font-weight: 800; color: #0f172a; }
+.stat-label { font-size: .75rem; color: #94a3b8; }
+
+.credit-card {
+  background: #fff;
+  border: 1px solid #e8eef8;
+  border-radius: 12px;
+  margin-bottom: .75rem;
+  overflow: hidden;
+  transition: box-shadow .2s;
+  &:hover { box-shadow: 0 4px 16px rgba(8,22,72,.10); }
+}
+
+.credit-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: .875rem 1rem;
+  cursor: pointer;
+}
+
+.credit-client {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  min-width: 200px;
+}
+.credit-avatar {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: linear-gradient(135deg,#081648,#1a56db);
+  color: #fff; font-size: .9rem; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.credit-nom { font-weight: 700; color: #0f172a; font-size: .9rem; }
+.credit-tel { font-size: .75rem; color: #94a3b8; }
+
+.credit-info-center {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .375rem;
+}
+
+.credit-montants {
+  text-align: right;
+  min-width: 180px;
+}
+.montant-restant { font-size: 1.1rem; font-weight: 800; color: #ef4444; }
+.montant-sub { font-size: .75rem; color: #94a3b8; }
+.credit-dates { margin-top: .2rem; }
+
+.credit-actions {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.credit-progress { margin-top: -1px; }
+
+.credit-produits {
+  border-top: 1px solid #f1f5f9;
+  background: #f8fafc;
+  padding: 1rem;
+}
+
+.produits-header {
+  margin-bottom: .75rem;
+  padding-bottom: .5rem;
+  border-bottom: 1px solid #e8eef8;
+}
+
+.credit-summary-row {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  margin-top: .75rem;
+  padding: .625rem .75rem;
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid #e8eef8;
+  font-size: .8rem;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 4rem 1rem;
+  color: #94a3b8;
+}
+
+// Modal panneau
+.modal-backdrop-custom {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.4);
+  z-index: 1040;
+}
+.modal-panel {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  background: #fff;
+  border-radius: 16px;
+  width: 480px;
+  max-width: 95vw;
+  z-index: 1050;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(8,22,72,.2);
+}
+.modal-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+.modal-panel-body {
+  padding: 1.25rem 1.5rem;
+  overflow-y: auto;
+  max-height: 60vh;
+}
+.modal-panel-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: .5rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.credit-resume-box {
+  background: #f8fafc;
+  border: 1px solid #e8eef8;
+  border-radius: 10px;
+  padding: .875rem 1rem;
+}

@@ -1,112 +1,35 @@
 {
-  "LANG": {
-    "SELECT": "Kan sugandi",
-    "CURRENT": "Bamanakan"
-  },
-  "LOGIN": {
-    "TITLE": "Bɔ ka don",
-    "IDENTIFIER": "Mail, Telefɔni walima Tɔgɔ",
-    "PASSWORD": "Gundo",
-    "SUBMIT": "Don",
-    "FORGOT_PASSWORD": "Gundo dɔn te i la wa?",
-    "IDENTIFIER_PLACEHOLDER": "I ka mail, telefɔni walima tɔgɔ sɛbɛn",
-    "PASSWORD_PLACEHOLDER": "I ka gundo sɛbɛn"
-  },
-  "COMMON": {
-    "SAVE": "Mara",
-    "CANCEL": "Bali",
-    "DELETE": "Jɔsi",
-    "EDIT": "Yɛlɛma",
-    "ADD": "Fara",
-    "SEARCH": "Ɲini",
-    "LOADING": "Jateminɛ...",
-    "ERROR": "Fili",
-    "SUCCESS": "Ɲɛ",
-    "CONFIRM": "Tiɲɛ",
-    "CLOSE": "Datugu",
-    "YES": "Ɔwɔ",
-    "NO": "Ayi",
-    "TOTAL": "Bɛɛ lajɛlen",
-    "DATE": "Don",
-    "AMOUNT": "Wari hakɛ",
-    "ACTIONS": "Kɛtaw"
-  },
-  "NAV": {
-    "HOME": "Sɔrɔ",
-    "PRODUCTS": "Fɛnw",
-    "SALES": "Feere",
-    "CLIENTS": "Kɔlɔsiliw",
-    "CAISSE": "Caisse",
-    "INVENTORY": "Cogoya",
-    "REPORTS": "Sɛbɛn kura",
-    "NOTIFICATIONS": "Lajɛlen",
-    "PROFILE": "I ka baara",
-    "SETTINGS": "Sɛtigi"
-  },
-  "PROFILE": {
-    "TITLE": "I ka baara",
-    "NAME": "Tɔgɔ",
-    "EMAIL": "Mail",
-    "PHONE": "Telefɔni",
-    "COUNTRY_CODE": "Dugukolo code",
-    "SAVE": "Mara",
-    "LANGUAGE": "Kan"
-  },
-  "PRODUCTS": {
-    "TITLE": "Fɛnw",
-    "ADD": "Fɛn dɔ fara",
-    "NAME": "Fɛn tɔgɔ",
-    "PRICE": "Fɛn dama",
-    "STOCK": "Fɛn hakɛ",
-    "CATEGORY": "Hakɛ"
-  },
-  "SALES": {
-    "TITLE": "Feere",
-    "NEW": "Feere kura",
-    "TOTAL": "Bɛɛ lajɛlen",
-    "PAYMENT": "Sara",
-    "CLIENT": "Kɔlɔsili",
-    "DATE": "Don"
-  },
-  "CLIENTS": {
-    "TITLE": "Kɔlɔsiliw",
-    "ADD": "Kɔlɔsili kura fara",
-    "NAME": "Tɔgɔ",
-    "PHONE": "Telefɔni",
-    "EMAIL": "Mail"
-  },
-  "CAISSE": {
-    "TITLE": "Caisse",
-    "BALANCE": "Wari",
-    "DEPOSIT": "Fara",
-    "WITHDRAW": "Bɔ",
-    "HISTORY": "Kɔfɛ"
-  },
-  "INVENTORY": {
-    "TITLE": "Cogoya",
-    "LOW_STOCK": "Fɛn dɔgɔ",
-    "ADJUST": "Yɛlɛma"
-  },
-  "REPORTS": {
-    "TITLE": "Sɛbɛnw",
-    "DAILY": "Tile kelen",
-    "WEEKLY": "Dɔgɔkun",
-    "MONTHLY": "Kalo",
-    "YEARLY": "San"
-  },
-  "NOTIFICATIONS": {
-    "TITLE": "Lajɛlenw",
-    "MARK_READ": "Kalan kɛ"
-  },
-  "BOUTIQUE": {
-    "TITLE": "Boutiki",
-    "NAME": "Boutiki tɔgɔ",
-    "ADDRESS": "Sigiyɔrɔ"
-  },
-  "FORGOT_PASSWORD": {
-    "TITLE": "Gundo tɛmɛnen",
-    "EMAIL": "I ka mail",
-    "SUBMIT": "Ci",
-    "BACK": "Segin"
-  }
+  "LANG": { "SELECT": "Kan sugandi", "FR": "Français", "EN": "English", "AR": "العربية", "ES": "Español", "PT": "Português", "HA": "Hausa", "WO": "Wolof", "BM": "Bamanakan" },
+  "LOGIN": { "TITLE": "Bɔ ka don!", "SUBTITLE": "Don ka taa ɲɛ", "FIELD_LABEL": "Mail, Telefɔni walima Tɔgɔ", "FIELD_PLACEHOLDER": "I ka mail, telefɔni walima tɔgɔ sɛbɛn", "PASSWORD_LABEL": "Gundo", "PASSWORD_PLACEHOLDER": "••••••••", "SUBMIT": "Don", "LOADING": "O de bɛ kɛ...", "FORGOT": "Gundo dɔn te i la wa?", "WELCOME": "Bɔ ka don, {{name}}!", "ERROR_REQUIRED": "Tɔgɔ ni gundo ka kan ka sɛbɛn", "ERROR_FAILED": "Don kɛra fili ye" },
+  "COMMON": { "SAVE": "Mara", "CANCEL": "Bali", "DELETE": "Jɔsi", "EDIT": "Yɛlɛma", "ADD": "Fara", "SEARCH": "Ɲini", "LOADING": "Jateminɛ...", "CLOSE": "Datugu", "CONFIRM": "Tiɲɛ", "YES": "Ɔwɔ", "NO": "Ayi", "ERROR": "Fili", "SUCCESS": "Ɲɛ", "BACK": "Segin", "FILTER": "Sugandi", "TOTAL": "Bɛɛ lajɛlen", "DATE": "Don", "AMOUNT": "Wari hakɛ", "ACTIONS": "Kɛtaw", "STATUS": "Cogoya", "DETAILS": "Ɲɛfɔliw", "PRINT": "Sɛbɛn ci", "DOWNLOAD": "Jɛni", "REFRESH": "Kura kɛ", "SEND": "Ci", "ALL": "Bɛɛ" },
+  "NAV": { "PRODUCTS": "Fɛnw", "SALES": "Feere", "CLIENTS": "Kɔlɔsiliw", "CAISSE": "Caisse", "INVENTORY": "Cogoya", "REPORTS": "Sɛbɛn kura", "PROFILE": "I ka baara", "MORE": "An ka fara", "BENEFITS": "Nɔgɔya", "TRANSFERS": "Jɔlen", "INVOICES": "Sɛbɛn", "SELLERS": "Feereliw", "DEBTS": "Dɔnni", "BANK": "Banque", "SHOP": "Boutique", "EMPLOYEES": "Baradenw", "EMPLOYEE_PAY": "Sara biya", "SAFE": "Sɔrɔdigaw", "SUPPLIER_OBJ": "Jɔsɔrɔ ɲɛta", "SUPPLIER_BONUS": "Jɔsɔrɔ diyaw", "EXPENSES": "Musakaw", "NET_RESULT": "Sɔrɔɲuman", "SUPPLIERS": "Fɛnyɛlɛmaliw", "MOBILE_MONEY": "Mobile Money", "INVOICE_DESIGN": "Sɛbɛn kalata", "REPORT": "Sɛbɛn", "PROMO": "Bɔliw", "CREDIT_PAYMENT": "Juru Sara",
+    "NOTIFICATIONS": "Ɲɛfɔliw" },
+  "PROFILE": { "TITLE": "I ka baara", "FULL_NAME": "Tɔgɔ dafalen", "EMAIL": "Mail", "PHONE": "Telefɔni", "COUNTRY_CODE": "Dugukolo code", "PASSWORD": "Gundo kura", "SAVE": "Mara", "LANGUAGE": "Kan", "ROLE": "Cogoya", "BOUTIQUE": "Boutique", "LOGOUT": "Bɔ", "LOGOUT_CONFIRM": "I bɛ fɛ ka bɔ wa?", "SAVED": "I ka baara yɛlɛmana" },
+  "PRODUCTS": { "TITLE": "Fɛnw", "ADD": "Fɛn kura fara", "NAME": "Fɛn tɔgɔ", "PRICE_SELL": "Feere dama", "PRICE_BUY": "Sɔrɔ dama", "STOCK": "Fɛn hakɛ", "CATEGORY": "Hakɛ", "SUPPLIER": "Jɔsɔrɔ", "BARCODE": "Code-barres", "ALERT_THRESHOLD": "Jɛnni hakɛ", "LOW_STOCK": "Fɛn dɔgɔ", "OUT_OF_STOCK": "Fɛn mana", "SEARCH": "Fɛn ɲini", "SAVED": "Fɛn maralen", "DELETED": "Fɛn jɔsilen", "CONFIRM_DELETE": "Fɛn in jɔsi wa?" },
+  "SALES": { "TITLE": "Feere", "NEW": "Feere kura", "TODAY": "Bi", "WEEK": "Dɔgɔkun in", "MONTH": "Kalo in", "ALL": "Bɛɛ", "CASH": "Wari", "CREDIT": "Dɔnni", "SETTLED": "Biyalen", "CANCELLED": "Sɔsɔlen", "RETURN": "Segin", "MODIFY": "Yɛlɛma", "INVOICE": "Sɛbɛn PDF", "QR_CODE": "QR Code", "TOTAL": "Bɛɛ lajɛlen", "AMOUNT_PAID": "Biyalen wari", "REMAINING": "Tɔ", "DISCOUNT": "Dɛsɛ", "PAYMENT_MODE": "Biya cogoya", "CASH_PAYMENT": "Wari", "MOBILE_MONEY": "Mobile Money", "CARD": "Carte", "CHEQUE": "Chèque", "TRANSFER": "Jɔlen" },
+  "CLIENTS": { "TITLE": "Kɔlɔsiliw", "ADD": "Kɔlɔsili kura fara", "NAME": "Tɔgɔ", "FIRSTNAME": "Tɔgɔ dɔ", "PHONE": "Telefɔni", "EMAIL": "Mail", "ADDRESS": "Sigiyɔrɔ", "QR_CODE": "Kɔlɔsili QR Code", "HISTORY": "Kɔfɛ", "CREDITS": "Dɔnni", "ADVANCES": "Ntɔlɔni", "RELEVE": "Sɛbɛn PDF", "SEARCH": "Kɔlɔsili ɲini", "SAVED": "Kɔlɔsili maralen", "DELETED": "Kɔlɔsili jɔsilen" },
+  "CAISSE": { "TITLE": "Caisse", "BALANCE": "Wari yen", "INCOME": "Don", "EXPENSE": "Bɔ", "TRANSFER": "Banque jɔlen", "OPERATIONS": "Kɛtaw", "CREDITS": "Dɔnniw", "STATS": "Jateminɛ", "SETTLE_CREDIT": "Dɔnni sara", "AMOUNT": "Wari hakɛ", "REASON": "Fɔlɔ", "OVERDUE": "Tɛmɛnen" },
+  "INVENTORY": { "TITLE": "Cogoya", "MOVEMENT": "Yɛlɛma", "LOW_STOCK": "Fɛn dɔgɔ", "HISTORY": "Kɔfɛ", "IN": "Don", "OUT": "Bɔ", "CORRECTION": "Ɲɛtaa", "LOSS": "Sɔn", "PRODUCT": "Fɛn", "QUANTITY": "Hakɛ", "REASON": "Fɔlɔ", "SAVED": "Yɛlɛma maralen" },
+  "REPORTS": { "TITLE": "Sɛbɛnw", "DAILY": "Tile kelen", "WEEKLY": "Dɔgɔkun", "MONTHLY": "Kalo", "CUSTOM": "Sugandilen", "REVENUE": "Wari sɔrɔlen", "PROFIT": "Nɔgɔya", "EXPENSES": "Musakaw", "NET": "Sɔrɔɲuman", "SALES_COUNT": "Feere hakɛ", "START_DATE": "Daminɛ don", "END_DATE": "Laban don" },
+  "NOTIFICATIONS": { "LOW_STOCK": "Fɛn dɔgɔ", "OUT_OF_STOCK": "Fɛn mana", "CREDIT_OVERDUE": "Dɔnni tɛmɛnen" },
+  "BOUTIQUE": { "SELECT_TITLE": "Boutique sugandi", "SELECT_SUB": "I ka boutique sugandi ka taa ɲɛ" },
+  "FORGOT_PASSWORD": { "TITLE": "Gundo tɛmɛnen", "EMAIL_LABEL": "I ka mail", "SUBMIT": "Ci", "BACK": "Segin" },
+  "EXPENSES": { "TITLE": "Musakaw", "SUBTITLE": "Wari bɔ otomatiki caisse la", "NEW": "Musaka kura", "EDIT": "Musaka yɛlɛma", "NAME": "Musaka tɔgɔ", "REASON": "Fɔlɔ / Ɲɛfɔli", "TOTAL": "Musakaw bɛɛ lajɛlen", "PERIOD_TOTAL": "Waatini musakaw", "EMPTY": "Musaka tɛ", "RESET": "Segin", "ADJUST_INFO": "Caisse bi yɛlɛma otomatiki", "DEDUCT_INFO": "Wari bɛ bɔ caisse la otomatiki" },
+  "SELLERS": { "TITLE": "Barakɛlaw Gɛrɛfɛn", "SUBTITLE": "Kɔlɔtigiliw, feereliw ak weleyaw", "TOTAL_USERS": "Barakɛlaw bɛɛ", "ADMINS": "Kɔlɔtigiliw", "SELLERS": "Feereliw", "ACTIVE": "Barakɛlaw", "NEW": "Feereli kura", "EMPTY": "Barakɛla tɛ", "ROLE": "Cogoya", "COUNTRY_CODE": "Dugukolo code", "ACTIVATE": "Sunni", "DEACTIVATE": "Datugu" },
+  "DEBTS": { "TITLE": "Kɔdɔnniw", "SUBTITLE": "Kɔdɔnniw gɛrɛfɛn", "NEW": "Dɔnni kura", "CREDITOR": "Dɔnnijigi", "PAID": "Biyalen", "REMAINING": "Tɔ", "PAID_STATUS": "Biyalen", "PARTIAL": "Dɔ", "PENDING": "Jateminenw", "SETTLE": "Sara", "EMPTY": "Dɔnni tɛ" },
+  "ACCOUNTS": { "TITLE": "Banque Compteliw", "SUBTITLE": "I ka banque wari gɛrɛfɛn", "NEW": "Compte kura", "NAME": "Compte tɔgɔ", "BALANCE": "Wari", "DEPOSIT": "Fara", "WITHDRAW": "Bɔ", "HISTORY": "Kɔfɛ", "EMPTY": "Compte tɛ" },
+  "EMPLOYEES": { "TITLE": "Baradenw", "SUBTITLE": "Baradenw gɛrɛfɛn", "NEW": "Barade kura", "NAME": "Tɔgɔ", "POST": "Baara", "SALARY": "Sara", "START_DATE": "Daminɛ don", "ACTIVE": "Barakɛ", "INACTIVE": "Barakɛ tɛ", "EMPTY": "Barade tɛ" },
+  "EMPLOYEE_PAY": { "TITLE": "Sara Biya", "SUBTITLE": "Saraw ni ntɔlɔniw", "PAY": "Sara", "ADVANCE": "Ntɔlɔni", "SALARY": "Sara", "MONTH": "Kalo", "PAID": "Biyalen", "PENDING": "Jateminɛ", "HISTORY": "Sara kɔfɛ", "EMPTY": "Sara tɛ" },
+  "SAFE": { "TITLE": "Sɔrɔdigaw", "SUBTITLE": "Fɛn sɔrɔdigaw gɛrɛfɛn", "NEW": "Sɔrɔdi kura", "DEPOSITOR": "Sɔrɔdijigi", "PRODUCT": "Fɛn", "QUANTITY": "Hakɛ", "ACTIVE": "Kɛ bɛ", "RETURNED": "Seginnen", "EMPTY": "Sɔrɔdi tɛ" },
+  "SUPPLIER_OBJ": { "TITLE": "Jɔsɔrɔ Ɲɛtaliw", "SUBTITLE": "Sɔrɔ ɲɛtaliw jateminɛ", "NEW": "Ɲɛta kura", "SUPPLIER": "Jɔsɔrɔ", "TARGET": "Ɲɛta", "ACHIEVED": "Sɔrɔlen", "PROGRESS": "Ka taa ɲɛ", "EMPTY": "Ɲɛta tɛ" },
+  "SUPPLIERS": { "TITLE": "Fɛnyɛlɛmaliw", "SUBTITLE": "I ka jɔsɔrɔw gɛrɛfɛn", "NEW": "Jɔsɔrɔ kura", "NAME": "Tɔgɔ", "PHONE": "Telefɔni", "ADDRESS": "Sigiyɔrɔ", "EMPTY": "Jɔsɔrɔ tɛ" },
+  "BENEFITS": { "TITLE": "Nɔgɔya", "SUBTITLE": "Nɔgɔya jateminɛ", "GROSS": "Nɔgɔya dafalen", "NET": "Nɔgɔya ɲuman", "EXPENSES": "Musakaw", "DAILY": "Tile kelen", "MONTHLY": "Kalo", "TOTAL": "Bɛɛ lajɛlen" },
+  "TRANSFERS": { "TITLE": "Jɔlenw", "SUBTITLE": "Wari jɔlenw gɛrɛfɛn", "NEW": "Jɔleni kura", "FROM": "Ka", "TO": "Ka taa", "TYPE": "Sugandili", "EMPTY": "Jɔleni tɛ" },
+  "SUPPLIER_BONUS": { "TITLE": "Jɔsɔrɔ Diyaw", "SUBTITLE": "Jɔsɔrɔ diyaw ni dɛsɛliw", "NEW": "Diya kura", "SUPPLIER": "Jɔsɔrɔ", "TYPE": "Sugandili", "VALUE": "Hakɛ", "EMPTY": "Diya tɛ" },
+  "NET_RESULT": { "TITLE": "Sɔrɔɲuman", "SUBTITLE": "Wari jateminɛ dafalen", "REVENUE": "Wari sɔrɔlen", "COST": "Fɛn dama", "GROSS": "Nɔgɔya dafalen", "EXPENSES": "Musakaw", "NET": "Sɔrɔɲuman" },
+  "MOBILE_MONEY": { "TITLE": "Mobile Money", "SUBTITLE": "Orange, Moov, Wave", "OPERATIONS": "Kɛtaw", "SUMMARY": "Cɛsiri", "DOWNLOAD": "Jɛni", "ALL": "Bɛɛ", "EXPORT_CSV": "CSV bɔ" },
+  "INVOICE_DESIGN": { "TITLE": "Sɛbɛn Kalata", "SUBTITLE": "I ka sɛbɛn sugandili sugandi", "CLASSIC": "Kɔrɔ", "CLASSIC_DESC": "Cɛmɛn bulukan, stiil ɲuman", "MODERN": "Kura", "MODERN_DESC": "Ñi ɲuman", "MINIMAL": "Dɔgɔ", "MINIMAL_DESC": "Ka nɔgɔ ka nɔgɔ", "SELECTED": "Sugandilen", "SELECT": "Sugandi" },
+  "INVOICES": { "TITLE": "Sɛbɛnw", "SUBTITLE": "I ka sɛbɛnw kɔfɛ", "NUMBER": "Sɛbɛn N°", "CLIENT": "Kɔlɔsili", "PAYMENT": "Biya", "DESIGN": "Kalata", "PRINT": "Sɛbɛn ci", "DOWNLOAD_PDF": "PDF jɛni", "EMPTY": "Sɛbɛn tɛ", "DETAIL": "Sɛbɛn cikakken" },
+  "PROMO": { "TITLE": "Bɔliw", "SUBTITLE": "I ka bɔliw gɛrɛ ani kɔlɔsiliw ɲɛfɔ WhatsApp fɛ", "NEW": "Bɔli kura", "NAME": "Tɔgɔ", "DESC": "Ɲɛfɔli", "START": "Daminɛ don", "END": "Laban don", "TYPE": "Dɛsɛ sugandili", "PERCENT": "Kɔlɔn (%)", "FIXED": "Wari sax (FCFA)", "VALUE": "Hakɛ", "ACTIVE": "Kɛ bɛ", "WHATSAPP": "WhatsApp ci", "STATUS_ACTIVE": "Kɛ bɛ", "STATUS_UPCOMING": "Bɛ na", "STATUS_EXPIRED": "Tɛmɛnen", "STATUS_INACTIVE": "Kɛ tɛ", "EMPTY": "Bɔli tɛ", "PREVIEW": "Jurukai jira:", "TOTAL_CLIENTS": "Kɔlɔsiliw bɛɛ", "WITH_PHONE": "Telefɔni bɛ", "WITHOUT_PHONE": "Telefɔni tɛ", "SEND": "Ci" },
+  "BOUTIQUE_SETTINGS": { "TITLE": "Boutique Setigɛliw", "SUBTITLE": "Xibaariw ni setigɛliw", "NAME": "Boutique tɔgɔ", "ADDRESS": "Sigiyɔrɔ", "PHONE": "Telefɔni", "LOGO": "Alamarani" }
 }

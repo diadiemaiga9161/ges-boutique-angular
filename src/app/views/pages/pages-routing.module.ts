@@ -25,6 +25,8 @@ import { BonusFournisseursComponent } from './bonus-fournisseurs/bonus-fournisse
 import { ResultatNetComponent } from './resultat-net/resultat-net.component';
 import { MobileMoneyComponent } from './mobile-money/mobile-money.component';
 import { FactureDesignComponent } from './facture-design/facture-design.component';
+import { PromotionsComponent } from './promotions/promotions.component';
+import { ReglementCreditsComponent } from './reglement-credits/reglement-credits.component';
 
 const routes: Routes = [
     {
@@ -124,6 +126,11 @@ const routes: Routes = [
     {
         path: 'facture-design',
         component: FactureDesignComponent
+    },
+    // { path: 'promotions', component: PromotionsComponent }, // PROMOTIONS désactivées sur web — gérer depuis l'app mobile
+    {
+        path: 'reglement-credits',
+        component: ReglementCreditsComponent
     },
 ];
 

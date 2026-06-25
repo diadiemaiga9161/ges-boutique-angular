@@ -55,14 +55,17 @@
     "ALL": "الكل"
   },
   "NAV": {
-    "PRODUCTS": "المنتجات",
-    "SALES": "المبيعات",
-    "CLIENTS": "العملاء",
-    "CAISSE": "الصندوق",
-    "INVENTORY": "الجرد",
-    "REPORTS": "التقارير",
-    "PROFILE": "الملف الشخصي",
-    "MORE": "المزيد"
+    "PRODUCTS": "المنتجات", "SALES": "المبيعات", "CLIENTS": "العملاء",
+    "CAISSE": "الصندوق", "INVENTORY": "الجرد", "REPORTS": "التقارير",
+    "PROFILE": "الملف الشخصي", "MORE": "المزيد", "BENEFITS": "الأرباح",
+    "TRANSFERS": "التحويلات", "INVOICES": "الفواتير", "SELLERS": "البائعون",
+    "DEBTS": "الديون", "BANK": "البنك", "SHOP": "المتجر", "EMPLOYEES": "الموظفون",
+    "EMPLOYEE_PAY": "رواتب الموظفين", "SAFE": "الودائع",
+    "SUPPLIER_OBJ": "أهداف الموردين", "SUPPLIER_BONUS": "مكافآت الموردين",
+    "EXPENSES": "المصروفات", "NET_RESULT": "الصافي", "SUPPLIERS": "الموردون",
+    "MOBILE_MONEY": "موبايل موني", "INVOICE_DESIGN": "تصميم الفواتير",
+    "REPORT": "تقرير", "PROMO": "العروض", "CREDIT_PAYMENT": "تسوية الائتمان",
+    "NOTIFICATIONS": "الإشعارات"
   },
   "PROFILE": {
     "TITLE": "ملفي الشخصي",
@@ -196,5 +199,114 @@
     "EMAIL_LABEL": "البريد الإلكتروني",
     "SUBMIT": "إرسال رابط الاسترداد",
     "BACK": "العودة لتسجيل الدخول"
+  },
+  "EXPENSES": {
+    "TITLE": "المصروفات", "SUBTITLE": "خصم تلقائي من الصندوق",
+    "NEW": "مصروف جديد", "EDIT": "تعديل المصروف",
+    "NAME": "اسم المصروف", "REASON": "السبب / الوصف",
+    "TOTAL": "إجمالي المصروفات", "PERIOD_TOTAL": "إجمالي الفترة",
+    "EMPTY": "لا توجد مصروفات", "RESET": "إعادة تعيين",
+    "ADJUST_INFO": "سيتم تعديل الصندوق تلقائياً",
+    "DEDUCT_INFO": "سيتم خصم المبلغ تلقائياً من الصندوق"
+  },
+  "SELLERS": {
+    "TITLE": "إدارة المستخدمين", "SUBTITLE": "المشرفون والبائعون والصلاحيات",
+    "TOTAL_USERS": "إجمالي المستخدمين", "ADMINS": "المشرفون",
+    "SELLERS": "البائعون", "ACTIVE": "نشط", "NEW": "بائع جديد",
+    "EMPTY": "لا يوجد مستخدمون", "ROLE": "الدور",
+    "COUNTRY_CODE": "رمز الدولة", "ACTIVATE": "تفعيل", "DEACTIVATE": "تعطيل"
+  },
+  "DEBTS": {
+    "TITLE": "الديون القديمة", "SUBTITLE": "إدارة الديون السابقة",
+    "NEW": "دين جديد", "CREDITOR": "الدائن", "PAID": "مسدَّد",
+    "REMAINING": "المتبقي", "PAID_STATUS": "مسدَّد", "PARTIAL": "جزئي",
+    "PENDING": "معلق", "SETTLE": "تسديد", "EMPTY": "لا توجد ديون"
+  },
+  "ACCOUNTS": {
+    "TITLE": "الحسابات البنكية", "SUBTITLE": "إدارة خزينتك البنكية",
+    "NEW": "حساب جديد", "NAME": "اسم الحساب", "BALANCE": "الرصيد",
+    "DEPOSIT": "إيداع", "WITHDRAW": "سحب", "HISTORY": "السجل",
+    "EMPTY": "لا توجد حسابات"
+  },
+  "EMPLOYEES": {
+    "TITLE": "الموظفون", "SUBTITLE": "إدارة الموظفين",
+    "NEW": "موظف جديد", "NAME": "الاسم", "POST": "المنصب",
+    "SALARY": "الراتب", "START_DATE": "تاريخ التوظيف",
+    "ACTIVE": "نشط", "INACTIVE": "غير نشط", "EMPTY": "لا يوجد موظفون"
+  },
+  "EMPLOYEE_PAY": {
+    "TITLE": "رواتب الموظفين", "SUBTITLE": "الرواتب والسلف",
+    "PAY": "دفع", "ADVANCE": "سلفة", "SALARY": "راتب",
+    "MONTH": "الشهر", "PAID": "مسدَّد", "PENDING": "معلق",
+    "HISTORY": "سجل المدفوعات", "EMPTY": "لا توجد مدفوعات"
+  },
+  "SAFE": {
+    "TITLE": "الودائع", "SUBTITLE": "إدارة ودائع البضائع",
+    "NEW": "وديعة جديدة", "DEPOSITOR": "المودِع", "PRODUCT": "المنتج",
+    "QUANTITY": "الكمية", "ACTIVE": "نشط", "RETURNED": "مُعاد",
+    "EMPTY": "لا توجد ودائع"
+  },
+  "SUPPLIER_OBJ": {
+    "TITLE": "أهداف الموردين", "SUBTITLE": "متابعة أهداف المشتريات",
+    "NEW": "هدف جديد", "SUPPLIER": "المورد", "TARGET": "الهدف",
+    "ACHIEVED": "المحقق", "PROGRESS": "التقدم", "EMPTY": "لا توجد أهداف"
+  },
+  "SUPPLIERS": {
+    "TITLE": "الموردون", "SUBTITLE": "إدارة مورديك",
+    "NEW": "مورد جديد", "NAME": "الاسم", "PHONE": "الهاتف",
+    "ADDRESS": "العنوان", "EMPTY": "لا يوجد موردون"
+  },
+  "BENEFITS": {
+    "TITLE": "الأرباح", "SUBTITLE": "تحليل الأرباح",
+    "GROSS": "الربح الإجمالي", "NET": "الربح الصافي",
+    "EXPENSES": "المصروفات", "DAILY": "يومي", "MONTHLY": "شهري", "TOTAL": "الإجمالي"
+  },
+  "TRANSFERS": {
+    "TITLE": "التحويلات", "SUBTITLE": "إدارة تحويلات الأموال",
+    "NEW": "تحويل جديد", "FROM": "من", "TO": "إلى",
+    "TYPE": "النوع", "EMPTY": "لا توجد تحويلات"
+  },
+  "SUPPLIER_BONUS": {
+    "TITLE": "مكافآت الموردين", "SUBTITLE": "مزايا وخصومات الموردين",
+    "NEW": "مكافأة جديدة", "SUPPLIER": "المورد",
+    "TYPE": "النوع", "VALUE": "القيمة", "EMPTY": "لا توجد مكافآت"
+  },
+  "NET_RESULT": {
+    "TITLE": "الصافي", "SUBTITLE": "التحليل المالي الكامل",
+    "REVENUE": "رقم الأعمال", "COST": "تكلفة البضاعة",
+    "GROSS": "الهامش الإجمالي", "EXPENSES": "المصروفات", "NET": "الصافي"
+  },
+  "MOBILE_MONEY": {
+    "TITLE": "موبايل موني", "SUBTITLE": "Orange ، Moov ، Wave",
+    "OPERATIONS": "العمليات", "SUMMARY": "الملخص",
+    "DOWNLOAD": "تنزيل", "ALL": "الكل", "EXPORT_CSV": "تصدير CSV"
+  },
+  "INVOICE_DESIGN": {
+    "TITLE": "تصميم الفواتير", "SUBTITLE": "اختر نموذج فواتيرك",
+    "CLASSIC": "كلاسيكي", "CLASSIC_DESC": "رأس أزرق، أسلوب احترافي",
+    "MODERN": "عصري", "MODERN_DESC": "تصميم داكن وأنيق",
+    "MINIMAL": "بسيط", "MINIMAL_DESC": "نظيف وبسيط",
+    "SELECTED": "محدد", "SELECT": "اختر"
+  },
+  "INVOICES": {
+    "TITLE": "الفواتير", "SUBTITLE": "سجل فواتيرك",
+    "NUMBER": "رقم الفاتورة", "CLIENT": "العميل", "PAYMENT": "الدفع",
+    "DESIGN": "التصميم", "PRINT": "طباعة", "DOWNLOAD_PDF": "تنزيل PDF",
+    "EMPTY": "لا توجد فواتير", "DETAIL": "تفاصيل الفاتورة"
+  },
+  "PROMO": {
+    "TITLE": "العروض", "SUBTITLE": "أدِر عروضك وأخطر عملاءك عبر واتساب",
+    "NEW": "عرض جديد", "NAME": "العنوان", "DESC": "الوصف",
+    "START": "تاريخ البداية", "END": "تاريخ النهاية", "TYPE": "نوع الخصم",
+    "PERCENT": "نسبة مئوية (%)", "FIXED": "مبلغ ثابت (FCFA)", "VALUE": "القيمة",
+    "ACTIVE": "نشط", "WHATSAPP": "إرسال واتساب",
+    "STATUS_ACTIVE": "نشط", "STATUS_UPCOMING": "قادم",
+    "STATUS_EXPIRED": "منتهي", "STATUS_INACTIVE": "غير نشط", "EMPTY": "لا توجد عروض",
+    "PREVIEW": "معاينة الرسالة:", "TOTAL_CLIENTS": "إجمالي العملاء",
+    "WITH_PHONE": "برقم هاتف", "WITHOUT_PHONE": "بدون رقم", "SEND": "إرسال"
+  },
+  "BOUTIQUE_SETTINGS": {
+    "TITLE": "إعدادات المتجر", "SUBTITLE": "المعلومات والإعدادات",
+    "NAME": "اسم المتجر", "ADDRESS": "العنوان", "PHONE": "الهاتف", "LOGO": "الشعار"
   }
 }

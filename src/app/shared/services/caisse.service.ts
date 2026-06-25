@@ -414,7 +414,9 @@ export class CaisseService {
     }).pipe(
       map(response => {
         const credits = response.credits || [];
-        const creditsFiltres = credits.filter((credit: any) => !credit.venteAnnulee && !credit.annulee);
+        const creditsFiltres = credits.filter((credit: any) =>
+          !credit.venteAnnulee && !credit.annulee && !credit.estReglee
+        );
         return creditsFiltres.map((credit: any) => this.enrichirCredit(credit));
       }),
       catchError(error => this.handleError(error, 'récupérer les crédits non réglés'))
@@ -427,7 +429,9 @@ export class CaisseService {
     }).pipe(
       map(response => {
         const credits = response.creditsEnRetard || [];
-        const creditsFiltres = credits.filter((credit: any) => !credit.venteAnnulee && !credit.annulee);
+        const creditsFiltres = credits.filter((credit: any) =>
+          !credit.venteAnnulee && !credit.annulee && !credit.estReglee
+        );
         return creditsFiltres.map((credit: any) => this.enrichirCredit(credit));
       }),
       catchError(error => this.handleError(error, 'récupérer les crédits en retard'))
