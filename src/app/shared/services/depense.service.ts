@@ -5,6 +5,11 @@ import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { AuthService } from './auth.service';
 
+export interface TypeDepense {
+  id: number;
+  nom: string;
+}
+
 export interface Depense {
   id?: number;
   nom: string;
@@ -21,12 +26,14 @@ export interface DepenseRequest {
   motif?: string;
   date: string;
   montant: number;
+  typeDepense?: string;
 }
 
 @Injectable({ providedIn: 'root' })
 export class DepenseService {
 
   private apiUrl = `${environment.apiUrl}/depenses`;
+  private typesUrl = `${environment.apiUrl}/types-depense`;
 
   constructor(private http: HttpClient, private auth: AuthService) {}
 
@@ -75,6 +82,34 @@ export class DepenseService {
     return this.http.delete<any>(`${this.apiUrl}/${id}`, { headers: this.getHeaders() }).pipe(
       map(() => void 0),
       catchError(e => throwError(() => new Error(e?.error?.message || 'Erreur suppression dépense')))
+    );
+  }
+
+  getTypes(): Observable<TypeDepense[]> {
+    return this.http.get<any>(this.typesUrl, { headers: this.getHeaders() }).pipe(
+      map(r => r.types || []),
+      catchError(e => throwError(() => new Error(e?.error?.message || 'Erreur chargement types')))
+    );
+  }
+
+  creerType(nom: string): Observable<TypeDepense> {
+    return this.http.post<any>(this.typesUrl, { nom }, { headers: this.getHeaders() }).pipe(
+      map(r => r.type || r),
+      catchError(e => throwError(() => new Error(e?.error?.message || 'Erreur création type')))
+    );
+  }
+
+  modifierType(id: number, nom: string): Observable<TypeDepense> {
+    return this.http.put<any>(`${this.typesUrl}/${id}`, { nom }, { headers: this.getHeaders() }).pipe(
+      map(r => r.type || r),
+      catchError(e => throwError(() => new Error(e?.error?.message || 'Erreur modification type')))
+    );
+  }
+
+  supprimerType(id: number): Observable<void> {
+    return this.http.delete<any>(`${this.typesUrl}/${id}`, { headers: this.getHeaders() }).pipe(
+      map(() => void 0),
+      catchError(e => throwError(() => new Error(e?.error?.message || 'Erreur suppression type')))
     );
   }
 
