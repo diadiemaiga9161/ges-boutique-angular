@@ -138,9 +138,10 @@
     </div>
   </div>
 
-  <!-- ══ RECHERCHE ════════════════════════════════════════════════════════ -->
+  <!-- ══ RECHERCHE & FILTRES ══════════════════════════════════════════════ -->
   <div class="app-filter-card mb-4" *ngIf="statutFilter !== 'PAR_CLIENT'">
-    <div class="input-group">
+    <!-- Ligne 1 : recherche texte -->
+    <div class="input-group mb-2">
       <span class="input-group-text"><i class="bi bi-search"></i></span>
       <input type="text" class="form-control"
         placeholder="Rechercher par client, téléphone ou N° vente…"
@@ -148,6 +149,33 @@
       <button *ngIf="searchTerm" class="btn btn-outline-secondary" (click)="searchTerm=''; applyFilter()">
         <i class="bi bi-x-lg"></i>
       </button>
+    </div>
+    <!-- Ligne 2 : filtre client dropdown + filtre dates -->
+    <div class="row g-2 align-items-end">
+      <div class="col-md-4">
+        <label class="form-label form-label-sm mb-1 text-muted fw-semibold">Client</label>
+        <select class="form-select form-select-sm" [(ngModel)]="clientSelectionne" (change)="applyFilter()">
+          <option value="">-- Tous les clients --</option>
+          <option *ngFor="let nom of clientsUniques" [value]="nom">{{ nom }}</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label form-label-sm mb-1 text-muted fw-semibold">Du</label>
+        <input type="date" class="form-control form-control-sm"
+          [(ngModel)]="dateDebut" (change)="applyFilter()">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label form-label-sm mb-1 text-muted fw-semibold">Au</label>
+        <input type="date" class="form-control form-control-sm"
+          [(ngModel)]="dateFin" (change)="applyFilter()">
+      </div>
+      <div class="col-md-2">
+        <button class="btn btn-sm btn-outline-secondary w-100"
+          *ngIf="dateDebut || dateFin || clientSelectionne"
+          (click)="clientSelectionne=''; effacerFiltresDates()">
+          <i class="bi bi-x-circle me-1"></i> Effacer
+        </button>
+      </div>
     </div>
   </div>
 
@@ -242,6 +270,10 @@
                 <td>
                   <span *ngIf="credit.estReglee" class="badge bg-success">✓ Réglé</span>
                   <span *ngIf="!credit.estReglee" [class]="getCreditStatusClass(credit)">{{ getCreditStatusText(credit) }}</span>
+                  <span *ngIf="ventesAvecGroupeIds.has(credit.venteId)"
+                    class="badge ms-1"
+                    style="background:#d97706;color:#fff;font-size:0.65rem"
+                    title="Ce crédit a des versements dans un paiement groupé">GROUPÉ</span>
                 </td>
                 <td class="text-center">
                   <div class="d-flex gap-1 justify-content-center flex-wrap">
@@ -694,35 +726,121 @@
         <div *ngIf="!versementsLoading && versements.length === 0" class="text-muted small py-2">
           <i class="bi bi-inbox me-1"></i> Aucun versement enregistré.
         </div>
-        <div class="table-responsive" *ngIf="!versementsLoading && versements.length > 0">
-          <table class="table table-sm table-bordered mb-0">
-            <thead class="table-warning">
-              <tr>
-                <th>Date</th>
-                <th class="text-end">Montant versé</th>
-                <th>Mode</th>
-                <th>Référence</th>
-                <th>Enregistré par</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let v of versements">
-                <td>{{ formatDateLong(v.dateOperation) }}</td>
-                <td class="text-end fw-bold text-success">{{ formatPrice(v.montant) }}</td>
-                <td>{{ v.modePaiement || '—' }}</td>
-                <td>{{ v.referencePaiement || '—' }}</td>
-                <td>{{ v.utilisateurNom || '—' }}</td>
-              </tr>
-            </tbody>
-            <tfoot class="table-light">
-              <tr>
-                <td class="text-end fw-bold">Total versé</td>
-                <td class="text-end fw-bold text-success">{{ formatPrice(selectedCredit!.montantVerse) }}</td>
-                <td colspan="3"></td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
+
+        <ng-container *ngIf="!versementsLoading && versements.length > 0">
+          <!-- Champ de recherche dans les versements -->
+          <div class="input-group input-group-sm mb-2">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input type="text" class="form-control"
+              placeholder="Rechercher dans les versements…"
+              [(ngModel)]="rechercheVersement">
+            <button *ngIf="rechercheVersement" class="btn btn-outline-secondary"
+              (click)="rechercheVersement=''">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+
+          <!-- Tableau versements simples -->
+          <div class="table-responsive" *ngIf="versementsSimples.length > 0 || paiementsGroupesDetail.size === 0">
+            <p class="text-muted small mb-1" *ngIf="paiementsGroupesDetail.size > 0">
+              <i class="bi bi-info-circle me-1"></i> Versements simples ({{ versementsSimples.length }})
+            </p>
+            <table class="table table-sm table-bordered mb-0">
+              <thead class="table-warning">
+                <tr>
+                  <th>Date</th>
+                  <th class="text-end">Montant versé</th>
+                  <th>Mode</th>
+                  <th>Référence</th>
+                  <th>Enregistré par</th>
+                  <th>Motif</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngIf="versementsFiltres.length === 0">
+                  <td colspan="6" class="text-center text-muted py-2">
+                    <i class="bi bi-search me-1"></i> Aucun résultat pour cette recherche.
+                  </td>
+                </tr>
+                <tr *ngFor="let v of versementsFiltres">
+                  <td>{{ formatDateLong(v.dateOperation) }}</td>
+                  <td class="text-end fw-bold text-success">{{ formatPrice(v.montant) }}</td>
+                  <td>{{ v.modePaiement || '—' }}</td>
+                  <td>{{ v.referencePaiement || '—' }}</td>
+                  <td>{{ v.utilisateurNom || '—' }}</td>
+                  <td><span class="text-muted small">{{ v.motif || '—' }}</span></td>
+                </tr>
+              </tbody>
+              <tfoot class="table-light">
+                <tr>
+                  <td class="text-end fw-bold">Total versé</td>
+                  <td class="text-end fw-bold text-success">{{ formatPrice(selectedCredit!.montantVerse) }}</td>
+                  <td colspan="4"></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          <!-- Section paiements groupés dans le modal -->
+          <div *ngIf="paiementsGroupesDetail.size > 0" class="mt-4">
+            <h6 class="fw-bold mb-3" style="color:#b45309">
+              <i class="bi bi-collection me-2"></i>
+              Paiements groupés
+              <span class="badge ms-2" style="background:#d97706;color:#fff">{{ paiementsGroupesDetail.size }} session(s)</span>
+            </h6>
+
+            <div>
+              <ng-container *ngFor="let entry of paiementsGroupesDetail | keyvalue; let gi = index">
+                <div class="accordion-item border rounded mb-2" style="overflow:hidden">
+                  <!-- En-tête -->
+                  <div style="background:linear-gradient(90deg,#fef3c7,#fffbeb);padding:10px 14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                    <span class="badge" style="background:#d97706;color:#fff;font-size:0.72rem">PAIEMENT GROUP&Eacute;</span>
+                    <strong style="color:#92400e">{{ referenceGroupeCourte(entry.key) }}</strong>
+                    <span class="text-muted small">
+                      &bull; {{ formatDateLong(premiereDateGroupe(entry.value)) }}
+                      &bull; Total : <strong class="text-success">{{ formatPrice(montantTotalGroupe(entry.value)) }}</strong>
+                      &bull; {{ entry.value.length }} versement(s)
+                    </span>
+                  </div>
+                  <!-- Corps -->
+                  <div style="background:#fffbeb;border-top:1px solid #fde68a;padding:12px 16px">
+                    <div class="table-responsive">
+                      <table class="table table-sm table-bordered mb-0">
+                        <thead style="background:#fde68a">
+                          <tr>
+                            <th>Date</th>
+                            <th class="text-end">Montant</th>
+                            <th>Mode</th>
+                            <th>Référence</th>
+                            <th>Enregistré par</th>
+                            <th>Motif</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr *ngFor="let v of entry.value">
+                            <td>{{ formatDateLong(v.dateOperation) }}</td>
+                            <td class="text-end fw-bold text-success">{{ formatPrice(v.montant) }}</td>
+                            <td>{{ v.modePaiement || '—' }}</td>
+                            <td>{{ v.referencePaiement || '—' }}</td>
+                            <td>{{ v.utilisateurNom || '—' }}</td>
+                            <td><span class="text-muted small">{{ v.motif || '—' }}</span></td>
+                          </tr>
+                        </tbody>
+                        <tfoot style="background:#fef3c7">
+                          <tr>
+                            <td class="fw-bold">Total groupe</td>
+                            <td class="text-end fw-bold text-success">{{ formatPrice(montantTotalGroupe(entry.value)) }}</td>
+                            <td colspan="4"></td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </ng-container>
+            </div>
+          </div>
+        </ng-container>
       </div>
 
       <div class="modal-footer">

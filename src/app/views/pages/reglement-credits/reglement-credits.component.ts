@@ -57,6 +57,11 @@ export class ReglementCreditsComponent implements OnInit {
   // Clients dont les détails sont ouverts dans la vue PAR_CLIENT
   clientsExpanded = new Set<string>();
 
+  // ── Filtres date et client ────────────────────────────────────
+  dateDebut: string = '';
+  dateFin: string = '';
+  clientSelectionne: string = '';
+
   // ── Modal détails crédit ──────────────────────────────────────
   showDetailsCreditModal = false;
   selectedCredit: CreditInfo | null = null;
@@ -64,6 +69,11 @@ export class ReglementCreditsComponent implements OnInit {
   detailsLignesLoading = false;
   versements: OperationCaisse[] = [];
   versementsLoading = false;
+
+  // ── Versements dans le modal détail ──────────────────────────
+  versementsSimples: OperationCaisse[] = [];
+  paiementsGroupesDetail: Map<string, OperationCaisse[]> = new Map();
+  rechercheVersement: string = '';
 
   // ── Modal crédits par client ──────────────────────────────────
   showCreditsClientModal = false;
@@ -95,6 +105,8 @@ export class ReglementCreditsComponent implements OnInit {
   paiementsGroupes: any[] = [];
   paiementsGroupesLoading = false;
   expandedGroupes = new Set<string>();
+  // venteIds dont au moins un versement est groupé
+  ventesAvecGroupeIds = new Set<number>();
 
   constructor(
     private caisseService: CaisseService,
@@ -113,6 +125,13 @@ export class ReglementCreditsComponent implements OnInit {
     this.caisseService.getPaiementsGroupes().subscribe({
       next: (data) => {
         this.paiementsGroupes = data;
+        // Alimenter le Set des ventes avec versements groupés
+        this.ventesAvecGroupeIds = new Set<number>();
+        for (const pg of data) {
+          for (const v of (pg.ventesImpliquees || [])) {
+            if (v.venteCreditId) this.ventesAvecGroupeIds.add(v.venteCreditId);
+          }
+        }
         this.paiementsGroupesLoading = false;
       },
       error: () => { this.paiementsGroupesLoading = false; }
@@ -258,16 +277,75 @@ export class ReglementCreditsComponent implements OnInit {
     this.applyFilter();
   }
 
+  get clientsUniques(): string[] {
+    const noms = new Set<string>();
+    for (const c of this.allCredits) {
+      const nom = (c.clientNom || '').trim();
+      if (nom) noms.add(nom);
+    }
+    return Array.from(noms).sort((a, b) => a.localeCompare(b, 'fr'));
+  }
+
+  get versementsFiltres(): OperationCaisse[] {
+    const t = this.rechercheVersement.toLowerCase().trim();
+    if (!t) return this.versementsSimples;
+    return this.versementsSimples.filter(v =>
+      String(v.montant || '').includes(t) ||
+      (v.modePaiement || '').toLowerCase().includes(t) ||
+      (v.referencePaiement || '').toLowerCase().includes(t) ||
+      (v.dateOperation || '').toLowerCase().includes(t) ||
+      (v.utilisateurNom || '').toLowerCase().includes(t) ||
+      (v.motif || '').toLowerCase().includes(t)
+    );
+  }
+
   applyFilter() {
     const t = this.searchTerm.toLowerCase().trim();
-    this.creditsFiltres = !t ? [...this.credits] :
-      this.credits.filter(c =>
+    let result = this.credits;
+
+    // Filtre texte
+    if (t) {
+      result = result.filter(c =>
         (c.clientNom || '').toLowerCase().includes(t) ||
         (c.clientTelephone || '').includes(t) ||
         (c.numeroVente || '').toLowerCase().includes(t)
       );
+    }
+
+    // Filtre client dropdown
+    if (this.clientSelectionne) {
+      result = result.filter(c =>
+        (c.clientNom || '').trim() === this.clientSelectionne
+      );
+    }
+
+    // Filtre date
+    if (this.dateDebut) {
+      const debut = new Date(this.dateDebut);
+      debut.setHours(0, 0, 0, 0);
+      result = result.filter(c => {
+        if (!c.dateOperation) return false;
+        return new Date(c.dateOperation) >= debut;
+      });
+    }
+    if (this.dateFin) {
+      const fin = new Date(this.dateFin);
+      fin.setHours(23, 59, 59, 999);
+      result = result.filter(c => {
+        if (!c.dateOperation) return false;
+        return new Date(c.dateOperation) <= fin;
+      });
+    }
+
+    this.creditsFiltres = result;
     this.creditsCurrentPage = 1;
     this.buildGroupesParClient();
+  }
+
+  effacerFiltresDates() {
+    this.dateDebut = '';
+    this.dateFin = '';
+    this.applyFilter();
   }
 
   buildGroupesParClient() {
@@ -352,6 +430,9 @@ export class ReglementCreditsComponent implements OnInit {
     this.selectedCredit = credit;
     this.detailsLignes = [];
     this.versements = [];
+    this.versementsSimples = [];
+    this.paiementsGroupesDetail = new Map();
+    this.rechercheVersement = '';
     this.showDetailsCreditModal = true;
     if (credit.venteId) {
       this.detailsLignesLoading = true;
@@ -363,6 +444,7 @@ export class ReglementCreditsComponent implements OnInit {
         next: ({ vente, vers }) => {
           this.detailsLignes = vente.lignes || vente.produits || [];
           this.versements = vers;
+          this.calculerGroupesVersements(vers);
           this.detailsLignesLoading = false;
           this.versementsLoading = false;
         },
@@ -372,6 +454,35 @@ export class ReglementCreditsComponent implements OnInit {
         }
       });
     }
+  }
+
+  private calculerGroupesVersements(vers: OperationCaisse[]) {
+    this.versementsSimples = [];
+    this.paiementsGroupesDetail = new Map();
+    for (const op of vers) {
+      const ref = op.referenceGroupe;
+      if (ref && ref.trim() !== '') {
+        if (!this.paiementsGroupesDetail.has(ref)) {
+          this.paiementsGroupesDetail.set(ref, []);
+        }
+        this.paiementsGroupesDetail.get(ref)!.push(op);
+      } else {
+        this.versementsSimples.push(op);
+      }
+    }
+  }
+
+  montantTotalGroupe(ops: OperationCaisse[]): number {
+    return ops.reduce((s, o) => s + (o.montant || 0), 0);
+  }
+
+  premiereDateGroupe(ops: OperationCaisse[]): string {
+    if (!ops.length) return '';
+    return ops[0].dateOperation || '';
+  }
+
+  referenceGroupeCourte(ref: string): string {
+    return ref ? ref.substring(0, 8).toUpperCase() : '';
   }
 
   // ── Modal crédits par client ────────────────────────────────────
@@ -581,7 +692,21 @@ export class ReglementCreditsComponent implements OnInit {
     const qrBase64 = await this.fetchImageAsBase64(qrApiUrl);
     const qrImgSrc = qrBase64 || '';
 
-    const versRows = vers.length ? vers.map((v, i) =>
+    // Grouper les versements par referenceGroupe
+    const groupesMap = new Map<string, OperationCaisse[]>();
+    const simplesVers: OperationCaisse[] = [];
+    for (const op of vers) {
+      const ref = op.referenceGroupe;
+      if (ref && ref.trim() !== '') {
+        if (!groupesMap.has(ref)) groupesMap.set(ref, []);
+        groupesMap.get(ref)!.push(op);
+      } else {
+        simplesVers.push(op);
+      }
+    }
+
+    const versToDisplay = simplesVers.length > 0 ? simplesVers : (groupesMap.size === 0 ? vers : []);
+    const versRows = versToDisplay.length ? versToDisplay.map((v, i) =>
       `<tr style="background:${i % 2 === 0 ? '#fff' : '#f8fafc'}">
         <td>${this.formatDateLong(v.dateOperation)}</td>
         <td style="text-align:right;font-weight:700;color:#166534">${this.formatPrice(v.montant)}</td>
@@ -590,21 +715,55 @@ export class ReglementCreditsComponent implements OnInit {
         <td>${v.utilisateurNom || '—'}</td>
         <td>${v.motif || '—'}</td>
       </tr>`
-    ).join('') : `<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:16px">Aucun versement</td></tr>`;
+    ).join('') : `<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:16px">${groupesMap.size > 0 ? 'Tous les versements font partie de paiements groupés (voir section ci-dessous)' : 'Aucun versement'}</td></tr>`;
 
-    const isGrouped = vers.some(v => (v.motif || '').includes('Paiement groupé'));
-    let montantTotalGroupe = 0;
-    if (isGrouped) {
-      const motifGroupe = vers.find(v => (v.motif || '').includes('Total apporté:'))?.motif || '';
-      const match = motifGroupe.match(/Total apporté:\s*([\d\s]+)/);
-      if (match) montantTotalGroupe = parseFloat(match[1].replace(/\s/g, ''));
-    }
+    const isGrouped = groupesMap.size > 0;
     const groupBadge = isGrouped ? `
   <div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:10px;padding:10px 14px;margin-bottom:12px">
-    <div style="font-size:12px;font-weight:800;color:#92400e;margin-bottom:4px">PAIEMENT GROUPE</div>
-    ${montantTotalGroupe > 0 ? `<div style="font-size:13px;color:#78350f">Montant total apporté par le client : <strong>${this.formatPrice(montantTotalGroupe)}</strong></div>` : ''}
-    <div style="font-size:11px;color:#92400e;margin-top:3px">Ce versement fait partie d'un paiement groupé</div>
+    <div style="font-size:12px;font-weight:800;color:#92400e;margin-bottom:4px">INCLUT DES PAIEMENTS GROUPES</div>
+    <div style="font-size:11px;color:#92400e;margin-top:3px">Certains versements font partie de paiements groupés — voir section ci-dessous</div>
   </div>` : '';
+
+    // Section paiements groupés PDF
+    let groupesPdfSection = '';
+    if (groupesMap.size > 0) {
+      let groupesHtml = '';
+      groupesMap.forEach((ops, ref) => {
+        const totalGroupe = ops.reduce((s, o) => s + (o.montant || 0), 0);
+        const dateGroupe = ops[0]?.dateOperation ? new Date(ops[0].dateOperation).toLocaleDateString('fr-FR') : '—';
+        const refCourte = ref.substring(0, 8).toUpperCase();
+        const lignesGroupe = ops.map((o, i) => `<tr style="background:${i % 2 === 0 ? '#fff' : '#f8fafc'}">
+          <td>${o.dateOperation ? new Date(o.dateOperation).toLocaleDateString('fr-FR') : '—'}</td>
+          <td style="text-align:right;font-weight:700;color:#166534">${this.formatPrice(o.montant)}</td>
+          <td>${o.modePaiement || 'ESPECES'}</td>
+          <td>${o.referencePaiement || '—'}</td>
+          <td>${o.utilisateurNom || '—'}</td>
+          <td>${o.motif || '—'}</td>
+        </tr>`).join('');
+        groupesHtml += `
+        <div style="border:1px solid #e0e0e0;border-radius:8px;margin-bottom:12px;overflow:hidden">
+          <div style="background:#e3f2fd;padding:10px 14px;font-weight:600;color:#0d47a1">
+            Référence: ${refCourte} &bull; ${dateGroupe} &bull; Montant apporté: ${this.formatPrice(totalGroupe)}
+          </div>
+          <table style="width:100%;border-collapse:collapse;font-size:12px">
+            <thead><tr style="background:#bbdefb">
+              <th style="padding:6px 8px;text-align:left">Date</th>
+              <th style="padding:6px 8px;text-align:right">Montant</th>
+              <th style="padding:6px 8px;text-align:left">Mode</th>
+              <th style="padding:6px 8px;text-align:left">Référence</th>
+              <th style="padding:6px 8px;text-align:left">Enregistré par</th>
+              <th style="padding:6px 8px;text-align:left">Motif</th>
+            </tr></thead>
+            <tbody>${lignesGroupe}</tbody>
+          </table>
+        </div>`;
+      });
+      groupesPdfSection = `
+      <div style="margin-top:24px">
+        <h3 style="color:#1565c0;border-bottom:2px solid #1565c0;padding-bottom:4px;margin-bottom:12px;font-size:14px">Paiements groupés (${groupesMap.size} session(s))</h3>
+        ${groupesHtml}
+      </div>`;
+    }
 
     const html = `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>Versements crédit — ${credit.clientNom}</title>
 <style>
@@ -658,13 +817,14 @@ td{padding:7px 10px;border-bottom:1px solid #f1f5f9;color:#374151}
       <div class="kpi"><div class="kpi-val">${credit.progression ? credit.progression.toFixed(0) + '%' : '—'}</div><div class="kpi-lbl">Progression</div></div>
     </div>
     ${groupBadge}
-    <div class="section-title">Détail des versements (${vers.length})</div>
+    <div class="section-title">Versements simples (${versToDisplay.length})</div>
     <table>
       <thead><tr><th>Date</th><th style="text-align:right">Montant versé</th><th>Mode</th><th>Référence</th><th>Enregistré par</th><th>Motif</th></tr></thead>
       <tbody>${versRows}</tbody>
-      <tfoot><tr style="background:#eff6ff"><td colspan="1" style="font-weight:700">Total</td><td style="text-align:right;font-weight:900;color:#166534">${this.formatPrice(credit.montantVerse)}</td><td colspan="4"></td></tr></tfoot>
+      <tfoot><tr style="background:#eff6ff"><td colspan="1" style="font-weight:700">Total versé</td><td style="text-align:right;font-weight:900;color:#166534">${this.formatPrice(credit.montantVerse)}</td><td colspan="4"></td></tr></tfoot>
     </table>
     ${!credit.estReglee ? `<div style="margin-top:12px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:12px;text-align:center"><span style="color:#dc2626;font-weight:700;font-size:14px">Reste à payer : ${this.formatPrice(credit.montantRestant)}</span></div>` : ''}
+    ${groupesPdfSection}
   </div>
   <div class="ftr">Ges Boutique &middot; Historique versements crédit &middot; ${new Date().toLocaleDateString('fr-FR')}</div>
 </div></body></html>`;

@@ -87,6 +87,7 @@ export interface OperationCaisse {
   venteCreditId?: number;
   numeroCredit?: string;
   venteAnnulee?: boolean;
+  referenceGroupe?: string;
 }
 
 export interface CreditInfo {
