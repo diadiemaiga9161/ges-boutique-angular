@@ -92,15 +92,20 @@ export interface OperationCaisse {
 export interface CreditInfo {
   id: number;
   clientNom: string;
+  clientPrenom?: string;
   clientTelephone: string;
   montantTotal: number;
   montantVerse: number;
   montantRestant: number;
   dateOperation: string;
   dateEcheance: string;
+  dateReglement?: string;
   venteId: number;
   numeroVente: string;
   estReglee: boolean;
+  regleParNom?: string;
+  regleParId?: number;
+  vendeurNom?: string;
   enRetard: boolean;
   joursRetard: number;
   progression: number;
@@ -168,6 +173,8 @@ export interface ReglementCreditRequest {
   utilisateurId?: number;
   modePaiement: string;
   referencePaiement?: string;
+  motif?: string;
+  referenceGroupe?: string;
 }
 
 export interface VerificationCaisseRequest {
@@ -414,13 +421,53 @@ export class CaisseService {
     }).pipe(
       map(response => {
         const credits = response.credits || [];
-        const creditsFiltres = credits.filter((credit: any) =>
-          !credit.venteAnnulee && !credit.annulee && !credit.estReglee
-        );
-        return creditsFiltres.map((credit: any) => this.enrichirCredit(credit));
+        return credits
+          .filter((credit: any) => !credit.venteAnnulee && !credit.annulee)
+          .map((credit: any) => this.enrichirCredit(credit));
       }),
       catchError(error => this.handleError(error, 'récupérer les crédits non réglés'))
     );
+  }
+
+  getCreditsRegles(): Observable<CreditInfo[]> {
+    return this.http.get<any>(`${this.apiUrl.replace('/caisse', '')}/ventes/credits/regles`, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(response => {
+        const credits = response.credits || [];
+        return credits
+          .filter((c: any) => !c.venteAnnulee && !c.annulee)
+          .map((c: any) => this.enrichirCreditRegle(c));
+      }),
+      catchError(error => this.handleError(error, 'récupérer les crédits réglés'))
+    );
+  }
+
+  private enrichirCreditRegle(credit: any): CreditInfo {
+    const montantTotal = credit.montantTotal || 0;
+    const montantVerse = credit.montantVerse || montantTotal;
+    return {
+      id: credit.id,
+      clientNom: credit.clientNom || 'N/A',
+      clientPrenom: credit.clientPrenom,
+      clientTelephone: credit.clientTelephone || '',
+      montantTotal,
+      montantVerse,
+      montantRestant: 0,
+      dateOperation: credit.dateVente || '',
+      dateEcheance: credit.dateEcheance || '',
+      dateReglement: credit.dateReglement || '',
+      venteId: credit.id,
+      numeroVente: credit.numeroVente || '',
+      estReglee: true,
+      regleParNom: credit.regleParNom,
+      regleParId: credit.regleParId,
+      vendeurNom: credit.vendeurNom,
+      enRetard: false,
+      joursRetard: 0,
+      progression: 100,
+      venteAnnulee: credit.annulee || false
+    };
   }
 
   getCreditsEnRetard(): Observable<CreditInfo[]> {
@@ -472,6 +519,15 @@ export class CaisseService {
     }).pipe(
       map(response => this.extractData<OperationCaisse>(response, 'reglement')),
       catchError(error => this.handleError(error, 'enregistrer le règlement de crédit'))
+    );
+  }
+
+  getPaiementsGroupes(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/paiements-groupes`, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(response => Array.isArray(response) ? response : []),
+      catchError(error => this.handleError(error, 'récupérer les paiements groupés'))
     );
   }
 
@@ -871,30 +927,34 @@ export class CaisseService {
   }
 
   imprimerFacture(facture: Facture): void {
-    console.log('🖨️ Impression de la facture:', facture.numeroFacture);
-    
-    try {
-      const factureHTML = this.genererHTMLFacture(facture);
-      const fenetreImpression = window.open('', '_blank');
-      
-      if (!fenetreImpression) {
-        throw new Error('Impossible d\'ouvrir la fenêtre d\'impression. Veuillez autoriser les popups.');
-      }
-      
-      fenetreImpression.document.write(factureHTML);
-      fenetreImpression.document.close();
-      
-      fenetreImpression.onload = () => {
-        setTimeout(() => {
-          fenetreImpression.focus();
-          fenetreImpression.print();
-          fenetreImpression.addEventListener('afterprint', () => fenetreImpression.close());
-        }, 500);
-      };
-    } catch (error) {
-      console.error('❌ Erreur lors de l\'impression:', error);
-      throw new Error('Impossible de générer la facture. Veuillez réessayer.');
-    }
+    const html = this.genererHTMLFacture(facture);
+    document.getElementById('caisse-inv-overlay')?.remove();
+    const overlay = document.createElement('div');
+    overlay.id = 'caisse-inv-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;background:rgba(0,0,0,.65)';
+
+    const frame = document.createElement('iframe');
+    frame.style.cssText = 'flex:1;width:100%;border:none;background:#f8fafc';
+    frame.setAttribute('srcdoc', html);
+
+    const bar = document.createElement('div');
+    bar.style.cssText = 'background:#1a56db;padding:10px 16px;display:flex;gap:10px;align-items:center;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,.3)';
+
+    const btnClose = document.createElement('button');
+    btnClose.textContent = '✕ Fermer';
+    btnClose.style.cssText = 'background:#ef4444;color:#fff;border:none;border-radius:8px;padding:9px 20px;font-size:14px;font-weight:700;cursor:pointer';
+    btnClose.addEventListener('click', () => overlay.remove());
+
+    const btnPrint = document.createElement('button');
+    btnPrint.textContent = '🖨 Imprimer / PDF';
+    btnPrint.style.cssText = 'background:#fff;color:#1a56db;border:none;border-radius:8px;padding:9px 20px;font-size:14px;font-weight:700;cursor:pointer';
+    btnPrint.addEventListener('click', () => frame.contentWindow?.print());
+
+    bar.appendChild(btnClose);
+    bar.appendChild(btnPrint);
+    overlay.appendChild(bar);
+    overlay.appendChild(frame);
+    document.body.appendChild(overlay);
   }
 
   private genererHTMLFacture(facture: Facture): string {
@@ -1036,23 +1096,29 @@ export class CaisseService {
       Math.ceil(Math.abs(maintenant.getTime() - echeance.getTime()) / (1000 * 60 * 60 * 24)) : 0;
     const montantVerse = credit.montantVerse || 0;
     const montantTotal = credit.montantTotal || credit.montant || 0;
-    const montantRestant = credit.montantRestant || (montantTotal - montantVerse);
-    const progression = montantTotal > 0 ? (montantVerse / montantTotal) * 100 : 0;
+    const montantRestant = credit.montantRestant ?? (montantTotal - montantVerse);
+    const rawProgression = montantTotal > 0 ? (montantVerse / montantTotal) * 100 : 0;
+    const progression = montantRestant > 0 ? Math.min(rawProgression, 99) : rawProgression;
     const venteId = credit.venteId || (credit.vente ? credit.vente.id : null) || 0;
     
     return {
       id: credit.id,
       clientNom: credit.clientNom || 'N/A',
+      clientPrenom: credit.clientPrenom,
       clientTelephone: credit.clientTelephone || '',
       montantTotal: montantTotal,
       montantVerse: montantVerse,
       montantRestant: montantRestant,
       dateOperation: credit.dateOperation || '',
       dateEcheance: credit.dateEcheance || '',
+      dateReglement: credit.dateReglement,
       venteId: venteId,
       numeroVente: credit.numeroVente || '',
       estReglee: credit.estReglee || montantRestant <= 0,
-      enRetard: enRetard,
+      regleParNom: credit.regleParNom,
+      regleParId: credit.regleParId,
+      vendeurNom: credit.vendeurNom,
+      enRetard: enRetard && !(credit.estReglee || montantRestant <= 0),
       joursRetard: joursRetard,
       progression: progression,
       venteAnnulee: credit.venteAnnulee || credit.annulee || false
