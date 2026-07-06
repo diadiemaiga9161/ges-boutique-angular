@@ -39,8 +39,17 @@ export class DepensesComponent implements OnInit {
   filtreActif = false;
 
   totauxParType: { type: string; total: number }[] = [];
-  typeFiltre: string = '';
-  moisFiltre: string = '';
+
+  private _typeFiltre: string = '';
+  get typeFiltre(): string { return this._typeFiltre; }
+  set typeFiltre(v: string) { this._typeFiltre = v; this.pageActuelle = 1; }
+
+  private _moisFiltre: string = '';
+  get moisFiltre(): string { return this._moisFiltre; }
+  set moisFiltre(v: string) { this._moisFiltre = v; this.pageActuelle = 1; }
+
+  pageActuelle: number = 1;
+  itemsParPage: number = 10;
 
   constructor(
     private depenseService: DepenseService,
@@ -115,6 +124,7 @@ export class DepensesComponent implements OnInit {
   load(): void {
     this.loading = true;
     this.filtreActif = false;
+    this.pageActuelle = 1;
     forkJoin({
       depenses: this.depenseService.getAll(),
       paiements: this.paiementEmployeService.getTous()
@@ -134,6 +144,7 @@ export class DepensesComponent implements OnInit {
     if (!this.dateDebut || !this.dateFin) return;
     this.loading = true;
     this.filtreActif = true;
+    this.pageActuelle = 1;
     forkJoin({
       depenses: this.depenseService.getParPeriode(this.dateDebut, this.dateFin),
       paiements: this.paiementEmployeService.getTous()
@@ -259,6 +270,29 @@ export class DepensesComponent implements OnInit {
       const moisOk = !this.moisFiltre || (d.date || '').startsWith(this.moisFiltre);
       return typeOk && moisOk;
     });
+  }
+
+  get depensesPaginees(): any[] {
+    const debut = (this.pageActuelle - 1) * this.itemsParPage;
+    return this.depensesFiltrees.slice(debut, debut + this.itemsParPage);
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.depensesFiltrees.length / this.itemsParPage);
+  }
+
+  allerPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages) {
+      this.pageActuelle = page;
+    }
+  }
+
+  get pageNumbers(): number[] {
+    const pages: number[] = [];
+    const debut = Math.max(1, this.pageActuelle - 2);
+    const fin = Math.min(this.totalPages, debut + 4);
+    for (let i = debut; i <= fin; i++) pages.push(i);
+    return pages;
   }
 
   get totalDepensesFiltrees(): number {
