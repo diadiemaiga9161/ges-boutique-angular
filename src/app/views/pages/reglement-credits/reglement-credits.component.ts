@@ -277,6 +277,7 @@ export class ReglementCreditsComponent implements OnInit {
     this.reglementGroupesParClient = Array.from(map.values())
       .filter(g => g.totalVerse > 0)
       .sort((a, b) => b.totalVerse - a.totalVerse);
+    this.pageReglements = 1;
   }
 
   toggleClient(nom: string) {
@@ -410,6 +411,32 @@ export class ReglementCreditsComponent implements OnInit {
 
   changerPageGroupes(p: number): void {
     if (p >= 1 && p <= this.totalPagesGroupes) this.pageGroupesClient = p;
+  }
+
+  // ── Pagination règlements par client (PAR_CLIENT tab) ──────────
+
+  pageReglements: number = 1;
+  readonly ITEMS_REGLEMENTS = 10;
+
+  get reglementGroupesParClientPagines(): ReglementGroupeClient[] {
+    const debut = (this.pageReglements - 1) * this.ITEMS_REGLEMENTS;
+    return this.reglementGroupesParClient.slice(debut, debut + this.ITEMS_REGLEMENTS);
+  }
+
+  get totalPagesReglements(): number {
+    return Math.ceil((this.reglementGroupesParClient?.length || 0) / this.ITEMS_REGLEMENTS);
+  }
+
+  get pagesReglementsNumbers(): number[] {
+    const pages: number[] = [];
+    const debut = Math.max(1, this.pageReglements - 2);
+    const fin = Math.min(this.totalPagesReglements, debut + 4);
+    for (let i = debut; i <= fin; i++) pages.push(i);
+    return pages;
+  }
+
+  changerPageReglements(p: number): void {
+    if (p >= 1 && p <= this.totalPagesReglements) this.pageReglements = p;
   }
 
   // ── Pagination crédits ─────────────────────────────────────────
