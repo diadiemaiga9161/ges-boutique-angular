@@ -383,9 +383,36 @@ export class ReglementCreditsComponent implements OnInit {
       g.total += c.montantRestant || 0;
     }
     this.creditsGroupesParClient = Array.from(map.values()).sort((a, b) => b.total - a.total);
+    this.pageGroupesClient = 1;
   }
 
-  // ── Pagination ─────────────────────────────────────────────────
+  // ── Pagination groupes par client ──────────────────────────────
+
+  pageGroupesClient: number = 1;
+  readonly ITEMS_GROUPES = 10;
+
+  get creditsGroupesParClientPagines(): GroupeClient[] {
+    const debut = (this.pageGroupesClient - 1) * this.ITEMS_GROUPES;
+    return this.creditsGroupesParClient.slice(debut, debut + this.ITEMS_GROUPES);
+  }
+
+  get totalPagesGroupes(): number {
+    return Math.ceil((this.creditsGroupesParClient?.length || 0) / this.ITEMS_GROUPES);
+  }
+
+  get pagesGroupesNumbers(): number[] {
+    const pages: number[] = [];
+    const debut = Math.max(1, this.pageGroupesClient - 2);
+    const fin = Math.min(this.totalPagesGroupes, debut + 4);
+    for (let i = debut; i <= fin; i++) pages.push(i);
+    return pages;
+  }
+
+  changerPageGroupes(p: number): void {
+    if (p >= 1 && p <= this.totalPagesGroupes) this.pageGroupesClient = p;
+  }
+
+  // ── Pagination crédits ─────────────────────────────────────────
 
   get paginatedCredits(): CreditInfo[] {
     const start = (this.creditsCurrentPage - 1) * this.creditsItemsPerPage;
