@@ -49,56 +49,56 @@ export class NavigationService {
 
     private vendeurMenu: IMenuItem[] = [
         // --- Opérations ---
-        { name: 'NAV.PRODUCTS',        type: 'link', icon: 'i-Clothing-Store',              state: '/produit' },
-        { name: 'NAV.SALES',           type: 'link', icon: 'i-Money-2',                     state: '/vente' },
-        { name: 'NAV.CREDIT_PAYMENT',  type: 'link', icon: 'i-Credit-Card',                 state: '/reglement-credits' },
-        { name: 'NAV.ORDERS',          type: 'link', icon: 'i-File-Clipboard-File--Text',   state: '/commandes' },
+        { name: 'Produits',            type: 'link', icon: 'i-Clothing-Store',              state: '/produit' },
+        { name: 'Ventes',              type: 'link', icon: 'i-Money-2',                     state: '/vente' },
+        { name: 'Règlement crédits',   type: 'link', icon: 'i-Credit-Card',                 state: '/reglement-credits' },
+        { name: 'Commandes',           type: 'link', icon: 'i-File-Clipboard-File--Text',   state: '/commandes' },
         // --- Clients ---
-        { name: 'NAV.CLIENTS',         type: 'link', icon: 'i-Business-ManWoman',           state: '/client' },
-        { name: 'NAV.PARTNERS',        type: 'link', icon: 'i-Business-ManWoman',           state: '/partenaires' },
+        { name: 'Clients',             type: 'link', icon: 'i-Business-ManWoman',           state: '/client' },
+        { name: 'Partenaires',         type: 'link', icon: 'i-Business-ManWoman',           state: '/partenaires' },
         // --- Suivi ---
-        { name: 'NAV.INVENTORY',       type: 'link', icon: 'i-Bar-Chart',                   state: '/inventaire' },
-        { name: 'NAV.REPORT',          type: 'link', icon: 'i-Receipt-4',                   state: '/rapport' },
+        { name: 'Inventaire',          type: 'link', icon: 'i-Bar-Chart',                   state: '/inventaire' },
+        { name: 'Rapport',             type: 'link', icon: 'i-Receipt-4',                   state: '/rapport' },
         // --- Compte ---
-        { name: 'NAV.PROFILE',         type: 'link', icon: 'i-Administrator',               state: '/profile' },
+        { name: 'Profil',              type: 'link', icon: 'i-Administrator',               state: '/profile' },
     ];
 
     private adminMenu: IMenuItem[] = [
         // --- Opérations quotidiennes ---
-        { name: 'NAV.PRODUCTS',      type: 'link', icon: 'i-Clothing-Store',              state: '/produit' },
-        { name: 'NAV.SALES',         type: 'link', icon: 'i-Money-2',                     state: '/vente' },
-        { name: 'NAV.CAISSE',        type: 'link', icon: 'i-Cash-register-2',             state: '/caisse' },
-        { name: 'NAV.INVOICES',      type: 'link', icon: 'i-Receipt-3',                   state: '/facture' },
-        { name: 'NAV.CREDIT_PAYMENT',type: 'link', icon: 'i-Credit-Card',                 state: '/reglement-credits' },
-        { name: 'NAV.ORDERS',        type: 'link', icon: 'i-File-Clipboard-File--Text',   state: '/commandes' },
+        { name: 'Produits',            type: 'link', icon: 'i-Clothing-Store',              state: '/produit' },
+        { name: 'Ventes',              type: 'link', icon: 'i-Money-2',                     state: '/vente' },
+        { name: 'Caisse',              type: 'link', icon: 'i-Cash-register-2',             state: '/caisse' },
+        { name: 'Factures',            type: 'link', icon: 'i-Receipt-3',                   state: '/facture' },
+        { name: 'Règlement crédits',   type: 'link', icon: 'i-Credit-Card',                 state: '/reglement-credits' },
+        { name: 'Commandes',           type: 'link', icon: 'i-File-Clipboard-File--Text',   state: '/commandes' },
         // --- Clients ---
-        { name: 'NAV.CLIENTS',       type: 'link', icon: 'i-Business-ManWoman',           state: '/client' },
-        { name: 'NAV.PARTNERS',      type: 'link', icon: 'i-Business-ManWoman',           state: '/partenaires' },
-        { name: 'NAV.DEBTS',         type: 'link', icon: 'i-Money-2',                     state: '/dettes' },
+        { name: 'Clients',             type: 'link', icon: 'i-Business-ManWoman',           state: '/client' },
+        { name: 'Partenaires',         type: 'link', icon: 'i-Business-ManWoman',           state: '/partenaires' },
+        { name: 'Dettes',              type: 'link', icon: 'i-Money-2',                     state: '/dettes' },
         // --- Stock ---
-        { name: 'NAV.INVENTORY',     type: 'link', icon: 'i-Bar-Chart',                   state: '/inventaire' },
-        { name: 'NAV.TRANSFERS',     type: 'link', icon: 'i-Arrow-Right',                 state: '/transferts' },
+        { name: 'Inventaire',          type: 'link', icon: 'i-Bar-Chart',                   state: '/inventaire' },
+        { name: 'Transferts',          type: 'link', icon: 'i-Arrow-Right',                 state: '/transferts' },
         // --- Finances ---
-        { name: 'NAV.REPORT',        type: 'link', icon: 'i-Receipt-4',                   state: '/rapport' },
-        { name: 'NAV.BENEFITS',      type: 'link', icon: 'i-Money-2',                     state: '/benefices' },
-        { name: 'NAV.EXPENSES',      type: 'link', icon: 'i-Billing',                     state: '/depenses' },
-        { name: 'NAV.NET_RESULT',    type: 'link', icon: 'i-Line-Chart',                  state: '/resultat-net' },
-        { name: 'NAV.BANK',          type: 'link', icon: 'i-University',                  state: '/comptes' },
-        { name: 'NAV.MOBILE_MONEY',  type: 'link', icon: 'i-Money-Bag',                   state: '/mobile-money' },
-        { name: 'NAV.SAFE',          type: 'link', icon: 'i-Safe-Box',                    state: '/depot-garde' },
+        { name: 'Rapport',             type: 'link', icon: 'i-Receipt-4',                   state: '/rapport' },
+        { name: 'Bénéfices',           type: 'link', icon: 'i-Money-2',                     state: '/benefices' },
+        { name: 'Dépenses',            type: 'link', icon: 'i-Billing',                     state: '/depenses' },
+        { name: 'Résultat net',        type: 'link', icon: 'i-Line-Chart',                  state: '/resultat-net' },
+        { name: 'Comptes',             type: 'link', icon: 'i-University',                  state: '/comptes' },
+        { name: 'Mobile Money',        type: 'link', icon: 'i-Money-Bag',                   state: '/mobile-money' },
+        { name: 'Dépôt garde',         type: 'link', icon: 'i-Safe-Box',                    state: '/depot-garde' },
         // --- Fournisseurs ---
-        { name: 'NAV.SUPPLIERS',     type: 'link', icon: 'i-Business-Man',                state: '/fournisseurs' },
-        { name: 'NAV.SUPPLIER_OBJ',  type: 'link', icon: 'i-Target',                      state: '/objectif-fournisseur' },
-        { name: 'NAV.SUPPLIER_BONUS',type: 'link', icon: 'i-Gift-Box',                    state: '/bonus-fournisseurs' },
+        { name: 'Fournisseurs',        type: 'link', icon: 'i-Business-Man',                state: '/fournisseurs' },
+        { name: 'Objectif fournisseur',type: 'link', icon: 'i-Target',                      state: '/objectif-fournisseur' },
+        { name: 'Bonus fournisseurs',  type: 'link', icon: 'i-Gift-Box',                    state: '/bonus-fournisseurs' },
         // --- Ressources humaines ---
-        { name: 'NAV.EMPLOYEES',     type: 'link', icon: 'i-Business-Man',                state: '/employes' },
-        { name: 'NAV.EMPLOYEE_PAY',  type: 'link', icon: 'i-Money-Bag',                   state: '/paiement-employe' },
-        { name: 'NAV.SELLERS',       type: 'link', icon: 'i-Administrator',               state: '/vendeur' },
+        { name: 'Employés',            type: 'link', icon: 'i-Business-Man',                state: '/employes' },
+        { name: 'Paiement employé',    type: 'link', icon: 'i-Money-Bag',                   state: '/paiement-employe' },
+        { name: 'Vendeurs',            type: 'link', icon: 'i-Administrator',               state: '/vendeur' },
         // --- Administration ---
-        { name: 'NAV.SHOP',          type: 'link', icon: 'i-Shop-2',                      state: '/boutique' },
-        { name: 'NAV.INVOICE_DESIGN',type: 'link', icon: 'i-Pen-2',                       state: '/facture-design' },
-        // { name: 'NAV.PROMO',         type: 'link', icon: 'i-Tag-2',                       state: '/promotions' }, // gérer depuis l'app mobile
-        { name: 'NAV.PROFILE',       type: 'link', icon: 'i-Administrator',               state: '/profile' },
+        { name: 'Boutique',            type: 'link', icon: 'i-Shop-2',                      state: '/boutique' },
+        { name: 'Design facture',      type: 'link', icon: 'i-Pen-2',                       state: '/facture-design' },
+        // { name: 'Promotions',          type: 'link', icon: 'i-Tag-2',                       state: '/promotions' }, // gérer depuis l'app mobile
+        { name: 'Profil',              type: 'link', icon: 'i-Administrator',               state: '/profile' },
     ];
 
     menuItems = new BehaviorSubject<IMenuItem[]>([]);
