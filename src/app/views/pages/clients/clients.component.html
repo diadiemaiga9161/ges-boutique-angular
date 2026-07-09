@@ -193,6 +193,14 @@
             <label class="form-label fw-semibold">{{ 'CLIENTS.EMAIL' | translate }}</label>
             <input type="email" class="form-control" [(ngModel)]="clientForm.email" name="email" placeholder="client@example.com" />
           </div>
+          <div class="col-12">
+            <div class="form-check mt-1">
+              <input class="form-check-input" type="checkbox" id="partenaire" [(ngModel)]="clientForm.partenaire" name="partenaire">
+              <label class="form-check-label fw-semibold" for="partenaire">
+                {{ 'CLIENTS.PARTNER' | translate }}
+              </label>
+            </div>
+          </div>
         </div>
       </form>
     </div>
@@ -337,6 +345,47 @@
             </div>
           </div>
         </section>
+
+        <!-- Crédits réglés -->
+        <section class="credit-client-section" *ngIf="creditsReglesClient.length > 0">
+          <div class="credit-section-header" style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border-left:4px solid #16a34a">
+            <div>
+              <h4 style="color:#15803d"><i class="fa fa-check-circle me-2"></i>Crédits réglés ({{ creditsReglesClient.length }})</h4>
+              <p>Historique des crédits soldés.</p>
+            </div>
+            <span class="credit-count" style="background:#16a34a">{{ creditsReglesClient.length }} crédit(s) réglé(s)</span>
+          </div>
+          <div class="credit-table-wrapper">
+            <table class="data-table ventes-table credit-only-table">
+              <thead>
+                <tr>
+                  <th>N° Facture</th>
+                  <th>Date vente</th>
+                  <th>Réglé le</th>
+                  <th class="text-right">Montant</th>
+                  <th>Réglé par</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let vente of creditsReglesClient" style="background:#f0fdf4">
+                  <td><strong>{{ vente.numeroVente }}</strong></td>
+                  <td>{{ formatDateComplete(vente.dateVente) }}</td>
+                  <td class="text-success fw-semibold">
+                    {{ vente.dateReglement ? formatDateComplete(vente.dateReglement) : '-' }}
+                  </td>
+                  <td class="text-right">{{ formatPrice(vente.montantTotal) }}</td>
+                  <td class="fw-semibold">{{ vente.regleParNom || '-' }}</td>
+                  <td>
+                    <button type="button" class="btn-sm btn-detail" (click)="showVenteDetail(vente)">
+                      <i class="fa fa-eye"></i> Détails
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
         
         <div class="ventes-filters">
           <input 
@@ -349,7 +398,8 @@
           <select [(ngModel)]="filterVenteType" (change)="filterVentesClient()" class="filter-select">
             <option value="">Tous les types</option>
             <option value="COMPTANT">Comptant</option>
-            <option value="CREDIT">Crédit</option>
+            <option value="CREDIT">Crédit (tous)</option>
+            <option value="CREDIT_EN_COURS">Crédit en cours</option>
             <option value="CREDIT_RETARD">Crédit en retard</option>
             <option value="CREDIT_REGLE">Crédit réglé</option>
           </select>
@@ -511,7 +561,8 @@
           <select [(ngModel)]="filterDiversType" (change)="filterVentesDivers()" class="filter-select">
             <option value="">Tous les types</option>
             <option value="COMPTANT">Comptant</option>
-            <option value="CREDIT">Crédit</option>
+            <option value="CREDIT">Crédit (tous)</option>
+            <option value="CREDIT_EN_COURS">Crédit en cours</option>
             <option value="CREDIT_RETARD">Crédit en retard</option>
             <option value="CREDIT_REGLE">Crédit réglé</option>
           </select>
@@ -658,7 +709,15 @@
             </div>
             <div class="fd-credit-row" *ngIf="!selectedVenteDetail.creditRegle">
               <span class="fd-credit-label">Reste dû</span>
-              <span class="fd-credit-val">{{ formatPrice(selectedVenteDetail.montantRestant || 0) }}</span>
+              <span class="fd-credit-val text-danger fw-bold">{{ formatPrice(selectedVenteDetail.montantRestant || 0) }}</span>
+            </div>
+            <div class="fd-credit-row" *ngIf="selectedVenteDetail.creditRegle && selectedVenteDetail.dateReglement">
+              <span class="fd-credit-label">Réglé le</span>
+              <span class="fd-credit-val text-success">{{ selectedVenteDetail.dateReglement | date:'dd/MM/yyyy' }}</span>
+            </div>
+            <div class="fd-credit-row" *ngIf="selectedVenteDetail.regleParNom">
+              <span class="fd-credit-label">Réglé par</span>
+              <span class="fd-credit-val fw-bold">{{ selectedVenteDetail.regleParNom }}</span>
             </div>
           </div>
           <table class="fd-table">

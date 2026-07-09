@@ -65,7 +65,7 @@
     "EXPENSES": "المصروفات", "NET_RESULT": "الصافي", "SUPPLIERS": "الموردون",
     "MOBILE_MONEY": "موبايل موني", "INVOICE_DESIGN": "تصميم الفواتير",
     "REPORT": "تقرير", "PROMO": "العروض", "CREDIT_PAYMENT": "تسوية الائتمان",
-    "ORDERS": "الطلبات", "NOTIFICATIONS": "الإشعارات"
+    "ORDERS": "الطلبات", "NOTIFICATIONS": "الإشعارات", "PARTNERS": "الشركاء"
   },
   "PROFILE": {
     "TITLE": "ملفي الشخصي",
@@ -141,7 +141,12 @@
     "RELEVE": "كشف PDF",
     "SEARCH": "ابحث عن عميل",
     "SAVED": "تم حفظ العميل",
-    "DELETED": "تم حذف العميل"
+    "DELETED": "تم حذف العميل",
+    "PARTNER": "شريك"
+  },
+  "PARTENAIRES": {
+    "TITLE": "الشركاء",
+    "SEARCH": "ابحث عن شريك"
   },
   "CAISSE": {
     "TITLE": "الصندوق",
@@ -203,11 +208,16 @@
   "EXPENSES": {
     "TITLE": "المصروفات", "SUBTITLE": "خصم تلقائي من الصندوق",
     "NEW": "مصروف جديد", "EDIT": "تعديل المصروف",
-    "NAME": "اسم المصروف", "REASON": "السبب / الوصف",
+    "NAME": "اسم المصروف", "REASON": "السبب / الوصف", "TYPE": "نوع المصروف",
     "TOTAL": "إجمالي المصروفات", "PERIOD_TOTAL": "إجمالي الفترة",
     "EMPTY": "لا توجد مصروفات", "RESET": "إعادة تعيين",
     "ADJUST_INFO": "سيتم تعديل الصندوق تلقائياً",
-    "DEDUCT_INFO": "سيتم خصم المبلغ تلقائياً من الصندوق"
+    "DEDUCT_INFO": "سيتم خصم المبلغ تلقائياً من الصندوق",
+    "PDF_TITLE": "تقرير المصروفات", "PDF_FOOTER": "وثيقة سرية — Ges Boutique",
+    "TYPE_FILTER": "تصفية حسب النوع", "MONTH_FILTER": "تصفية حسب الشهر",
+    "ALL_TYPES": "جميع الأنواع", "SUMMARY_BY_TYPE": "ملخص حسب النوع",
+    "PDF_BTN": "تحميل PDF",
+    "MONTH": "الشهر", "COUNT": "عدد المصروفات", "TYPES_COUNT": "الأنواع", "AVERAGE": "المتوسط", "BY_TYPE": "التوزيع حسب النوع"
   },
   "SELLERS": {
     "TITLE": "إدارة المستخدمين", "SUBTITLE": "المشرفون والبائعون والصلاحيات",
@@ -307,6 +317,25 @@
   },
   "BOUTIQUE_SETTINGS": {
     "TITLE": "إعدادات المتجر", "SUBTITLE": "المعلومات والإعدادات",
-    "NAME": "اسم المتجر", "ADDRESS": "العنوان", "PHONE": "الهاتف", "LOGO": "الشعار"
+    "NAME": "اسم المتجر", "ADDRESS": "العنوان", "PHONE": "الهاتف", "LOGO": "الشعار",
+    "CUSTOMIZATION": "تخصيص عام",
+    "DARK_MODE": "الوضع المظلم", "DARK_MODE_DESC": "تفعيل المظهر الداكن للتطبيق",
+    "PACKAGING": "تعبئة متعددة المستويات",
+    "PACKAGING_DESC": "البيع حسب المستوى (كرتون → كيس → وحدة) مع مخزون تسلسلي تلقائي.",
+    "ENABLED": "مفعّل", "DISABLED": "معطّل",
+    "MAIN_COLOR": "اللون الرئيسي", "MAIN_COLOR_DESC": "اختر اللون الرئيسي للتطبيق",
+    "PREVIEW": "معاينة:",
+    "PACKAGING_LEVELS": "مستويات التعبئة لكل منتج",
+    "PACKAGING_LEVELS_DESC": "حدد كيفية تعبئة كل منتج (مثال: كرتون → كيس → وحدة).",
+    "SELECT_PRODUCT": "المنتج", "CHOOSE_PRODUCT": "اختر منتجاً",
+    "NO_LEVELS": "لا يوجد مستوى لهذا المنتج. انقر على «إضافة مستوى».",
+    "ADD_LEVEL": "إضافة مستوى", "EDIT_LEVEL": "تعديل المستوى",
+    "LEVEL_NAME": "اسم التعبئة (مثال: كرتون، كيس، وحدة)",
+    "LEVEL_PARENT": "يوجد داخل:",
+    "LEVEL_PARENT_HINT": "اختر \"الأكبر\" إذا لم تكن هذه التعبئة داخل شيء آخر.",
+    "NO_PARENT": "الأكبر (لا وعاء)",
+    "PURCHASE_PRICE": "سعر الشراء (FCFA)", "SELL_PRICE": "سعر البيع (FCFA)",
+    "CURRENT_STOCK": "المخزون الحالي",
+    "DECOMPOSE": "فتح وحدة واحدة من الوالد"
   }
 }

@@ -110,7 +110,8 @@ export class ClientsComponent implements OnInit {
   clientForm: Client = {
     nom: '',
     prenom: '',
-    numeroTelephone: ''
+    numeroTelephone: '',
+    partenaire: false
   };
 
   constructor(
@@ -174,7 +175,8 @@ export class ClientsComponent implements OnInit {
       prenom: client.prenom,
       numeroTelephone: client.numeroTelephone || client.telephone || '',
       adresse: client.adresse || '',
-      email: client.email || ''
+      email: client.email || '',
+      partenaire: client.partenaire ?? false
     };
     this.errorMessage = '';
     this.successMessage = '';
@@ -186,7 +188,8 @@ export class ClientsComponent implements OnInit {
     this.clientForm = {
       nom: '',
       prenom: '',
-      numeroTelephone: ''
+      numeroTelephone: '',
+      partenaire: false
     };
     this.errorMessage = '';
     this.successMessage = '';
@@ -358,7 +361,8 @@ export class ClientsComponent implements OnInit {
       }
       if (this.filterVenteType) {
         if (this.filterVenteType === 'COMPTANT' && vente.estCredit) return false;
-        if (this.filterVenteType === 'CREDIT' && (!vente.estCredit || vente.creditRegle)) return false;
+        if (this.filterVenteType === 'CREDIT' && !vente.estCredit) return false;
+        if (this.filterVenteType === 'CREDIT_EN_COURS' && (!vente.estCredit || vente.creditRegle || this.getMontantRestantCredit(vente) <= 0)) return false;
         if (this.filterVenteType === 'CREDIT_RETARD' && (!vente.estCredit || vente.creditRegle || !this.isCreditEnRetard(vente))) return false;
         if (this.filterVenteType === 'CREDIT_REGLE' && (!vente.estCredit || !vente.creditRegle)) return false;
       }
@@ -378,7 +382,8 @@ export class ClientsComponent implements OnInit {
       }
       if (this.filterDiversType) {
         if (this.filterDiversType === 'COMPTANT' && vente.estCredit) return false;
-        if (this.filterDiversType === 'CREDIT' && (!vente.estCredit || vente.creditRegle)) return false;
+        if (this.filterDiversType === 'CREDIT' && !vente.estCredit) return false;
+        if (this.filterDiversType === 'CREDIT_EN_COURS' && (!vente.estCredit || vente.creditRegle || this.getMontantRestantCredit(vente) <= 0)) return false;
         if (this.filterDiversType === 'CREDIT_RETARD' && (!vente.estCredit || vente.creditRegle || !this.isCreditEnRetard(vente))) return false;
         if (this.filterDiversType === 'CREDIT_REGLE' && (!vente.estCredit || !vente.creditRegle)) return false;
       }
@@ -693,6 +698,12 @@ export class ClientsComponent implements OnInit {
     return this.ventesClient
       .filter(vente => this.isCreditEnCours(vente))
       .sort((a, b) => new Date(a.dateEcheance || a.dateVente).getTime() - new Date(b.dateEcheance || b.dateVente).getTime());
+  }
+
+  get creditsReglesClient(): VenteMap[] {
+    return this.ventesClient
+      .filter(vente => vente.estCredit && vente.creditRegle)
+      .sort((a, b) => new Date(b.dateVente).getTime() - new Date(a.dateVente).getTime());
   }
 
   isCreditEnCours(vente: VenteMap): boolean {

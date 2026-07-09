@@ -15,6 +15,7 @@ export interface Client {
   telephone?: string;
   adresse?: string;
   email?: string;
+  partenaire?: boolean;
   dateCreation?: string;
   ventes?: any[];
   soldeAvance?: number;
@@ -218,15 +219,27 @@ export class ClientService {
       telephone: client.telephone || client.numeroTelephone || '',
       numeroTelephone: client.numeroTelephone || client.telephone || '',
       adresse: client.adresse || '',
-      email: client.email || ''
+      email: client.email || '',
+      partenaire: client.partenaire ?? false
     };
   }
 
   private toBackendClient(client: Client): Client {
     return {
       ...client,
-      numeroTelephone: client.numeroTelephone || client.telephone || ''
+      numeroTelephone: client.numeroTelephone || client.telephone || '',
+      partenaire: client.partenaire ?? false
     };
+  }
+
+  getPartenaires(): Observable<Client[]> {
+    return this.http.get<any>(`${this.apiUrl}/partenaires`, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(response => this.extractData<Client[]>(response) || []),
+      map(clients => (clients || []).map(client => this.normalizeClient(client))),
+      catchError(error => this.handleError(error, 'récupérer les partenaires'))
+    );
   }
 
   // ==================== AVANCES CLIENT ====================

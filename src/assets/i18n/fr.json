@@ -84,7 +84,8 @@
     "PROMO": "Promotions",
     "NOTIFICATIONS": "Notifications",
     "CREDIT_PAYMENT": "Règlement Crédits",
-    "ORDERS": "Commandes"
+    "ORDERS": "Commandes",
+    "PARTNERS": "Partenaires"
   },
   "PROFILE": {
     "TITLE": "Mon Profil",
@@ -160,7 +161,12 @@
     "RELEVE": "Relevé PDF",
     "SEARCH": "Rechercher un client",
     "SAVED": "Client enregistré",
-    "DELETED": "Client supprimé"
+    "DELETED": "Client supprimé",
+    "PARTNER": "Partenaire"
+  },
+  "PARTENAIRES": {
+    "TITLE": "Partenaires",
+    "SEARCH": "Rechercher un partenaire"
   },
   "CAISSE": {
     "TITLE": "Caisse",
@@ -222,11 +228,16 @@
   "EXPENSES": {
     "TITLE": "Dépenses", "SUBTITLE": "Déduction automatique de la caisse",
     "NEW": "Nouvelle dépense", "EDIT": "Modifier la dépense",
-    "NAME": "Nom de la dépense", "REASON": "Motif / Description",
+    "NAME": "Nom de la dépense", "REASON": "Motif / Description", "TYPE": "Type de dépense",
     "TOTAL": "Total des dépenses", "PERIOD_TOTAL": "Total sur la période",
     "EMPTY": "Aucune dépense enregistrée", "RESET": "Réinitialiser",
     "ADJUST_INFO": "La caisse sera ajustée automatiquement",
-    "DEDUCT_INFO": "Le montant sera déduit automatiquement de la caisse"
+    "DEDUCT_INFO": "Le montant sera déduit automatiquement de la caisse",
+    "PDF_TITLE": "Rapport de dépenses", "PDF_FOOTER": "Document confidentiel — Ges Boutique",
+    "TYPE_FILTER": "Filtrer par type", "MONTH_FILTER": "Filtrer par mois",
+    "ALL_TYPES": "Tous les types", "SUMMARY_BY_TYPE": "Répartition par type",
+    "PDF_BTN": "Télécharger PDF",
+    "MONTH": "Mois", "COUNT": "Nb dépenses", "TYPES_COUNT": "Types", "AVERAGE": "Moyenne", "BY_TYPE": "Répartition par type"
   },
   "SELLERS": {
     "TITLE": "Gestion des Utilisateurs", "SUBTITLE": "Administrateurs, vendeurs et accès",
@@ -326,6 +337,25 @@
   },
   "BOUTIQUE_SETTINGS": {
     "TITLE": "Paramètres Boutique", "SUBTITLE": "Informations et configuration",
-    "NAME": "Nom de la boutique", "ADDRESS": "Adresse", "PHONE": "Téléphone", "LOGO": "Logo"
+    "NAME": "Nom de la boutique", "ADDRESS": "Adresse", "PHONE": "Téléphone", "LOGO": "Logo",
+    "CUSTOMIZATION": "Personnalisation globale",
+    "DARK_MODE": "Mode sombre", "DARK_MODE_DESC": "Activer le thème sombre pour toute l'application",
+    "PACKAGING": "Conditionnement multi-niveaux",
+    "PACKAGING_DESC": "Vendre par niveau (Carton → Sachet → Pièce) avec stock cascade automatique.",
+    "ENABLED": "Activé", "DISABLED": "Désactivé",
+    "MAIN_COLOR": "Couleur principale", "MAIN_COLOR_DESC": "Choisissez la couleur principale de l'application",
+    "PREVIEW": "Aperçu :",
+    "PACKAGING_LEVELS": "Niveaux d'emballage par produit",
+    "PACKAGING_LEVELS_DESC": "Définissez comment chaque produit est emballé (ex : Carton → Sachet → Pièce).",
+    "SELECT_PRODUCT": "Produit", "CHOOSE_PRODUCT": "Choisir un produit",
+    "NO_LEVELS": "Aucun niveau défini pour ce produit. Cliquez sur « Ajouter un niveau ».",
+    "ADD_LEVEL": "Ajouter un niveau", "EDIT_LEVEL": "Modifier le niveau",
+    "LEVEL_NAME": "Nom de l'emballage (ex : Carton, Sachet, Pièce)",
+    "LEVEL_PARENT": "Il est contenu dans :",
+    "LEVEL_PARENT_HINT": "Choisir \"C'est le plus grand\" si cet emballage n'est contenu dans rien.",
+    "NO_PARENT": "C'est le plus grand (aucun contenant)",
+    "PURCHASE_PRICE": "Prix d'achat (FCFA)", "SELL_PRICE": "Prix de vente (FCFA)",
+    "CURRENT_STOCK": "Stock actuel",
+    "DECOMPOSE": "Ouvrir 1 unité du parent"
   }
 }

@@ -28,6 +28,7 @@ import { FactureDesignComponent } from './facture-design/facture-design.componen
 import { PromotionsComponent } from './promotions/promotions.component';
 import { ReglementCreditsComponent } from './reglement-credits/reglement-credits.component';
 import { CommandesComponent } from './commandes/commandes.component';
+import { PartenairesComponent } from './partenaires/partenaires.component';
 
 const routes: Routes = [
     {
@@ -136,6 +137,10 @@ const routes: Routes = [
     {
         path: 'commandes',
         component: CommandesComponent
+    },
+    {
+        path: 'partenaires',
+        component: PartenairesComponent
     },
 ];
 

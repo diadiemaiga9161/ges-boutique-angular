@@ -46,7 +46,7 @@
     "EXPENSES": "Expenses", "NET_RESULT": "Net Result", "SUPPLIERS": "Suppliers",
     "MOBILE_MONEY": "Mobile Money", "INVOICE_DESIGN": "Invoice Design",
     "REPORT": "Report", "PROMO": "Promotions", "CREDIT_PAYMENT": "Credit Settlement",
-    "ORDERS": "Orders", "NOTIFICATIONS": "Notifications"
+    "ORDERS": "Orders", "NOTIFICATIONS": "Notifications", "PARTNERS": "Partners"
   },
   "PROFILE": {
     "TITLE": "My Profile", "FULL_NAME": "Full name", "EMAIL": "Email",
@@ -79,8 +79,9 @@
     "FIRSTNAME": "First name", "PHONE": "Phone", "EMAIL": "Email",
     "ADDRESS": "Address", "QR_CODE": "Client QR Code", "HISTORY": "History",
     "CREDITS": "Credits", "ADVANCES": "Advances", "RELEVE": "PDF Statement",
-    "SEARCH": "Search a client", "SAVED": "Client saved", "DELETED": "Client deleted"
+    "SEARCH": "Search a client", "SAVED": "Client saved", "DELETED": "Client deleted", "PARTNER": "Partner"
   },
+  "PARTENAIRES": { "TITLE": "Partners", "SEARCH": "Search a partner" },
   "CAISSE": {
     "TITLE": "Cash Register", "BALANCE": "Current balance", "INCOME": "Income",
     "EXPENSE": "Expense", "TRANSFER": "Bank transfer", "OPERATIONS": "Operations",
@@ -112,11 +113,16 @@
   "EXPENSES": {
     "TITLE": "Expenses", "SUBTITLE": "Automatic cash deduction",
     "NEW": "New expense", "EDIT": "Edit expense",
-    "NAME": "Expense name", "REASON": "Reason / Description",
+    "NAME": "Expense name", "REASON": "Reason / Description", "TYPE": "Expense type",
     "TOTAL": "Total expenses", "PERIOD_TOTAL": "Period total",
     "EMPTY": "No expenses recorded", "RESET": "Reset",
     "ADJUST_INFO": "Cash will be adjusted automatically",
-    "DEDUCT_INFO": "Amount will be automatically deducted from cash"
+    "DEDUCT_INFO": "Amount will be automatically deducted from cash",
+    "PDF_TITLE": "Expense report", "PDF_FOOTER": "Confidential document — Ges Boutique",
+    "TYPE_FILTER": "Filter by type", "MONTH_FILTER": "Filter by month",
+    "ALL_TYPES": "All types", "SUMMARY_BY_TYPE": "Breakdown by type",
+    "PDF_BTN": "Download PDF",
+    "MONTH": "Month", "COUNT": "Expense count", "TYPES_COUNT": "Types", "AVERAGE": "Average", "BY_TYPE": "Breakdown by type"
   },
   "SELLERS": {
     "TITLE": "User Management", "SUBTITLE": "Administrators, sellers and access",
@@ -216,6 +222,25 @@
   },
   "BOUTIQUE_SETTINGS": {
     "TITLE": "Shop Settings", "SUBTITLE": "Information and configuration",
-    "NAME": "Shop name", "ADDRESS": "Address", "PHONE": "Phone", "LOGO": "Logo"
+    "NAME": "Shop name", "ADDRESS": "Address", "PHONE": "Phone", "LOGO": "Logo",
+    "CUSTOMIZATION": "Global customization",
+    "DARK_MODE": "Dark mode", "DARK_MODE_DESC": "Enable dark theme for the entire application",
+    "PACKAGING": "Multi-level packaging",
+    "PACKAGING_DESC": "Sell by level (Carton → Bag → Unit) with automatic cascade stock.",
+    "ENABLED": "Enabled", "DISABLED": "Disabled",
+    "MAIN_COLOR": "Main color", "MAIN_COLOR_DESC": "Choose the main color of the application",
+    "PREVIEW": "Preview:",
+    "PACKAGING_LEVELS": "Packaging levels per product",
+    "PACKAGING_LEVELS_DESC": "Define how each product is packaged (e.g. Carton → Bag → Unit).",
+    "SELECT_PRODUCT": "Product", "CHOOSE_PRODUCT": "Choose a product",
+    "NO_LEVELS": "No level defined for this product. Click \"Add a level\".",
+    "ADD_LEVEL": "Add a level", "EDIT_LEVEL": "Edit level",
+    "LEVEL_NAME": "Packaging name (e.g. Carton, Bag, Unit)",
+    "LEVEL_PARENT": "It is contained in:",
+    "LEVEL_PARENT_HINT": "Choose \"Largest unit\" if this package is not contained in anything.",
+    "NO_PARENT": "Largest unit (no container)",
+    "PURCHASE_PRICE": "Purchase price (FCFA)", "SELL_PRICE": "Selling price (FCFA)",
+    "CURRENT_STOCK": "Current stock",
+    "DECOMPOSE": "Open 1 parent unit"
   }
 }
