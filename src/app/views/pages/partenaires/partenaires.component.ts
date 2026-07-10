@@ -28,7 +28,7 @@ interface HistoriquePaiementEntry {
   standalone: true,
   imports: [CommonModule, FormsModule, TranslateModule],
   templateUrl: './partenaires.component.html',
-  styleUrls: ['../clients/clients.component.scss']
+  styleUrls: ['../clients/clients.component.scss', './partenaires.component.scss']
 })
 export class PartenairesComponent implements OnInit {
   clients: Client[] = [];
@@ -92,6 +92,15 @@ export class PartenairesComponent implements OnInit {
   isLoadingHistorique: boolean = false;
   historiquePaiements: HistoriquePaiementEntry[] = [];
   clientPourHistorique: Client | null = null;
+
+  // Filtres date pour historique ventes
+  filterVenteDateDebut: string = '';
+  filterVenteDateFin: string = '';
+
+  // Filtres date pour historique paiements
+  filterPaiementDateDebut: string = '';
+  filterPaiementDateFin: string = '';
+  historiquePaiementsFiltres: HistoriquePaiementEntry[] = [];
 
   // ==================== AVANCES CLIENT ====================
   showAvanceModal: boolean = false;
@@ -345,6 +354,20 @@ export class PartenairesComponent implements OnInit {
         const venteMois = `${venteDate.getFullYear()}-${String(venteDate.getMonth() + 1).padStart(2, '0')}`;
         if (venteMois !== this.filterVenteMois) return false;
       }
+      if (this.filterVenteDateDebut) {
+        if (new Date(vente.dateVente) < new Date(this.filterVenteDateDebut)) return false;
+      }
+      if (this.filterVenteDateFin) {
+        if (new Date(vente.dateVente) > new Date(this.filterVenteDateFin + 'T23:59:59')) return false;
+      }
+      return true;
+    });
+  }
+
+  filterHistoriquePaiements(): void {
+    this.historiquePaiementsFiltres = this.historiquePaiements.filter(p => {
+      if (this.filterPaiementDateDebut && new Date(p.date) < new Date(this.filterPaiementDateDebut)) return false;
+      if (this.filterPaiementDateFin && new Date(p.date) > new Date(this.filterPaiementDateFin + 'T23:59:59')) return false;
       return true;
     });
   }
@@ -373,6 +396,8 @@ export class PartenairesComponent implements OnInit {
     this.filterVenteNumero = '';
     this.filterVenteType = '';
     this.filterVenteMois = '';
+    this.filterVenteDateDebut = '';
+    this.filterVenteDateFin = '';
     this.ventesClientFiltered = [...this.ventesClient];
   }
 
@@ -673,6 +698,7 @@ export class PartenairesComponent implements OnInit {
           this.historiquePaiements = entries.sort((a, b) =>
             new Date(b.date).getTime() - new Date(a.date).getTime()
           );
+          this.historiquePaiementsFiltres = [...this.historiquePaiements];
           this.isLoadingHistorique = false;
           return;
         }
@@ -698,6 +724,7 @@ export class PartenairesComponent implements OnInit {
             this.historiquePaiements = entries.sort((a, b) =>
               new Date(b.date).getTime() - new Date(a.date).getTime()
             );
+            this.historiquePaiementsFiltres = [...this.historiquePaiements];
             this.isLoadingHistorique = false;
           },
           error: () => { this.isLoadingHistorique = false; }
@@ -710,11 +737,32 @@ export class PartenairesComponent implements OnInit {
   closeHistoriquePaiementsModal(): void {
     this.showHistoriquePaiementsModal = false;
     this.historiquePaiements = [];
+    this.historiquePaiementsFiltres = [];
     this.clientPourHistorique = null;
+    this.filterPaiementDateDebut = '';
+    this.filterPaiementDateFin = '';
   }
 
   getTotalHistorique(): number {
     return this.historiquePaiements.reduce((sum, r) => sum + (r.montant || 0), 0);
+  }
+
+  get totalHistoriqueFiltres(): number {
+    return this.historiquePaiementsFiltres.reduce((sum, r) => sum + (r.montant || 0), 0);
+  }
+
+  get historiquePaiementsGroupes(): { date: string; entries: HistoriquePaiementEntry[]; total: number }[] {
+    const groups: { [key: string]: HistoriquePaiementEntry[] } = {};
+    this.historiquePaiementsFiltres.forEach(p => {
+      const key = new Date(p.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(p);
+    });
+    return Object.entries(groups).map(([date, entries]) => ({
+      date,
+      entries,
+      total: entries.reduce((s, e) => s + e.montant, 0)
+    }));
   }
 
   voirVenteDepuisHistorique(entry: HistoriquePaiementEntry): void {

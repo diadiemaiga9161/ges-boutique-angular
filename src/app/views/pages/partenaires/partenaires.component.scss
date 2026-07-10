@@ -1,4 +1,92 @@
 // src/app/views/pages/partenaires/partenaires.component.scss
-// Réutilise les styles globaux des clients (app-page, modal-overlay, data-table, etc.)
-// Pas de surcharge nécessaire ; les classes sont définies dans clients.component.scss
-// et dans les styles globaux du projet.
+// Styles spécifiques à la page Partenaires
+// Les classes de base (app-page, modal-overlay, data-table, etc.) viennent de clients.component.scss
+// (référencé dans styleUrls du composant)
+
+// ── Avatar dans le tableau ────────────────────────────────────────────────────
+.avatar-circle {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1a56db, #3b82f6);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+// ── Bande de stats (modal ventes + avances) ───────────────────────────────────
+.stats-bande {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.stat-card {
+  background: #fff;
+  border-radius: 10px;
+  padding: 14px 16px;
+  border: 1px solid #e9ecef;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+
+  .stat-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1a56db;
+    line-height: 1.2;
+  }
+
+  .stat-label {
+    font-size: 0.73rem;
+    color: #6c757d;
+    margin-top: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+}
+
+// ── Bande de filtres ──────────────────────────────────────────────────────────
+.filtres-bande {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+
+// ── Tableau ventes : coloration des lignes selon statut ───────────────────────
+.table-success-light  { background: #f0fdf4 !important; }
+.table-warning-light  { background: #fffbeb !important; }
+.table-danger-light   { background: #fef2f2 !important; }
+.table-info-light     { background: #eff6ff !important; }
+
+// ── Groupes de paiements ─────────────────────────────────────────────────────
+.groupe-paiement {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+
+  .groupe-header {
+    background: #f1f5f9;
+    font-size: 0.88rem;
+    border-bottom: 1px solid #e2e8f0;
+    border-radius: 8px 8px 0 0;
+  }
+
+  .groupe-body {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+  }
+}
+
+// ── Bande total paiements ────────────────────────────────────────────────────
+.total-bande {
+  background: linear-gradient(135deg, #1a56db, #1d4ed8);
+  color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(26, 86, 219, 0.3);
+}
