@@ -295,6 +295,7 @@ export class PartenairesComponent implements OnInit {
         this.ventesClient.sort((a, b) => new Date(b.dateVente).getTime() - new Date(a.dateVente).getTime());
         this.ventesClientFiltered = [...this.ventesClient];
         this.isLoadingVentes = false;
+        this.loadPaiementsForVentesModal(client);
       },
       error: (error) => {
         this.errorMessage = error.message || 'Impossible de charger les ventes du partenaire';
@@ -521,6 +522,15 @@ export class PartenairesComponent implements OnInit {
     }
   }
 
+  formatDateLong(dateString: string): string {
+    if (!dateString) return '-';
+    try {
+      return new Date(dateString).toLocaleDateString('fr-FR', {
+        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+      });
+    } catch { return dateString; }
+  }
+
   getRelativeDate(dateString: string): string {
     if (!dateString) return '';
 
@@ -674,6 +684,72 @@ export class PartenairesComponent implements OnInit {
     this.isLoadingHistorique = true;
     this.historiquePaiements = [];
     this.showHistoriquePaiementsModal = true;
+
+    this.venteService.getAllVentes().subscribe({
+      next: (ventes) => {
+        const ventesClient = ventes.filter(v => this.isVenteForClient(v, client) && !v.annulee);
+        const entries: HistoriquePaiementEntry[] = [];
+
+        const comptant = ventesClient.filter(v => !v.estCredit);
+        comptant.forEach(v => {
+          entries.push({
+            date: v.dateVente,
+            montant: v.montantTotal,
+            typeLabel: 'Comptant',
+            modePaiement: v.modePaiement || '',
+            reference: v.referencePaiement || '',
+            numeroVente: v.numeroVente,
+            venteId: v.id,
+            vente: v
+          });
+        });
+
+        const credits = ventesClient.filter(v => v.estCredit);
+        if (credits.length === 0) {
+          this.historiquePaiements = entries.sort((a, b) =>
+            new Date(b.date).getTime() - new Date(a.date).getTime()
+          );
+          this.historiquePaiementsFiltres = [...this.historiquePaiements];
+          this.isLoadingHistorique = false;
+          return;
+        }
+
+        const calls = credits.map(v => this.caisseService.getHistoriqueReglementsCredit(v.id));
+        forkJoin(calls).subscribe({
+          next: (results) => {
+            results.forEach((reglements, i) => {
+              const vente = credits[i];
+              reglements.forEach(r => {
+                entries.push({
+                  date: r.dateOperation,
+                  montant: r.montant,
+                  typeLabel: 'Crédit',
+                  modePaiement: (r.modePaiement as string) || '',
+                  reference: r.referencePaiement || '',
+                  numeroVente: vente.numeroVente,
+                  venteId: vente.id,
+                  vente: vente
+                });
+              });
+            });
+            this.historiquePaiements = entries.sort((a, b) =>
+              new Date(b.date).getTime() - new Date(a.date).getTime()
+            );
+            this.historiquePaiementsFiltres = [...this.historiquePaiements];
+            this.isLoadingHistorique = false;
+          },
+          error: () => { this.isLoadingHistorique = false; }
+        });
+      },
+      error: () => { this.isLoadingHistorique = false; }
+    });
+  }
+
+  private loadPaiementsForVentesModal(client: Client): void {
+    this.isLoadingHistorique = true;
+    this.historiquePaiements = [];
+    this.historiquePaiementsFiltres = [];
+    this.clientPourHistorique = client;
 
     this.venteService.getAllVentes().subscribe({
       next: (ventes) => {
