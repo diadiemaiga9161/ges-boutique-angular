@@ -101,6 +101,7 @@ export class PartenairesComponent implements OnInit {
   filterPaiementDateDebut: string = '';
   filterPaiementDateFin: string = '';
   historiquePaiementsFiltres: HistoriquePaiementEntry[] = [];
+  viewModePaiement: 'simple' | 'groupe' = 'groupe';
 
   // ==================== AVANCES CLIENT ====================
   showAvanceModal: boolean = false;
@@ -741,6 +742,7 @@ export class PartenairesComponent implements OnInit {
     this.clientPourHistorique = null;
     this.filterPaiementDateDebut = '';
     this.filterPaiementDateFin = '';
+    this.viewModePaiement = 'groupe';
   }
 
   getTotalHistorique(): number {
