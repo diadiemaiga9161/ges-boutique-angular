@@ -1,4 +1,5 @@
 // src/app/views/pages/factures/factures.component.scss
+@use 'sass:color';
 
 // ═══ FACTURE DOCUMENT — 3 DESIGNS ═══════════════════════
 .modal-detail--full .modal-content { max-width: 680px; }
@@ -168,7 +169,7 @@ $border-radius: 12px;
 
     .btn-vente {
       background: $info;
-      &:hover { background: darken($info, 8%); }
+      &:hover { background: color.adjust($info, $lightness: -8%); }
     }
   }
 

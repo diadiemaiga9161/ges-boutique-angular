@@ -9,9 +9,8 @@ import {
   MOIS_LABELS
 } from '../../../shared/services/objectif-fournisseur.service';
 import { ProductService } from '../../../shared/services/product.service';
+import { FactureService } from '../../../shared/services/facture.service';
 import Swal from 'sweetalert2';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
@@ -73,7 +72,8 @@ export class ObjectifFournisseurComponent implements OnInit {
 
   constructor(
     public objectifService: ObjectifFournisseurService,
-    private productService: ProductService
+    private productService: ProductService,
+    private factureService: FactureService
   ) {}
 
   ngOnInit(): void {
@@ -274,104 +274,38 @@ export class ObjectifFournisseurComponent implements OnInit {
   }
 
   private exporterPdf(rapport: any, type: 'mensuel' | 'annuel'): void {
-    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-    const pageW = doc.internal.pageSize.getWidth();
-    const now = new Date();
-
-    // En-tête
-    doc.setFillColor(37, 99, 235);
-    doc.rect(0, 0, pageW, 28, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(16);
-    doc.setFont('helvetica', 'bold');
-    doc.text('RAPPORT BONUS FOURNISSEURS', pageW / 2, 12, { align: 'center' });
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
+    const stats: StatsObjectif = rapport.statistiques || {};
     const periode = type === 'mensuel'
       ? `${MOIS_LABELS[rapport.mois]} ${rapport.annee}`
       : `Année ${rapport.annee}`;
-    doc.text(`Période : ${periode}`, pageW / 2, 20, { align: 'center' });
-    doc.text(`Généré le ${now.toLocaleDateString('fr-FR')} à ${now.toLocaleTimeString('fr-FR')}`, pageW / 2, 25, { align: 'center' });
 
-    doc.setTextColor(0, 0, 0);
-    let y = 38;
-
-    // Résumé stats
-    const stats: StatsObjectif = rapport.statistiques || {};
-    const rows4 = [
-      ['Total objectifs', String(stats.totalObjectifs || 0)],
-      ['Objectifs atteints', String(stats.objectifsAtteints || 0)],
-      ['Total bonus fournisseurs', this.fmt(rapport.totalBonusFournisseur || 0)],
-      ['Quantité bonus reçue', String(rapport.totalQuantiteBonusRecue || 0) + ' unités']
-    ];
-
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Résumé', 14, y);
-    y += 4;
-
-    autoTable(doc, {
-      startY: y,
-      head: [['Indicateur', 'Valeur']],
-      body: rows4,
-      styles: { fontSize: 10 },
-      headStyles: { fillColor: [37, 99, 235] },
-      columnStyles: { 0: { cellWidth: 90 }, 1: { cellWidth: 80, halign: 'right' } },
-      margin: { left: 14, right: 14 }
-    });
-
-    y = (doc as any).lastAutoTable.finalY + 10;
-
-    // Tableau des objectifs
     const objectifsList: ObjectifFournisseur[] = rapport.objectifs || [];
-    if (objectifsList.length > 0) {
-      doc.setFontSize(12);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Détail des objectifs', 14, y);
-      y += 4;
 
-      const bodyRows = objectifsList.map(o => [
-        o.fournisseurNom,
-        o.produitNom || '—',
-        MOIS_LABELS[o.mois] + ' ' + o.annee,
-        this.formatQte(o.objectifQuantite),
-        this.formatQte(o.quantiteAtteinte),
-        this.fmt(o.bonusParUnite) + '/u',
-        this.fmt(o.bonusCalcule),
-        this.formatQte(o.quantiteBonusRecue),
-        o.statut === 'ATTEINT' ? 'Atteint ✓' : 'Non atteint',
-        o.stockAjoute ? 'Oui' : 'Non'
-      ]);
+    const lignes = objectifsList.map(o => [
+      o.fournisseurNom,
+      o.produitNom || '—',
+      MOIS_LABELS[o.mois] + ' ' + o.annee,
+      this.formatQte(o.objectifQuantite),
+      this.formatQte(o.quantiteAtteinte),
+      this.fmt(o.bonusParUnite) + '/u',
+      this.fmt(o.bonusCalcule),
+      this.formatQte(o.quantiteBonusRecue),
+      o.statut === 'ATTEINT' ? 'Atteint' : 'Non atteint',
+      o.stockAjoute ? 'Oui' : 'Non'
+    ]);
 
-      autoTable(doc, {
-        startY: y,
-        head: [['Fournisseur', 'Produit', 'Période', 'Objectif', 'Atteint', 'Bonus/u', 'Bonus total', 'Qté bonus', 'Statut', 'Stock']],
-        body: bodyRows,
-        styles: { fontSize: 7, cellPadding: 2 },
-        headStyles: { fillColor: [37, 99, 235], fontSize: 7 },
-        didDrawCell: (data: any) => {
-          if (data.section === 'body' && data.column.index === 8) {
-            const val = data.cell.text[0] || '';
-            if (val.includes('Atteint')) doc.setTextColor(22, 163, 74);
-            else doc.setTextColor(220, 38, 38);
-          }
-        },
-        margin: { left: 6, right: 6 }
-      });
-    }
-
-    // Pied de page
-    const pageCount = (doc as any).internal.getNumberOfPages();
-    for (let i = 1; i <= pageCount; i++) {
-      doc.setPage(i);
-      doc.setFontSize(8);
-      doc.setTextColor(100);
-      doc.text(`Page ${i} / ${pageCount}`, pageW / 2, 290, { align: 'center' });
-      doc.text('Ges Boutique — Rapport confidentiel', 14, 290);
-    }
-
-    const nomFichier = `bonus-fournisseurs-${type}-${rapport.annee}${type === 'mensuel' ? '-' + String(rapport.mois).padStart(2, '0') : ''}.pdf`;
-    doc.save(nomFichier);
+    this.factureService.ouvrirDocumentPDF({
+      titre: 'Rapport Bonus Fournisseurs',
+      sousTitre: `Période : ${periode}`,
+      colonnes: ['Fournisseur', 'Produit', 'Période', 'Objectif', 'Atteint', 'Bonus/u', 'Bonus total', 'Qté bonus', 'Statut', 'Stock'],
+      lignes,
+      totaux: [
+        { label: 'Total objectifs', valeur: String(stats.totalObjectifs || 0) },
+        { label: 'Objectifs atteints', valeur: String(stats.objectifsAtteints || 0) },
+        { label: 'Total bonus fournisseurs', valeur: this.fmt(rapport.totalBonusFournisseur || 0) },
+        { label: 'Quantité bonus reçue', valeur: this.formatQte(rapport.totalQuantiteBonusRecue || 0) + ' unités' }
+      ]
+    });
   }
 
   private formatQte(n: number): string {

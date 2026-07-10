@@ -1,4 +1,4 @@
-<div class="container-fluid py-4 app-page">
+﻿<div class="container-fluid py-4 app-page">
 
   <!-- En-tête -->
   <div class="app-page-header mb-4">
@@ -181,15 +181,15 @@
                 <ng-container *ngIf="!d['sourceExterne']">
                   <button class="btn btn-sm btn-outline-primary me-1" (click)="startEdit(d)"
                           title="{{ 'COMMON.EDIT' | translate }}">
-                    <i class="fa fa-edit me-1"></i> Modifier
+                    <i class="fa fa-edit me-1"> Modifier</i> Modifier
                   </button>
                   <button class="btn btn-sm btn-outline-danger" (click)="supprimer(d)"
                           title="{{ 'COMMON.DELETE' | translate }}">
-                    <i class="fa fa-trash me-1"></i> Supprimer
+                    <i class="fa fa-trash me-1"> Supprimer</i> Supprimer
                   </button>
                 </ng-container>
                 <span *ngIf="d['sourceExterne']" class="text-muted" style="font-size:0.75rem">
-                  <i class="fa fa-lock me-1"></i>Via Employés
+                  <i class="fa fa-lock me-1">Via Employés</i>Via Employés
                 </span>
               </td>
             </tr>
@@ -224,7 +224,7 @@
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title"><i class="fa fa-tags me-2"></i>Types de dépenses</h5>
+        <h5 class="modal-title"><i class="fa fa-tags me-2">Types de dépenses</i>Types de dépenses</h5>
         <button type="button" class="btn-close" (click)="fermerGestionTypes()"></button>
       </div>
       <div class="modal-body">
@@ -237,14 +237,14 @@
             <!-- Mode édition -->
             <ng-container *ngIf="editingTypeId === t.id">
               <input type="text" class="form-control form-control-sm flex-grow-1" [(ngModel)]="editingTypeName" (keyup.enter)="saveEditType()">
-              <button class="btn btn-success btn-sm" (click)="saveEditType()" [disabled]="typesLoading"><i class="fa fa-check"></i></button>
-              <button class="btn btn-secondary btn-sm" (click)="cancelEditType()"><i class="fa fa-times"></i></button>
+              <button class="btn btn-success btn-sm" (click)="saveEditType()" [disabled]="typesLoading"><i class="fa fa-check">Modifier</i></button>
+              <button class="btn btn-secondary btn-sm" (click)="cancelEditType()"><i class="fa fa-times">Retour</i></button>
             </ng-container>
             <!-- Mode affichage -->
             <ng-container *ngIf="editingTypeId !== t.id">
               <span class="flex-grow-1">{{ t.nom }}</span>
-              <button class="btn btn-outline-primary btn-sm" (click)="startEditType(t)" title="Modifier"><i class="fa fa-pencil"></i></button>
-              <button class="btn btn-outline-danger btn-sm" (click)="supprimerTypeDepense(t)" [disabled]="typesLoading" title="Supprimer"><i class="fa fa-trash"></i></button>
+              <button class="btn btn-outline-primary btn-sm" (click)="startEditType(t)" title="Modifier"><i class="fa fa-pencil">Modifier</i></button>
+              <button class="btn btn-outline-danger btn-sm" (click)="supprimerTypeDepense(t)" [disabled]="typesLoading" title="Supprimer"><i class="fa fa-trash">Supprimer</i></button>
             </ng-container>
           </div>
           <div *ngIf="typesDepense.length === 0" class="list-group-item text-muted small text-center">Aucun type</div>
@@ -254,7 +254,7 @@
         <div class="d-flex gap-2">
           <input type="text" class="form-control" [(ngModel)]="newTypeName" placeholder="Nouveau type..." (keyup.enter)="ajouterType()">
           <button class="btn btn-primary" (click)="ajouterType()" [disabled]="typesLoading || !newTypeName.trim()">
-            <i class="fa fa-plus"></i> Ajouter
+            <i class="fa fa-plus"> Ajouter</i> Ajouter
           </button>
         </div>
       </div>
@@ -293,7 +293,7 @@
               <option *ngFor="let t of typesDepense" [value]="t.nom">{{ t.nom }}</option>
             </select>
             <button type="button" class="btn btn-outline-secondary btn-sm" (click)="ouvrirGestionTypes()" title="Gérer les types">
-              <i class="fa fa-cog"></i>
+              <i class="fa fa-cog">Gérer</i>
             </button>
           </div>
         </div>

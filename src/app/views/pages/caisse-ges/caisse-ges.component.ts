@@ -7,6 +7,7 @@ import { Subscription, forkJoin, from } from 'rxjs';
 import { WebSocketService } from '../../../shared/services/websocket.service';
 import { concatMap, toArray } from 'rxjs/operators';
 import Swal from 'sweetalert2';
+import { FactureService } from '../../../shared/services/facture.service';
 import {
   CaisseService,
   Caisse,
@@ -25,6 +26,7 @@ import {
   TransfertCaisseBanqueRequest
 } from '../../../shared/services/caisse.service';
 import { AuthService, User } from '../../../shared/services/auth.service';
+import { VenteService, VenteMap } from '../../../shared/services/vente.service';
 import { CompteService, Compte } from '../../../shared/services/compte.service';
 import { TranslateModule } from '@ngx-translate/core';
 
@@ -180,7 +182,9 @@ export class CaisseGesComponent implements OnInit, OnDestroy {
     public caisseService: CaisseService,
     private authService: AuthService,
     private compteService: CompteService,
-    private ws: WebSocketService
+    private ws: WebSocketService,
+    private factureService: FactureService,
+    private venteService: VenteService
   ) {}
 
   ngOnInit(): void {
@@ -267,36 +271,60 @@ export class CaisseGesComponent implements OnInit, OnDestroy {
   }
 
   loadCredits(): void {
-    console.log('🔄 Chargement des crédits...');
-    
-    this.caisseService.getCreditsNonRegles().subscribe({
-      next: (credits) => {
-        this.creditsEnCours = credits.filter(credit => !credit.venteAnnulee);
-        console.log(`📊 ${this.creditsEnCours.length} crédits en cours chargés`);
+    forkJoin({
+      nonRegles: this.caisseService.getCreditsNonRegles(),
+      regles: this.caisseService.getCreditsRegles(),
+      toutesVentes: this.venteService.getVentesCredit()
+    }).subscribe({
+      next: ({ nonRegles, regles, toutesVentes }) => {
+        const caisseMap = new Map<number, CreditInfo>();
+        [...nonRegles, ...regles].forEach(c => { if (c.venteId) caisseMap.set(c.venteId, c); });
+        const all = toutesVentes.filter(v => !v.annulee).map(v => {
+          const c = caisseMap.get(v.id);
+          if (c) {
+            const montantRestant = c.montantRestant ?? Math.max(0, (v.montantTotal || 0) - (v.montantVerse || 0));
+            const estReglee = c.estReglee || !!v.creditRegle || montantRestant <= 0.01;
+            const maintenant = new Date();
+            const echeance = c.dateEcheance ? new Date(c.dateEcheance) : null;
+            const enRetard = !estReglee && echeance ? echeance < maintenant : false;
+            const joursRetard = enRetard && echeance
+              ? Math.ceil((maintenant.getTime() - echeance.getTime()) / (1000 * 60 * 60 * 24)) : 0;
+            return { ...c, montantRestant, estReglee, enRetard, joursRetard };
+          }
+          return this.venteMapToCreditInfo(v);
+        });
+        this.creditsEnCours = all.filter(c => !c.estReglee);
+        this.creditsEnRetard = all.filter(c => c.enRetard && !c.estReglee);
       },
-      error: (error) => {
-        console.error('Erreur chargement crédits:', error);
-      }
+      error: () => {}
     });
-    
-    this.caisseService.getCreditsEnRetard().subscribe({
-      next: (credits) => {
-        this.creditsEnRetard = credits.filter(credit => !credit.venteAnnulee);
-        console.log(`⚠️ ${this.creditsEnRetard.length} crédits en retard`);
-      },
-      error: (error) => {
-        console.error('Erreur chargement crédits en retard:', error);
-      }
-    });
-    
+
     this.caisseService.getSituationCredits().subscribe({
-      next: (situation) => {
-        this.situationCredits = situation;
-      },
-      error: (error) => {
-        console.error('Erreur chargement situation crédits:', error);
-      }
+      next: (situation) => { this.situationCredits = situation; },
+      error: () => {}
     });
+  }
+
+  private venteMapToCreditInfo(v: VenteMap): CreditInfo {
+    const montantTotal = v.montantTotal || 0;
+    const montantVerse = v.montantVerse || 0;
+    const montantRestant = v.montantRestant ?? Math.max(0, montantTotal - montantVerse);
+    const echeance = v.dateEcheance ? new Date(v.dateEcheance) : null;
+    const maintenant = new Date();
+    const estReglee = !!v.creditRegle || montantRestant <= 0;
+    const enRetard = !estReglee && echeance ? echeance < maintenant : false;
+    const joursRetard = enRetard && echeance
+      ? Math.ceil((maintenant.getTime() - echeance.getTime()) / (1000 * 60 * 60 * 24)) : 0;
+    return {
+      id: v.id, venteId: v.id, numeroVente: v.numeroVente || '',
+      clientNom: v.clientNom || 'Client divers',
+      clientPrenom: v.clientPrenom, clientTelephone: v.clientTelephone || '',
+      montantTotal, montantVerse, montantRestant,
+      dateOperation: v.dateVente || '', dateEcheance: v.dateEcheance || '',
+      dateReglement: v.dateReglement, estReglee, enRetard, joursRetard,
+      progression: montantTotal > 0 ? Math.min((montantVerse / montantTotal) * 100, 99) : 0,
+      venteAnnulee: v.annulee || false
+    };
   }
 
   loadStatistiquesJour(): void {
@@ -1277,6 +1305,46 @@ export class CaisseGesComponent implements OnInit, OnDestroy {
     return this.caisseService.formatPrice(price);
   }
 
+  imprimerCreditsEnCours(): void {
+    const liste = this.creditsEnCours;
+    if (!liste.length) { return; }
+    const total = liste.reduce((s, c) => s + (c.montantRestant || 0), 0);
+    const totalInitial = liste.reduce((s, c) => s + (c.montantTotal || 0), 0);
+    const totalVerse = liste.reduce((s, c) => s + (c.montantVerse || 0), 0);
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent('CREDITS_EN_COURS_' + new Date().toISOString().split('T')[0])}`;
+
+    const rows = liste.map(c => `<tr>
+      <td>${c.clientNom || '—'}</td>
+      <td>${c.clientTelephone || '—'}</td>
+      <td>${c.numeroVente || '—'}</td>
+      <td style="text-align:right">${this.formatPrice(c.montantTotal || 0)}</td>
+      <td style="text-align:right;color:#16a34a">${this.formatPrice(c.montantVerse || 0)}</td>
+      <td style="text-align:right;color:#dc2626;font-weight:700">${this.formatPrice(c.montantRestant || 0)}</td>
+      <td style="text-align:center"><span style="background:${c.enRetard ? '#fee2e2' : '#fef9c3'};color:${c.enRetard ? '#991b1b' : '#854d0e'};padding:2px 8px;border-radius:12px;font-size:0.75rem">${c.enRetard ? 'En retard' : 'En cours'}</span></td>
+    </tr>`).join('');
+
+    const html = `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>Crédits en cours</title>
+<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;padding:24px;font-size:13px;color:#1e293b}.sheet{background:#fff;max-width:800px;margin:0 auto;border-radius:14px;overflow:hidden;box-shadow:0 4px 24px rgba(8,22,72,.12)}.hdr{background:linear-gradient(135deg,#d97706,#f59e0b);color:#fff;padding:24px 28px;display:flex;justify-content:space-between;align-items:flex-start}.hdr-title{font-size:22px;font-weight:900}.hdr-sub{font-size:12px;opacity:.8;margin-top:4px}.body{padding:24px 28px}.kpi-row{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap}.kpi{flex:1;min-width:130px;background:#f8fafc;border-radius:10px;padding:14px 16px;text-align:center;border:1px solid #e2e8f0}.kpi-val{font-size:1.1rem;font-weight:900;color:#1e293b}.kpi-lbl{font-size:0.7rem;color:#64748b;margin-top:3px}table{width:100%;border-collapse:collapse;font-size:0.82rem}th{background:#f8fafc;padding:8px 10px;text-align:left;font-weight:700;color:#475569;border-bottom:1px solid #e2e8f0}td{padding:7px 10px;border-bottom:1px solid #f1f5f9;color:#374151}tr:last-child td{border-bottom:none}.btn-bar{display:flex;gap:8px;justify-content:center;padding:12px;background:#f8fafc;border-bottom:1px solid #e5e7eb}.btn{border:none;border-radius:8px;padding:9px 20px;font-size:13px;font-weight:700;cursor:pointer}.btn-p{background:#d97706;color:#fff}.btn-c{background:#ef4444;color:#fff}.ftr{background:linear-gradient(135deg,#d97706,#f59e0b);color:rgba(255,255,255,.6);text-align:center;padding:12px;font-size:11px}@media print{.btn-bar{display:none}body{background:#fff;padding:0}.sheet{box-shadow:none;border-radius:0;max-width:100%}}</style></head><body>
+<div class="sheet">
+  <div class="hdr"><div><div class="hdr-title">Crédits en cours</div><div class="hdr-sub">${liste.length} crédit(s)</div><div class="hdr-sub">Généré le ${new Date().toLocaleDateString('fr-FR')}</div></div><img src="${qrUrl}" width="72" height="72" style="border-radius:8px;background:#fff;padding:3px" alt="QR" onerror="this.style.display='none'"></div>
+  <div class="btn-bar"><button class="btn btn-p" onclick="window.print()">Imprimer / PDF</button><button class="btn btn-c" onclick="window.close()">Fermer</button></div>
+  <div class="body">
+    <div class="kpi-row">
+      <div class="kpi"><div class="kpi-val">${this.formatPrice(totalInitial)}</div><div class="kpi-lbl">Total accordé</div></div>
+      <div class="kpi"><div class="kpi-val" style="color:#16a34a">${this.formatPrice(totalVerse)}</div><div class="kpi-lbl">Total versé</div></div>
+      <div class="kpi"><div class="kpi-val" style="color:#dc2626">${this.formatPrice(total)}</div><div class="kpi-lbl">Reste à percevoir</div></div>
+    </div>
+    <table>
+      <thead><tr><th>Client</th><th>Tél</th><th>N° vente</th><th style="text-align:right">Initial</th><th style="text-align:right">Versé</th><th style="text-align:right">Restant</th><th style="text-align:center">Statut</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>
+  <div class="ftr">Ges Boutique &middot; Crédits en cours</div>
+</div></body></html>`;
+
+    this.factureService.ouvrirHtmlPersonnalise(html);
+  }
+
   formatDateShort(dateString: string): string {
     return this.caisseService.formatDateShort(dateString);
   }
@@ -1407,35 +1475,7 @@ export class CaisseGesComponent implements OnInit, OnDestroy {
   }
 
   refreshCredits(): void {
-    console.log('🔄 Rafraîchissement des crédits après annulation...');
-    
-    this.caisseService.getCreditsNonRegles().subscribe({
-      next: (credits) => {
-        this.creditsEnCours = credits.filter(credit => !credit.venteAnnulee);
-        console.log(`📊 ${this.creditsEnCours.length} crédits en cours après rafraîchissement`);
-      },
-      error: (error) => {
-        console.error('Erreur rafraîchissement crédits:', error);
-      }
-    });
-    
-    this.caisseService.getCreditsEnRetard().subscribe({
-      next: (credits) => {
-        this.creditsEnRetard = credits.filter(credit => !credit.venteAnnulee);
-      },
-      error: (error) => {
-        console.error('Erreur rafraîchissement crédits retard:', error);
-      }
-    });
-    
-    this.caisseService.getSituationCredits().subscribe({
-      next: (situation) => {
-        this.situationCredits = situation;
-      },
-      error: (error) => {
-        console.error('Erreur rafraîchissement situation crédits:', error);
-      }
-    });
+    this.loadCredits();
   }
 
   // ==================== CREDITS PAR CLIENT ====================

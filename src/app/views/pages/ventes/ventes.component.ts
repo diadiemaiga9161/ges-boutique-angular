@@ -1244,6 +1244,27 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
     return produitComplet ? produitComplet.quantite : 0;
   }
 
+  /**
+   * Retourne le stock à afficher dans la liste de sélection produits.
+   * Si le produit possède des niveaux de conditionnement (chargés par l'API),
+   * on affiche la somme des stocks de ces niveaux.
+   * Sinon on retourne le stock principal (quantite).
+   */
+  getStockAfficheProduit(produit: Produit): number {
+    if (produit.niveaux && produit.niveaux.length > 0) {
+      return produit.niveaux.reduce((sum, n) => sum + (n.stock || 0), 0);
+    }
+    return produit.quantite || 0;
+  }
+
+  /**
+   * Indique si un produit est indisponible à la vente (stock zéro).
+   * Tient compte des niveaux de conditionnement si disponibles.
+   */
+  isProduitSansStock(produit: Produit): boolean {
+    return this.getStockAfficheProduit(produit) === 0;
+  }
+
   addProduitToVente(produit: Produit): void {
     if (produit.quantite === 0) {
       this.errorMessage = `❌ Stock épuisé pour ${produit.nom}`;
@@ -1286,6 +1307,14 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
     this.showNiveauModal = false;
     this.produitEnAttente = null;
     this.addProduitAvecNiveau(produit, niveau, facteurTotal);
+  }
+
+  getNiveauStockDisplay(niveau: ProduitNiveau): { label: string; color: string } {
+    const stock = niveau.stock || 0;
+    if (stock > 0) return { label: `Stock: ${stock}`, color: '#16a34a' };
+    const parent = this.niveauxDisponibles.find(n => n.id === niveau.parentId);
+    if (parent && (parent.stock || 0) > 0) return { label: 'Disponible via cascade', color: '#d97706' };
+    return { label: 'Rupture', color: '#dc2626' };
   }
 
   private addProduitAvecNiveau(produit: Produit, niveau: ProduitNiveau, facteurTotal: number): void {

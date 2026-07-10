@@ -1,4 +1,4 @@
-<div class="container-fluid py-4 app-page">
+﻿<div class="container-fluid py-4 app-page">
   <!-- En-tête -->
   <div class="app-page-header mb-4">
     <div class="app-page-header-left">
@@ -9,22 +9,25 @@
       </div>
     </div>
     <div class="app-page-header-actions">
+      <button class="btn btn-outline-secondary" type="button" (click)="telechargerStockPdf()" [disabled]="!produits.length">
+        <i class="fa fa-file-pdf-o me-1"> Stock PDF</i> Stock PDF
+      </button>
       <button class="btn btn-primary" type="button" (click)="openAddModal()" *ngIf="isAdmin">
         <i class="fa fa-plus me-1"></i> {{ 'PRODUCTS.ADD' | translate }}
       </button>
       <button class="btn btn-success" type="button" (click)="openImportModal()" *ngIf="isAdmin">
-        <i class="fa fa-upload me-1"></i> Importer Excel
+        <i class="fa fa-upload me-1"> Importer Excel</i> Importer Excel
       </button>
       <div class="dropdown" *ngIf="isAdmin">
         <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-          <i class="fa fa-cog me-1"></i> Gestion
+          <i class="fa fa-cog me-1"> Gestion</i> Gestion
         </button>
         <ul class="dropdown-menu">
-          <li><a class="dropdown-item" (click)="openAddCategoryModal()"><i class="fa fa-tag me-2"></i>Ajouter catégorie</a></li>
-          <li><a class="dropdown-item" (click)="activeTab = 'categories'"><i class="fa fa-list me-2"></i>Gérer catégories</a></li>
+          <li><a class="dropdown-item" (click)="openAddCategoryModal()"><i class="fa fa-tag me-2">Ajouter catégorie</i>Ajouter catégorie</a></li>
+          <li><a class="dropdown-item" (click)="activeTab = 'categories'"><i class="fa fa-list me-2">Gérer catégories</i>Gérer catégories</a></li>
           <li><hr class="dropdown-divider"></li>
-          <li><a class="dropdown-item" (click)="openAddFournisseurModal()"><i class="fa fa-truck me-2"></i>Ajouter fournisseur</a></li>
-          <li><a class="dropdown-item" (click)="activeTab = 'fournisseurs'"><i class="fa fa-users me-2"></i>Gérer fournisseurs</a></li>
+          <li><a class="dropdown-item" (click)="openAddFournisseurModal()"><i class="fa fa-truck me-2">Ajouter fournisseur</i>Ajouter fournisseur</a></li>
+          <li><a class="dropdown-item" (click)="activeTab = 'fournisseurs'"><i class="fa fa-users me-2">Gérer fournisseurs</i>Gérer fournisseurs</a></li>
         </ul>
       </div>
     </div>
@@ -134,7 +137,7 @@
                 <input class="form-check-input" type="checkbox" [(ngModel)]="showBioOnly" (change)="applyFilters()" id="bioCheck">
                 <label class="form-check-label" for="bioCheck">Bio</label>
               </div>
-              <button class="btn btn-sm btn-outline-secondary" type="button" (click)="resetFilters()"><i class="fa fa-refresh me-1"></i> Réinitialiser</button>
+              <button class="btn btn-sm btn-outline-secondary" type="button" (click)="resetFilters()"><i class="fa fa-refresh me-1"> Réinitialiser</i> Réinitialiser</button>
             </div>
           </div>
         </div>
@@ -145,17 +148,17 @@
     <ul class="nav nav-tabs mb-3">
       <li class="nav-item">
         <a class="nav-link" [class.active]="activeTab === 'produits'" (click)="activeTab = 'produits'">
-          <i class="fa fa-box me-1"></i> Produits <span class="badge bg-secondary ms-1">{{ filteredProducts.length }}</span>
+          <i class="fa fa-box me-1"> Produits </i> Produits <span class="badge bg-secondary ms-1">{{ filteredProducts.length }}</span>
         </a>
       </li>
       <li class="nav-item">
         <a class="nav-link" [class.active]="activeTab === 'fournisseurs'" (click)="activeTab = 'fournisseurs'; loadFournisseurs()">
-          <i class="fa fa-truck me-1"></i> Fournisseurs <span class="badge bg-secondary ms-1">{{ fournisseurs.length }}</span>
+          <i class="fa fa-truck me-1"> Fournisseurs </i> Fournisseurs <span class="badge bg-secondary ms-1">{{ fournisseurs.length }}</span>
         </a>
       </li>
       <li class="nav-item">
         <a class="nav-link" [class.active]="activeTab === 'categories'" (click)="activeTab = 'categories'">
-          <i class="fa fa-tags me-1"></i> Catégories <span class="badge bg-secondary ms-1">{{ categories.length }}</span>
+          <i class="fa fa-tags me-1"> Catégories </i> Catégories <span class="badge bg-secondary ms-1">{{ categories.length }}</span>
         </a>
       </li>
     </ul>
@@ -166,9 +169,9 @@
         <h5 class="mb-0">Liste des produits</h5>
         <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
           <span class="text-muted me-3" *ngIf="filteredProducts.length > 0">Page {{ currentPage }}/{{ totalPages }} ({{ filteredProducts.length }} produits)</span>
-          <button class="btn btn-sm btn-primary" type="button" (click)="openAddModal()" *ngIf="isAdmin"><i class="fa fa-plus me-1"></i> Créer</button>
-          <button class="btn btn-sm btn-outline-success" type="button" (click)="exportProducts()" *ngIf="isAdmin"><i class="fa fa-download me-1"></i> Excel</button>
-          <button class="btn btn-sm btn-outline-info" type="button" (click)="loadData()"><i class="fa fa-refresh me-1"></i> Actualiser</button>
+          <button class="btn btn-sm btn-primary" type="button" (click)="openAddModal()" *ngIf="isAdmin"><i class="fa fa-plus me-1"> Créer</i> Créer</button>
+          <button class="btn btn-sm btn-outline-success" type="button" (click)="exportProducts()" *ngIf="isAdmin"><i class="fa fa-download me-1"> Excel</i> Excel</button>
+          <button class="btn btn-sm btn-outline-info" type="button" (click)="loadData()"><i class="fa fa-refresh me-1"> Actualiser</i> Actualiser</button>
         </div>
       </div>
       <div class="card-body p-0">
@@ -212,9 +215,9 @@
                 </td>
                 <td class="text-center" *ngIf="isAdmin">
                   <div class="btn-group btn-group-sm">
-                    <button class="btn btn-outline-primary" type="button" (click)="openEditModal(produit)" title="Modifier"><i class="fa fa-edit me-1"></i> Modifier</button>
-                    <button class="btn btn-outline-info" type="button" (click)="openDetailsModal(produit)" title="Détails"><i class="fa fa-info-circle me-1"></i> Détails</button>
-                    <button class="btn btn-outline-danger" type="button" (click)="openDeleteModal(produit)" title="Supprimer"><i class="fa fa-trash me-1"></i> Supprimer</button>
+                    <button class="btn btn-outline-primary" type="button" (click)="openEditModal(produit)" title="Modifier"><i class="fa fa-edit me-1"> Modifier</i> Modifier</button>
+                    <button class="btn btn-outline-info" type="button" (click)="openDetailsModal(produit)" title="Détails"><i class="fa fa-info-circle me-1"> Détails</i> Détails</button>
+                    <button class="btn btn-outline-danger" type="button" (click)="openDeleteModal(produit)" title="Supprimer"><i class="fa fa-trash me-1"> Supprimer</i> Supprimer</button>
                   </div>
                 </td>
               </tr>
@@ -222,7 +225,7 @@
                 <td [attr.colspan]="isAdmin ? 10 : 9" class="text-center py-4">
                   <i class="fa fa-box fa-3x text-muted mb-3"></i>
                   <p class="text-muted">Aucun produit trouvé</p>
-                  <button class="btn btn-primary" type="button" (click)="openAddModal()" *ngIf="isAdmin"><i class="fa fa-plus me-1"></i> Créer un produit</button>
+                  <button class="btn btn-primary" type="button" (click)="openAddModal()" *ngIf="isAdmin"><i class="fa fa-plus me-1"> Créer un produit</i> Créer un produit</button>
                 </td>
               </tr>
             </tbody>
@@ -245,8 +248,8 @@
       <div class="card-header bg-white d-flex justify-content-between align-items-center flex-wrap gap-2">
         <h5 class="mb-0">Liste des fournisseurs</h5>
         <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
-          <button class="btn btn-sm btn-outline-success" type="button" (click)="exportFournisseurs()" *ngIf="isAdmin"><i class="fa fa-download me-1"></i> Excel</button>
-          <button class="btn btn-sm btn-primary" type="button" (click)="openAddFournisseurModal()" *ngIf="isAdmin"><i class="fa fa-plus me-1"></i> Ajouter</button>
+          <button class="btn btn-sm btn-outline-success" type="button" (click)="exportFournisseurs()" *ngIf="isAdmin"><i class="fa fa-download me-1"> Excel</i> Excel</button>
+          <button class="btn btn-sm btn-primary" type="button" (click)="openAddFournisseurModal()" *ngIf="isAdmin"><i class="fa fa-plus me-1"> Ajouter</i> Ajouter</button>
         </div>
       </div>
       <div class="card-body p-0">
@@ -285,13 +288,13 @@
                 <td class="text-center"><span [class]="'badge ' + (f.actif ? 'bg-success' : 'bg-danger')">{{ f.actif ? "Actif" : "Inactif" }}</span></td>
                 <td class="text-center" *ngIf="isAdmin">
                   <div class="btn-group btn-group-sm">
-                    <button class="btn btn-outline-primary" type="button" (click)="openEditFournisseurModal(f)" title="Modifier"><i class="fa fa-edit me-1"></i> Modifier</button>
-                    <button class="btn btn-outline-info" type="button" (click)="openSituationModal(f)" title="Situation comptable"><i class="fa fa-chart-line me-1"></i> Situation</button>
-                    <button class="btn btn-outline-success" type="button" (click)="openAchatModal(f)" title="Enregistrer un achat"><i class="fa fa-shopping-cart me-1"></i> Achat</button>
-                    <button class="btn btn-outline-warning" type="button" (click)="openPaiementModal(f)" title="Effectuer un paiement"><i class="fa fa-money me-1"></i> Paiement</button>
-                    <button class="btn btn-outline-primary" type="button" (click)="openAvanceFournisseurModal(f)" title="Enregistrer une avance fournisseur"><i class="fa fa-hand-holding-usd me-1"></i> Avance</button>
-                    <button class="btn btn-outline-info" type="button" (click)="openHistoriqueAvancesModal(f)" title="Voir l'historique des avances"><i class="fa fa-history me-1"></i> Hist. avance</button>
-                    <button class="btn btn-outline-danger" type="button" (click)="openDeleteFournisseurModal(f)" [disabled]="f.nombreProduits > 0" title="Supprimer"><i class="fa fa-trash me-1"></i> Supprimer</button>
+                    <button class="btn btn-outline-primary" type="button" (click)="openEditFournisseurModal(f)" title="Modifier"><i class="fa fa-edit me-1"> Modifier</i> Modifier</button>
+                    <button class="btn btn-outline-info" type="button" (click)="openSituationModal(f)" title="Situation comptable"><i class="fa fa-chart-line me-1"> Situation</i> Situation</button>
+                    <button class="btn btn-outline-success" type="button" (click)="openAchatModal(f)" title="Enregistrer un achat"><i class="fa fa-shopping-cart me-1"> Achat</i> Achat</button>
+                    <button class="btn btn-outline-warning" type="button" (click)="openPaiementModal(f)" title="Effectuer un paiement"><i class="fa fa-money me-1"> Paiement</i> Paiement</button>
+                    <button class="btn btn-outline-primary" type="button" (click)="openAvanceFournisseurModal(f)" title="Enregistrer une avance fournisseur"><i class="fa fa-hand-holding-usd me-1"> Avance</i> Avance</button>
+                    <button class="btn btn-outline-info" type="button" (click)="openHistoriqueAvancesModal(f)" title="Voir l'historique des avances"><i class="fa fa-history me-1"> Hist. avance</i> Hist. avance</button>
+                    <button class="btn btn-outline-danger" type="button" (click)="openDeleteFournisseurModal(f)" [disabled]="f.nombreProduits > 0" title="Supprimer"><i class="fa fa-trash me-1"> Supprimer</i> Supprimer</button>
                   </div>
                 </td>
               </tr>
@@ -299,7 +302,7 @@
                 <td [attr.colspan]="isAdmin ? 10 : 9" class="text-center py-4">
                   <i class="fa fa-truck fa-3x text-muted mb-3"></i>
                   <p class="text-muted">Aucun fournisseur enregistré</p>
-                  <button class="btn btn-primary" type="button" (click)="openAddFournisseurModal()" *ngIf="isAdmin"><i class="fa fa-plus me-1"></i> Ajouter un fournisseur</button>
+                  <button class="btn btn-primary" type="button" (click)="openAddFournisseurModal()" *ngIf="isAdmin"><i class="fa fa-plus me-1"> Ajouter un fournisseur</i> Ajouter un fournisseur</button>
                 </td>
               </tr>
             </tbody>
@@ -312,7 +315,7 @@
     <div class="card" *ngIf="activeTab === 'categories'">
       <div class="card-header bg-white d-flex justify-content-between align-items-center">
         <h5 class="mb-0">Liste des catégories</h5>
-        <button class="btn btn-sm btn-primary" type="button" (click)="openAddCategoryModal()" *ngIf="isAdmin"><i class="fa fa-plus me-1"></i> Ajouter</button>
+        <button class="btn btn-sm btn-primary" type="button" (click)="openAddCategoryModal()" *ngIf="isAdmin"><i class="fa fa-plus me-1"> Ajouter</i> Ajouter</button>
       </div>
       <div class="card-body p-0">
         <div class="table-responsive">
@@ -334,8 +337,8 @@
                 <td class="text-center"><small>{{ cat.dateCreation | date: "dd/MM/yyyy" }}</small></td>
                 <td class="text-center" *ngIf="isAdmin">
                   <div class="btn-group btn-group-sm">
-                    <button class="btn btn-outline-primary" type="button" (click)="startEditCategory(cat)" title="Modifier"><i class="fa fa-edit me-1"></i> Modifier</button>
-                    <button class="btn btn-outline-danger" type="button" (click)="openDeleteCategoryModal(cat)" [disabled]="countProductsForCategory(cat) > 0" title="Supprimer"><i class="fa fa-trash me-1"></i> Supprimer</button>
+                    <button class="btn btn-outline-primary" type="button" (click)="startEditCategory(cat)" title="Modifier"><i class="fa fa-edit me-1"> Modifier</i> Modifier</button>
+                    <button class="btn btn-outline-danger" type="button" (click)="openDeleteCategoryModal(cat)" [disabled]="countProductsForCategory(cat) > 0" title="Supprimer"><i class="fa fa-trash me-1"> Supprimer</i> Supprimer</button>
                   </div>
                 </td>
               </tr>
@@ -343,7 +346,7 @@
                 <td [attr.colspan]="isAdmin ? 5 : 4" class="text-center py-4">
                   <i class="fa fa-tags fa-3x text-muted mb-3"></i>
                   <p class="text-muted">Aucune catégorie définie</p>
-                  <button class="btn btn-primary" type="button" (click)="openAddCategoryModal()" *ngIf="isAdmin"><i class="fa fa-plus me-1"></i> Ajouter une catégorie</button>
+                  <button class="btn btn-primary" type="button" (click)="openAddCategoryModal()" *ngIf="isAdmin"><i class="fa fa-plus me-1"> Ajouter une catégorie</i> Ajouter une catégorie</button>
                 </td>
               </tr>
             </tbody>
@@ -359,7 +362,7 @@
   <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-header bg-primary text-white">
-        <h5 class="modal-title"><i class="fa fa-plus-circle me-2"></i>Ajouter un nouveau produit alimentaire</h5>
+        <h5 class="modal-title"><i class="fa fa-plus-circle me-2">Ajouter un nouveau produit alimentaire</i>Ajouter un nouveau produit alimentaire</h5>
         <button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button>
       </div>
       <div class="modal-body">
@@ -432,7 +435,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" (click)="closeAllModals()" [disabled]="isLoading">Annuler</button>
-        <button type="button" class="btn btn-primary" (click)="addProduct()" [disabled]="isLoading"><span *ngIf="!isLoading"><i class="fa fa-save me-1"></i> Ajouter</span><span *ngIf="isLoading"><i class="fa fa-spinner fa-spin me-1"></i> Ajout en cours...</span></button>
+        <button type="button" class="btn btn-primary" (click)="addProduct()" [disabled]="isLoading"><span *ngIf="!isLoading"><i class="fa fa-save me-1"> Ajouter</i> Ajouter</span><span *ngIf="isLoading"><i class="fa fa-spinner fa-spin me-1"> Ajout en cours...</i> Ajout en cours...</span></button>
       </div>
     </div>
   </div>
@@ -443,7 +446,7 @@
   <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-header bg-warning text-white">
-        <h5 class="modal-title"><i class="fa fa-edit me-2"></i>Modifier le produit</h5>
+        <h5 class="modal-title"><i class="fa fa-edit me-2">Modifier le produit</i>Modifier le produit</h5>
         <button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button>
       </div>
       <div class="modal-body">
@@ -472,7 +475,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" (click)="closeAllModals()" [disabled]="isLoading">Annuler</button>
-        <button type="button" class="btn btn-warning text-white" (click)="updateProduct()" [disabled]="isLoading"><span *ngIf="!isLoading"><i class="fa fa-save me-1"></i> Modifier</span><span *ngIf="isLoading"><i class="fa fa-spinner fa-spin me-1"></i> Modification en cours...</span></button>
+        <button type="button" class="btn btn-warning text-white" (click)="updateProduct()" [disabled]="isLoading"><span *ngIf="!isLoading"><i class="fa fa-save me-1"> Modifier</i> Modifier</span><span *ngIf="isLoading"><i class="fa fa-spinner fa-spin me-1"> Modification en cours...</i> Modification en cours...</span></button>
       </div>
     </div>
   </div>
@@ -482,7 +485,7 @@
 <div class="modal fade show" [class.d-block]="showDetailsModal" *ngIf="showDetailsModal" style="background-color: rgba(0, 0, 0, 0.5); z-index: 1050" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
-      <div class="modal-header bg-info text-white"><h5 class="modal-title"><i class="fa fa-info-circle me-2"></i>Détails du produit</h5><button type="button" class="btn-close btn-close-white" (click)="closeDetailsModal()"></button></div>
+      <div class="modal-header bg-info text-white"><h5 class="modal-title"><i class="fa fa-info-circle me-2">Détails du produit</i>Détails du produit</h5><button type="button" class="btn-close btn-close-white" (click)="closeDetailsModal()"></button></div>
       <div class="modal-body">
         <div *ngIf="selectedProduct" class="product-details">
           <div class="row mb-3"><div class="col-6"><strong>Nom:</strong> {{ selectedProduct.nom }}</div><div class="col-6"><strong>Code barre:</strong> {{ selectedProduct.codeBarre || "N/A" }}</div></div>
@@ -496,7 +499,7 @@
           <div class="row"><div class="col-6"><strong>Bio:</strong> <i class="fa" [class.fa-check-circle]="selectedProduct.bio" [class.fa-circle-o]="!selectedProduct.bio" [class.text-success]="selectedProduct.bio" [class.text-muted]="!selectedProduct.bio"></i> {{ selectedProduct.bio ? "Oui" : "Non" }}</div><div class="col-6"><strong>Statut stock:</strong> <span [class]="'badge ' + getStockStatusClass(selectedProduct)">{{ getStockStatusText(selectedProduct) }}</span></div></div>
         </div>
       </div>
-      <div class="modal-footer"><button type="button" class="btn btn-secondary" (click)="closeDetailsModal()">Fermer</button><button type="button" class="btn btn-warning" (click)="openEditModal(selectedProduct!); closeDetailsModal()"><i class="fa fa-edit me-1"></i> Modifier</button></div>
+      <div class="modal-footer"><button type="button" class="btn btn-secondary" (click)="closeDetailsModal()">Fermer</button><button type="button" class="btn btn-warning" (click)="openEditModal(selectedProduct!); closeDetailsModal()"><i class="fa fa-edit me-1"> Modifier</i> Modifier</button></div>
     </div>
   </div>
 </div>
@@ -505,14 +508,14 @@
 <div class="modal fade show" [class.d-block]="showDeleteModal" *ngIf="showDeleteModal" style="background-color: rgba(0, 0, 0, 0.5); z-index: 1050" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
-      <div class="modal-header bg-danger text-white"><h5 class="modal-title"><i class="fa fa-exclamation-triangle me-2"></i>Confirmer la suppression</h5><button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button></div>
+      <div class="modal-header bg-danger text-white"><h5 class="modal-title"><i class="fa fa-exclamation-triangle me-2">Confirmer la suppression</i>Confirmer la suppression</h5><button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button></div>
       <div class="modal-body text-center">
         <i class="fa fa-box fa-4x text-danger mb-3"></i>
         <p class="lead">Supprimer le produit <strong>{{ selectedProduct?.nom }}</strong> ?</p>
         <div class="alert alert-warning"><p class="mb-1">Catégorie: {{ selectedProduct?.categorie.nom }}</p><p class="mb-1">Fournisseur: {{ selectedProduct?.fournisseur?.nom || "Aucun" }}</p><p class="mb-0">Stock actuel: {{ selectedProduct?.quantite }} {{ selectedProduct?.uniteMesure || "pcs" }}</p></div>
         <p class="text-danger mt-3">Cette action est irréversible !</p>
       </div>
-      <div class="modal-footer"><button type="button" class="btn btn-secondary" (click)="closeAllModals()" [disabled]="isLoading">Annuler</button><button type="button" class="btn btn-danger" (click)="deleteProduct()" [disabled]="isLoading"><span *ngIf="!isLoading"><i class="fa fa-trash me-1"></i> Supprimer</span><span *ngIf="isLoading"><i class="fa fa-spinner fa-spin me-1"></i> Suppression...</span></button></div>
+      <div class="modal-footer"><button type="button" class="btn btn-secondary" (click)="closeAllModals()" [disabled]="isLoading">Annuler</button><button type="button" class="btn btn-danger" (click)="deleteProduct()" [disabled]="isLoading"><span *ngIf="!isLoading"><i class="fa fa-trash me-1"> Supprimer</i> Supprimer</span><span *ngIf="isLoading"><i class="fa fa-spinner fa-spin me-1"> Suppression...</i> Suppression...</span></button></div>
     </div>
   </div>
 </div>
@@ -522,7 +525,7 @@
   <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-header bg-info text-white">
-        <h5 class="modal-title"><i class="fa fa-chart-line me-2"></i>Situation comptable - {{ selectedFournisseurForSituation?.nom }}</h5>
+        <h5 class="modal-title"><i class="fa fa-chart-line me-2">Situation comptable - </i>Situation comptable - {{ selectedFournisseurForSituation?.nom }}</h5>
         <button type="button" class="btn-close btn-close-white" (click)="showSituationModal = false"></button>
       </div>
       <div class="modal-body">
@@ -545,7 +548,7 @@
                   <td class="text-end">{{ formatPrice(achat.montantPaye || 0) }}</td>
                   <td class="text-end fw-bold" [class.text-success]="(achat.montantTotal - achat.montantPaye) <= 0.01" [class.text-danger]="(achat.montantTotal - achat.montantPaye) > 0.01">{{ formatPrice(achat.montantTotal - achat.montantPaye) }}</td>
                   <td class="text-center"><span class="badge" [class.bg-success]="(achat.montantTotal - achat.montantPaye) <= 0.01" [class.bg-info]="(achat.montantPaye > 0 && (achat.montantTotal - achat.montantPaye) > 0.01)" [class.bg-warning]="(achat.montantPaye === 0 || achat.montantPaye === undefined)">{{ getAchatStatusText(achat) }}</span></td>
-                  <td class="text-center"><div class="d-flex gap-1 justify-content-center"><button class="btn btn-sm btn-outline-warning py-0" title="Retour marchandise" [disabled]="achat.statut === 'ANNULE'" (click)="openRetourAchatModal(achat); showSituationModal=false"><i class="fa fa-undo me-1"></i>Retour</button><button class="btn btn-sm btn-outline-danger py-0" title="Annuler cet achat" [disabled]="achat.statut === 'ANNULE'" (click)="annulerAchat(achat)"><i class="fa fa-ban me-1"></i>Annuler</button></div></td>
+                  <td class="text-center"><div class="d-flex gap-1 justify-content-center"><button class="btn btn-sm btn-outline-warning py-0" title="Retour marchandise" [disabled]="achat.statut === 'ANNULE'" (click)="openRetourAchatModal(achat); showSituationModal=false"><i class="fa fa-undo me-1">Retour</i>Retour</button><button class="btn btn-sm btn-outline-danger py-0" title="Annuler cet achat" [disabled]="achat.statut === 'ANNULE'" (click)="annulerAchat(achat)"><i class="fa fa-ban me-1">Annuler</i>Annuler</button></div></td>
                 </tr>
                 <tr *ngIf="fournisseurSituation.achatsRecents.length === 0"><td colspan="7" class="text-center">Aucun achat récent</td></tr>
               </tbody>
@@ -570,7 +573,7 @@
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" (click)="showSituationModal = false">Fermer</button>
-        <button class="btn btn-info" (click)="openSituationModal(selectedFournisseurForSituation!)" *ngIf="selectedFournisseurForSituation"><i class="fa fa-refresh me-2"></i> Rafraîchir</button>
+        <button class="btn btn-info" (click)="openSituationModal(selectedFournisseurForSituation!)" *ngIf="selectedFournisseurForSituation"><i class="fa fa-refresh me-2"> Rafraîchir</i> Rafraîchir</button>
         <button class="btn btn-primary" (click)="openAchatModal(selectedFournisseurForSituation!); showSituationModal = false">Nouvel achat</button>
         <button class="btn btn-success" (click)="openPaiementModal(selectedFournisseurForSituation!); showSituationModal = false">Effectuer paiement</button>
       </div>
@@ -582,7 +585,7 @@
 <div class="modal fade show" [class.d-block]="showAddFournisseurModal" *ngIf="showAddFournisseurModal" style="background-color: rgba(0, 0, 0, 0.5); z-index: 1050" tabindex="-1">
   <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content">
-      <div class="modal-header bg-primary text-white"><h5 class="modal-title"><i class="fa fa-truck me-2"></i>Ajouter un fournisseur</h5><button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button></div>
+      <div class="modal-header bg-primary text-white"><h5 class="modal-title"><i class="fa fa-truck me-2">Ajouter un fournisseur</i>Ajouter un fournisseur</h5><button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button></div>
       <div class="modal-body">
         <form #fournisseurForm="ngForm">
           <div class="row g-3">
@@ -605,7 +608,7 @@
           </div>
         </form>
       </div>
-      <div class="modal-footer"><button type="button" class="btn btn-secondary" (click)="closeAllModals()" [disabled]="isLoading">Annuler</button><button type="button" class="btn btn-primary" (click)="addFournisseur()" [disabled]="isLoading"><span *ngIf="!isLoading"><i class="fa fa-save me-1"></i> Ajouter</span><span *ngIf="isLoading"><i class="fa fa-spinner fa-spin me-1"></i> Ajout en cours...</span></button></div>
+      <div class="modal-footer"><button type="button" class="btn btn-secondary" (click)="closeAllModals()" [disabled]="isLoading">Annuler</button><button type="button" class="btn btn-primary" (click)="addFournisseur()" [disabled]="isLoading"><span *ngIf="!isLoading"><i class="fa fa-save me-1"> Ajouter</i> Ajouter</span><span *ngIf="isLoading"><i class="fa fa-spinner fa-spin me-1"> Ajout en cours...</i> Ajout en cours...</span></button></div>
     </div>
   </div>
 </div>
@@ -614,7 +617,7 @@
 <div class="modal fade show" [class.d-block]="showEditFournisseurModal" *ngIf="showEditFournisseurModal" style="background-color: rgba(0, 0, 0, 0.5); z-index: 1050" tabindex="-1">
   <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content">
-      <div class="modal-header bg-warning text-white"><h5 class="modal-title"><i class="fa fa-edit me-2"></i>Modifier le fournisseur</h5><button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button></div>
+      <div class="modal-header bg-warning text-white"><h5 class="modal-title"><i class="fa fa-edit me-2">Modifier le fournisseur</i>Modifier le fournisseur</h5><button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button></div>
       <div class="modal-body">
         <form #editFournisseurForm="ngForm">
           <div class="row g-3">
@@ -637,7 +640,7 @@
           </div>
         </form>
       </div>
-      <div class="modal-footer"><button type="button" class="btn btn-secondary" (click)="closeAllModals()" [disabled]="isLoading">Annuler</button><button type="button" class="btn btn-warning text-white" (click)="updateFournisseur()" [disabled]="isLoading"><span *ngIf="!isLoading"><i class="fa fa-save me-1"></i> Modifier</span><span *ngIf="isLoading"><i class="fa fa-spinner fa-spin me-1"></i> Modification en cours...</span></button></div>
+      <div class="modal-footer"><button type="button" class="btn btn-secondary" (click)="closeAllModals()" [disabled]="isLoading">Annuler</button><button type="button" class="btn btn-warning text-white" (click)="updateFournisseur()" [disabled]="isLoading"><span *ngIf="!isLoading"><i class="fa fa-save me-1"> Modifier</i> Modifier</span><span *ngIf="isLoading"><i class="fa fa-spinner fa-spin me-1"> Modification en cours...</i> Modification en cours...</span></button></div>
     </div>
   </div>
 </div>
@@ -646,14 +649,14 @@
 <div class="modal fade show" [class.d-block]="showDeleteFournisseurModal" *ngIf="showDeleteFournisseurModal" style="background-color: rgba(0, 0, 0, 0.5); z-index: 1050" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
-      <div class="modal-header bg-danger text-white"><h5 class="modal-title"><i class="fa fa-exclamation-triangle me-2"></i>Confirmer la suppression</h5><button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button></div>
+      <div class="modal-header bg-danger text-white"><h5 class="modal-title"><i class="fa fa-exclamation-triangle me-2">Confirmer la suppression</i>Confirmer la suppression</h5><button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button></div>
       <div class="modal-body text-center">
         <i class="fa fa-truck fa-4x text-danger mb-3"></i>
         <p class="lead">Supprimer le fournisseur <strong>{{ selectedFournisseur?.nom }}</strong> ?</p>
-        <div class="alert alert-warning"><p><i class="fa fa-info-circle me-2"></i> Code: {{ selectedFournisseur?.code }}</p><p *ngIf="selectedFournisseur?.nombreProduits && selectedFournisseur!.nombreProduits > 0" class="text-danger mb-0"><i class="fa fa-exclamation-triangle me-1"></i> Ce fournisseur a {{ selectedFournisseur?.nombreProduits }} produit(s) associé(s).</p><p *ngIf="!selectedFournisseur?.nombreProduits || selectedFournisseur!.nombreProduits === 0" class="mb-0">Aucun produit associé à ce fournisseur.</p></div>
+        <div class="alert alert-warning"><p><i class="fa fa-info-circle me-2"> Code: </i> Code: {{ selectedFournisseur?.code }}</p><p *ngIf="selectedFournisseur?.nombreProduits && selectedFournisseur!.nombreProduits > 0" class="text-danger mb-0"><i class="fa fa-exclamation-triangle me-1"> Ce fournisseur a </i> Ce fournisseur a {{ selectedFournisseur?.nombreProduits }} produit(s) associé(s).</p><p *ngIf="!selectedFournisseur?.nombreProduits || selectedFournisseur!.nombreProduits === 0" class="mb-0">Aucun produit associé à ce fournisseur.</p></div>
         <p class="text-danger">Cette action est irréversible !</p>
       </div>
-      <div class="modal-footer"><button type="button" class="btn btn-secondary" (click)="closeAllModals()" [disabled]="isLoading">Annuler</button><button type="button" class="btn btn-danger" (click)="deleteFournisseur()" [disabled]="isLoading || (selectedFournisseur?.nombreProduits || 0) > 0"><span *ngIf="!isLoading"><i class="fa fa-trash me-1"></i> Supprimer</span><span *ngIf="isLoading"><i class="fa fa-spinner fa-spin me-1"></i> Suppression...</span></button></div>
+      <div class="modal-footer"><button type="button" class="btn btn-secondary" (click)="closeAllModals()" [disabled]="isLoading">Annuler</button><button type="button" class="btn btn-danger" (click)="deleteFournisseur()" [disabled]="isLoading || (selectedFournisseur?.nombreProduits || 0) > 0"><span *ngIf="!isLoading"><i class="fa fa-trash me-1"> Supprimer</i> Supprimer</span><span *ngIf="isLoading"><i class="fa fa-spinner fa-spin me-1"> Suppression...</i> Suppression...</span></button></div>
     </div>
   </div>
 </div>
@@ -662,9 +665,9 @@
 <div class="modal fade show" [class.d-block]="showAddCategoryModal" *ngIf="showAddCategoryModal" style="background-color: rgba(0, 0, 0, 0.5); z-index: 1050" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
-      <div class="modal-header bg-info text-white"><h5 class="modal-title"><i class="fa fa-tag me-2"></i>Ajouter une catégorie</h5><button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button></div>
+      <div class="modal-header bg-info text-white"><h5 class="modal-title"><i class="fa fa-tag me-2">Ajouter une catégorie</i>Ajouter une catégorie</h5><button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button></div>
       <div class="modal-body"><div class="mb-3"><label class="form-label">Nom <span class="text-danger">*</span></label><input type="text" class="form-control" [(ngModel)]="categoryForm.nom" placeholder="Ex: Produits laitiers"></div><div class="mb-3"><label class="form-label">Description</label><textarea class="form-control" rows="3" [(ngModel)]="categoryForm.description" placeholder="Description de la catégorie"></textarea></div></div>
-      <div class="modal-footer"><button type="button" class="btn btn-secondary" (click)="closeAllModals()">Annuler</button><button type="button" class="btn btn-info text-white" (click)="addCategory()" [disabled]="isLoading"><span *ngIf="!isLoading"><i class="fa fa-save me-1"></i> Ajouter</span><span *ngIf="isLoading"><i class="fa fa-spinner fa-spin me-1"></i> Ajout en cours...</span></button></div>
+      <div class="modal-footer"><button type="button" class="btn btn-secondary" (click)="closeAllModals()">Annuler</button><button type="button" class="btn btn-info text-white" (click)="addCategory()" [disabled]="isLoading"><span *ngIf="!isLoading"><i class="fa fa-save me-1"> Ajouter</i> Ajouter</span><span *ngIf="isLoading"><i class="fa fa-spinner fa-spin me-1"> Ajout en cours...</i> Ajout en cours...</span></button></div>
     </div>
   </div>
 </div>
@@ -673,9 +676,9 @@
 <div class="modal fade show" [class.d-block]="isEditingCategory" *ngIf="isEditingCategory" style="background-color: rgba(0, 0, 0, 0.5); z-index: 1050" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
-      <div class="modal-header bg-primary text-white"><h5 class="modal-title"><i class="fa fa-edit me-2"></i>Modifier la catégorie</h5><button type="button" class="btn-close btn-close-white" (click)="cancelEditCategory()"></button></div>
-      <div class="modal-body"><div *ngIf="selectedCategory"><div class="alert alert-info"><i class="fa fa-info-circle me-2"></i> Catégorie utilisée par {{ countProductsForCategory(selectedCategory) }} produit(s).</div><div class="mb-3"><label class="form-label">Nom <span class="text-danger">*</span></label><input type="text" class="form-control" [(ngModel)]="categoryForm.nom"></div><div class="mb-3"><label class="form-label">Description</label><textarea class="form-control" rows="3" [(ngModel)]="categoryForm.description"></textarea></div></div></div>
-      <div class="modal-footer"><button type="button" class="btn btn-secondary" (click)="cancelEditCategory()">Annuler</button><button type="button" class="btn btn-primary" (click)="updateCategory()" [disabled]="isLoading"><span *ngIf="!isLoading"><i class="fa fa-save me-1"></i> Enregistrer</span><span *ngIf="isLoading"><i class="fa fa-spinner fa-spin me-1"></i> Enregistrement...</span></button></div>
+      <div class="modal-header bg-primary text-white"><h5 class="modal-title"><i class="fa fa-edit me-2">Modifier la catégorie</i>Modifier la catégorie</h5><button type="button" class="btn-close btn-close-white" (click)="cancelEditCategory()"></button></div>
+      <div class="modal-body"><div *ngIf="selectedCategory"><div class="alert alert-info"><i class="fa fa-info-circle me-2"> Catégorie utilisée par </i> Catégorie utilisée par {{ countProductsForCategory(selectedCategory) }} produit(s).</div><div class="mb-3"><label class="form-label">Nom <span class="text-danger">*</span></label><input type="text" class="form-control" [(ngModel)]="categoryForm.nom"></div><div class="mb-3"><label class="form-label">Description</label><textarea class="form-control" rows="3" [(ngModel)]="categoryForm.description"></textarea></div></div></div>
+      <div class="modal-footer"><button type="button" class="btn btn-secondary" (click)="cancelEditCategory()">Annuler</button><button type="button" class="btn btn-primary" (click)="updateCategory()" [disabled]="isLoading"><span *ngIf="!isLoading"><i class="fa fa-save me-1"> Enregistrer</i> Enregistrer</span><span *ngIf="isLoading"><i class="fa fa-spinner fa-spin me-1"> Enregistrement...</i> Enregistrement...</span></button></div>
     </div>
   </div>
 </div>
@@ -684,9 +687,9 @@
 <div class="modal fade show" [class.d-block]="showDeleteCategoryModal" *ngIf="showDeleteCategoryModal" style="background-color: rgba(0, 0, 0, 0.5); z-index: 1050" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
-      <div class="modal-header bg-danger text-white"><h5 class="modal-title"><i class="fa fa-exclamation-triangle me-2"></i>Supprimer la catégorie</h5><button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button></div>
+      <div class="modal-header bg-danger text-white"><h5 class="modal-title"><i class="fa fa-exclamation-triangle me-2">Supprimer la catégorie</i>Supprimer la catégorie</h5><button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button></div>
       <div class="modal-body text-center"><i class="fa fa-tags fa-4x text-danger mb-3"></i><p class="lead">Supprimer la catégorie <strong>{{ selectedCategory?.nom }}</strong> ?</p><p class="text-muted">{{ selectedCategory?.description }}</p><div class="alert alert-warning">Cette catégorie est utilisée par {{ countProductsForCategory(selectedCategory!) }} produit(s).</div><p class="text-danger" *ngIf="countProductsForCategory(selectedCategory!) > 0">Impossible de supprimer une catégorie liée à des produits.</p></div>
-      <div class="modal-footer"><button type="button" class="btn btn-secondary" (click)="closeAllModals()">Annuler</button><button type="button" class="btn btn-danger" (click)="deleteCategory()" [disabled]="countProductsForCategory(selectedCategory!) > 0 || isLoading"><span *ngIf="!isLoading"><i class="fa fa-trash me-1"></i> Supprimer</span><span *ngIf="isLoading"><i class="fa fa-spinner fa-spin me-1"></i> Suppression...</span></button></div>
+      <div class="modal-footer"><button type="button" class="btn btn-secondary" (click)="closeAllModals()">Annuler</button><button type="button" class="btn btn-danger" (click)="deleteCategory()" [disabled]="countProductsForCategory(selectedCategory!) > 0 || isLoading"><span *ngIf="!isLoading"><i class="fa fa-trash me-1"> Supprimer</i> Supprimer</span><span *ngIf="isLoading"><i class="fa fa-spinner fa-spin me-1"> Suppression...</i> Suppression...</span></button></div>
     </div>
   </div>
 </div>
@@ -695,11 +698,11 @@
 <div class="modal fade show" [class.d-block]="showImportModal" *ngIf="showImportModal" style="background-color: rgba(0, 0, 0, 0.5); z-index: 1050" tabindex="-1">
   <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content">
-      <div class="modal-header bg-success text-white"><h5 class="modal-title"><i class="fa fa-file-excel me-2"></i>Importer des produits</h5><button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button></div>
+      <div class="modal-header bg-success text-white"><h5 class="modal-title"><i class="fa fa-file-excel me-2">Importer des produits</i>Importer des produits</h5><button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button></div>
       <div class="modal-body">
-        <div class="row"><div class="col-md-6"><div class="mb-3"><label class="form-label">Fichier Excel/CSV</label><input type="file" class="form-control" accept=".xlsx,.xls,.csv" (change)="onFileSelected($event)" [disabled]="isImporting"><div class="form-text">Formats supportés: .xlsx, .xls, .csv (max 10MB)</div></div><div *ngIf="selectedFile" class="alert alert-info"><i class="fa fa-file me-2"></i> {{ selectedFile.name }}<br><small>{{ (selectedFile.size / 1024).toFixed(2) }} KB</small></div></div><div class="col-md-6"><div class="alert alert-warning"><h6><i class="fa fa-exclamation-triangle me-2"></i>Format attendu :</h6><ul class="small"><li><strong>Nom*</strong>, <strong>Catégorie*</strong>, Fournisseur</li><li><strong>PrixAchat*</strong>, <strong>PrixVente*</strong>, <strong>Quantite*</strong></li><li>DatePeremption (JJ/MM/AAAA)</li><li>LotNumber, ConditionsStockage</li><li>PoidsVolume, UniteMesure, Bio (oui/non), Origine</li></ul></div></div></div>
+        <div class="row"><div class="col-md-6"><div class="mb-3"><label class="form-label">Fichier Excel/CSV</label><input type="file" class="form-control" accept=".xlsx,.xls,.csv" (change)="onFileSelected($event)" [disabled]="isImporting"><div class="form-text">Formats supportés: .xlsx, .xls, .csv (max 10MB)</div></div><div *ngIf="selectedFile" class="alert alert-info"><i class="fa fa-file me-2"></i> {{ selectedFile.name }}<br><small>{{ (selectedFile.size / 1024).toFixed(2) }} KB</small></div></div><div class="col-md-6"><div class="alert alert-warning"><h6><i class="fa fa-exclamation-triangle me-2">Format attendu :</i>Format attendu :</h6><ul class="small"><li><strong>Nom*</strong>, <strong>Catégorie*</strong>, Fournisseur</li><li><strong>PrixAchat*</strong>, <strong>PrixVente*</strong>, <strong>Quantite*</strong></li><li>DatePeremption (JJ/MM/AAAA)</li><li>LotNumber, ConditionsStockage</li><li>PoidsVolume, UniteMesure, Bio (oui/non), Origine</li></ul></div></div></div>
       </div>
-      <div class="modal-footer"><button class="btn btn-outline-success me-auto" (click)="downloadTemplate()" [disabled]="isImporting"><i class="fa fa-download me-1"></i> Télécharger le template</button><button class="btn btn-secondary" (click)="closeAllModals()" [disabled]="isImporting">Annuler</button><button class="btn btn-success" (click)="importProducts()" [disabled]="!selectedFile || isImporting"><span *ngIf="!isImporting"><i class="fa fa-upload me-1"></i> Importer</span><span *ngIf="isImporting"><i class="fa fa-spinner fa-spin me-1"></i> Import en cours...</span></button></div>
+      <div class="modal-footer"><button class="btn btn-outline-success me-auto" (click)="downloadTemplate()" [disabled]="isImporting"><i class="fa fa-download me-1"> Télécharger le template</i> Télécharger le template</button><button class="btn btn-secondary" (click)="closeAllModals()" [disabled]="isImporting">Annuler</button><button class="btn btn-success" (click)="importProducts()" [disabled]="!selectedFile || isImporting"><span *ngIf="!isImporting"><i class="fa fa-upload me-1"> Importer</i> Importer</span><span *ngIf="isImporting"><i class="fa fa-spinner fa-spin me-1"> Import en cours...</i> Import en cours...</span></button></div>
     </div>
   </div>
 </div>
@@ -708,13 +711,13 @@
 <div class="modal fade show" [class.d-block]="showImportResultModal" *ngIf="showImportResultModal" style="background-color: rgba(0, 0, 0, 0.5); z-index: 1050" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
-      <div class="modal-header" [class.bg-success]="importResult?.failed === 0" [class.bg-warning]="importResult?.failed && importResult.failed > 0"><h5 class="modal-title text-white"><i class="fa fa-chart-bar me-2"></i>Résultats de l'importation</h5><button type="button" class="btn-close btn-close-white" (click)="closeImportResultModal()"></button></div>
+      <div class="modal-header" [class.bg-success]="importResult?.failed === 0" [class.bg-warning]="importResult?.failed && importResult.failed > 0"><h5 class="modal-title text-white"><i class="fa fa-chart-bar me-2">Résultats de l'importation</i>Résultats de l'importation</h5><button type="button" class="btn-close btn-close-white" (click)="closeImportResultModal()"></button></div>
       <div class="modal-body">
         <div class="row text-center"><div class="col-4"><div class="border-end"><h3 class="text-success">{{ importResult?.success || 0 }}</h3><small>Succès</small></div></div><div class="col-4"><div class="border-end"><h3 class="text-danger">{{ importResult?.failed || 0 }}</h3><small>Échecs</small></div></div><div class="col-4"><h3 class="text-primary">{{ importResult?.total || 0 }}</h3><small>Total</small></div></div>
         <div *ngIf="importResult?.errors && importResult.errors.length > 0" class="mt-3"><h6>Erreurs rencontrées :</h6><div class="alert alert-danger"><ul class="mb-0 small"><li *ngFor="let err of importResult.errors">{{ err }}</li></ul></div></div>
         <div *ngIf="importResult?.success && importResult.success > 0" class="mt-3 alert alert-success"><i class="fa fa-check-circle me-2"></i> {{ importResult.success }} produit(s) importé(s) avec succès.</div>
       </div>
-      <div class="modal-footer"><button class="btn btn-primary" (click)="closeImportResultModal(); loadData()"><i class="fa fa-check me-1"></i> OK</button></div>
+      <div class="modal-footer"><button class="btn btn-primary" (click)="closeImportResultModal(); loadData()"><i class="fa fa-check me-1"> OK</i> OK</button></div>
     </div>
   </div>
 </div>
@@ -725,7 +728,7 @@
   <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-header bg-primary text-white">
-        <h5 class="modal-title"><i class="fa fa-shopping-cart me-2"></i>Enregistrer un achat - {{ selectedFournisseurForAchat?.nom }}</h5>
+        <h5 class="modal-title"><i class="fa fa-shopping-cart me-2">Enregistrer un achat - </i>Enregistrer un achat - {{ selectedFournisseurForAchat?.nom }}</h5>
         <button type="button" class="btn-close btn-close-white" (click)="showAchatModal = false"></button>
       </div>
       <div class="modal-body">
@@ -733,8 +736,8 @@
           <div class="col-md-7">
             <h6>Ajouter un produit</h6>
             <ul class="nav nav-tabs mb-3">
-              <li class="nav-item"><a class="nav-link" [class.active]="!tempLigneAchat.nouveauProduitNom" (click)="tempLigneAchat.nouveauProduitNom = undefined"><i class="fa fa-box me-1"></i> Produit existant</a></li>
-              <li class="nav-item"><a class="nav-link" [class.active]="tempLigneAchat.nouveauProduitNom" (click)="tempLigneAchat.nouveauProduitNom = 'new'"><i class="fa fa-plus-circle me-1"></i> Nouveau produit</a></li>
+              <li class="nav-item"><a class="nav-link" [class.active]="!tempLigneAchat.nouveauProduitNom" (click)="tempLigneAchat.nouveauProduitNom = undefined"><i class="fa fa-box me-1"> Produit existant</i> Produit existant</a></li>
+              <li class="nav-item"><a class="nav-link" [class.active]="tempLigneAchat.nouveauProduitNom" (click)="tempLigneAchat.nouveauProduitNom = 'new'"><i class="fa fa-plus-circle me-1"> Nouveau produit</i> Nouveau produit</a></li>
             </ul>
             <div *ngIf="!tempLigneAchat.nouveauProduitNom" class="row g-2 mb-3">
               <div class="col-md-12">
@@ -760,10 +763,10 @@
             <div class="row g-2 mb-3">
               <div class="col-md-3"><label class="form-label small">Quantité <span class="text-danger">*</span></label><input type="number" class="form-control form-control-sm" [(ngModel)]="tempLigneAchat.quantite" min="1"></div>
               <div class="col-md-3"><label class="form-label small">Prix achat unitaire <span class="text-danger">*</span></label><input type="number" class="form-control form-control-sm" [(ngModel)]="tempLigneAchat.prixAchatUnitaire" step="0.01"></div>
-              <div class="col-md-3 d-flex align-items-end"><button class="btn btn-sm btn-success w-100" (click)="ajouterLigneAchat()"><i class="fa fa-plus me-1"></i> Ajouter</button></div>
+              <div class="col-md-3 d-flex align-items-end"><button class="btn btn-sm btn-success w-100" (click)="ajouterLigneAchat()"><i class="fa fa-plus me-1"> Ajouter</i> Ajouter</button></div>
             </div>
             <hr><h6>Produits de l'achat</h6>
-            <div class="table-responsive"><table class="table table-sm table-bordered"><thead><tr><th>Produit</th><th>Qté</th><th>Prix unitaire</th><th>Sous-total</th><th></th></tr></thead><tbody><tr *ngFor="let ligne of achatForm.lignes; let i = index"><td><span *ngIf="ligne.produitId">Produit sélectionné</span><span *ngIf="!ligne.produitId && ligne.nouveauProduitNom"><strong>{{ ligne.nouveauProduitNom }}</strong> (nouveau)</span></td><td class="text-center">{{ ligne.quantite }}</td><td class="text-end">{{ formatPrice(ligne.prixAchatUnitaire) }}</td><td class="text-end">{{ formatPrice(ligne.quantite * ligne.prixAchatUnitaire) }}</td><td class="text-center"><button class="btn btn-sm btn-danger" (click)="supprimerLigneAchat(i)"><i class="fa fa-trash"></i></button></td></tr><tr *ngIf="achatForm.lignes.length === 0"><td colspan="5" class="text-center text-muted py-3"><i class="fa fa-info-circle me-1"></i> Aucun produit ajouté</td></tr></tbody><tfoot><tr class="table-active"><th colspan="3" class="text-end">Total :</th><th colspan="2">{{ formatPrice(calculerTotalAchat()) }}</th></tr></tfoot></table></div>
+            <div class="table-responsive"><table class="table table-sm table-bordered"><thead><tr><th>Produit</th><th>Qté</th><th>Prix unitaire</th><th>Sous-total</th><th></th></tr></thead><tbody><tr *ngFor="let ligne of achatForm.lignes; let i = index"><td><span *ngIf="ligne.produitId">Produit sélectionné</span><span *ngIf="!ligne.produitId && ligne.nouveauProduitNom"><strong>{{ ligne.nouveauProduitNom }}</strong> (nouveau)</span></td><td class="text-center">{{ ligne.quantite }}</td><td class="text-end">{{ formatPrice(ligne.prixAchatUnitaire) }}</td><td class="text-end">{{ formatPrice(ligne.quantite * ligne.prixAchatUnitaire) }}</td><td class="text-center"><button class="btn btn-sm btn-danger" (click)="supprimerLigneAchat(i)"><i class="fa fa-trash"></i></button></td></tr><tr *ngIf="achatForm.lignes.length === 0"><td colspan="5" class="text-center text-muted py-3"><i class="fa fa-info-circle me-1"> Aucun produit ajouté</i> Aucun produit ajouté</td></tr></tbody><tfoot><tr class="table-active"><th colspan="3" class="text-end">Total :</th><th colspan="2">{{ formatPrice(calculerTotalAchat()) }}</th></tr></tfoot></table></div>
           </div>
           <div class="col-md-5">
             <div class="card bg-light">
@@ -814,7 +817,7 @@
                   {{ formatPrice(calculerTotalAchat() - (achatForm.montantPaye || 0) - (avanceFournisseurUtilisee || 0)) }}
                 </div>
                 <div class="alert alert-primary mt-2" *ngIf="(avanceFournisseurUtilisee || 0) > 0">
-                  <i class="fa fa-check-circle me-1"></i> Avance utilisée : {{ formatPrice(avanceFournisseurUtilisee || 0) }} (déjà payé)
+                  <i class="fa fa-check-circle me-1"> Avance utilisée : </i> Avance utilisée : {{ formatPrice(avanceFournisseurUtilisee || 0) }} (déjà payé)
                 </div>
               </div>
             </div>
@@ -824,8 +827,8 @@
       <div class="modal-footer">
         <button class="btn btn-secondary" (click)="showAchatModal = false" [disabled]="isLoading">Annuler</button>
         <button class="btn btn-primary" (click)="creerAchat()" [disabled]="isLoading || achatForm.lignes.length === 0">
-          <span *ngIf="!isLoading"><i class="fa fa-save me-1"></i> Enregistrer l'achat</span>
-          <span *ngIf="isLoading"><i class="fa fa-spinner fa-spin me-1"></i> Enregistrement...</span>
+          <span *ngIf="!isLoading"><i class="fa fa-save me-1"> Enregistrer l'achat</i> Enregistrer l'achat</span>
+          <span *ngIf="isLoading"><i class="fa fa-spinner fa-spin me-1"> Enregistrement...</i> Enregistrement...</span>
         </button>
       </div>
     </div>
@@ -871,7 +874,7 @@
             <!-- Sélecteur d'achat à payer -->
             <div class="mb-3">
               <label class="form-label fw-semibold">
-                <i class="fa fa-shopping-cart me-1"></i> Achat à payer
+                <i class="fa fa-shopping-cart me-1"> Achat à payer</i> Achat à payer
               </label>
               <select class="form-select" [(ngModel)]="paiementForm.achatCibleId" (change)="onAchatSelectionnePourPaiement()">
                 <option [ngValue]="null">-- Payer tous les achats (FIFO) --</option>
@@ -885,7 +888,7 @@
             <!-- Mode de paiement -->
             <div class="mb-4">
               <label class="form-label fw-semibold">
-                <i class="fa fa-credit-card me-1"></i> Mode de paiement
+                <i class="fa fa-credit-card me-1"> Mode de paiement</i> Mode de paiement
               </label>
               <div class="row g-2">
                 <div class="col-6" *ngFor="let mode of modesPaiement">
@@ -906,17 +909,17 @@
                 </div>
               </div>
               <div class="alert alert-warning mt-2 py-2" *ngIf="paiementForm.modePaiement === 'ESPECES'">
-                <i class="fa fa-exclamation-triangle me-1"></i> Le montant sera déduit de la caisse (sortie d'espèces).
+                <i class="fa fa-exclamation-triangle me-1"> Le montant sera déduit de la caisse (sortie d'espèces).</i> Le montant sera déduit de la caisse (sortie d'espèces).
               </div>
               <div class="alert alert-info mt-2 py-2" *ngIf="paiementForm.modePaiement === 'BANQUE'">
-                <i class="fa fa-university me-1"></i> Le montant sera déduit du compte bancaire sélectionné.
+                <i class="fa fa-university me-1"> Le montant sera déduit du compte bancaire sélectionné.</i> Le montant sera déduit du compte bancaire sélectionné.
               </div>
             </div>
 
             <!-- Sélecteur de compte bancaire -->
             <div class="mb-3" *ngIf="paiementForm.modePaiement === 'BANQUE'">
               <label class="form-label fw-semibold">
-                <i class="fa fa-university me-1"></i> Compte bancaire *
+                <i class="fa fa-university me-1"> Compte bancaire *</i> Compte bancaire *
               </label>
               <select class="form-select" [(ngModel)]="paiementForm.compteId">
                 <option [ngValue]="undefined">-- Choisir un compte --</option>
@@ -929,7 +932,7 @@
             <!-- Référence -->
             <div class="mb-3" *ngIf="paiementForm.modePaiement !== 'ESPECES'">
               <label class="form-label fw-semibold">
-                <i class="fa fa-hashtag me-1"></i> Référence (chèque, virement)
+                <i class="fa fa-hashtag me-1"> Référence (chèque, virement)</i> Référence (chèque, virement)
               </label>
               <input type="text" class="form-control" [(ngModel)]="paiementForm.reference"
                 placeholder="N° chèque, ref virement..." style="border-radius: 10px;">
@@ -938,7 +941,7 @@
             <!-- Observation -->
             <div class="mb-3">
               <label class="form-label fw-semibold">
-                <i class="fa fa-comment me-1"></i> Observation
+                <i class="fa fa-comment me-1"> Observation</i> Observation
               </label>
               <textarea class="form-control" rows="2" [(ngModel)]="paiementForm.observation"
                 placeholder="Optionnel..." style="border-radius: 10px;"></textarea>
@@ -961,7 +964,7 @@
             <!-- Montant à payer -->
             <div class="mb-4">
               <label class="form-label fw-semibold">
-                <i class="fa fa-tag text-success me-1"></i> Montant à payer <span class="text-danger">*</span>
+                <i class="fa fa-tag text-success me-1"> Montant à payer </i> Montant à payer <span class="text-danger">*</span>
               </label>
               <div class="input-group input-group-lg">
                 <span class="input-group-text bg-success text-white">XOF</span>
@@ -976,7 +979,7 @@
                 <button type="button" class="btn btn-sm btn-outline-secondary" 
                   (click)="setMontant(montantMaxPaiement)"
                   [disabled]="!montantMaxPaiement">
-                  <i class="fa fa-check-circle me-1"></i> Tout payer
+                  <i class="fa fa-check-circle me-1"> Tout payer</i> Tout payer
                 </button>
                 <button type="button" class="btn btn-sm btn-outline-secondary" 
                   (click)="setMontant(montantMaxPaiement / 2)"
@@ -1030,15 +1033,15 @@
 
       <div class="modal-footer py-3 bg-light">
         <button type="button" class="btn btn-secondary px-4" (click)="closePaiementModal()" [disabled]="isLoading">
-          <i class="fa fa-times me-2"></i>Annuler
+          <i class="fa fa-times me-2">Annuler</i>Annuler
         </button>
         <button type="button" class="btn btn-success px-4" (click)="effectuerPaiement()" 
           [disabled]="isLoading || !paiementForm.montant || paiementForm.montant <= 0 || paiementForm.montant > montantMaxPaiement">
           <span *ngIf="!isLoading">
-            <i class="fa fa-check me-2"></i>Enregistrer le paiement
+            <i class="fa fa-check me-2">Enregistrer le paiement</i>Enregistrer le paiement
           </span>
           <span *ngIf="isLoading">
-            <i class="fa fa-spinner fa-spin me-2"></i>Enregistrement...
+            <i class="fa fa-spinner fa-spin me-2">Enregistrement...</i>Enregistrement...
           </span>
         </button>
       </div>
@@ -1053,10 +1056,10 @@
       <div class="modal-body">
         <div class="alert alert-primary d-flex justify-content-between align-items-center mb-3"><div><i class="fa fa-wallet me-2"></i><strong>Solde avance disponible chez ce fournisseur</strong></div><span class="badge bg-primary fs-6">{{ formatPrice(getTotalAvancesDisponibles()) }}</span></div>
         <div *ngIf="isLoadingAvance" class="text-center py-4"><div class="spinner-border text-info"></div><div class="mt-2 text-muted">Chargement...</div></div>
-        <div *ngIf="!isLoadingAvance && historiqueAvancesFournisseur.length === 0" class="text-center text-muted py-4"><i class="fa fa-inbox fa-3x mb-3 d-block opacity-50"></i>Aucune avance enregistrée pour ce fournisseur.</div>
+        <div *ngIf="!isLoadingAvance && historiqueAvancesFournisseur.length === 0" class="text-center text-muted py-4"><i class="fa fa-inbox fa-3x mb-3 d-block opacity-50">Aucune avance enregistrée pour ce fournisseur.</i>Aucune avance enregistrée pour ce fournisseur.</div>
         <div class="table-responsive" *ngIf="!isLoadingAvance && historiqueAvancesFournisseur.length > 0"><table class="table table-hover table-sm"><thead class="table-light"><tr><th>Date</th><th class="text-end">Montant initial</th><th class="text-end">Utilisé</th><th class="text-end text-success fw-bold">Disponible</th><th>Source</th><th>Statut</th><th>Motif</th></tr></thead><tbody><tr *ngFor="let avance of historiqueAvancesFournisseur" [class.table-success]="(avance.montantDisponible || 0) > 0" [class.table-secondary]="(avance.montantDisponible || 0) <= 0"><td><small>{{ formatDate(avance.dateDepot) }}</small></td><td class="text-end">{{ formatPrice(avance.montant) }}</td><td class="text-end text-warning">{{ formatPrice(avance.montantUtilise) }}</td><td class="text-end fw-bold" [class.text-success]="avance.montantDisponible > 0" [class.text-muted]="avance.montantDisponible <= 0">{{ formatPrice(avance.montantDisponible) }}</td><td><span class="badge" [class.bg-info]="avance.sourceFinancement === 'CAISSE'" [class.bg-primary]="avance.sourceFinancement === 'BANQUE'">{{ avance.sourceFinancement === 'CAISSE' ? 'Caisse' : 'Banque' }}</span></td><td><span class="badge" [class.bg-success]="avance.statut === 'DISPONIBLE'" [class.bg-secondary]="avance.statut === 'EPUISE'" [class.bg-warning]="avance.statut === 'UTILISE_PARTIELLEMENT'">{{ avance.statut === 'DISPONIBLE' ? 'Disponible' : avance.statut === 'EPUISE' ? 'Épuisée' : 'Partielle' }}</span></td><td><small class="text-muted">{{ avance.motif || '-' }}</small></td></tr></tbody><tfoot class="table-light fw-bold"><tr><td>Total</td><td class="text-end">{{ formatPrice(getSumAvances('montant')) }}</td><td class="text-end text-warning">{{ formatPrice(getSumAvances('montantUtilise')) }}</td><td class="text-end text-success">{{ formatPrice(getTotalAvancesDisponibles()) }}</td><td colspan="3"></td></tr></tfoot></table></div>
       </div>
-      <div class="modal-footer"><button class="btn btn-outline-secondary" (click)="showHistoriqueAvancesModal=false">Fermer</button><button class="btn btn-primary" (click)="openAvanceFournisseurModal(selectedFournisseurForHistorique!); showHistoriqueAvancesModal=false" *ngIf="selectedFournisseurForHistorique"><i class="fa fa-plus me-1"></i> Nouvelle avance</button></div>
+      <div class="modal-footer"><button class="btn btn-outline-secondary" (click)="showHistoriqueAvancesModal=false">Fermer</button><button class="btn btn-primary" (click)="openAvanceFournisseurModal(selectedFournisseurForHistorique!); showHistoriqueAvancesModal=false" *ngIf="selectedFournisseurForHistorique"><i class="fa fa-plus me-1"> Nouvelle avance</i> Nouvelle avance</button></div>
     </div>
   </div>
 </div>
@@ -1066,8 +1069,8 @@
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content shadow-lg">
       <div class="modal-header bg-primary text-white"><div class="d-flex align-items-center"><i class="fa fa-hand-holding-usd fa-lg me-3"></i><div><h5 class="modal-title fw-bold mb-0">Avance fournisseur</h5><small class="opacity-75">{{ selectedFournisseurForAvance?.nom }}</small></div></div><button type="button" class="btn-close btn-close-white" (click)="showAvanceFournisseurModal=false"></button></div>
-      <div class="modal-body p-4"><div class="alert alert-info mb-3"><i class="fa fa-info-circle me-1"></i> L'avance sera déduite automatiquement lors des prochains achats avec ce fournisseur.</div><div class="mb-3"><label class="form-label fw-semibold">Montant de l'avance (F) *</label><input type="number" class="form-control form-control-lg" [(ngModel)]="avanceFournisseurForm.montant" min="1" step="0.01" placeholder="Ex: 500000"></div><div class="mb-3"><label class="form-label fw-semibold">Source du financement *</label><div class="d-flex gap-3"><div class="form-check"><input class="form-check-input" type="radio" id="src_caisse" name="sourceFinancement" value="CAISSE" [(ngModel)]="avanceFournisseurForm.sourceFinancement"><label class="form-check-label" for="src_caisse"><i class="fa fa-cash-register me-1"></i> Caisse</label></div><div class="form-check"><input class="form-check-input" type="radio" id="src_banque" name="sourceFinancement" value="BANQUE" [(ngModel)]="avanceFournisseurForm.sourceFinancement"><label class="form-check-label" for="src_banque"><i class="fa fa-university me-1"></i> Banque</label></div></div></div><div class="mb-3" *ngIf="avanceFournisseurForm.sourceFinancement === 'BANQUE'"><label class="form-label fw-semibold">Compte bancaire *</label><select class="form-select" [(ngModel)]="avanceFournisseurForm.compteId"><option [ngValue]="undefined">-- Choisir un compte --</option><option *ngFor="let c of comptes" [ngValue]="c.id">{{ c.nomBanque }} — Solde: {{ formatPrice(c.soldeActuel) }}</option></select></div><div class="mb-3"><label class="form-label fw-semibold">Motif</label><input type="text" class="form-control" [(ngModel)]="avanceFournisseurForm.motif" placeholder="Ex: Commande prévue, approvisionnement..."></div><div class="alert alert-warning mb-0" *ngIf="avanceFournisseurForm.sourceFinancement === 'CAISSE'"><i class="fa fa-exclamation-triangle me-1"></i> Le montant sera prélevé de la caisse (sortie d'espèces).</div></div>
-      <div class="modal-footer"><button class="btn btn-outline-secondary" (click)="showAvanceFournisseurModal=false" [disabled]="isLoading">Annuler</button><button class="btn btn-primary" (click)="submitAvanceFournisseur()" [disabled]="isLoading"><span *ngIf="!isLoading"><i class="fa fa-check me-1"></i> Enregistrer l'avance</span><span *ngIf="isLoading"><i class="fa fa-spinner fa-spin me-1"></i> Enregistrement...</span></button></div>
+      <div class="modal-body p-4"><div class="alert alert-info mb-3"><i class="fa fa-info-circle me-1"> L'avance sera déduite automatiquement lors des prochains achats avec ce fournisseur.</i> L'avance sera déduite automatiquement lors des prochains achats avec ce fournisseur.</div><div class="mb-3"><label class="form-label fw-semibold">Montant de l'avance (F) *</label><input type="number" class="form-control form-control-lg" [(ngModel)]="avanceFournisseurForm.montant" min="1" step="0.01" placeholder="Ex: 500000"></div><div class="mb-3"><label class="form-label fw-semibold">Source du financement *</label><div class="d-flex gap-3"><div class="form-check"><input class="form-check-input" type="radio" id="src_caisse" name="sourceFinancement" value="CAISSE" [(ngModel)]="avanceFournisseurForm.sourceFinancement"><label class="form-check-label" for="src_caisse"><i class="fa fa-cash-register me-1"> Caisse</i> Caisse</label></div><div class="form-check"><input class="form-check-input" type="radio" id="src_banque" name="sourceFinancement" value="BANQUE" [(ngModel)]="avanceFournisseurForm.sourceFinancement"><label class="form-check-label" for="src_banque"><i class="fa fa-university me-1"> Banque</i> Banque</label></div></div></div><div class="mb-3" *ngIf="avanceFournisseurForm.sourceFinancement === 'BANQUE'"><label class="form-label fw-semibold">Compte bancaire *</label><select class="form-select" [(ngModel)]="avanceFournisseurForm.compteId"><option [ngValue]="undefined">-- Choisir un compte --</option><option *ngFor="let c of comptes" [ngValue]="c.id">{{ c.nomBanque }} — Solde: {{ formatPrice(c.soldeActuel) }}</option></select></div><div class="mb-3"><label class="form-label fw-semibold">Motif</label><input type="text" class="form-control" [(ngModel)]="avanceFournisseurForm.motif" placeholder="Ex: Commande prévue, approvisionnement..."></div><div class="alert alert-warning mb-0" *ngIf="avanceFournisseurForm.sourceFinancement === 'CAISSE'"><i class="fa fa-exclamation-triangle me-1"> Le montant sera prélevé de la caisse (sortie d'espèces).</i> Le montant sera prélevé de la caisse (sortie d'espèces).</div></div>
+      <div class="modal-footer"><button class="btn btn-outline-secondary" (click)="showAvanceFournisseurModal=false" [disabled]="isLoading">Annuler</button><button class="btn btn-primary" (click)="submitAvanceFournisseur()" [disabled]="isLoading"><span *ngIf="!isLoading"><i class="fa fa-check me-1"> Enregistrer l'avance</i> Enregistrer l'avance</span><span *ngIf="isLoading"><i class="fa fa-spinner fa-spin me-1"> Enregistrement...</i> Enregistrement...</span></button></div>
     </div>
   </div>
 </div>
@@ -1081,12 +1084,12 @@
         <div class="alert alert-light border mb-3 d-flex justify-content-between align-items-center"><div><small class="text-muted">Total achat</small><div class="fw-bold">{{ formatPrice(selectedAchatPourRetour?.montantTotal) }}</div></div><div><small class="text-muted">Déjà payé</small><div class="text-success fw-bold">{{ formatPrice(selectedAchatPourRetour?.montantPaye) }}</div></div><div><small class="text-muted">Restant dû</small><div class="text-danger fw-bold">{{ formatPrice((selectedAchatPourRetour?.montantTotal || 0) - (selectedAchatPourRetour?.montantPaye || 0)) }}</div></div></div>
         <h6 class="fw-semibold mb-2">Sélectionner les produits à retourner</h6>
         <div class="table-responsive mb-3"><table class="table table-sm table-bordered align-middle"><thead class="table-light"><tr><th style="width:32px"></th><th>Produit</th><th class="text-center" style="width:90px">Qté max</th><th class="text-center" style="width:110px">Qté retournée</th><th class="text-end" style="width:110px">Prix unit.</th><th class="text-end" style="width:110px">Sous-total</th></tr></thead><tbody><tr *ngFor="let ligne of retourAchatLignes" [class.table-warning]="ligne.selected"><td class="text-center"><input type="checkbox" class="form-check-input" [(ngModel)]="ligne.selected"></td><td>{{ ligne.produitNom }}</td><td class="text-center text-muted">{{ ligne.quantiteMax }}</td><td class="text-center"><input type="number" class="form-control form-control-sm text-center" [(ngModel)]="ligne.quantiteRetournee" [disabled]="!ligne.selected" min="1" [max]="ligne.quantiteMax" step="1"></td><td class="text-end">{{ formatPrice(ligne.prixUnitaire) }}</td><td class="text-end fw-bold">{{ ligne.selected && ligne.quantiteRetournee > 0 ? formatPrice(ligne.quantiteRetournee * ligne.prixUnitaire) : '-' }}</td></tr></tbody><tfoot class="table-light fw-bold" *ngIf="totalRetourAchat > 0"><tr><td colspan="5" class="text-end">Total retour</td><td class="text-end text-warning">{{ formatPrice(totalRetourAchat) }}</td></tr></tfoot></table></div>
-        <div class="mb-3"><label class="form-label fw-semibold">Mode de remboursement *</label><div class="d-flex gap-3"><div class="form-check"><input class="form-check-input" type="radio" id="retour_caisse" name="retourMode" value="CAISSE" [(ngModel)]="retourAchatModeRemboursement"><label class="form-check-label" for="retour_caisse"><i class="fa fa-cash-register me-1"></i> Caisse</label></div><div class="form-check"><input class="form-check-input" type="radio" id="retour_banque" name="retourMode" value="BANQUE" [(ngModel)]="retourAchatModeRemboursement"><label class="form-check-label" for="retour_banque"><i class="fa fa-university me-1"></i> Banque</label></div></div></div>
+        <div class="mb-3"><label class="form-label fw-semibold">Mode de remboursement *</label><div class="d-flex gap-3"><div class="form-check"><input class="form-check-input" type="radio" id="retour_caisse" name="retourMode" value="CAISSE" [(ngModel)]="retourAchatModeRemboursement"><label class="form-check-label" for="retour_caisse"><i class="fa fa-cash-register me-1"> Caisse</i> Caisse</label></div><div class="form-check"><input class="form-check-input" type="radio" id="retour_banque" name="retourMode" value="BANQUE" [(ngModel)]="retourAchatModeRemboursement"><label class="form-check-label" for="retour_banque"><i class="fa fa-university me-1"> Banque</i> Banque</label></div></div></div>
         <div class="mb-3" *ngIf="retourAchatModeRemboursement === 'BANQUE'"><label class="form-label fw-semibold">Compte bancaire *</label><select class="form-select" [(ngModel)]="retourAchatCompteId"><option [ngValue]="undefined">-- Choisir un compte --</option><option *ngFor="let c of comptes" [ngValue]="c.id">{{ c.nomBanque }} — Solde: {{ formatPrice(c.soldeActuel) }}</option></select></div>
         <div class="mb-3"><label class="form-label fw-semibold">Motif du retour</label><input type="text" class="form-control" [(ngModel)]="retourAchatMotif" placeholder="Ex: Produit défectueux, mauvaise livraison..."></div>
         <div class="alert alert-info mb-0" *ngIf="totalRetourAchat > 0"><i class="fa fa-info-circle me-2"></i><ng-container *ngIf="totalRetourAchat <= ((selectedAchatPourRetour?.montantTotal || 0) - (selectedAchatPourRetour?.montantPaye || 0)); else excessTemplate"><strong>Dette réduite de {{ formatPrice(totalRetourAchat) }}</strong> — aucun remboursement en espèces.</ng-container><ng-template #excessTemplate>Dette soldée + remboursement de <strong>{{ formatPrice(totalRetourAchat - ((selectedAchatPourRetour?.montantTotal || 0) - (selectedAchatPourRetour?.montantPaye || 0))) }}</strong> vers {{ retourAchatModeRemboursement === 'CAISSE' ? 'la caisse' : 'la banque' }}.</ng-template></div>
       </div>
-      <div class="modal-footer"><button class="btn btn-outline-secondary" (click)="showRetourAchatModal=false" [disabled]="isLoading">Annuler</button><button class="btn btn-warning" (click)="submitRetourAchat()" [disabled]="isLoading || totalRetourAchat <= 0"><span *ngIf="!isLoading"><i class="fa fa-undo me-1"></i> Confirmer le retour</span><span *ngIf="isLoading"><i class="fa fa-spinner fa-spin me-1"></i> Traitement...</span></button></div>
+      <div class="modal-footer"><button class="btn btn-outline-secondary" (click)="showRetourAchatModal=false" [disabled]="isLoading">Annuler</button><button class="btn btn-warning" (click)="submitRetourAchat()" [disabled]="isLoading || totalRetourAchat <= 0"><span *ngIf="!isLoading"><i class="fa fa-undo me-1"> Confirmer le retour</i> Confirmer le retour</span><span *ngIf="isLoading"><i class="fa fa-spinner fa-spin me-1"> Traitement...</i> Traitement...</span></button></div>
     </div>
   </div>
 </div>

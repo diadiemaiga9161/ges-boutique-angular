@@ -28,6 +28,7 @@ import {
 } from '../../../shared/services/product.service';
 import { AuthService } from '../../../shared/services/auth.service';
 import { CompteService, Compte } from '../../../shared/services/compte.service';
+import { FactureService } from '../../../shared/services/facture.service';
 import { environment } from '../../../../environments/environment';
 import Swal from 'sweetalert2';
 import { TranslateModule } from '@ngx-translate/core';
@@ -229,7 +230,8 @@ export class ProduitComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private compteService: CompteService,
     private http: HttpClient,
-    private ws: WebSocketService
+    private ws: WebSocketService,
+    private factureService: FactureService
   ) {}
 
   ngOnInit(): void {
@@ -1123,6 +1125,49 @@ export class ProduitComponent implements OnInit, OnDestroy {
 
   formatPrice(price: number): string {
     return this.productService.formatPrice(price);
+  }
+
+  telechargerStockPdf(): void {
+    const liste = this.produits;
+    if (!liste.length) { return; }
+    const totalValeur = liste.reduce((s, p) => s + (p.quantite || 0) * (p.prixVente || 0), 0);
+    const totalQte = liste.reduce((s, p) => s + (p.quantite || 0), 0);
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent('STOCK_' + new Date().toISOString().split('T')[0])}`;
+
+    const rows = liste.map(p => {
+      const valeur = (p.quantite || 0) * (p.prixVente || 0);
+      const stockClass = p.quantite === 0 ? '#fee2e2' : (p.quantite || 0) <= (p.seuilAlerte || 10) ? '#fef9c3' : '#dcfce7';
+      const stockColor = p.quantite === 0 ? '#991b1b' : (p.quantite || 0) <= (p.seuilAlerte || 10) ? '#854d0e' : '#166534';
+      return `<tr>
+        <td><strong>${p.nom || '—'}</strong></td>
+        <td>${p.categorie?.nom || '—'}</td>
+        <td style="text-align:center"><span style="background:${stockClass};color:${stockColor};padding:2px 10px;border-radius:12px;font-weight:700">${p.quantite ?? 0} ${p.uniteMesure || ''}</span></td>
+        <td style="text-align:right">${this.formatPrice(p.prixAchat || 0)}</td>
+        <td style="text-align:right;font-weight:700">${this.formatPrice(p.prixVente || 0)}</td>
+        <td style="text-align:right;font-weight:700;color:#1e40af">${this.formatPrice(valeur)}</td>
+      </tr>`;
+    }).join('');
+
+    const html = `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>État du stock</title>
+<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;padding:24px;font-size:13px;color:#1e293b}.sheet{background:#fff;max-width:820px;margin:0 auto;border-radius:14px;overflow:hidden;box-shadow:0 4px 24px rgba(8,22,72,.12)}.hdr{background:linear-gradient(135deg,#081648,#1a56db);color:#fff;padding:24px 28px;display:flex;justify-content:space-between;align-items:flex-start}.hdr-title{font-size:22px;font-weight:900}.hdr-sub{font-size:12px;opacity:.7;margin-top:4px}.body{padding:24px 28px}.kpi-row{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap}.kpi{flex:1;min-width:130px;background:#eff6ff;border-radius:10px;padding:14px 16px;text-align:center}.kpi-val{font-size:1.1rem;font-weight:900;color:#1a56db}.kpi-lbl{font-size:0.7rem;color:#64748b;margin-top:3px}table{width:100%;border-collapse:collapse;font-size:0.82rem}th{background:#f8fafc;padding:8px 10px;text-align:left;font-weight:700;color:#475569;border-bottom:1px solid #e2e8f0}td{padding:7px 10px;border-bottom:1px solid #f1f5f9;color:#374151}tr:last-child td{border-bottom:none}.btn-bar{display:flex;gap:8px;justify-content:center;padding:12px;background:#f8fafc;border-bottom:1px solid #e5e7eb}.btn{border:none;border-radius:8px;padding:9px 20px;font-size:13px;font-weight:700;cursor:pointer}.btn-p{background:#1a56db;color:#fff}.btn-c{background:#ef4444;color:#fff}.ftr{background:linear-gradient(135deg,#081648,#1a56db);color:rgba(255,255,255,.6);text-align:center;padding:12px;font-size:11px}@media print{.btn-bar{display:none}body{background:#fff;padding:0}.sheet{box-shadow:none;border-radius:0;max-width:100%}}</style></head><body>
+<div class="sheet">
+  <div class="hdr"><div><div class="hdr-title">État du Stock</div><div class="hdr-sub">${liste.length} produit(s)</div><div class="hdr-sub">Généré le ${new Date().toLocaleDateString('fr-FR')}</div></div><img src="${qrUrl}" width="72" height="72" style="border-radius:8px;background:#fff;padding:3px" alt="QR" onerror="this.style.display='none'"></div>
+  <div class="btn-bar"><button class="btn btn-p" onclick="window.print()">Imprimer / PDF</button><button class="btn btn-c" onclick="window.close()">Fermer</button></div>
+  <div class="body">
+    <div class="kpi-row">
+      <div class="kpi"><div class="kpi-val">${liste.length}</div><div class="kpi-lbl">Produits</div></div>
+      <div class="kpi"><div class="kpi-val">${totalQte}</div><div class="kpi-lbl">Total articles</div></div>
+      <div class="kpi"><div class="kpi-val">${this.formatPrice(totalValeur)}</div><div class="kpi-lbl">Valeur totale</div></div>
+    </div>
+    <table>
+      <thead><tr><th>Produit</th><th>Catégorie</th><th style="text-align:center">Stock</th><th style="text-align:right">Prix achat</th><th style="text-align:right">Prix vente</th><th style="text-align:right">Valeur stock</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>
+  <div class="ftr">Ges Boutique &middot; État du stock</div>
+</div></body></html>`;
+
+    this.factureService.ouvrirHtmlPersonnalise(html);
   }
 
   formatDate(date: string | undefined): string {

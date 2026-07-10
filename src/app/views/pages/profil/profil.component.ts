@@ -328,7 +328,7 @@ export class ProfilComponent implements OnInit {
   }
 
   goToPage(): void {
-    this.router.navigate(['/sessions/connexion']);
+    this.router.navigate(['/connexion']);
   }
 
   getFormattedRole(): string {

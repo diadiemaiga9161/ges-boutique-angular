@@ -137,6 +137,71 @@
   }
 }
 
+/* Niveaux d'emballage — chaîne visuelle */
+.niveaux-chaine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.niveau-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  min-width: 160px;
+  max-width: 220px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: box-shadow 0.2s;
+
+  &:hover {
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  }
+}
+
+.niveau-card-header {
+  margin-bottom: 8px;
+}
+
+.niveau-nom {
+  font-size: 1rem;
+  color: var(--text);
+}
+
+.niveau-prix {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  font-size: 0.78rem;
+}
+
+.niveau-relation {
+  font-size: 0.76rem;
+  color: var(--primary);
+}
+
+.niveau-arrow {
+  display: flex;
+  align-items: center;
+  font-size: 1.4rem;
+  color: var(--primary);
+  margin-top: 20px;
+  opacity: 0.6;
+}
+
+.niveau-form-box {
+  border-color: var(--primary) !important;
+  background: var(--surface) !important;
+}
+
+.btn-xs {
+  padding: 2px 7px;
+  font-size: 0.72rem;
+  border-radius: 6px;
+  line-height: 1.4;
+}
+
 /* Mode sombre support */
 .dark-mode .section {
   background: #1f2937;

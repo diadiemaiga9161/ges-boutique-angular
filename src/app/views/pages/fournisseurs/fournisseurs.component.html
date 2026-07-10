@@ -1,4 +1,4 @@
-<div class="container-fluid py-4 app-page">
+﻿<div class="container-fluid py-4 app-page">
 
   <!-- En-tête -->
   <div class="app-page-header mb-4">
@@ -11,7 +11,7 @@
     </div>
     <div class="app-page-header-actions">
       <button class="btn btn-outline-secondary btn-sm" (click)="telechargerPdfTousFournisseurs()">
-        <i class="fa fa-file-pdf-o me-1"></i> Liste PDF
+        <i class="fa fa-file-pdf-o me-1"> Liste PDF</i> Liste PDF
       </button>
       <button class="btn btn-primary" (click)="ouvrirFormulaire()">
         <i class="fa fa-plus me-1"></i> {{ 'SUPPLIERS.NEW' | translate }}
@@ -162,7 +162,7 @@
             <i class="i-Bar-Chart"></i> Situation
           </button>
           <button class="btn btn-sm btn-outline-danger" (click)="confirmerSupprimer(f)">
-            <i class="i-Trash"></i>
+            <i class="i-Trash mr-1"></i> Supprimer
           </button>
         </div>
       </div>
@@ -202,6 +202,15 @@
       <p>Sélectionnez un fournisseur ci-dessus pour afficher ses achats.</p>
     </div>
 
+    <!-- Fournisseur sélectionné -->
+    <ng-container *ngFor="let f of fournisseurs">
+      <div *ngIf="f.id === filtreFournisseurId" class="alert alert-info py-2 px-3 mb-2" style="border-radius:10px;font-size:0.85rem;border:1px solid #bfdbfe">
+        <i class="i-Business-Man mr-1"></i>
+        Fournisseur : <strong>{{ f.nom }}</strong>
+        <span *ngIf="f.telephone" class="ml-2 text-muted">· {{ f.telephone }}</span>
+      </div>
+    </ng-container>
+
     <!-- Stats achats -->
     <div class="mini-stats-row" *ngIf="filtreFournisseurId && achatsFiltres.length">
       <div class="mini-stat">
@@ -232,6 +241,31 @@
       <button class="btn btn-primary" (click)="ouvrirAchatModal()">Enregistrer un achat</button>
     </div>
 
+    <!-- Résumé mensuel par produit -->
+    <div *ngIf="filtreFournisseurId && !isLoading && resumeMensuelProduits.length > 0" class="card mb-3 border-primary">
+      <div class="card-header bg-primary text-white py-2">
+        <i class="fa fa-calendar me-2"> Achats du mois en cours — par produit</i> Achats du mois en cours — par produit
+      </div>
+      <div class="card-body p-2">
+        <table class="table table-sm mb-0">
+          <thead>
+            <tr>
+              <th>Produit</th>
+              <th class="text-center">Qté totale</th>
+              <th class="text-right">Montant total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of resumeMensuelProduits">
+              <td>{{ item.nom }}</td>
+              <td class="text-center">{{ item.quantite }}</td>
+              <td class="text-right font-weight-bold">{{ fmt(item.total) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
     <div class="table-wrapper" *ngIf="filtreFournisseurId && !isLoading && achatsFiltres.length">
       <table class="data-table">
         <thead>
@@ -247,30 +281,74 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let achat of achatsFiltres">
-            <td class="font-weight-bold">#{{ achat.id }}</td>
-            <td>{{ formatDate(achat.dateAchat || achat.dateCreation) }}</td>
-            <td>
-              <div class="produits-list">
-                <span class="produit-chip" *ngFor="let l of (achat.lignes || [])">
-                  {{ l.produit?.nom }} ×{{ l.quantite }}
-                </span>
-              </div>
-            </td>
-            <td class="text-right font-weight-bold">{{ fmt(achat.montantTotal) }}</td>
-            <td class="text-right text-success">{{ fmt(achat.montantPaye) }}</td>
-            <td class="text-right" [class.text-danger]="achat.montantRestant > 0">{{ fmt(achat.montantRestant) }}</td>
-            <td class="text-center">
-              <span class="badge" [class]="statutClass(achat.statut)">{{ statutLabel(achat.statut) }}</span>
-            </td>
-            <td>
-              <button class="btn btn-xs btn-success mr-1" (click)="ouvrirPaiementModal(achat)"
-                      *ngIf="achat.statut !== 'PAYE' && achat.statut !== 'ANNULE'"
-                      title="Payer">
-                <i class="i-Money-Bag"></i> Payer
-              </button>
-            </td>
-          </tr>
+          <ng-container *ngFor="let achat of achatsFiltres">
+            <tr>
+              <td class="font-weight-bold">#{{ achat.id }}</td>
+              <td>{{ formatDate(achat.dateAchat || achat.dateCreation) }}</td>
+              <td>
+                <div class="produits-list">
+                  <span class="produit-chip" *ngFor="let l of (achat.lignes || [])">
+                    {{ l.produit?.nom }} ×{{ l.quantite }}
+                  </span>
+                </div>
+              </td>
+              <td class="text-right font-weight-bold">{{ fmt(achat.montantTotal) }}</td>
+              <td class="text-right text-success">{{ fmt(achat.montantPaye) }}</td>
+              <td class="text-right" [class.text-danger]="achat.montantRestant > 0">{{ fmt(achat.montantRestant) }}</td>
+              <td class="text-center">
+                <span class="badge" [class]="statutClass(achat.statut)">{{ statutLabel(achat.statut) }}</span>
+              </td>
+              <td>
+                <button class="btn btn-xs btn-success mr-1" (click)="ouvrirPaiementModal(achat)"
+                        *ngIf="achat.statut !== 'PAYE' && achat.statut !== 'ANNULE'"
+                        title="Payer">
+                  <i class="i-Money-Bag"></i> Payer
+                </button>
+                <button class="btn btn-xs btn-outline-danger mr-1" (click)="confirmerAnnulerAchat(achat)"
+                        *ngIf="achat.statut !== 'ANNULE'"
+                        [disabled]="isAnnulationEnCours"
+                        title="Annuler cet achat">
+                  <i class="fa fa-ban mr-1"> Annuler</i> Annuler
+                </button>
+                <button class="btn btn-xs btn-outline-info ml-1" (click)="toggleDetailAchat(achat)" title="Voir les produits de cet achat">
+                  <i class="fa mr-1" [class.fa-chevron-down]="achatDetail?.id !== achat.id" [class.fa-chevron-up]="achatDetail?.id === achat.id"></i>
+                  {{ achatDetail?.id === achat.id ? 'Masquer' : 'Produits' }}
+                </button>
+              </td>
+            </tr>
+            <!-- Ligne expandable : détail produits de l'achat -->
+            <tr *ngIf="achatDetail?.id === achat.id">
+              <td colspan="8" class="p-0">
+                <div class="achat-detail-panel p-3" style="background:#f8fafc;border-top:2px solid #e2e8f0">
+                  <div *ngIf="achatDetailLoading" class="text-center py-2">
+                    <span class="spinner-border spinner-border-sm text-primary"></span>
+                    <span class="ml-2">Chargement des produits...</span>
+                  </div>
+                  <table *ngIf="!achatDetailLoading && achatDetail?.ligneAchats?.length" class="table table-sm mb-0">
+                    <thead class="table-light">
+                      <tr>
+                        <th>Produit</th>
+                        <th class="text-center">Quantité</th>
+                        <th class="text-right">Prix unitaire</th>
+                        <th class="text-right">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let ligne of achatDetail.ligneAchats">
+                        <td>{{ ligne.nomProduit || ligne.produit?.nom || '—' }}</td>
+                        <td class="text-center">{{ ligne.quantite }} {{ ligne.uniteMesure || '' }}</td>
+                        <td class="text-right">{{ ligne.prixAchatUnitaire | number:'1.0-0' }} F</td>
+                        <td class="text-right font-weight-bold">{{ (ligne.total || ligne.sousTotal || (ligne.quantite * ligne.prixAchatUnitaire)) | number:'1.0-0' }} F</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <p *ngIf="!achatDetailLoading && !achatDetail?.ligneAchats?.length" class="text-muted mb-0 py-2">
+                    <i class="fa fa-info-circle mr-1"> Aucun détail de produit disponible pour cet achat.</i> Aucun détail de produit disponible pour cet achat.
+                  </p>
+                </div>
+              </td>
+            </tr>
+          </ng-container>
         </tbody>
       </table>
     </div>
@@ -311,7 +389,7 @@
       <div class="table-wrapper" *ngIf="paiements.length">
         <table class="data-table">
           <thead>
-            <tr><th>Date</th><th class="text-right">Montant</th><th>Mode</th><th>Référence</th><th>Observation</th></tr>
+            <tr><th>Date</th><th class="text-right">Montant</th><th>Mode</th><th>Référence</th><th>Observation</th><th></th></tr>
           </thead>
           <tbody>
             <tr *ngFor="let p of paiements">
@@ -320,6 +398,11 @@
               <td>{{ p.modePaiement }}</td>
               <td>{{ p.reference || '—' }}</td>
               <td>{{ p.observation || '—' }}</td>
+              <td>
+                <button class="btn btn-xs btn-outline-primary" (click)="imprimerRecuPaiementFournisseur(p)" title="Imprimer le reçu">
+                  <i class="i-File-Download"></i> Reçu
+                </button>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -385,6 +468,9 @@
           </button>
         </div>
         <div class="toolbar-right">
+          <button class="btn btn-sm btn-outline-primary mr-2" (click)="telechargerFicheFournisseur()">
+            <i class="fa fa-address-card-o mr-1"> Fiche fournisseur</i> Fiche fournisseur
+          </button>
           <button class="btn btn-sm btn-outline-secondary" (click)="telechargerPdfSituation()" [disabled]="!situation">
             <i class="i-File-Download mr-1"></i> PDF situation
           </button>
@@ -444,6 +530,39 @@
             <div class="progress-bar bg-success"
                  [style.width]="((situation.totalPaye / situation.totalAchats) * 100) + '%'"></div>
           </div>
+        </div>
+
+        <!-- Top 5 produits achetés (depuis achats chargés) -->
+        <div class="mt-3 mb-3" *ngIf="achats.length > 0 && topProduits.length > 0">
+          <h5 class="section-title">Top 5 produits les plus achetés</h5>
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Produit</th>
+                  <th class="text-center">Quantité totale</th>
+                  <th class="text-right">Total achats</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let item of topProduits; let i = index">
+                  <td>
+                    <span class="badge badge-secondary mr-1" style="min-width:22px">{{ i + 1 }}</span>
+                    {{ item.nom }}
+                  </td>
+                  <td class="text-center font-weight-bold">{{ item.quantite }}</td>
+                  <td class="text-right font-weight-bold">{{ fmt(item.total) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="text-muted" style="font-size:0.75rem;margin-top:4px">
+            <i class="fa fa-info-circle mr-1"> Calculé depuis les achats chargés dans l'onglet Achats. Chargez les achats d'abord pour voir ce résumé.</i> Calculé depuis les achats chargés dans l'onglet Achats. Chargez les achats d'abord pour voir ce résumé.
+          </p>
+        </div>
+        <div class="empty-state-sm mt-2 mb-3" *ngIf="achats.length === 0">
+          <i class="i-Shop"></i>
+          <span>Chargez les achats (onglet Achats) pour voir le top produits.</span>
         </div>
 
         <!-- Infos contact -->
@@ -789,6 +908,43 @@
         <span *ngIf="isSaving" class="spinner-border spinner-border-sm mr-1"></span>
         Enregistrer l'avance
       </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL SÉLECTION FOURNISSEUR — Fiche PDF ══════════════════════════ -->
+<div class="modal fade show d-block" *ngIf="showFicheModal"
+     style="background:rgba(0,0,0,0.55);z-index:1060" (click)="showFicheModal=false">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:420px" (click)="$event.stopPropagation()">
+    <div class="modal-content" style="border-radius:16px;border:none">
+      <div class="modal-header" style="background:linear-gradient(135deg,#081648,#1a56db);border-radius:16px 16px 0 0">
+        <h5 class="modal-title text-white">
+          <i class="fa fa-address-card-o me-2"> Fiche fournisseur PDF</i> Fiche fournisseur PDF
+        </h5>
+        <button class="btn-close btn-close-white" (click)="showFicheModal=false"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted small mb-3">Choisissez le fournisseur pour lequel générer la fiche complète.</p>
+        <div class="mb-3">
+          <label class="form-label fw-bold">Fournisseur</label>
+          <select class="form-select" [(ngModel)]="ficheFournisseurSelectionne">
+            <option [ngValue]="null">-- Sélectionner --</option>
+            <option *ngFor="let f of fournisseurs" [ngValue]="f">
+              {{ f.nom }}{{ f.telephone ? ' — ' + f.telephone : '' }}
+            </option>
+          </select>
+        </div>
+        <div *ngIf="ficheFournisseurSelectionne" class="alert alert-info py-2 small mb-0">
+          <i class="fa fa-info-circle me-1"></i>
+          Fiche complète pour <strong>{{ ficheFournisseurSelectionne.nom }}</strong> — achats, paiements, situation.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="showFicheModal=false">Annuler</button>
+        <button class="btn btn-primary" (click)="confirmerFicheFournisseur()" [disabled]="!ficheFournisseurSelectionne">
+          <i class="fa fa-file-pdf-o me-1"> Générer la fiche</i> Générer la fiche
+        </button>
+      </div>
     </div>
   </div>
 </div>

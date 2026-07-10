@@ -1,4 +1,4 @@
-<div class="container-fluid py-4 app-page">
+﻿<div class="container-fluid py-4 app-page">
 
   <!-- En-tête -->
   <div class="app-page-header mb-4">
@@ -44,7 +44,7 @@
   <div class="app-table-card" *ngIf="!isLoading">
     <div class="app-table-header">
       <div class="app-table-title">
-        <i class="fa fa-handshake-o me-2"></i>Partenaires
+        <i class="fa fa-handshake-o me-2">Partenaires</i>Partenaires
         <span class="app-table-count">{{ clients.length }}</span>
       </div>
     </div>
@@ -79,22 +79,22 @@
             <td class="text-center">
               <div class="btn-group btn-group-sm">
                 <button type="button" class="btn btn-info text-white" (click)="showClientVentes(client)" title="Historique ventes">
-                  <i class="fa fa-shopping-cart me-1"></i>Ventes
+                  <i class="fa fa-shopping-cart me-1">Ventes</i>Ventes
                 </button>
                 <button type="button" class="btn btn-success" (click)="loadHistoriquePaiements(client)" title="Historique paiements">
-                  <i class="fa fa-history me-1"></i>Paiements
+                  <i class="fa fa-history me-1">Paiements</i>Paiements
                 </button>
                 <button type="button" class="btn btn-warning" (click)="editClient(client)" title="Modifier">
-                  <i class="fa fa-edit me-1"></i>Modifier
+                  <i class="fa fa-edit me-1">Modifier</i>Modifier
                 </button>
                 <button type="button" class="btn btn-danger" (click)="deleteClient(client)" title="Supprimer">
-                  <i class="fa fa-trash me-1"></i>Supprimer
+                  <i class="fa fa-trash me-1">Supprimer</i>Supprimer
                 </button>
                 <button type="button" class="btn btn-primary" (click)="openAvanceModal(client)" title="Déposer une avance">
-                  <i class="fa fa-money me-1"></i>Avance
+                  <i class="fa fa-money me-1">Avance</i>Avance
                 </button>
                 <button type="button" class="btn btn-secondary" (click)="openHistoriqueAvancesModal(client)" title="Historique avances">
-                  <i class="fa fa-list me-1"></i>Avances
+                  <i class="fa fa-list me-1">Avances</i>Avances
                 </button>
               </div>
             </td>
@@ -317,10 +317,10 @@
             </div>
             <div class="col-auto d-flex gap-2">
               <button type="button" class="btn btn-outline-secondary btn-sm" (click)="resetVentesFilters()">
-                <i class="fa fa-refresh me-1"></i>Réinit.
+                <i class="fa fa-refresh me-1">Réinit.</i>Réinit.
               </button>
               <button type="button" class="btn btn-outline-danger btn-sm" (click)="exportAllVentesDetailToPDF()" [disabled]="ventesClientFiltered.length === 0">
-                <i class="fa fa-file-pdf-o me-1"></i>PDF
+                <i class="fa fa-file-pdf-o me-1">PDF</i>PDF
               </button>
             </div>
           </div>
@@ -330,7 +330,7 @@
         <div *ngIf="creditsEnCoursClient.length > 0" class="credit-client-section mb-4">
           <div class="credit-section-header">
             <div>
-              <h4><i class="fa fa-credit-card me-2"></i>Crédits en cours</h4>
+              <h4><i class="fa fa-credit-card me-2">Crédits en cours</i>Crédits en cours</h4>
               <p class="mb-0">Suivi des crédits non réglés avec acomptes et reste à payer.</p>
             </div>
             <div class="text-end">
@@ -381,7 +381,7 @@
                   <td class="text-right"><strong class="text-danger">{{ formatPrice(getMontantRestantCredit(vente)) }}</strong></td>
                   <td>
                     <button type="button" class="btn-sm btn-detail" (click)="showVenteDetail(vente)">
-                      <i class="fa fa-eye"></i> Détails
+                      <i class="fa fa-eye"> Détails</i> Détails
                     </button>
                   </td>
                 </tr>
@@ -403,7 +403,7 @@
         <div *ngIf="creditsReglesClient.length > 0" class="credit-client-section mb-4" style="border-left: 4px solid #16a34a;">
           <div class="credit-section-header" style="background: linear-gradient(135deg,#f0fdf4,#dcfce7);">
             <div>
-              <h4 style="color:#15803d"><i class="fa fa-check-circle me-2"></i>Crédits réglés ({{ creditsReglesClient.length }})</h4>
+              <h4 style="color:#15803d"><i class="fa fa-check-circle me-2">Crédits réglés (</i>Crédits réglés ({{ creditsReglesClient.length }})</h4>
               <p class="mb-0">Historique des crédits soldés.</p>
             </div>
             <span class="credit-count" style="background:#16a34a">{{ creditsReglesClient.length }} réglé(s)</span>
@@ -429,7 +429,7 @@
                   <td class="fw-semibold">{{ vente.regleParNom || '-' }}</td>
                   <td>
                     <button type="button" class="btn-sm btn-detail" (click)="showVenteDetail(vente)">
-                      <i class="fa fa-eye"></i> Détails
+                      <i class="fa fa-eye"> Détails</i> Détails
                     </button>
                   </td>
                 </tr>
@@ -441,7 +441,7 @@
         <!-- Tableau de toutes les ventes (filtrées) -->
         <div class="d-flex justify-content-between align-items-center mb-2">
           <h5 class="mb-0 fw-semibold">
-            <i class="fa fa-list me-2 text-primary"></i>Toutes les ventes
+            <i class="fa fa-list me-2 text-primary">Toutes les ventes</i>Toutes les ventes
             <span class="badge bg-secondary ms-1">{{ ventesClientFiltered.length }}</span>
           </h5>
           <span class="text-muted small">Total : <strong>{{ formatPrice(getTotalVentes(ventesClientFiltered)) }}</strong></span>
@@ -486,7 +486,7 @@
                 <td class="text-right text-success">{{ formatPrice(vente.montantVerse || 0) }}</td>
                 <td class="text-right text-danger">{{ vente.estCredit ? formatPrice(getMontantRestantCredit(vente)) : '-' }}</td>
                 <td>
-                  <span *ngIf="!vente.estCredit" class="badge badge-success"><i class="fa fa-check-circle me-1"></i>Payé</span>
+                  <span *ngIf="!vente.estCredit" class="badge badge-success"><i class="fa fa-check-circle me-1">Payé</i>Payé</span>
                   <span *ngIf="vente.estCredit" class="credit-status" [class]="getCreditStatusClass(vente)">
                     {{ getCreditStatusText(vente) }}
                   </span>
@@ -494,17 +494,17 @@
                 <td>
                   <div class="d-flex gap-1">
                     <button type="button" class="btn-sm btn-detail" (click)="showVenteDetail(vente)" title="Voir détail">
-                      <i class="fa fa-eye me-1"></i>Voir
+                      <i class="fa fa-eye me-1">Voir</i>Voir
                     </button>
                     <button type="button" class="btn-sm btn-pdf" (click)="telechargerFacture(vente.id)" title="Facture PDF">
-                      <i class="fa fa-file-pdf-o me-1"></i>Facture
+                      <i class="fa fa-file-pdf-o me-1">Facture</i>Facture
                     </button>
                   </div>
                 </td>
               </tr>
               <tr *ngIf="ventesClientFiltered.length === 0">
                 <td colspan="9" class="text-center py-4 text-muted">
-                  <i class="fa fa-filter me-2"></i>Aucune vente ne correspond aux filtres.
+                  <i class="fa fa-filter me-2">Aucune vente ne correspond aux filtres.</i>Aucune vente ne correspond aux filtres.
                 </td>
               </tr>
             </tbody>
@@ -524,20 +524,20 @@
       <div class="paiements-section mt-4 pt-4" style="border-top: 2px dashed #e2e8f0;">
         <div class="d-flex justify-content-between align-items-center mb-3">
           <h5 class="mb-0 fw-bold text-primary">
-            <i class="fa fa-money me-2"></i>Historique des paiements
+            <i class="fa fa-money me-2">Historique des paiements</i>Historique des paiements
           </h5>
           <div class="btn-group btn-group-sm">
             <button type="button" class="btn"
                     [class.btn-primary]="viewModePaiement === 'simple'"
                     [class.btn-outline-primary]="viewModePaiement !== 'simple'"
                     (click)="viewModePaiement = 'simple'">
-              <i class="fa fa-list me-1"></i>Simple
+              <i class="fa fa-list me-1">Simple</i>Simple
             </button>
             <button type="button" class="btn"
                     [class.btn-primary]="viewModePaiement === 'groupe'"
                     [class.btn-outline-primary]="viewModePaiement !== 'groupe'"
                     (click)="viewModePaiement = 'groupe'">
-              <i class="fa fa-calendar me-1"></i>Groupé
+              <i class="fa fa-calendar me-1">Groupé</i>Groupé
             </button>
           </div>
         </div>
@@ -565,17 +565,17 @@
 
         <!-- Loading paiements -->
         <div *ngIf="isLoadingHistorique" class="text-center py-3">
-          <i class="fa fa-spinner fa-spin text-primary"></i> Chargement des paiements...
+          <i class="fa fa-spinner fa-spin text-primary"> Chargement des paiements...</i> Chargement des paiements...
         </div>
 
         <!-- Aucun paiement -->
         <div *ngIf="!isLoadingHistorique && historiquePaiements.length === 0" class="text-center py-3 text-muted">
-          <i class="fa fa-inbox me-2"></i>Aucun paiement enregistré pour ce partenaire.
+          <i class="fa fa-inbox me-2">Aucun paiement enregistré pour ce partenaire.</i>Aucun paiement enregistré pour ce partenaire.
         </div>
 
         <!-- Aucun résultat filtre -->
         <div *ngIf="!isLoadingHistorique && historiquePaiements.length > 0 && historiquePaiementsFiltres.length === 0" class="text-center py-3 text-muted">
-          <i class="fa fa-filter me-2"></i>Aucun paiement ne correspond aux filtres.
+          <i class="fa fa-filter me-2">Aucun paiement ne correspond aux filtres.</i>Aucun paiement ne correspond aux filtres.
         </div>
 
         <!-- VUE SIMPLE -->
@@ -613,10 +613,10 @@
                   <td>
                     <div class="d-flex gap-1">
                       <button class="btn btn-sm btn-outline-primary" (click)="voirVenteDepuisHistorique(p)">
-                        <i class="fa fa-eye me-1"></i>Voir vente
+                        <i class="fa fa-eye me-1">Voir vente</i>Voir vente
                       </button>
                       <button class="btn btn-sm btn-outline-danger" (click)="imprimerFactureHistorique(p)">
-                        <i class="fa fa-file-pdf-o me-1"></i>Facture
+                        <i class="fa fa-file-pdf-o me-1">Facture</i>Facture
                       </button>
                     </div>
                   </td>
@@ -840,7 +840,7 @@
          [style.border-top]="design === 2 ? '1px solid #334155' : ''">
       <button type="button" class="btn-secondary" (click)="closeDetailModal()">Fermer</button>
       <button type="button" class="btn-primary" (click)="telechargerFacture(selectedVenteDetail.id)">
-        <i class="fa fa-file-pdf-o"></i> Télécharger facture
+        <i class="fa fa-file-pdf-o"> Télécharger facture</i> Télécharger facture
       </button>
     </div>
   </div>
@@ -891,7 +891,7 @@
             <div class="col-auto">
               <button type="button" class="btn btn-outline-secondary btn-sm"
                       (click)="filterPaiementDateDebut = ''; filterPaiementDateFin = ''; filterHistoriquePaiements()">
-                <i class="fa fa-refresh me-1"></i>Réinitialiser
+                <i class="fa fa-refresh me-1">Réinitialiser</i>Réinitialiser
               </button>
             </div>
             <div class="col-auto ms-auto d-flex gap-2 align-items-center">
@@ -904,13 +904,13 @@
                         [class.btn-primary]="viewModePaiement === 'simple'"
                         [class.btn-outline-primary]="viewModePaiement !== 'simple'"
                         (click)="viewModePaiement = 'simple'">
-                  <i class="fa fa-list me-1"></i>Simple
+                  <i class="fa fa-list me-1">Simple</i>Simple
                 </button>
                 <button type="button" class="btn"
                         [class.btn-primary]="viewModePaiement === 'groupe'"
                         [class.btn-outline-primary]="viewModePaiement !== 'groupe'"
                         (click)="viewModePaiement = 'groupe'">
-                  <i class="fa fa-calendar me-1"></i>Groupé
+                  <i class="fa fa-calendar me-1">Groupé</i>Groupé
                 </button>
               </div>
             </div>
@@ -919,7 +919,7 @@
 
         <!-- Aucun résultat -->
         <div *ngIf="historiquePaiementsFiltres.length === 0" class="text-center py-4 text-muted">
-          <i class="fa fa-filter me-2"></i>Aucun paiement ne correspond aux filtres de dates.
+          <i class="fa fa-filter me-2">Aucun paiement ne correspond aux filtres de dates.</i>Aucun paiement ne correspond aux filtres de dates.
         </div>
 
         <!-- VUE SIMPLE: tableau ligne par ligne -->
@@ -958,10 +958,10 @@
                 <td>
                   <div class="d-flex gap-1">
                     <button class="btn btn-outline-secondary btn-sm" (click)="voirVenteDepuisHistorique(p)" title="Voir vente">
-                      <i class="fa fa-eye me-1"></i>Voir
+                      <i class="fa fa-eye me-1">Voir</i>Voir
                     </button>
                     <button class="btn btn-outline-danger btn-sm" (click)="imprimerFactureHistorique(p)" title="Facture">
-                      <i class="fa fa-file-pdf-o me-1"></i>Facture
+                      <i class="fa fa-file-pdf-o me-1">Facture</i>Facture
                     </button>
                   </div>
                 </td>
@@ -1003,10 +1003,10 @@
                 </div>
                 <div class="text-end ms-3 d-flex gap-1">
                   <button class="btn btn-outline-secondary btn-sm" (click)="voirVenteDepuisHistorique(p)" title="Voir la vente">
-                    <i class="fa fa-eye me-1"></i>Voir
+                    <i class="fa fa-eye me-1">Voir</i>Voir
                   </button>
                   <button class="btn btn-outline-danger btn-sm" (click)="imprimerFactureHistorique(p)" title="Imprimer facture">
-                    <i class="fa fa-file-pdf-o me-1"></i>Facture
+                    <i class="fa fa-file-pdf-o me-1">Facture</i>Facture
                   </button>
                 </div>
               </div>
@@ -1086,12 +1086,12 @@
     </div>
     <div class="modal-footer">
       <button type="button" class="btn-secondary" (click)="closeAvanceModal()">
-        <i class="fa fa-times me-1"></i> Annuler
+        <i class="fa fa-times me-1"> Annuler</i> Annuler
       </button>
       <button type="submit" form="avancePartenaireForm" class="btn-primary"
               [disabled]="isLoadingAvance || !avanceForm.montant || avanceForm.montant <= 0">
-        <span *ngIf="!isLoadingAvance"><i class="fa fa-save me-1"></i> Enregistrer l'avance</span>
-        <span *ngIf="isLoadingAvance"><i class="fa fa-spinner fa-spin me-1"></i> Traitement...</span>
+        <span *ngIf="!isLoadingAvance"><i class="fa fa-save me-1"> Enregistrer l'avance</i> Enregistrer l'avance</span>
+        <span *ngIf="isLoadingAvance"><i class="fa fa-spinner fa-spin me-1"> Traitement...</i> Traitement...</span>
       </button>
     </div>
   </div>
@@ -1179,7 +1179,7 @@
     <div class="modal-footer">
       <button type="button" class="btn-secondary" (click)="closeHistoriqueAvancesModal()">Fermer</button>
       <button type="button" class="btn-primary" (click)="openAvanceModal(clientPourAvance!)" *ngIf="clientPourAvance">
-        <i class="fa fa-plus me-1"></i> Nouvelle avance
+        <i class="fa fa-plus me-1"> Nouvelle avance</i> Nouvelle avance
       </button>
     </div>
   </div>

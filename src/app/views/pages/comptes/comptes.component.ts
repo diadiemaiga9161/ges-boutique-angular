@@ -13,9 +13,8 @@ import {
 } from '../../../shared/services/compte.service';
 import { AuthService } from '../../../shared/services/auth.service';
 import { environment } from '../../../../environments/environment';
+import { FactureService } from '../../../shared/services/facture.service';
 import Swal from 'sweetalert2';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
@@ -73,7 +72,8 @@ export class ComptesComponent implements OnInit {
   constructor(
     private compteService: CompteService,
     private authService: AuthService,
-    private http: HttpClient
+    private http: HttpClient,
+    private factureService: FactureService
   ) {}
 
   ngOnInit(): void {
@@ -339,121 +339,44 @@ export class ComptesComponent implements OnInit {
       return;
     }
 
-    // Créer le document PDF
-    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-    
-    // Titre
-    const titre = `Historique des opérations - ${this.selectedCompte.nomBanque}`;
-    doc.setFontSize(16);
-    doc.setTextColor(40, 40, 40);
-    doc.text(titre, 14, 15);
-    
-    // Informations du compte
-    doc.setFontSize(10);
-    doc.setTextColor(100, 100, 100);
-    let yOffset = 25;
-    
-    doc.text(`Titulaire: ${this.selectedCompte.titulaire || 'Non spécifié'}`, 14, yOffset);
-    doc.text(`Numéro de compte: ${this.selectedCompte.numeroCompte || 'Non spécifié'}`, 14, yOffset + 5);
-    doc.text(`Agence: ${this.selectedCompte.agence || 'Non spécifié'}`, 14, yOffset + 10);
-    doc.text(`Solde actuel: ${this.selectedCompte.soldeActuel.toLocaleString('fr-FR')} F`, 14, yOffset + 15);
-    
-    // Informations sur le filtre
-    let filtreInfo = '';
-    if (this.filtreDate === 'jour') filtreInfo = 'Filtre: Aujourd\'hui';
-    else if (this.filtreDate === 'semaine') filtreInfo = 'Filtre: Cette semaine';
-    else if (this.filtreDate === 'mois') filtreInfo = 'Filtre: Ce mois';
-    else if (this.dateDebut || this.dateFin) {
-      filtreInfo = `Période: ${this.dateDebut || 'début'} au ${this.dateFin || 'aujourd\'hui'}`;
-    } else {
-      filtreInfo = 'Période: Toutes les opérations';
-    }
-    
-    doc.text(filtreInfo, 200, yOffset, { align: 'right' });
-    doc.text(`Date d'export: ${new Date().toLocaleString('fr-FR')}`, 200, yOffset + 5, { align: 'right' });
-    doc.text(`Total opérations: ${this.totalElements}`, 200, yOffset + 10, { align: 'right' });
-    
-    // Préparer les données pour le tableau
-    const entetes = [['Date', 'Type', 'Motif', 'Référence', 'Montant', 'Solde Avant', 'Solde Après']];
-    
-    const lignes = this.historiqueFiltre.map(op => [
-      new Date(op.dateOperation).toLocaleString('fr-FR'),
-      this.getTypeLabel(op.type),
-      op.motif || '-',
-      op.reference || '-',
-      `${this.isDebit(op.type) ? '-' : '+'} ${op.montant.toLocaleString('fr-FR')} F`,
-      `${op.soldeAvant.toLocaleString('fr-FR')} F`,
-      `${op.soldeApres.toLocaleString('fr-FR')} F`
-    ]);
-    
-    // Calculer la somme des montants
     const totalVersements = this.historiqueFiltre
       .filter(op => !this.isDebit(op.type))
       .reduce((sum, op) => sum + op.montant, 0);
-    
+
     const totalDebits = this.historiqueFiltre
       .filter(op => this.isDebit(op.type))
       .reduce((sum, op) => sum + op.montant, 0);
-    
-    // Ajouter des lignes de récapitulatif
-    lignes.push(['', '', '', '', '', '', '']);
-    lignes.push(['', '', '', '', 'TOTAL VERSEMENTS:', `${totalVersements.toLocaleString('fr-FR')} F`, '']);
-    lignes.push(['', '', '', '', 'TOTAL DÉBITS:', `${totalDebits.toLocaleString('fr-FR')} F`, '']);
-    lignes.push(['', '', '', '', 'SOLDE FINAL:', `${this.selectedCompte.soldeActuel.toLocaleString('fr-FR')} F`, '']);
-    
-    // Créer le tableau
-    autoTable(doc, {
-      head: entetes,
-      body: lignes,
-      startY: 45,
-      theme: 'striped',
-      headStyles: {
-        fillColor: [41, 128, 185],
-        textColor: 255,
-        fontStyle: 'bold',
-        halign: 'center'
-      },
-      bodyStyles: {
-        fontSize: 8,
-        cellPadding: 2
-      },
-      columnStyles: {
-        0: { cellWidth: 35, halign: 'center' },
-        1: { cellWidth: 25, halign: 'center' },
-        2: { cellWidth: 40, halign: 'left' },
-        3: { cellWidth: 25, halign: 'center' },
-        4: { cellWidth: 30, halign: 'right' },
-        5: { cellWidth: 30, halign: 'right' },
-        6: { cellWidth: 30, halign: 'right' }
-      },
-      alternateRowStyles: {
-        fillColor: [245, 245, 245]
-      },
-      margin: { left: 10, right: 10 },
-      didDrawPage: (data) => {
-        // Ajouter le numéro de page en bas
-        const pageCount = doc.getNumberOfPages();
-        doc.setFontSize(8);
-        doc.setTextColor(150, 150, 150);
-        doc.text(
-          `Page ${data.pageNumber} sur ${pageCount}`,
-          doc.internal.pageSize.getWidth() / 2,
-          doc.internal.pageSize.getHeight() - 10,
-          { align: 'center' }
-        );
-      }
-    });
-    
-    // Sauvegarder le PDF
-    const nomFichier = `historique_${this.selectedCompte.nomBanque}_${new Date().toISOString().split('T')[0]}.pdf`;
-    doc.save(nomFichier);
-    
-    Swal.fire({
-      icon: 'success',
-      title: 'Export PDF réussi',
-      text: `${this.historiqueFiltre.length} opérations exportées`,
-      timer: 2000,
-      showConfirmButton: false
+
+    let filtreInfo = '';
+    if (this.filtreDate === 'jour') filtreInfo = "Aujourd'hui";
+    else if (this.filtreDate === 'semaine') filtreInfo = 'Cette semaine';
+    else if (this.filtreDate === 'mois') filtreInfo = 'Ce mois';
+    else if (this.dateDebut || this.dateFin) {
+      filtreInfo = `${this.dateDebut || 'début'} au ${this.dateFin || "aujourd'hui"}`;
+    } else {
+      filtreInfo = 'Toutes les opérations';
+    }
+
+    const lignes = this.historiqueFiltre.map(op => [
+      new Date(op.dateOperation).toLocaleString('fr-FR'),
+      this.getTypeLabel(op.type),
+      op.motif || '—',
+      op.reference || '—',
+      `${this.isDebit(op.type) ? '-' : '+'}${op.montant.toLocaleString('fr-FR')} F`,
+      `${op.soldeAvant.toLocaleString('fr-FR')} F`,
+      `${op.soldeApres.toLocaleString('fr-FR')} F`
+    ]);
+
+    this.factureService.ouvrirDocumentPDF({
+      titre: `Historique — ${this.selectedCompte.nomBanque}`,
+      sousTitre: `Période : ${filtreInfo} | Titulaire : ${this.selectedCompte.titulaire || 'N/A'} | Solde actuel : ${this.selectedCompte.soldeActuel.toLocaleString('fr-FR')} F`,
+      colonnes: ['Date', 'Type', 'Motif', 'Référence', 'Montant', 'Solde avant', 'Solde après'],
+      lignes,
+      totaux: [
+        { label: 'Total versements', valeur: `${totalVersements.toLocaleString('fr-FR')} F` },
+        { label: 'Total débits', valeur: `${totalDebits.toLocaleString('fr-FR')} F` },
+        { label: 'Solde final', valeur: `${this.selectedCompte.soldeActuel.toLocaleString('fr-FR')} F` }
+      ]
     });
   }
 

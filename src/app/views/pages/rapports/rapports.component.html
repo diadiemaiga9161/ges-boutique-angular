@@ -67,7 +67,7 @@
  
  <div class="rapport-resume">
  <div class="row g-3">
- <div class="col-md-3 col-6">
+ <div class="col-md-3 col-6" *ngIf="!isVendeur">
  <div class="resume-item">
  <h4>{{ formatPrice(rapportActif.chiffreAffaireTotal) }}</h4>
  <p> Argent rentré</p>
@@ -79,13 +79,13 @@
  <p> Nombre de ventes</p>
  </div>
  </div>
- <div class="col-md-3 col-6">
+ <div class="col-md-3 col-6" *ngIf="!isVendeur">
  <div class="resume-item">
  <h4>{{ formatPrice(rapportActif.montantRemisesTotal || 0) }}</h4>
  <p> Remises accordées</p>
  </div>
  </div>
- <div class="col-md-3 col-6">
+ <div class="col-md-3 col-6" *ngIf="!isVendeur">
  <div class="resume-item">
  <h4>{{ formatPrice(rapportActif.chiffreAffaireTotal / (rapportActif.nombreVentes || 1)) }}</h4>
  <p> Moyenne par vente</p>
@@ -93,8 +93,8 @@
  </div>
  </div>
  
- <!-- Bénéfice réel de la période -->
- <div class="alert alert-success mt-3 text-center" *ngIf="getBeneficeBrut() > 0">
+ <!-- Bénéfice réel de la période - admin seulement -->
+ <div class="alert alert-success mt-3 text-center" *ngIf="getBeneficeBrut() > 0 && !isVendeur">
  <i class="fas fa-smile-wink"></i> 
  <strong>Bonne nouvelle !</strong> Vous avez gagné <strong>{{ formatPrice(getBeneficeBrut()) }}</strong> 
  sur les ventes (bénéfice = prix vente - prix d'achat).
@@ -106,11 +106,11 @@
  <div class="table-responsive">
  <table class="table table-sm">
  <thead>
- <tr><th>Produit</th><th>Quantité</th><th>Chiffre d'affaires</th></tr>
+ <tr><th>Produit</th><th>Quantité</th><th *ngIf="!isVendeur">Chiffre d'affaires</th></tr>
  </thead>
  <tbody>
  <tr *ngFor="let p of rapportActif.topProduits.slice(0,5)">
- <td>{{ p.nom }}</td><td>{{ p.quantite }} unités</td><td class="text-success">{{ formatPrice(p.chiffreAffaire) }}</td>
+ <td>{{ p.nom }}</td><td>{{ p.quantite }} unités</td><td class="text-success" *ngIf="!isVendeur">{{ formatPrice(p.chiffreAffaire) }}</td>
  </tr>
  </tbody>
  </table>
@@ -129,6 +129,7 @@
  </div>
  </div>
 
+ <ng-container *ngIf="!isVendeur">
  <div class="stat-card" style="background: linear-gradient(135deg, #11998e, #38ef7d);">
  <div class="stat-icon"><i class="fas fa-money-bill-wave"></i></div>
  <div class="stat-content">
@@ -146,6 +147,7 @@
  <small>Ce que vous gardez sur 100 FCFA</small>
  </div>
  </div>
+ </ng-container>
 
  <div class="stat-card bg-warning">
  <div class="stat-icon"><i class="fas fa-box"></i></div>
@@ -155,8 +157,8 @@
  </div>
  </div>
  </div>
- <!-- CRÉDITS CLIENTS (DONNÉES RÉELLES) -->
- <div class="credits-section fade-in">
+ <!-- CRÉDITS CLIENTS (DONNÉES RÉELLES) - admin seulement -->
+ <div class="credits-section fade-in" *ngIf="!isVendeur">
  <h4><i class="fas fa-hand-holding-usd"></i> Argent qui vous est dû (crédits clients)</h4>
  <div class="row">
  <div class="col-md-4 mb-2">
@@ -199,8 +201,8 @@
  <i class="fas fa-check-circle"></i> Aucun crédit en cours, tout est payé !
  </div>
  </div>
- <!-- GAINS vs PERTES - DONNÉES RÉELLES -->
- <div *ngIf="getTotalGains() > 0 || getTotalPertes() > 0" class="gains-pertes-card fade-in">
+ <!-- GAINS vs PERTES - admin seulement -->
+ <div *ngIf="(getTotalGains() > 0 || getTotalPertes() > 0) && !isVendeur" class="gains-pertes-card fade-in">
  <h4><i class="fas fa-chart-pie"></i> Votre argent : Ce qui rentre vs Ce qui sort</h4>
  <div class="row">
  <div class="col-md-6">
@@ -239,7 +241,7 @@
  <div class="table-responsive">
  <table class="table table-hover">
  <thead>
- <tr><th>#</th><th>Produit</th><th>Catégorie</th><th>Quantité vendue</th><th>Chiffre d'affaires</th></tr>
+ <tr><th>#</th><th>Produit</th><th>Catégorie</th><th>Quantité vendue</th><th *ngIf="!isVendeur">Chiffre d'affaires</th></tr>
  </thead>
  <tbody>
  <tr *ngFor="let produit of statistiquesGenerales.produitsPlusVendus.slice(0,10); let i = index">
@@ -247,7 +249,7 @@
  <td class="fw-bold">{{ produit.nom }}</td>
  <td>{{ produit.categorie }}</td>
  <td>{{ produit.quantiteVendue }} unités</td>
- <td class="text-success">{{ formatPrice(produit.chiffreAffaire) }}</td>
+ <td class="text-success" *ngIf="!isVendeur">{{ formatPrice(produit.chiffreAffaire) }}</td>
  </tr>
  </tbody>
  </table>
@@ -262,13 +264,13 @@
  <div class="table-responsive" *ngIf="statistiquesGenerales?.categoriesStats?.length">
  <table class="table table-sm">
  <thead>
- <tr><th>Catégorie</th><th>Produits</th><th>Chiffre d'affaires</th></tr>
+ <tr><th>Catégorie</th><th>Produits</th><th *ngIf="!isVendeur">Chiffre d'affaires</th></tr>
  </thead>
  <tbody>
  <tr *ngFor="let cat of statistiquesGenerales.categoriesStats">
  <td class="fw-bold">{{ cat.nom }}</td>
  <td>{{ cat.nombreProduits }} produits</td>
- <td class="text-success">{{ formatPrice(cat.chiffreAffaire) }}</td>
+ <td class="text-success" *ngIf="!isVendeur">{{ formatPrice(cat.chiffreAffaire) }}</td>
  </tr>
  </tbody>
  </table>
@@ -285,13 +287,13 @@
  <div class="table-responsive" *ngIf="statistiquesGenerales?.modePaiementStats?.length">
  <table class="table table-sm">
  <thead>
- <tr><th>Mode</th><th>Nombre de ventes</th><th>Montant</th></tr>
+ <tr><th>Mode</th><th>Nombre de ventes</th><th *ngIf="!isVendeur">Montant</th></tr>
  </thead>
  <tbody>
  <tr *ngFor="let mode of statistiquesGenerales.modePaiementStats">
  <td><span class="badge" [ngClass]="getModePaiementBadge(mode.mode)">{{ getModePaiementLabel(mode.mode) }}</span></td>
  <td>{{ mode.nombreVentes }} ventes</td>
- <td class="text-success">{{ formatPrice(mode.montant) }}</td>
+ <td class="text-success" *ngIf="!isVendeur">{{ formatPrice(mode.montant) }}</td>
  </tr>
  </tbody>
  </table>
@@ -303,8 +305,8 @@
  </div>
  </div>
 
- <!-- VENDEURS (DONNÉES RÉELLES) -->
- <div *ngIf="statistiquesGenerales?.vendeurs?.length" class="section-card fade-in">
+ <!-- VENDEURS (DONNÉES RÉELLES) - admin seulement -->
+ <div *ngIf="statistiquesGenerales?.vendeurs?.length && !isVendeur" class="section-card fade-in">
  <h4><i class="fas fa-users"></i> Performance de votre équipe</h4>
  <div class="table-responsive">
  <table class="table table-hover">

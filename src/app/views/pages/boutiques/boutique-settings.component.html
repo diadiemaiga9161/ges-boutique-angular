@@ -9,7 +9,7 @@
       </div>
     </div>
   </div>
-  <div class="card mx-auto" style="max-width: 800px;">
+  <div class="card mx-auto" style="max-width: 860px;">
     <div class="card-body">
       <h5 class="card-title mb-4">{{ 'BOUTIQUE_SETTINGS.TITLE' | translate }}</h5>
 
@@ -97,14 +97,14 @@
 
         <!-- Personnalisation globale -->
         <div class="section mb-4">
-          <h6 class="section-title">Personnalisation globale</h6>
+          <h6 class="section-title">{{ 'BOUTIQUE_SETTINGS.CUSTOMIZATION' | translate }}</h6>
 
           <!-- Mode sombre -->
           <div class="mb-4">
             <div class="d-flex align-items-center justify-content-between">
               <div>
-                <h6 class="mb-1">Mode sombre</h6>
-                <small class="text-muted">Activer le thème sombre pour toute l'application</small>
+                <h6 class="mb-1">{{ 'BOUTIQUE_SETTINGS.DARK_MODE' | translate }}</h6>
+                <small class="text-muted">{{ 'BOUTIQUE_SETTINGS.DARK_MODE_DESC' | translate }}</small>
               </div>
               <div class="form-check form-switch">
                 <input class="form-check-input" type="checkbox"
@@ -121,19 +121,16 @@
           <div class="mb-4">
             <div class="d-flex align-items-center justify-content-between">
               <div>
-                <h6 class="mb-1"><i class="i-Box3 me-1"></i> Conditionnement multi-niveaux</h6>
-                <small class="text-muted">
-                  Vendre par niveau (Carton → Cartouche → Pièce) avec stock cascade automatique.
-                  <br>Quand un niveau est épuisé, une unité du niveau supérieur est décomposée automatiquement.
-                </small>
+                <h6 class="mb-1"><i class="i-Box3 me-1"></i> {{ 'BOUTIQUE_SETTINGS.PACKAGING' | translate }}</h6>
+                <small class="text-muted">{{ 'BOUTIQUE_SETTINGS.PACKAGING_DESC' | translate }}</small>
               </div>
               <div class="form-check form-switch">
                 <input class="form-check-input" type="checkbox"
                        id="conditionnementToggle" [(ngModel)]="conditionnementActif"
                        name="conditionnement" (change)="toggleConditionnement()">
                 <label class="form-check-label" for="conditionnementToggle">
-                  <span *ngIf="conditionnementActif" class="badge bg-success">Activé</span>
-                  <span *ngIf="!conditionnementActif" class="badge bg-secondary">Désactivé</span>
+                  <span *ngIf="conditionnementActif" class="badge bg-success">{{ 'BOUTIQUE_SETTINGS.ENABLED' | translate }}</span>
+                  <span *ngIf="!conditionnementActif" class="badge bg-secondary">{{ 'BOUTIQUE_SETTINGS.DISABLED' | translate }}</span>
                 </label>
               </div>
             </div>
@@ -141,8 +138,8 @@
 
           <!-- Couleur globale -->
           <div class="mb-3">
-            <h6 class="mb-3">Couleur principale</h6>
-            <small class="text-muted d-block mb-3">Choisissez la couleur principale qui sera appliquée à toute l'application</small>
+            <h6 class="mb-3">{{ 'BOUTIQUE_SETTINGS.MAIN_COLOR' | translate }}</h6>
+            <small class="text-muted d-block mb-3">{{ 'BOUTIQUE_SETTINGS.MAIN_COLOR_DESC' | translate }}</small>
 
             <div class="color-palette">
               <div class="color-option"
@@ -154,11 +151,10 @@
               </div>
             </div>
 
-            <!-- Aperçu de la couleur sélectionnée -->
             <div class="mt-3 p-3 border rounded" [style.background-color]="selectedGlobalColor + '20'">
               <div class="d-flex align-items-center gap-2">
                 <div class="preview-circle" [style.background-color]="selectedGlobalColor"></div>
-                <span>Aperçu : {{ selectedGlobalColor }}</span>
+                <span>{{ 'BOUTIQUE_SETTINGS.PREVIEW' | translate }} {{ selectedGlobalColor }}</span>
               </div>
             </div>
           </div>
@@ -177,6 +173,181 @@
           </button>
         </div>
       </form>
+
+      <!-- ── Section gestion des niveaux d'emballage ─────────────────────── -->
+      <div *ngIf="conditionnementActif" class="section mt-4">
+        <h6 class="section-title">
+          <i class="i-Box3 me-2"></i>{{ 'BOUTIQUE_SETTINGS.PACKAGING_LEVELS' | translate }}
+        </h6>
+        <p class="text-muted small mb-3">{{ 'BOUTIQUE_SETTINGS.PACKAGING_LEVELS_DESC' | translate }}</p>
+
+        <!-- Sélection du produit -->
+        <div class="mb-3">
+          <label class="form-label fw-semibold">{{ 'BOUTIQUE_SETTINGS.SELECT_PRODUCT' | translate }}</label>
+          <div class="d-flex gap-2 align-items-center">
+            <select class="form-select" style="max-width:320px;"
+                    [(ngModel)]="selectedProduitId"
+                    name="selectedProduit"
+                    (ngModelChange)="onProduitChange()">
+              <option [ngValue]="null">-- {{ 'BOUTIQUE_SETTINGS.CHOOSE_PRODUCT' | translate }} --</option>
+              <option *ngFor="let p of produits" [ngValue]="p.id">{{ p.nom }}</option>
+            </select>
+            <span *ngIf="produitsLoading" class="spinner-border spinner-border-sm text-primary"></span>
+          </div>
+        </div>
+
+        <!-- Erreur niveaux -->
+        <div *ngIf="niveauxError" class="alert alert-danger py-2">{{ niveauxError }}</div>
+
+        <!-- Chaîne visuelle des niveaux existants -->
+        <div *ngIf="selectedProduitId && !niveauxLoading">
+
+          <div *ngIf="niveaux.length === 0 && !showNiveauForm" class="text-muted fst-italic mb-3">
+            {{ 'BOUTIQUE_SETTINGS.NO_LEVELS' | translate }}
+          </div>
+
+          <!-- Chaîne hiérarchique -->
+          <div *ngIf="niveaux.length > 0" class="niveaux-chaine mb-3">
+            <ng-container *ngFor="let n of buildNiveauxChaine(niveaux); let i = index; let last = last">
+              <div class="niveau-card">
+                <div class="niveau-card-header d-flex justify-content-between align-items-start">
+                  <span class="niveau-nom fw-bold">{{ n.nom }}</span>
+                  <div class="d-flex gap-1">
+                    <button type="button" class="btn btn-outline-primary btn-xs"
+                            title="Modifier"
+                            (click)="ouvrirFormulaireEdition(n)">
+                      <i class="fas fa-pencil-alt"></i>
+                    </button>
+                    <button type="button" class="btn btn-outline-danger btn-xs"
+                            title="Supprimer"
+                            (click)="supprimerNiveau(n)">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </div>
+                </div>
+                <div class="niveau-card-body">
+                  <div class="niveau-prix">
+                    <span class="badge bg-light text-dark border me-1">
+                      Achat : <strong>{{ n.prixAchat | number:'1.0-0' }} F</strong>
+                    </span>
+                    <span class="badge bg-primary me-1">
+                      Vente : <strong>{{ n.prixVente | number:'1.0-0' }} F</strong>
+                    </span>
+                    <span class="badge bg-secondary">
+                      Stock : {{ n.stock ?? 0 }}
+                    </span>
+                  </div>
+                  <!-- Relation parent → enfant -->
+                  <div *ngIf="n.parentId" class="niveau-relation mt-1 text-muted small">
+                    1 {{ nomParent(n, niveaux) }} = {{ n.facteur }} {{ n.nom }}
+                  </div>
+                </div>
+                <!-- Bouton décomposer si le niveau a un parent et que le parent existe -->
+                <div *ngIf="n.parentId" class="mt-2">
+                  <button type="button" class="btn btn-outline-warning btn-xs"
+                          (click)="decomposerNiveau(n)">
+                    <i class="fas fa-cubes me-1"></i>{{ 'BOUTIQUE_SETTINGS.DECOMPOSE' | translate }}
+                  </button>
+                </div>
+              </div>
+              <!-- Flèche entre niveaux de même profondeur (frères) — séparateur visuel -->
+              <div *ngIf="!last && aDesEnfants(n)" class="niveau-arrow">
+                <i class="fas fa-long-arrow-alt-right"></i>
+              </div>
+            </ng-container>
+          </div>
+
+          <!-- Bouton ajouter un niveau -->
+          <button *ngIf="!showNiveauForm" type="button" class="btn btn-outline-primary btn-sm mb-3"
+                  (click)="ouvrirFormulaireCreation()">
+            <i class="fas fa-plus me-1"></i>{{ 'BOUTIQUE_SETTINGS.ADD_LEVEL' | translate }}
+          </button>
+
+          <!-- Formulaire ajout / modification niveau -->
+          <div *ngIf="showNiveauForm" class="niveau-form-box p-3 mb-3 border rounded bg-light">
+            <h6 class="mb-3 fw-semibold">
+              {{ editingNiveauId ? ('BOUTIQUE_SETTINGS.EDIT_LEVEL' | translate) : ('BOUTIQUE_SETTINGS.ADD_LEVEL' | translate) }}
+            </h6>
+
+            <div *ngIf="niveauError" class="alert alert-danger py-2 mb-3">{{ niveauError }}</div>
+
+            <!-- Champ 1 : Nom de l'emballage -->
+            <div class="mb-3">
+              <label class="form-label">{{ 'BOUTIQUE_SETTINGS.LEVEL_NAME' | translate }}</label>
+              <input class="form-control" [(ngModel)]="niveauForm.nom"
+                     name="niveauNom"
+                     placeholder="ex : Carton, Sachet, Pièce…">
+            </div>
+
+            <!-- Champ 2 : Parent (contenant) -->
+            <div class="mb-3">
+              <label class="form-label">{{ 'BOUTIQUE_SETTINGS.LEVEL_PARENT' | translate }}</label>
+              <select class="form-select" [(ngModel)]="niveauForm.parentId" name="niveauParent">
+                <option [ngValue]="null">{{ 'BOUTIQUE_SETTINGS.NO_PARENT' | translate }}</option>
+                <option *ngFor="let p of niveauxParentDisponibles" [ngValue]="p.id">{{ p.nom }}</option>
+              </select>
+              <small class="text-muted">{{ 'BOUTIQUE_SETTINGS.LEVEL_PARENT_HINT' | translate }}</small>
+            </div>
+
+            <!-- Champ 3 : Facteur (affiché seulement si un parent est sélectionné) -->
+            <div class="mb-3" *ngIf="niveauForm.parentId !== null">
+              <label class="form-label fw-semibold text-primary">{{ labelFacteur }}</label>
+              <input type="number" class="form-control" [(ngModel)]="niveauForm.facteur"
+                     name="niveauFacteur" min="1" style="max-width:160px;">
+            </div>
+
+            <!-- Champs 4 & 5 : Prix -->
+            <div class="row">
+              <div class="col-6 mb-3">
+                <label class="form-label">{{ 'BOUTIQUE_SETTINGS.PURCHASE_PRICE' | translate }}</label>
+                <div class="input-group">
+                  <input type="number" class="form-control" [(ngModel)]="niveauForm.prixAchat"
+                         name="niveauAchat" min="0">
+                  <span class="input-group-text">F</span>
+                </div>
+              </div>
+              <div class="col-6 mb-3">
+                <label class="form-label">{{ 'BOUTIQUE_SETTINGS.SELL_PRICE' | translate }}</label>
+                <div class="input-group">
+                  <input type="number" class="form-control" [(ngModel)]="niveauForm.prixVente"
+                         name="niveauVente" min="1">
+                  <span class="input-group-text">F</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Champ 6 : Stock -->
+            <div class="mb-3">
+              <label class="form-label">{{ 'BOUTIQUE_SETTINGS.CURRENT_STOCK' | translate }}</label>
+              <input type="number" class="form-control" [(ngModel)]="niveauForm.stock"
+                     name="niveauStock" min="0" style="max-width:160px;">
+            </div>
+
+            <!-- Actions formulaire -->
+            <div class="d-flex gap-2">
+              <button type="button" class="btn btn-primary btn-sm"
+                      [disabled]="niveauSaving"
+                      (click)="sauvegarderNiveau()">
+                <span *ngIf="niveauSaving" class="spinner-border spinner-border-sm me-1"></span>
+                {{ niveauSaving ? ('COMMON.LOADING' | translate) : ('COMMON.SAVE' | translate) }}
+              </button>
+              <button type="button" class="btn btn-light btn-sm"
+                      (click)="annulerFormulaireNiveau()">
+                {{ 'COMMON.CANCEL' | translate }}
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+        <div *ngIf="niveauxLoading" class="text-center py-3">
+          <span class="spinner-border spinner-border-sm text-primary me-2"></span>
+          Chargement des niveaux...
+        </div>
+
+      </div>
+      <!-- ── Fin section niveaux ─────────────────────────────────────────── -->
+
     </div>
   </div>
 </div>

@@ -816,5 +816,7 @@ export class RapportsComponent implements OnInit, OnDestroy, AfterViewInit {
     return this.authService.isAdmin();
   }
 
-  
+  get isVendeur(): boolean {
+    return this.authService.isVendeur();
+  }
 }

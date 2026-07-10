@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { EmployeService, Employe } from '../../../shared/services/employe.service';
 import { PaiementEmployeService, PaiementEmploye, PaiementEmployeRequest, StatsPaiementEmploye } from '../../../shared/services/paiement-employe.service';
 import { AuthService } from '../../../shared/services/auth.service';
+import { FactureService } from '../../../shared/services/facture.service';
 import Swal from 'sweetalert2';
 import { TranslateModule } from '@ngx-translate/core';
 
@@ -93,7 +94,8 @@ export class PaiementEmployeComponent implements OnInit {
   constructor(
     private employeService: EmployeService,
     private paiementService: PaiementEmployeService,
-    private authService: AuthService
+    private authService: AuthService,
+    private factureService: FactureService
   ) {}
 
   ngOnInit(): void {
@@ -250,5 +252,68 @@ export class PaiementEmployeComponent implements OnInit {
 
   formatMontant(m: number): string {
     return new Intl.NumberFormat('fr-FR').format(m) + ' FCFA';
+  }
+
+  telechargerRecuPaiement(p: PaiementEmploye): void {
+    const qrData = encodeURIComponent(`PAIEMENT_EMPLOYE\nEmployé: ${p.employeNomComplet}\nPoste: ${p.employePoste || ''}\nMontant: ${p.montant} FCFA\nDate: ${p.datePaiement ? new Date(p.datePaiement).toLocaleDateString('fr-FR') : ''}`);
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${qrData}`;
+    const montantFmt = (p.montant || 0).toLocaleString('fr-FR');
+    const salaireFmt = (p.salaireMensuel || 0).toLocaleString('fr-FR');
+    const datePaiement = p.datePaiement ? new Date(p.datePaiement).toLocaleDateString('fr-FR', { day:'2-digit', month:'long', year:'numeric' }) : '—';
+
+    const html = `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>Reçu paiement — ${p.employeNomComplet}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;padding:24px;font-size:13px;color:#1e293b}
+.sheet{background:#fff;max-width:540px;margin:0 auto;border-radius:14px;overflow:hidden;box-shadow:0 4px 24px rgba(5,80,40,.12)}
+.hdr{background:linear-gradient(135deg,#064e3b,#10b981);color:#fff;padding:24px 28px;display:flex;justify-content:space-between;align-items:center}
+.hdr-title{font-size:20px;font-weight:900}.hdr-sub{font-size:12px;opacity:.7;margin-top:3px}
+.recu-title{text-align:center;padding:18px;font-size:13px;font-weight:700;letter-spacing:2px;color:#64748b;text-transform:uppercase;border-bottom:1px solid #e2e8f0}
+.body{padding:20px 28px}
+.info-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9}
+.info-row:last-child{border-bottom:none}
+.info-label{color:#64748b;font-size:12px}
+.info-val{font-weight:700;color:#1e293b;font-size:13px}
+.montant-box{background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:2px solid #86efac;border-radius:12px;padding:20px;text-align:center;margin:20px 0}
+.montant-val{font-size:2rem;font-weight:900;color:#166534}
+.montant-lbl{font-size:11px;color:#16a34a;text-transform:uppercase;letter-spacing:1px;margin-top:4px}
+.btn-bar{display:flex;gap:8px;justify-content:center;padding:12px;background:#f8fafc;border-bottom:1px solid #e5e7eb}
+.btn{border:none;border-radius:8px;padding:9px 20px;font-size:13px;font-weight:700;cursor:pointer}
+.btn-p{background:#10b981;color:#fff}.btn-c{background:#ef4444;color:#fff}
+.ftr{background:linear-gradient(135deg,#064e3b,#10b981);color:rgba(255,255,255,.6);text-align:center;padding:12px;font-size:11px}
+.stamp{display:inline-block;border:3px solid #10b981;border-radius:8px;padding:6px 16px;color:#064e3b;font-weight:900;font-size:14px;letter-spacing:2px;transform:rotate(-3deg);margin:8px auto}
+@media print{.btn-bar{display:none}body{background:#fff;padding:0}.sheet{box-shadow:none;border-radius:0;max-width:100%}}
+</style></head><body>
+<div class="sheet">
+  <div class="hdr">
+    <div>
+      <div class="hdr-title">REÇU DE PAIEMENT</div>
+      <div class="hdr-sub">Ges Boutique &mdash; Paiement Employé</div>
+    </div>
+    <img src="${qrUrl}" width="72" height="72" style="border-radius:8px;background:#fff;padding:3px" alt="QR" onerror="this.style.display='none'">
+  </div>
+  <div class="btn-bar">
+    <button class="btn btn-p" onclick="window.print()">Imprimer / PDF</button>
+    <button class="btn btn-c" onclick="window.close()">Fermer</button>
+  </div>
+  <div class="recu-title">Reçu de salaire</div>
+  <div class="body">
+    <div class="info-row"><span class="info-label">Employé</span><span class="info-val">${p.employeNomComplet}</span></div>
+    <div class="info-row"><span class="info-label">Poste</span><span class="info-val">${p.employePoste || '—'}</span></div>
+    <div class="info-row"><span class="info-label">Salaire mensuel</span><span class="info-val">${salaireFmt} FCFA</span></div>
+    <div class="info-row"><span class="info-label">Nombre de mois</span><span class="info-val">${p.nombreMois} mois</span></div>
+    <div class="info-row"><span class="info-label">Période</span><span class="info-val">${p.periodeDebut}${p.periodeFin && p.periodeFin !== p.periodeDebut ? ' → ' + p.periodeFin : ''}</span></div>
+    <div class="info-row"><span class="info-label">Date de paiement</span><span class="info-val">${datePaiement}</span></div>
+    ${p.observation ? `<div class="info-row"><span class="info-label">Observation</span><span class="info-val">${p.observation}</span></div>` : ''}
+    <div class="montant-box">
+      <div class="montant-lbl">Montant payé</div>
+      <div class="montant-val">${montantFmt} FCFA</div>
+    </div>
+    <div style="text-align:center"><div class="stamp">✓ PAYÉ</div></div>
+  </div>
+  <div class="ftr">Ges Boutique &middot; Reçu généré le ${new Date().toLocaleDateString('fr-FR')}</div>
+</div></body></html>`;
+
+    this.factureService.ouvrirHtmlPersonnalise(html);
   }
 }

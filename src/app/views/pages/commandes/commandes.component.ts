@@ -34,7 +34,7 @@ export class CommandesComponent implements OnInit {
 
   // Filtres
   searchTerm = '';
-  statutFilter: '' | 'BROUILLON' | 'VALIDEE' = '';
+  statutFilter: '' | 'BROUILLON' | 'VALIDEE' | 'CREDIT' | 'ANNULEE' = '';
 
   // Modal formulaire (créer / modifier)
   showModal = false;
@@ -61,6 +61,17 @@ export class CommandesComponent implements OnInit {
 
   StatutCommande = StatutCommande;
   isSubmitting = false;
+
+  // Modal règlement individuel
+  showReglementModal = false;
+  commandeSelectionnee: Commande | null = null;
+  montantReglement = 0;
+
+  // Modal règlement groupé
+  showReglementGroupeModal = false;
+  commandesCredit: Commande[] = [];
+  idsSelectionnes: number[] = [];
+  montantReglementGroupe = 0;
 
   constructor(
     private commandeService: CommandeService,
@@ -93,7 +104,11 @@ export class CommandesComponent implements OnInit {
 
   appliquerFiltres(): void {
     let liste = [...this.commandes];
-    if (this.statutFilter) {
+    if (this.statutFilter === 'CREDIT') {
+      liste = liste.filter(c => c.estCredit && c.montantRestant > 0);
+    } else if (this.statutFilter === 'ANNULEE') {
+      liste = liste.filter((c: any) => c.statut === 'ANNULEE');
+    } else if (this.statutFilter) {
       liste = liste.filter(c => c.statut === this.statutFilter);
     }
     if (this.searchTerm.trim()) {
@@ -307,6 +322,100 @@ export class CommandesComponent implements OnInit {
     this.commandeService.imprimerFactureCommande(commande);
   }
 
+  // ─── Annuler ──────────────────────────────────────────────────────────────
+
+  annuler(commande: Commande): void {
+    const isValidee = commande.statut === StatutCommande.VALIDEE;
+    Swal.fire({
+      title: 'Annuler la commande ?',
+      html: `<p><strong>${commande.numeroCommande}</strong></p>${isValidee ? '<p class="text-warning">Cette commande est validée — la vente liée sera annulée et le stock restauré.</p>' : ''}`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Oui, annuler',
+      cancelButtonText: 'Non',
+      confirmButtonColor: '#dc2626'
+    }).then(result => {
+      if (!result.isConfirmed) return;
+      this.commandeService.annuler(commande.id, this.auth.getUserId()).subscribe({
+        next: () => {
+          this.statutFilter = '';
+          this.charger();
+          Swal.fire({ icon: 'success', title: 'Commande annulée', text: `${commande.numeroCommande} est maintenant annulée`, timer: 2000, showConfirmButton: false });
+        },
+        error: (e: any) => Swal.fire('Erreur', e.error?.message || 'Erreur lors de l\'annulation', 'error')
+      });
+    });
+  }
+
+  // ─── Règlement individuel ─────────────────────────────────────────────────
+
+  ouvrirReglementIndividuel(c: Commande): void {
+    this.commandeSelectionnee = c;
+    this.montantReglement = 0;
+    this.showReglementModal = true;
+  }
+
+  fermerReglementModal(): void {
+    this.showReglementModal = false;
+    this.commandeSelectionnee = null;
+    this.montantReglement = 0;
+  }
+
+  confirmerReglementIndividuel(): void {
+    if (!this.commandeSelectionnee || !this.montantReglement) return;
+    this.commandeService.payerCredit(this.commandeSelectionnee.id, this.montantReglement).subscribe({
+      next: () => {
+        this.fermerReglementModal();
+        this.charger();
+        Swal.fire({ icon: 'success', title: 'Paiement enregistré', timer: 1500, showConfirmButton: false });
+      },
+      error: (e: any) => Swal.fire('Erreur', e.error?.message || 'Erreur lors du règlement', 'error')
+    });
+  }
+
+  // ─── Règlement groupé ─────────────────────────────────────────────────────
+
+  ouvrirReglementGroupe(): void {
+    this.commandesCredit = this.commandes.filter(c => c.estCredit && c.montantRestant > 0);
+    this.idsSelectionnes = this.commandesCredit.map(c => c.id);
+    this.montantReglementGroupe = this.totalCreditsRestants;
+    this.showReglementGroupeModal = true;
+  }
+
+  fermerReglementGroupeModal(): void {
+    this.showReglementGroupeModal = false;
+    this.idsSelectionnes = [];
+    this.montantReglementGroupe = 0;
+  }
+
+  toggleSelectionCredit(id: number): void {
+    const idx = this.idsSelectionnes.indexOf(id);
+    idx === -1 ? this.idsSelectionnes.push(id) : this.idsSelectionnes.splice(idx, 1);
+  }
+
+  selectionnerTousCredits(event: Event): void {
+    const checked = (event.target as HTMLInputElement).checked;
+    this.idsSelectionnes = checked ? this.commandesCredit.map(c => c.id) : [];
+  }
+
+  get totalCreditsSelectionnes(): number {
+    return this.commandesCredit
+      .filter(c => this.idsSelectionnes.includes(c.id))
+      .reduce((s, c) => s + (c.montantRestant || 0), 0);
+  }
+
+  confirmerReglementGroupe(): void {
+    if (!this.idsSelectionnes.length || !this.montantReglementGroupe) return;
+    this.commandeService.payerCreditsGroupes(this.idsSelectionnes, this.montantReglementGroupe).subscribe({
+      next: () => {
+        this.fermerReglementGroupeModal();
+        this.charger();
+        Swal.fire({ icon: 'success', title: 'Règlement groupé enregistré', timer: 1500, showConfirmButton: false });
+      },
+      error: (e: any) => Swal.fire('Erreur', e.error?.message || 'Erreur règlement groupé', 'error')
+    });
+  }
+
   // ─── Helpers ───────────────────────────────────────────────────────────────
 
   formatMontant(v: number): string { return this.commandeService.formatMontant(v); }
@@ -319,4 +428,6 @@ export class CommandesComponent implements OnInit {
   get nbBrouillons(): number { return this.commandes.filter(c => c.statut === StatutCommande.BROUILLON).length; }
   get nbValidees(): number { return this.commandes.filter(c => c.statut === StatutCommande.VALIDEE).length; }
   get totalValidees(): number { return this.commandes.filter(c => c.statut === StatutCommande.VALIDEE).reduce((s, c) => s + (c.montantTotal || 0), 0); }
+  get nbCreditsEnCours(): number { return this.commandes.filter(c => c.estCredit && c.montantRestant > 0).length; }
+  get totalCreditsRestants(): number { return this.commandes.filter(c => c.estCredit && c.montantRestant > 0).reduce((s, c) => s + (c.montantRestant || 0), 0); }
 }
