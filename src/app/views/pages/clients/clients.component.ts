@@ -90,7 +90,11 @@ export class ClientsComponent implements OnInit {
   showHistoriquePaiementsModal: boolean = false;
   isLoadingHistorique: boolean = false;
   historiquePaiements: HistoriquePaiementEntry[] = [];
+  historiquePaiementsFiltres: HistoriquePaiementEntry[] = [];
   clientPourHistorique: Client | null = null;
+  filterPaiementDateDebut: string = '';
+  filterPaiementDateFin: string = '';
+  viewModePaiement: 'simple' | 'groupe' = 'groupe';
 
   // ==================== AVANCES CLIENT ====================
   showAvanceModal: boolean = false;
@@ -886,6 +890,7 @@ export class ClientsComponent implements OnInit {
           this.historiquePaiements = entries.sort((a, b) =>
             new Date(b.date).getTime() - new Date(a.date).getTime()
           );
+          this.historiquePaiementsFiltres = [...this.historiquePaiements];
           this.isLoadingHistorique = false;
           return;
         }
@@ -911,6 +916,7 @@ export class ClientsComponent implements OnInit {
             this.historiquePaiements = entries.sort((a, b) =>
               new Date(b.date).getTime() - new Date(a.date).getTime()
             );
+            this.historiquePaiementsFiltres = [...this.historiquePaiements];
             this.isLoadingHistorique = false;
           },
           error: () => { this.isLoadingHistorique = false; }
@@ -923,7 +929,42 @@ export class ClientsComponent implements OnInit {
   closeHistoriquePaiementsModal(): void {
     this.showHistoriquePaiementsModal = false;
     this.historiquePaiements = [];
+    this.historiquePaiementsFiltres = [];
     this.clientPourHistorique = null;
+    this.filterPaiementDateDebut = '';
+    this.filterPaiementDateFin = '';
+  }
+
+  filterHistoriquePaiements(): void {
+    this.historiquePaiementsFiltres = this.historiquePaiements.filter(p => {
+      if (this.filterPaiementDateDebut && new Date(p.date) < new Date(this.filterPaiementDateDebut)) return false;
+      if (this.filterPaiementDateFin && new Date(p.date) > new Date(this.filterPaiementDateFin + 'T23:59:59')) return false;
+      return true;
+    });
+  }
+
+  resetFiltresPaiements(): void {
+    this.filterPaiementDateDebut = '';
+    this.filterPaiementDateFin = '';
+    this.historiquePaiementsFiltres = [...this.historiquePaiements];
+  }
+
+  get totalHistoriqueFiltres(): number {
+    return this.historiquePaiementsFiltres.reduce((sum, r) => sum + (r.montant || 0), 0);
+  }
+
+  get historiquePaiementsGroupes(): { date: string; entries: HistoriquePaiementEntry[]; total: number }[] {
+    const groups: { [key: string]: HistoriquePaiementEntry[] } = {};
+    this.historiquePaiementsFiltres.forEach(p => {
+      const key = new Date(p.date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(p);
+    });
+    return Object.entries(groups).map(([date, entries]) => ({
+      date,
+      entries,
+      total: entries.reduce((s, e) => s + e.montant, 0)
+    }));
   }
 
   getTotalHistorique(): number {
