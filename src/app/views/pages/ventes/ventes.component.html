@@ -124,7 +124,7 @@
         </div>
       </div>
     </div>
-    <div class="col-6 col-md-3">
+    <div class="col-6 col-md-3" *ngIf="isAdmin">
       <div class="app-stat-card">
         <div class="app-stat-icon green"><i class="fa fa-trophy"></i></div>
         <div class="app-stat-body">
@@ -144,7 +144,7 @@
         </div>
       </div>
     </div>
-    <div class="col-6 col-md-3">
+    <div class="col-6 col-md-3" *ngIf="isAdmin">
       <div class="app-stat-card">
         <div class="app-stat-icon orange"><i class="fa fa-coins"></i></div>
         <div class="app-stat-body">
@@ -190,6 +190,26 @@
         </div>
       </div>
     </div>
+    <div class="col-6 col-md-3">
+      <div class="app-stat-card" style="cursor:pointer" (click)="voirVentesAnnulees()">
+        <div class="app-stat-icon red"><i class="fa fa-ban"></i></div>
+        <div class="app-stat-body">
+          <div class="app-stat-label">Ventes annulées</div>
+          <div class="app-stat-value">{{ nombreVentesAnnulees }}</div>
+          <div class="app-stat-sub text-danger">Cliquer pour filtrer</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="app-stat-card">
+        <div class="app-stat-icon" style="background:linear-gradient(135deg,#dc2626,#b91c1c);"><i class="fa fa-exclamation-circle"></i></div>
+        <div class="app-stat-body">
+          <div class="app-stat-label">Crédits en cours (total dû)</div>
+          <div class="app-stat-value text-danger">{{ formatPrice(totalCreditsEnCours) }}</div>
+          <div class="app-stat-sub">{{ creditsNonRegles.length }} crédit(s) non réglé(s)</div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Filtres -->
@@ -222,6 +242,7 @@
             <option value="">{{ 'COMMON.ALL' | translate }}</option>
             <option value="COMPTANT">{{ 'SALES.CASH' | translate }}</option>
             <option value="CREDIT">{{ 'SALES.CREDIT' | translate }}</option>
+            <option value="ANNULEES">Annulées</option>
           </select>
         </div>
         <div class="col-6 col-sm-3 col-md-2">
@@ -233,18 +254,26 @@
           </select>
         </div>
         <div class="col-6 col-sm-4 col-md-2">
-          <input type="date" class="form-control" [(ngModel)]="dateDebut" (change)="applyFilters()">
+          <input type="date" class="form-control" [(ngModel)]="dateDebut" (change)="applyFilters()" (input)="applyFilters()">
         </div>
         <div class="col-6 col-sm-4 col-md-2">
-          <input type="date" class="form-control" [(ngModel)]="dateFin" (change)="applyFilters()">
+          <input type="date" class="form-control" [(ngModel)]="dateFin" (change)="applyFilters()" (input)="applyFilters()">
         </div>
         <div class="col-6 col-sm-3 col-md-2">
           <label class="form-label small text-muted mb-1">Heure début</label>
-          <input type="time" class="form-control form-control-sm" [(ngModel)]="heureDebut" (change)="applyFilters()">
+          <input type="time" class="form-control form-control-sm" [(ngModel)]="heureDebut" (change)="applyFilters()" (input)="applyFilters()">
         </div>
         <div class="col-6 col-sm-3 col-md-2">
           <label class="form-label small text-muted mb-1">Heure fin</label>
-          <input type="time" class="form-control form-control-sm" [(ngModel)]="heureFin" (change)="applyFilters()">
+          <input type="time" class="form-control form-control-sm" [(ngModel)]="heureFin" (change)="applyFilters()" (input)="applyFilters()">
+        </div>
+        <div class="col-12 d-flex justify-content-end gap-2 mt-2">
+          <button class="btn btn-primary btn-sm" (click)="applyFilters()">
+            <i class="fa fa-filter me-1">Appliquer filtres</i>Appliquer filtres
+          </button>
+          <button class="btn btn-outline-secondary btn-sm" (click)="resetFilters()">
+            <i class="fa fa-refresh me-1">Réinitialiser</i>Réinitialiser
+          </button>
         </div>
       </div>
   </div>

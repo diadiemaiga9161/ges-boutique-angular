@@ -447,11 +447,12 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   calculerRevenus(): void {
-    // Calcul du CA total
-    this.chiffreAffaireTotal = this.ventes.reduce((sum, v) => sum + v.montantTotal, 0);
+    // Calcul du CA total (hors annulées)
+    const ventesActives = this.ventes.filter(v => !v.annulee);
+    this.chiffreAffaireTotal = ventesActives.reduce((sum, v) => sum + v.montantTotal, 0);
     this.beneficeTotal = 0;
 
-    for (const vente of this.ventes) {
+    for (const vente of ventesActives) {
       if (vente.produits && vente.produits.length > 0) {
         for (const produit of vente.produits) {
           const produitId = produit.produitId;
@@ -466,13 +467,16 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
 
     this.margeMoyenne = this.chiffreAffaireTotal > 0 ? (this.beneficeTotal / this.chiffreAffaireTotal) * 100 : 0;
 
-    // Calcul du jour
+    // Calcul du jour : ventes comptant du jour + règlements crédit reçus aujourd'hui
     const aujourdhui = new Date().toISOString().split('T')[0];
-    const ventesAujourdhui = this.ventes.filter(v => v.dateVente?.startsWith(aujourdhui));
-    this.chiffreAffaireJour = ventesAujourdhui.reduce((sum, v) => sum + v.montantTotal, 0);
-    this.beneficeJour = 0;
+    const ventesComptantAujourdhui = this.ventes.filter(v => v.dateVente?.startsWith(aujourdhui) && !v.estCredit && !v.annulee);
+    const caComptant = ventesComptantAujourdhui.reduce((sum, v) => sum + v.montantTotal, 0);
+    // reglementsDuJour = somme de tous les paiements crédit reçus aujourd'hui (partiel + complet)
+    const reglementsCreditJour = this.statistiques?.reglementsDuJour || 0;
+    this.chiffreAffaireJour = caComptant + reglementsCreditJour;
 
-    for (const vente of ventesAujourdhui) {
+    this.beneficeJour = 0;
+    for (const vente of ventesComptantAujourdhui) {
       if (vente.produits && vente.produits.length > 0) {
         for (const produit of vente.produits) {
           const produitId = produit.produitId;
@@ -637,6 +641,7 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
       next: (stats: Statistiques) => {
         this.statistiques = stats;
         this.isLoadingStats = false;
+        this.calculerRevenus(); // Recalculer avec reglementsDuJour disponible
         this.cdr.detectChanges();
       },
       error: (error: Error) => {
@@ -1913,14 +1918,16 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
   get filteredVentes(): VenteMap[] {
     let filtered = [...this.ventes];
 
-    if (!this.showAnnulees) {
-      filtered = filtered.filter(v => !v.annulee);
-    }
-    if (!this.showRetournees) {
-      filtered = filtered.filter(v => !v.estRetourne);
-    }
-
-    if (this.typeVenteFilter) {
+    if (this.typeVenteFilter === 'ANNULEES') {
+      // Mode "ventes annulées" : afficher seulement les annulées
+      filtered = filtered.filter(v => v.annulee);
+    } else {
+      if (!this.showAnnulees) {
+        filtered = filtered.filter(v => !v.annulee);
+      }
+      if (!this.showRetournees) {
+        filtered = filtered.filter(v => !v.estRetourne);
+      }
       if (this.typeVenteFilter === 'COMPTANT') {
         filtered = filtered.filter(v => !v.estCredit);
       } else if (this.typeVenteFilter === 'CREDIT') {
@@ -2151,6 +2158,22 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
 
   getCreditsEnCoursCount(): number {
     return this.filteredVentes.filter(v => v.estCredit && !v.creditRegle).length;
+  }
+
+  get nombreVentesAnnulees(): number {
+    return this.ventes.filter(v => v.annulee).length;
+  }
+
+  get totalCreditsEnCours(): number {
+    if (this.statistiques?.totalCreditsNonRegles !== undefined) {
+      return this.statistiques.totalCreditsNonRegles;
+    }
+    return this.creditsNonRegles.reduce((sum, c) => sum + (c.montantRestant || c.montantTotal), 0);
+  }
+
+  voirVentesAnnulees(): void {
+    this.typeVenteFilter = 'ANNULEES';
+    this.applyFilters();
   }
 
   // ==================== DÉLÉGATION AU SERVICE ====================
