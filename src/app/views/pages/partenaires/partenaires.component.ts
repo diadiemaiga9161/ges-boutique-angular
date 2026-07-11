@@ -571,6 +571,17 @@ export class PartenairesComponent implements OnInit {
     return icons[String(mode)] || 'fa fa-credit-card';
   }
 
+  getModePaiementBadgeClass(mode: string): string {
+    const classes: Record<string, string> = {
+      'ESPECES': 'bg-success text-white',
+      'ORANGE_MONEY': 'bg-warning text-dark',
+      'MOOV_MONEY': 'bg-info text-white',
+      'CARTE_BANCAIRE': 'bg-dark text-white',
+      'VIREMENT': 'bg-secondary text-white'
+    };
+    return classes[String(mode)] || 'bg-light text-dark border';
+  }
+
   getVenteTypeBadgeClass(vente: VenteMap): string {
     if (!vente.estCredit) return 'badge-success';
     if (vente.creditRegle) return 'badge-info';

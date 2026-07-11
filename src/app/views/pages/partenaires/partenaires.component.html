@@ -90,12 +90,6 @@
                 <button type="button" class="btn btn-danger" (click)="deleteClient(client)" title="Supprimer">
                   <i class="fa fa-trash me-1"></i>Supprimer
                 </button>
-                <button type="button" class="btn btn-primary" (click)="openAvanceModal(client)" title="Déposer une avance">
-                  <i class="fa fa-money me-1"></i>Avance
-                </button>
-                <button type="button" class="btn btn-secondary" (click)="openHistoriqueAvancesModal(client)" title="Historique avances">
-                  <i class="fa fa-list me-1"></i>Avances
-                </button>
               </div>
             </td>
           </tr>
@@ -124,19 +118,13 @@
               <i class="fa fa-shopping-cart"></i>
             </button>
             <button type="button" class="btn btn-sm btn-success" (click)="loadHistoriquePaiements(client)" title="Paiements">
-              <i class="fa fa-history"></i>
+              <i class="fa fa-history">Paiements</i>
             </button>
             <button type="button" class="btn btn-sm btn-warning" (click)="editClient(client)" title="Modifier">
-              <i class="fa fa-edit"></i>
+              <i class="fa fa-edit">Modifier</i>
             </button>
             <button type="button" class="btn btn-sm btn-danger" (click)="deleteClient(client)" title="Supprimer">
-              <i class="fa fa-trash"></i>
-            </button>
-            <button type="button" class="btn btn-sm btn-primary" (click)="openAvanceModal(client)" title="Avance">
-              <i class="fa fa-money"></i>
-            </button>
-            <button type="button" class="btn btn-sm btn-secondary" (click)="openHistoriqueAvancesModal(client)" title="Historique avances">
-              <i class="fa fa-list"></i>
+              <i class="fa fa-trash">Supprimer</i>
             </button>
           </div>
         </div>
@@ -429,7 +417,7 @@
                   <td class="fw-semibold">{{ vente.regleParNom || '-' }}</td>
                   <td>
                     <button type="button" class="btn-sm btn-detail" (click)="showVenteDetail(vente)">
-                      <i class="fa fa-eye"></i> Détails
+                      <i class="fa fa-eye">Détails</i> Détails
                     </button>
                   </td>
                 </tr>
@@ -608,7 +596,12 @@
                       {{ p.typeLabel }}
                     </span>
                   </td>
-                  <td class="small">{{ getModePaiementLabel(p.modePaiement) }}</td>
+                  <td>
+                    <span *ngIf="p.modePaiement" class="badge" [ngClass]="getModePaiementBadgeClass(p.modePaiement)">
+                      <i class="me-1" [ngClass]="getModePaiementIcon(p.modePaiement)"></i>{{ getModePaiementLabel(p.modePaiement) }}
+                    </span>
+                    <span *ngIf="!p.modePaiement" class="text-muted small">-</span>
+                  </td>
                   <td class="text-end fw-bold">{{ formatPrice(p.montant) }} <small class="text-muted fw-normal fs-6">FCFA</small></td>
                   <td>
                     <div class="d-flex gap-1">
@@ -653,7 +646,9 @@
                         [class.text-dark]="p.typeLabel !== 'Comptant'">
                     {{ p.typeLabel }}
                   </span>
-                  <span class="small text-muted">{{ getModePaiementLabel(p.modePaiement) }}</span>
+                  <span *ngIf="p.modePaiement" class="badge" [ngClass]="getModePaiementBadgeClass(p.modePaiement)">
+                    <i class="me-1" [ngClass]="getModePaiementIcon(p.modePaiement)"></i>{{ getModePaiementLabel(p.modePaiement) }}
+                  </span>
                 </div>
                 <div class="small text-muted mt-1">
                   <i class="fa fa-clock-o me-1"></i>{{ formatHeure(p.date) }}
@@ -840,7 +835,7 @@
          [style.border-top]="design === 2 ? '1px solid #334155' : ''">
       <button type="button" class="btn-secondary" (click)="closeDetailModal()">Fermer</button>
       <button type="button" class="btn-primary" (click)="telechargerFacture(selectedVenteDetail.id)">
-        <i class="fa fa-file-pdf-o"></i> Télécharger facture
+        <i class="fa fa-file-pdf-o">Télécharger</i> Télécharger facture
       </button>
     </div>
   </div>
@@ -949,9 +944,11 @@
                     {{ p.typeLabel }}
                   </span>
                 </td>
-                <td class="small">
-                  <i [class]="getModePaiementIcon(p.modePaiement)" class="me-1 text-muted"></i>
-                  {{ getModePaiementLabel(p.modePaiement) }}
+                <td>
+                  <span *ngIf="p.modePaiement" class="badge" [ngClass]="getModePaiementBadgeClass(p.modePaiement)">
+                    <i class="me-1" [ngClass]="getModePaiementIcon(p.modePaiement)"></i>{{ getModePaiementLabel(p.modePaiement) }}
+                  </span>
+                  <span *ngIf="!p.modePaiement" class="text-muted small">-</span>
                 </td>
                 <td class="text-right fw-semibold">{{ formatPrice(p.montant) }}</td>
                 <td class="small text-muted">{{ p.reference || '—' }}</td>
@@ -987,7 +984,6 @@
                    [class.border-bottom]="!last">
                 <div class="flex-grow-1">
                   <div class="d-flex align-items-center gap-2 flex-wrap">
-                    <i [class]="getModePaiementIcon(p.modePaiement)" class="text-muted"></i>
                     <span class="fw-semibold">{{ formatPrice(p.montant) }}</span>
                     <span class="badge"
                           [class.bg-success]="p.typeLabel === 'Comptant'"
@@ -995,9 +991,12 @@
                           [class.text-dark]="p.typeLabel !== 'Comptant'">
                       {{ p.typeLabel }}
                     </span>
+                    <span *ngIf="p.modePaiement" class="badge" [ngClass]="getModePaiementBadgeClass(p.modePaiement)">
+                      <i class="me-1" [ngClass]="getModePaiementIcon(p.modePaiement)"></i>{{ getModePaiementLabel(p.modePaiement) }}
+                    </span>
                   </div>
                   <div class="small text-muted mt-1">
-                    N° <strong>{{ p.numeroVente }}</strong> &nbsp;·&nbsp; {{ getModePaiementLabel(p.modePaiement) }}
+                    N° <strong>{{ p.numeroVente }}</strong>
                     <span *ngIf="p.reference">&nbsp;·&nbsp; Réf: {{ p.reference }}</span>
                   </div>
                 </div>
