@@ -1,4 +1,4 @@
-﻿<div class="container-fluid py-4 app-page factures-container">
+<div class="container-fluid py-4 app-page factures-container">
   <!-- En-tête -->
   <div class="app-page-header mb-4">
     <div class="app-page-header-left">
@@ -128,26 +128,26 @@
       </div>
       <div class="fc-card-actions">
         <button class="fc-btn fc-btn--pdf" (click)="exporterPdf(facture); $event.stopPropagation()" title="Télécharger PDF (modèle actif)">
-          <i class="fa fa-download"> PDF</i> PDF
+          <i class="fa fa-download"></i> PDF
         </button>
         <button class="fc-btn fc-btn--view" (click)="ouvrirPdfServeur(facture); $event.stopPropagation()" title="Voir PDF">
-          <i class="fa fa-eye"> Voir</i> Voir
+          <i class="fa fa-eye"></i> Voir
         </button>
         <button class="fc-btn fc-btn--validate" *ngIf="facture.statut === 'BROUILLON'"
                 (click)="validerFacture(facture); $event.stopPropagation()">
-          <i class="fa fa-check"> Valider</i> Valider
+          <i class="fa fa-check"></i> Valider
         </button>
         <button class="fc-btn fc-btn--edit" *ngIf="facture.statut === 'BROUILLON'"
                 (click)="openEditModal(facture); $event.stopPropagation()">
-          <i class="fa fa-edit"> Modifier</i> Modifier
+          <i class="fa fa-edit"></i> Modifier
         </button>
         <button class="fc-btn fc-btn--cancel" *ngIf="facture.statut !== 'ANNULEE' && facture.statut !== 'PAYEE'"
                 (click)="annulerFacture(facture); $event.stopPropagation()">
-          <i class="fa fa-ban"> Annuler</i> Annuler
+          <i class="fa fa-ban"></i> Annuler
         </button>
         <button class="fc-btn fc-btn--delete" *ngIf="facture.statut === 'BROUILLON'"
                 (click)="supprimerFacture(facture); $event.stopPropagation()">
-          <i class="fa fa-trash"> Suppr.</i> Suppr.
+          <i class="fa fa-trash"></i> Suppr.
         </button>
       </div>
     </div>
@@ -323,16 +323,16 @@
 
       <!-- Boutons d'action -->
       <div class="modal-actions">
-        <button class="btn-primary" (click)="imprimerFacture(selectedFacture)"><i class="fa fa-print"> Imprimer</i> Imprimer</button>
-        <button class="btn-success" (click)="exporterPdf(selectedFacture)"><i class="fa fa-download"> Télécharger PDF</i> Télécharger PDF</button>
-        <button class="btn-primary" (click)="ouvrirPdfServeur(selectedFacture)"><i class="fa fa-eye"> Voir PDF</i> Voir PDF</button>
+        <button class="btn-primary" (click)="imprimerFacture(selectedFacture)"><i class="fa fa-print"></i> Imprimer</button>
+        <button class="btn-success" (click)="exporterPdf(selectedFacture)"><i class="fa fa-download"></i> Télécharger PDF</button>
+        <button class="btn-primary" (click)="ouvrirPdfServeur(selectedFacture)"><i class="fa fa-eye"></i> Voir PDF</button>
         <button class="btn-warning" *ngIf="selectedFacture.statut === 'BROUILLON' && isAdmin" (click)="openEditModal(selectedFacture); closeAllModals()">
-          <i class="fa fa-edit"> Modifier</i> Modifier
+          <i class="fa fa-edit"></i> Modifier
         </button>
         <button class="btn-danger" *ngIf="selectedFacture.statut === 'BROUILLON' && isAdmin" (click)="supprimerFacture(selectedFacture); closeAllModals()">
-          <i class="fa fa-trash"> Supprimer</i> Supprimer
+          <i class="fa fa-trash"></i> Supprimer
         </button>
-        <button class="btn-secondary" (click)="closeAllModals()"><i class="fa fa-times"> Fermer</i> Fermer</button>
+        <button class="btn-secondary" (click)="closeAllModals()"><i class="fa fa-times"></i> Fermer</button>
       </div>
     </div>
   </div>
@@ -352,7 +352,7 @@
         </div>
         <!-- Section Client -->
         <div class="form-section">
-          <h4><i class="fa fa-user"> Informations client</i> Informations client</h4>
+          <h4><i class="fa fa-user"></i> Informations client</h4>
           <div class="form-row">
             <div class="form-group">
               <label>Nom <span class="required">*</span></label>
@@ -392,7 +392,7 @@
               <div class="form-group"><input type="text" class="form-control" placeholder="Nom *" [(ngModel)]="nouveauClient.nom" [ngModelOptions]="{standalone: true}"></div>
               <div class="form-group"><input type="text" class="form-control" placeholder="Prénom" [(ngModel)]="nouveauClient.prenom" [ngModelOptions]="{standalone: true}"></div>
               <div class="form-group"><input type="tel" class="form-control" placeholder="Téléphone *" [(ngModel)]="nouveauClient.numeroTelephone" [ngModelOptions]="{standalone: true}"></div>
-              <div class="form-group"><button type="button" class="btn-success" (click)="creerClient()"><i class="fa fa-save"> Créer client</i> Créer client</button></div>
+              <div class="form-group"><button type="button" class="btn-success" (click)="creerClient()"><i class="fa fa-save"></i> Créer client</button></div>
             </div>
           </div>
         </div>
@@ -400,7 +400,7 @@
         <!-- Section Articles -->
         <div class="form-section">
           <div class="articles-header">
-            <h4><i class="fa fa-shopping-cart"> Articles</i> Articles</h4>
+            <h4><i class="fa fa-shopping-cart"></i> Articles</h4>
             <button type="button" class="btn-toggle-mode" [class.active]="modeLibre" (click)="toggleModeLibre()">
               <i class="fa" [class.fa-database]="!modeLibre" [class.fa-pencil]="modeLibre"></i>
               {{ modeLibre ? 'Mode libre (hors catalogue)' : 'Mode catalogue (stock)' }}
@@ -425,14 +425,14 @@
                 <i class="fa fa-check-circle text-success"></i> <strong>{{ selectedProduit.nom }}</strong>
                 <span>Prix: {{ formatPrice(selectedProduit.prixVente) }}</span> <span>Stock: {{ selectedProduit.quantite }}</span>
               </div>
-              <button type="button" class="btn-sm btn-outline" (click)="selectedProduit = null; newLine.produitId = 0"><i class="fa fa-refresh"> Changer</i> Changer</button>
+              <button type="button" class="btn-sm btn-outline" (click)="selectedProduit = null; newLine.produitId = 0"><i class="fa fa-refresh"></i> Changer</button>
             </div>
             <div class="line-editor" *ngIf="selectedProduit">
               <div class="line-inputs">
                 <div class="input-group"><label>Quantité</label><input type="number" class="form-control" [(ngModel)]="newLine.quantite" min="1" [max]="selectedProduit.quantite" [ngModelOptions]="{standalone: true}"></div>
                 <div class="input-group"><label>Prix unitaire (FCFA)</label><input type="number" class="form-control" [(ngModel)]="newLine.prixUnitaire" step="1" min="0" [ngModelOptions]="{standalone: true}"></div>
                 <div class="input-group"><label>Remise (%)</label><input type="number" class="form-control" [(ngModel)]="newLine.remisePourcentage" min="0" max="100" [ngModelOptions]="{standalone: true}"></div>
-                <button type="button" class="btn-primary" (click)="addLine()"><i class="fa fa-plus"> Ajouter</i> Ajouter</button>
+                <button type="button" class="btn-primary" (click)="addLine()"><i class="fa fa-plus"></i> Ajouter</button>
               </div>
             </div>
           </div>
@@ -444,7 +444,7 @@
               <div class="input-group"><label>Quantité</label><input type="number" class="form-control" [(ngModel)]="ligneLibre.quantite" min="1" [ngModelOptions]="{standalone: true}"></div>
               <div class="input-group"><label>Prix unitaire (FCFA)</label><input type="number" class="form-control" [(ngModel)]="ligneLibre.prixUnitaire" step="1" min="0" [ngModelOptions]="{standalone: true}"></div>
               <div class="input-group"><label>Remise (%)</label><input type="number" class="form-control" [(ngModel)]="ligneLibre.remisePourcentage" min="0" max="100" [ngModelOptions]="{standalone: true}"></div>
-              <button type="button" class="btn-primary" (click)="addLine()"><i class="fa fa-plus"> Ajouter</i> Ajouter</button>
+              <button type="button" class="btn-primary" (click)="addLine()"><i class="fa fa-plus"></i> Ajouter</button>
             </div>
           </div>
           <div class="lines-list" *ngIf="factureForm.lignes.length">
@@ -478,14 +478,14 @@
         </div>
 
         <div class="form-section">
-          <h4><i class="fa fa-sticky-note"> Notes</i> Notes</h4>
+          <h4><i class="fa fa-sticky-note"></i> Notes</h4>
           <textarea rows="3" class="form-control" [(ngModel)]="factureForm.notes" name="notes" placeholder="Informations complémentaires..."></textarea>
         </div>
 
         <div class="invoice-total"><span>Total TTC :</span><strong>{{ formatPrice(getTotalAvecRemiseGlobale()) }}</strong></div>
         <div class="modal-actions">
           <button type="submit" class="btn-primary" [disabled]="isSaving"><i *ngIf="!isSaving" class="fa fa-save"></i><i *ngIf="isSaving" class="fa fa-spinner fa-spin"></i> {{ showCreateModal ? 'Créer' : 'Enregistrer' }}</button>
-          <button type="button" class="btn-secondary" (click)="closeAllModals()"><i class="fa fa-times"> Annuler</i> Annuler</button>
+          <button type="button" class="btn-secondary" (click)="closeAllModals()"><i class="fa fa-times"></i> Annuler</button>
         </div>
       </form>
     </div>

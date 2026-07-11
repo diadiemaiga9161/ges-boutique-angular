@@ -30,7 +30,7 @@ export class AuthInterceptor implements HttpInterceptor {
     if (!token) {
       console.log('❌ Interceptor: Pas de token, redirection vers login');
       // Si pas de token et route non publique, rediriger vers login
-      this.router.navigate(['/sessions/signin']);
+      this.router.navigate(['/connexion']);
       return throwError(() => new Error('Non authentifié'));
     }
 
@@ -84,7 +84,7 @@ export class AuthInterceptor implements HttpInterceptor {
       // Token expiré ou invalide
       console.log('❌ Interceptor: Token expiré, déconnexion...');
       this.authService.signout();
-      this.router.navigate(['/sessions/signin']);
+      this.router.navigate(['/connexion']);
       return throwError(() => new Error('Session expirée. Veuillez vous reconnecter.'));
     }
     

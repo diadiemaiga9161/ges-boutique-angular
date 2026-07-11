@@ -41,6 +41,8 @@ export class AuthService {
   private apiUrl = `${environment.apiUrl}/auth`;
   private tokenKey = 'auth_token';
   private userKey = 'user_data';
+  private loginTimestampKey = 'login_timestamp';
+  private readonly SESSION_DURATION_MS = 5 * 24 * 60 * 60 * 1000; // 5 jours
   
   private authenticatedSubject = new BehaviorSubject<boolean>(this.isAuthenticated());
   authenticated$ = this.authenticatedSubject.asObservable();
@@ -82,8 +84,9 @@ export class AuthService {
         tap(response => {
           console.log('✅ Réponse de connexion:', response);
           
-          // Sauvegarder le token
+          // Sauvegarder le token et horodatage de connexion
           this.store.setItem(this.tokenKey, response.token);
+          this.store.setItem(this.loginTimestampKey, Date.now().toString());
           
           // Créer l'objet utilisateur
           const userData: User = {
@@ -130,12 +133,13 @@ export class AuthService {
     
     this.store.removeItem(this.tokenKey);
     this.store.removeItem(this.userKey);
-    
+    this.store.removeItem(this.loginTimestampKey);
+
     this.authenticatedSubject.next(false);
     this.currentUserSubject.next(null);
     this.authenticated = false;
-    
-    this.router.navigateByUrl("/sessions/connexion");
+
+    this.router.navigateByUrl("/connexion");
   }
 
   getToken(): string | null {
@@ -151,8 +155,20 @@ export class AuthService {
   isAuthenticated(): boolean {
     const token = this.getToken();
     if (!token) return false;
-    
-    // Vérifier si le token n'est pas expiré
+
+    // Vérifier l'expiration de session (5 jours depuis la dernière connexion)
+    const loginTimestamp = this.store.getItem(this.loginTimestampKey);
+    if (loginTimestamp) {
+      const loginTime = Number(loginTimestamp);
+      if (Date.now() - loginTime > this.SESSION_DURATION_MS) {
+        this.store.removeItem(this.tokenKey);
+        this.store.removeItem(this.userKey);
+        this.store.removeItem(this.loginTimestampKey);
+        return false;
+      }
+    }
+
+    // Vérifier si le token JWT n'est pas expiré
     try {
       const decodedToken = this.decodeJwtToken(token);
       if (decodedToken && decodedToken.exp) {
@@ -163,7 +179,7 @@ export class AuthService {
     } catch (e) {
       console.error('Erreur décodage token:', e);
     }
-    
+
     return !!token;
   }
 

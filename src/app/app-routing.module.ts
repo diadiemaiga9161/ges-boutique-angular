@@ -5,40 +5,32 @@ import { AuthGuard } from '../../src/app/shared/services/auth.guard';
 import { BlankLayoutComponent } from './shared/components/layouts/blank-layout/blank-layout.component';
 import { AdminLayoutSidebarLargeComponent } from './shared/components/layouts/admin-layout-sidebar-large/admin-layout-sidebar-large.component';
 
-const adminRoutes: Routes = [
-
-    {
-      path: 'pages',
-      loadChildren: () => import('./views/pages/pages.module').then(m => m.PagesModule)
-    },
-  ];
-
 const routes: Routes = [
   {
     path: '',
-    redirectTo: 'sessions/connexion',
+    redirectTo: 'connexion',
     pathMatch: 'full'
-  },
-   {
-    path: 'inscription',
-    redirectTo: 'sessions/inscription',
   },
   {
     path: '',
     component: AuthLayoutComponent,
     children: [
       {
-        path: 'sessions',
+        path: '',
         loadChildren: () => import('./views/sessions/sessions.module').then(m => m.SessionsModule)
       }
     ]
   },
-
   {
     path: '',
     component: AdminLayoutSidebarLargeComponent,
     canActivate: [AuthGuard],
-    children: adminRoutes
+    children: [
+      {
+        path: '',
+        loadChildren: () => import('./views/pages/pages.module').then(m => m.PagesModule)
+      }
+    ]
   },
   {
     path: '**',
@@ -47,7 +39,7 @@ const routes: Routes = [
 ];
 
 @NgModule({
-  imports: [RouterModule.forRoot(routes, { useHash: true })],
+  imports: [RouterModule.forRoot(routes)],
   exports: [RouterModule]
 })
 export class AppRoutingModule { }

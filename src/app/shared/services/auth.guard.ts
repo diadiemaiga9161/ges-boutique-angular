@@ -15,7 +15,7 @@ export class AuthGuard implements CanActivate {
   canActivate(route: ActivatedRouteSnapshot): boolean {
     // Vérifier si l'utilisateur est authentifié
     if (!this.auth.isAuthenticated()) {
-      this.router.navigateByUrl('/sessions/signin');
+      this.router.navigateByUrl('/connexion');
       return false;
     }
 

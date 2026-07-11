@@ -80,7 +80,7 @@ export class ConnexionComponent implements OnInit {
           timerProgressBar: true,
           showClass: { popup: 'animate__animated animate__fadeInDown' }
         }).then(() => {
-          this.router.navigate(['/pages/produit']);
+          this.router.navigate(['/produit']);
         });
       }
     });
@@ -98,7 +98,7 @@ export class ConnexionComponent implements OnInit {
   }
 
   goToPage() {
-    this.router.navigate(['/sessions/inscription']);
+    this.router.navigate(['/inscription']);
   }
 
   resetForm() {

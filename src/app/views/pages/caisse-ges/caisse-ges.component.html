@@ -1,4 +1,4 @@
-﻿<div class="container-fluid py-4 app-page">
+<div class="container-fluid py-4 app-page">
   <!-- En-tête -->
   <div class="app-page-header mb-4">
     <div class="app-page-header-left">
@@ -255,7 +255,7 @@
  <span class="badge bg-light text-dark me-2">Total dû: {{ formatPrice(montantTotalCredits) }}</span>
  <span class="badge bg-danger" *ngIf="creditsEnRetard.length > 0"> {{ creditsEnRetard.length }} en retard</span>
  <button class="btn btn-sm btn-dark" (click)="imprimerCreditsEnCours()" title="Imprimer la liste des crédits en cours">
-   <i class="fa fa-file-pdf-o me-1"> Imprimer</i> Imprimer
+   <i class="fa fa-file-pdf-o me-1"></i> Imprimer
  </button>
  </div>
  </div>

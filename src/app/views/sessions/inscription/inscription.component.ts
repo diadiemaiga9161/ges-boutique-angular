@@ -197,6 +197,6 @@ export class InscriptionComponent {
   }
 
   goToLogin() {
-    this.router.navigate(['/sessions/connexion']);
+    this.router.navigate(['/connexion']);
   }
 }

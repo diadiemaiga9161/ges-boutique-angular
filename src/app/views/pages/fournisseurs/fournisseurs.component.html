@@ -1,4 +1,4 @@
-﻿<div class="container-fluid py-4 app-page">
+<div class="container-fluid py-4 app-page">
 
   <!-- En-tête -->
   <div class="app-page-header mb-4">
@@ -11,7 +11,7 @@
     </div>
     <div class="app-page-header-actions">
       <button class="btn btn-outline-secondary btn-sm" (click)="telechargerPdfTousFournisseurs()">
-        <i class="fa fa-file-pdf-o me-1"> Liste PDF</i> Liste PDF
+        <i class="fa fa-file-pdf-o me-1"></i> Liste PDF
       </button>
       <button class="btn btn-primary" (click)="ouvrirFormulaire()">
         <i class="fa fa-plus me-1"></i> {{ 'SUPPLIERS.NEW' | translate }}
@@ -244,7 +244,7 @@
     <!-- Résumé mensuel par produit -->
     <div *ngIf="filtreFournisseurId && !isLoading && resumeMensuelProduits.length > 0" class="card mb-3 border-primary">
       <div class="card-header bg-primary text-white py-2">
-        <i class="fa fa-calendar me-2"> Achats du mois en cours — par produit</i> Achats du mois en cours — par produit
+        <i class="fa fa-calendar me-2"></i> Achats du mois en cours — par produit
       </div>
       <div class="card-body p-2">
         <table class="table table-sm mb-0">
@@ -308,7 +308,7 @@
                         *ngIf="achat.statut !== 'ANNULE'"
                         [disabled]="isAnnulationEnCours"
                         title="Annuler cet achat">
-                  <i class="fa fa-ban mr-1"> Annuler</i> Annuler
+                  <i class="fa fa-ban mr-1"></i> Annuler
                 </button>
                 <button class="btn btn-xs btn-outline-info ml-1" (click)="toggleDetailAchat(achat)" title="Voir les produits de cet achat">
                   <i class="fa mr-1" [class.fa-chevron-down]="achatDetail?.id !== achat.id" [class.fa-chevron-up]="achatDetail?.id === achat.id"></i>
@@ -343,7 +343,7 @@
                     </tbody>
                   </table>
                   <p *ngIf="!achatDetailLoading && !achatDetail?.ligneAchats?.length" class="text-muted mb-0 py-2">
-                    <i class="fa fa-info-circle mr-1"> Aucun détail de produit disponible pour cet achat.</i> Aucun détail de produit disponible pour cet achat.
+                    <i class="fa fa-info-circle mr-1"></i> Aucun détail de produit disponible pour cet achat.
                   </p>
                 </div>
               </td>
@@ -469,7 +469,7 @@
         </div>
         <div class="toolbar-right">
           <button class="btn btn-sm btn-outline-primary mr-2" (click)="telechargerFicheFournisseur()">
-            <i class="fa fa-address-card-o mr-1"> Fiche fournisseur</i> Fiche fournisseur
+            <i class="fa fa-address-card-o mr-1"></i> Fiche fournisseur
           </button>
           <button class="btn btn-sm btn-outline-secondary" (click)="telechargerPdfSituation()" [disabled]="!situation">
             <i class="i-File-Download mr-1"></i> PDF situation
@@ -557,7 +557,7 @@
             </table>
           </div>
           <p class="text-muted" style="font-size:0.75rem;margin-top:4px">
-            <i class="fa fa-info-circle mr-1"> Calculé depuis les achats chargés dans l'onglet Achats. Chargez les achats d'abord pour voir ce résumé.</i> Calculé depuis les achats chargés dans l'onglet Achats. Chargez les achats d'abord pour voir ce résumé.
+            <i class="fa fa-info-circle mr-1"></i> Calculé depuis les achats chargés dans l'onglet Achats. Chargez les achats d'abord pour voir ce résumé.
           </p>
         </div>
         <div class="empty-state-sm mt-2 mb-3" *ngIf="achats.length === 0">
@@ -919,7 +919,7 @@
     <div class="modal-content" style="border-radius:16px;border:none">
       <div class="modal-header" style="background:linear-gradient(135deg,#081648,#1a56db);border-radius:16px 16px 0 0">
         <h5 class="modal-title text-white">
-          <i class="fa fa-address-card-o me-2"> Fiche fournisseur PDF</i> Fiche fournisseur PDF
+          <i class="fa fa-address-card-o me-2"></i> Fiche fournisseur PDF
         </h5>
         <button class="btn-close btn-close-white" (click)="showFicheModal=false"></button>
       </div>
@@ -942,7 +942,7 @@
       <div class="modal-footer">
         <button class="btn btn-secondary" (click)="showFicheModal=false">Annuler</button>
         <button class="btn btn-primary" (click)="confirmerFicheFournisseur()" [disabled]="!ficheFournisseurSelectionne">
-          <i class="fa fa-file-pdf-o me-1"> Générer la fiche</i> Générer la fiche
+          <i class="fa fa-file-pdf-o me-1"></i> Générer la fiche
         </button>
       </div>
     </div>

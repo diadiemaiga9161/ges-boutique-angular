@@ -112,6 +112,7 @@ export interface Produit {
   tauxMarge?: number;
   joursAvantPeremption?: number;
   typeVente?: string;
+  niveaux?: { id?: number; nom: string; stock?: number; prixVente: number; prixAchat: number; facteur: number; ordre?: number; parentId?: number; }[];
 }
 
 export interface ProduitDto {
@@ -1236,8 +1237,16 @@ export class ProductService {
     return this.http.get<any>(`${this.fournisseurAchatApiUrl}/paiements/${fournisseurId}`, {
       headers: this.getAuthHeaders()
     }).pipe(
-      map(response => this.extractData<PaiementFournisseur[]>(response) || []),
-      catchError(error => this.handleError(error, `historique paiements du fournisseur ${fournisseurId}`))
+      map(response => {
+        if (response && response.paiements && Array.isArray(response.paiements)) return response.paiements;
+        if (response && response.data && Array.isArray(response.data)) return response.data;
+        if (Array.isArray(response)) return response;
+        return [];
+      }),
+      catchError(error => {
+        console.error('❌ Erreur getHistoriquePaiements:', error);
+        return of([]);
+      })
     );
   }
 

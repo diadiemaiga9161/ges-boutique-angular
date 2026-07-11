@@ -8,11 +8,12 @@ export interface ProduitNiveau {
   id?: number;
   produitId?: number;
   nom: string;
-  ordre: number;
-  facteur: number;
+  ordre?: number;       // gardé pour compatibilité, mais plus obligatoire
+  parentId?: number;    // null = niveau racine (le plus grand emballage)
+  facteur: number;      // combien de CE niveau dans 1 unité du parent
   prixAchat: number;
   prixVente: number;
-  stock?: number; // stock propre de ce niveau (cascade auto si épuisé)
+  stock?: number;       // stock propre de ce niveau (cascade auto si épuisé)
 }
 
 @Injectable({ providedIn: 'root' })
@@ -64,12 +65,28 @@ export class ProduitNiveauService {
     );
   }
 
-  calculerFacteurTotal(niveaux: ProduitNiveau[], ordreNiveau: number): number {
-    const sorted = [...niveaux].sort((a, b) => a.ordre - b.ordre);
-    const maxOrdre = Math.max(...sorted.map(n => n.ordre));
+  calculerFacteurTotal(niveaux: ProduitNiveau[], ordreOuId: number): number {
+    // Si les niveaux utilisent parentId, on calcule via la hiérarchie
+    const usesParentId = niveaux.some(n => n.parentId !== undefined && n.parentId !== null);
+    if (usesParentId) {
+      // Trouver le niveau cible par id
+      const cible = niveaux.find(n => n.id === ordreOuId);
+      if (!cible) return 1;
+      // Accumuler facteur en remontant jusqu'à la racine
+      let total = 1;
+      let courant: ProduitNiveau | undefined = cible;
+      while (courant && courant.parentId) {
+        total *= courant.facteur;
+        courant = niveaux.find(n => n.id === courant!.parentId);
+      }
+      return total;
+    }
+    // Ancien comportement basé sur ordre
+    const sorted = [...niveaux].sort((a, b) => (a.ordre ?? 0) - (b.ordre ?? 0));
+    const maxOrdre = Math.max(...sorted.map(n => n.ordre ?? 0));
     let total = 1;
     for (const n of sorted) {
-      if (n.ordre >= ordreNiveau && n.ordre < maxOrdre) {
+      if ((n.ordre ?? 0) >= ordreOuId && (n.ordre ?? 0) < maxOrdre) {
         total *= n.facteur;
       }
     }

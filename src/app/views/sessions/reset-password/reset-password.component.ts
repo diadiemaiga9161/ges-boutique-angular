@@ -45,7 +45,7 @@ export class ResetPasswordComponent implements OnInit {
       next: res => {
         this.isLoading = false;
         this.successMessage = res.message;
-        setTimeout(() => this.router.navigateByUrl('/sessions/connexion'), 3000);
+        setTimeout(() => this.router.navigateByUrl('/connexion'), 3000);
       },
       error: err => {
         this.isLoading = false;

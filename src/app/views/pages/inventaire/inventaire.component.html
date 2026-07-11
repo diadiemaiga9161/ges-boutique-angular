@@ -1,4 +1,4 @@
-﻿<div class="container-fluid py-4 app-page">
+<div class="container-fluid py-4 app-page">
   <!-- En-tête -->
   <div class="app-page-header mb-4">
     <div class="app-page-header-left">
@@ -314,7 +314,7 @@
         <div class="row mt-3">
           <div class="col-12">
             <button class="btn btn-primary" type="button" (click)="rechercherMouvements()">
-              <i class="fa fa-calendar me-1"> Appliquer la période</i> Appliquer la période
+              <i class="fa fa-calendar me-1"></i> Appliquer la période
             </button>
           </div>
         </div>
@@ -389,22 +389,22 @@
                     <span *ngIf="mouvement.motif.toLowerCase().includes('achat fournisseur')"
                           class="badge badge-pill mr-1"
                           style="background-color:#17a2b8; color:#fff; font-size:0.72rem;">
-                      <i class="fa fa-truck"> Fournisseur</i> Fournisseur
+                      <i class="fa fa-truck"></i> Fournisseur
                     </span>
                     <span *ngIf="mouvement.motif.toLowerCase().includes('vente')"
                           class="badge badge-pill mr-1"
                           style="background-color:#fd7e14; color:#fff; font-size:0.72rem;">
-                      <i class="fa fa-shopping-cart"> Vente</i> Vente
+                      <i class="fa fa-shopping-cart"></i> Vente
                     </span>
                     <span *ngIf="mouvement.motif.toLowerCase().includes('retour')"
                           class="badge badge-pill mr-1"
                           style="background-color:#6f42c1; color:#fff; font-size:0.72rem;">
-                      <i class="fa fa-undo"> Retour</i> Retour
+                      <i class="fa fa-undo"></i> Retour
                     </span>
                     <span *ngIf="mouvement.motif.toLowerCase().includes('annulation')"
                           class="badge badge-pill mr-1"
                           style="background-color:#dc3545; color:#fff; font-size:0.72rem;">
-                      <i class="fa fa-times"> Annulation</i> Annulation
+                      <i class="fa fa-times"></i> Annulation
                     </span>
                   </ng-container>
                   <br *ngIf="mouvement.motif">
@@ -794,7 +794,7 @@
         </button>
         <button type="button" class="btn btn-warning" (click)="ajusterStock()" [disabled]="isLoading || ajustementForm.produitId === 0">
           <span *ngIf="!isLoading">
-            <i class="fa fa-save me-1"> Ajuster</i> Ajuster
+            <i class="fa fa-save me-1"></i> Ajuster
           </span>
           <span *ngIf="isLoading">
             <span class="spinner-border spinner-border-sm me-1"></span> Ajustement...
@@ -821,19 +821,19 @@
           <label class="form-label fw-semibold">Période d'export</label>
           <div class="d-flex flex-wrap gap-2">
             <button type="button" class="btn btn-outline-primary" [class.active]="exportPeriode === 'jour'" (click)="exportPeriode = 'jour'">
-              <i class="fa fa-calendar-day"> Jour</i> Jour
+              <i class="fa fa-calendar-day"></i> Jour
             </button>
             <button type="button" class="btn btn-outline-primary" [class.active]="exportPeriode === 'semaine'" (click)="exportPeriode = 'semaine'">
-              <i class="fa fa-calendar-week"> Semaine</i> Semaine
+              <i class="fa fa-calendar-week"></i> Semaine
             </button>
             <button type="button" class="btn btn-outline-primary" [class.active]="exportPeriode === 'mois'" (click)="exportPeriode = 'mois'">
-              <i class="fa fa-calendar-alt"> Mois</i> Mois
+              <i class="fa fa-calendar-alt"></i> Mois
             </button>
             <button type="button" class="btn btn-outline-primary" [class.active]="exportPeriode === 'annee'" (click)="exportPeriode = 'annee'">
-              <i class="fa fa-calendar-year"> Année</i> Année
+              <i class="fa fa-calendar-year"></i> Année
             </button>
             <button type="button" class="btn btn-outline-primary" [class.active]="exportPeriode === 'personnalise'" (click)="exportPeriode = 'personnalise'">
-              <i class="fa fa-calendar"> Personnalisé</i> Personnalisé
+              <i class="fa fa-calendar"></i> Personnalisé
             </button>
           </div>
         </div>
@@ -878,7 +878,7 @@
     <div class="modal-content">
       <div class="modal-header bg-info text-white">
         <h5 class="modal-title">
-          <i class="fa fa-history me-2"> Historique - </i> Historique - {{ selectedProduit.nom }}
+          <i class="fa fa-history me-2"></i> Historique - {{ selectedProduit.nom }}
         </h5>
         <button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button>
       </div>

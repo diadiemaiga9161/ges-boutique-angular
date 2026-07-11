@@ -1,10 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { catchError, Observable, of, map, forkJoin, switchMap } from 'rxjs';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import QRCode from 'qrcode';
 import { ClientService, Client } from './client.service';
+import { FactureService } from './facture.service';
 import { environment } from '../../../environments/environment';
 
 export interface TicketAvecClient {
@@ -52,7 +50,8 @@ export class PaiementService {
 
   constructor(
     private http: HttpClient,
-    private clientService: ClientService
+    private clientService: ClientService,
+    private factureService: FactureService
   ) {}
 
   // ============================================
@@ -436,211 +435,34 @@ export class PaiementService {
   // ============================================
 
   async genererPetitRecuCompletPDF(paiement: Paiement, ticket?: TicketAvecClient, totalDejaPaye?: number): Promise<void> {
-    try {
-      console.log('=== DÉBUT GÉNÉRATION PDF ===');
-      console.log('Paiement:', paiement);
-      console.log('Ticket fourni:', ticket);
-      
-      // Format A7 (74 x 105 mm) - petit format
-      const doc = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: [74, 105]
-      });
+    const lignes: string[][] = [[
+      paiement.reference || `#${paiement.id}`,
+      this.formatDateHeure(paiement.datePaiement || new Date().toISOString()),
+      this.getModePaiementLibelle(paiement.modePaiement),
+      this.formatMontant(paiement.montant)
+    ]];
 
-      const margin = 5;
-      let yPos = margin;
-      
-      // En-tête - Titre principal
-      doc.setFontSize(12);
-      doc.setTextColor(67, 97, 238);
-      doc.text('REÇU DE PAIEMENT', 74/2, yPos, { align: 'center' });
-      yPos += 5;
-
-      // Ligne de séparation
-      doc.setDrawColor(200, 200, 200);
-      doc.setLineWidth(0.3);
-      doc.line(margin, yPos, 74 - margin, yPos);
-      yPos += 3;
-
-      // Informations du paiement
-      doc.setFontSize(8);
-      doc.setTextColor(0, 0, 0);
-
-      // Date et heure
-      const datePaiement = paiement.datePaiement || new Date().toISOString();
-      doc.text(`Date: ${this.formatDateHeure(datePaiement)}`, margin, yPos);
-      yPos += 4;
-
-      // Référence du paiement
-      if (paiement.reference) {
-        doc.text(`Réf: ${paiement.reference}`, margin, yPos);
-        yPos += 4;
-      }
-
-      // ID Paiement
-      doc.text(`Paiement #${paiement.id || 'N/A'}`, margin, yPos);
-      yPos += 4;
-
-      // Montant en gros
-      doc.setFontSize(14);
-      doc.setTextColor(39, 174, 96);
-      doc.text(`${this.formatMontant(paiement.montant)}`, 74/2, yPos, { align: 'center' });
-      yPos += 7;
-
-      // Mode et type de paiement
-      doc.setFontSize(8);
-      doc.setTextColor(0, 0, 0);
-      doc.text(`Mode: ${this.getModePaiementLibelle(paiement.modePaiement)}`, margin, yPos);
-      yPos += 4;
-      
-      if (paiement.typePaiement) {
-        doc.text(`Type: ${this.getTypePaiementLibelle(paiement.typePaiement)}`, margin, yPos);
-        yPos += 4;
-      }
-
-      // Ligne de séparation
-      doc.setDrawColor(200, 200, 200);
-      doc.setLineWidth(0.2);
-      doc.line(margin, yPos, 74 - margin, yPos);
-      yPos += 4;
-
-      // Informations du ticket
-      doc.setFontSize(9);
-      doc.setTextColor(41, 128, 185);
-      doc.text('INFORMATIONS DU TICKET', 74/2, yPos, { align: 'center' });
-      yPos += 5;
-
-      doc.setFontSize(8);
-      doc.setTextColor(0, 0, 0);
-      
-      // Afficher les informations du ticket
-      if (ticket) {
-        console.log('Ticket disponible pour PDF:', ticket);
-        
-        // Numéro de ticket
-        const ticketNumero = ticket.numeroTicket || `Ticket #${ticket.id || paiement.ticketId || 'N/A'}`;
-        doc.text(`Ticket: ${ticketNumero}`, margin, yPos);
-        yPos += 4;
-
-        // Total du ticket
-        const prixTotal = ticket.prixTotal || 0;
-        doc.text(`Total: ${this.formatMontant(prixTotal)}`, margin, yPos);
-        yPos += 4;
-
-        // Date création ticket si disponible
-        if (ticket.dateCreation) {
-          doc.text(`Créé: ${this.formatDate(ticket.dateCreation)}`, margin, yPos);
-          yPos += 4;
-        }
-
-        // Informations client
-        if (ticket.client && (ticket.client.nom || ticket.client.prenom || ticket.client.telephone)) {
-          doc.setFontSize(9);
-          doc.setTextColor(52, 152, 219);
-          doc.text('INFORMATIONS CLIENT', 74/2, yPos, { align: 'center' });
-          yPos += 5;
-
-          doc.setFontSize(8);
-          doc.setTextColor(0, 0, 0);
-          
-          // Nom complet
-          if (ticket.client.nom || ticket.client.prenom) {
-            const nomComplet = `${ticket.client.prenom || ''} ${ticket.client.nom || ''}`.trim();
-            doc.text(`Nom: ${nomComplet}`, margin, yPos);
-            yPos += 4;
-          }
-          
-          // Téléphone
-          if (ticket.client.telephone) {
-            doc.text(`Tél: ${ticket.client.telephone}`, margin, yPos);
-            yPos += 4;
-          }
-        } else if (ticket.clientId) {
-          // Afficher au moins l'ID client
-          doc.text(`Client ID: ${ticket.clientId}`, margin, yPos);
-          yPos += 4;
-        } else {
-          doc.text('Client: Non spécifié', margin, yPos);
-          yPos += 4;
-        }
-
-        // Calcul du reste à payer
-        try {
-          let totalPayeLocal = totalDejaPaye || paiement.montant;
-          
-          if (ticket.id && ticket.id > 0 && !totalDejaPaye) {
-            try {
-              totalPayeLocal = await this.totalPaye(ticket.id).toPromise();
-            } catch (error) {
-              console.warn('Erreur récupération total payé:', error);
-            }
-          }
-          
-          const resteAPayer = this.calculerResteAPayer(totalPayeLocal, prixTotal);
-          
-          doc.setFontSize(9);
-          if (resteAPayer > 0) {
-            doc.setTextColor(231, 76, 60); // Rouge
-          } else {
-            doc.setTextColor(46, 204, 113); // Vert
-          }
-          
-          doc.text(`Reste à payer: ${this.formatMontant(resteAPayer)}`, margin, yPos);
-          yPos += 4;
-        } catch (error) {
-          console.warn('Erreur calcul reste à payer:', error);
-        }
-      } else {
-        // Si aucun ticket disponible
-        doc.text(`Ticket ID: #${paiement.ticketId || 'Non spécifié'}`, margin, yPos);
-        yPos += 4;
-        doc.text('Client: Information non disponible', margin, yPos);
-        yPos += 4;
-      }
-
-      // QR Code
-      if (yPos < 80) {
-        const qrCodeData = `PAIEMENT#${paiement.id || 'new'}#T${paiement.ticketId || 0}#${paiement.montant}#${this.formatDate(datePaiement)}`;
-        const qrCodeUrl = await QRCode.toDataURL(qrCodeData, { 
-          width: 25, 
-          margin: 0,
-          color: {
-            dark: '#000000',
-            light: '#FFFFFF'
-          }
-        });
-        
-        // Positionner le QR code en bas à droite
-        doc.addImage(qrCodeUrl, 'PNG', 74 - margin - 25, 105 - margin - 25, 25, 25);
-        
-        // Texte sous le QR code
-        doc.setFontSize(6);
-        doc.setTextColor(100, 100, 100);
-        doc.text('Scan pour vérifier', 74 - margin - 12.5, 105 - margin - 2, { align: 'center' });
-      }
-
-      // Pied de page
-      doc.setFontSize(7);
-      doc.setTextColor(100, 100, 100);
-      
-      // Date de génération
-      doc.text(`Généré le: ${new Date().toLocaleDateString('fr-FR')} ${new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`, margin, 105 - margin - 10);
-      
-      // Signature
-      doc.line(margin, 105 - margin - 5, margin + 20, 105 - margin - 5);
-      doc.text('Signature', margin + 10, 105 - margin - 2, { align: 'center' });
-
-      // Nom du fichier
-      const fileName = `recu-petit-${paiement.id || 'new'}-${this.formatDate(datePaiement).replace(/\//g, '-')}.pdf`;
-      doc.save(fileName);
-      
-      console.log('=== PDF GÉNÉRÉ AVEC SUCCÈS ===', fileName);
-
-    } catch (error) {
-      console.error('Erreur génération petit reçu complet:', error);
-      throw new Error('Erreur lors de la génération du reçu petit format: ' + error);
+    const totaux: { label: string; valeur: string }[] = [
+      { label: 'Montant payé', valeur: this.formatMontant(paiement.montant) }
+    ];
+    if (totalDejaPaye !== undefined && ticket?.prixTotal) {
+      const resteAPayer = this.calculerResteAPayer(totalDejaPaye, ticket.prixTotal);
+      totaux.push({ label: 'Reste à payer', valeur: this.formatMontant(resteAPayer) });
     }
+
+    const clientNom = ticket?.client
+      ? [ticket.client.prenom, ticket.client.nom].filter(Boolean).join(' ') || 'N/A'
+      : 'N/A';
+
+    this.factureService.ouvrirDocumentPDF({
+      titre: 'REÇU DE PAIEMENT',
+      sousTitre: ticket
+        ? `Ticket N° ${ticket.numeroTicket || ticket.id} — Client : ${clientNom}`
+        : '',
+      colonnes: ['Référence', 'Date', 'Mode', 'Montant'],
+      lignes,
+      totaux
+    });
   }
 
   // ============================================
@@ -648,239 +470,49 @@ export class PaiementService {
   // ============================================
 
   async telechargerRecuPaiementPDF(paiement: Paiement): Promise<void> {
-    try {
-      console.log('=== DÉBUT TÉLÉCHARGEMENT REÇU ===');
-      console.log('Paiement initial:', paiement);
-      
-      let ticketComplet: TicketAvecClient | undefined;
-      let totalPayeTicket = 0;
-      
-      // ÉTAPE 1: Si le paiement a déjà un ticket complet avec client
-      if (paiement.ticket && paiement.ticket.client && (paiement.ticket.client.nom || paiement.ticket.client.prenom)) {
-        console.log('✅ Ticket complet déjà présent dans le paiement');
-        ticketComplet = paiement.ticket;
-      }
-      // ÉTAPE 2: Sinon, charger le ticket avec toutes ses informations
-      else if (paiement.ticketId && paiement.ticketId > 0) {
-        console.log('🔄 Chargement du ticket complet... ID:', paiement.ticketId);
-        
-        try {
-          // Charger le ticket avec ses détails complets
-          const ticketObservable = this.getTicketById(paiement.ticketId);
-          const totalPayeObservable = this.totalPaye(paiement.ticketId);
-          
-          const [ticket, totalPaye] = await Promise.all([
-            ticketObservable.toPromise(),
-            totalPayeObservable.toPromise().catch(() => paiement.montant)
-          ]);
-          
-          ticketComplet = ticket;
-          totalPayeTicket = totalPaye;
-          
-          console.log('✅ Ticket chargé avec succès:', ticketComplet);
-          console.log('💰 Total déjà payé:', totalPayeTicket);
-          
-        } catch (ticketError) {
-          console.error('❌ Erreur chargement ticket:', ticketError);
-          // Créer un ticket minimal
-          ticketComplet = {
-            id: paiement.ticketId,
-            numeroTicket: `Ticket #${paiement.ticketId}`,
-            prixTotal: 0,
-            statut: 'INCONNU',
-            clientId: 0
-          };
-        }
-      } else {
-        console.warn('⚠️ Paiement sans ticketId valide');
-        ticketComplet = {
-          id: 0,
-          numeroTicket: 'Non spécifié',
-          prixTotal: 0,
-          statut: 'INCONNU'
-        };
-      }
-      
-      // ÉTAPE 3: S'assurer que le paiement a une date
-      if (!paiement.datePaiement) {
-        paiement.datePaiement = new Date().toISOString();
-        console.log('📅 Date de paiement ajoutée:', paiement.datePaiement);
-      }
-      
-      // ÉTAPE 4: S'assurer que le paiement a un ID temporaire si nouveau
-      if (!paiement.id) {
-        paiement.id = Math.floor(Math.random() * 10000) + 1000;
-        console.log('🆔 ID temporaire ajouté:', paiement.id);
-      }
-      
-      console.log('=== DONNÉES POUR PDF ===');
-      console.log('- Paiement ID:', paiement.id);
-      console.log('- Ticket ID:', paiement.ticketId);
-      console.log('- Ticket complet:', !!ticketComplet);
-      if (ticketComplet) {
-        console.log('- Numéro ticket:', ticketComplet.numeroTicket);
-        console.log('- Client ID:', ticketComplet.clientId);
-        console.log('- Client présent:', !!ticketComplet.client);
-        if (ticketComplet.client) {
-          console.log('- Nom client:', ticketComplet.client.nom);
-          console.log('- Prénom client:', ticketComplet.client.prenom);
-          console.log('- Téléphone client:', ticketComplet.client.telephone);
-        }
-      }
-      
-      // ÉTAPE 5: Générer le PDF
-      await this.genererPetitRecuCompletPDF(paiement, ticketComplet, totalPayeTicket);
-      console.log('=== PDF PETIT FORMAT GÉNÉRÉ AVEC SUCCÈS ===');
-      
-    } catch (error) {
-      console.error('❌ Erreur téléchargement reçu petit format:', error);
-      let errorMessage = 'Erreur lors du téléchargement du reçu';
-      if (error instanceof Error) {
-        errorMessage = error.message;
-      }
-      throw new Error(errorMessage);
-    }
+    await this.genererPetitRecuCompletPDF(paiement);
   }
 
   async telechargerPaiementsTicketPDF(ticketId: number): Promise<void> {
-    try {
-      console.log('Génération relevé pour ticket ID:', ticketId);
-      
-      // Récupérer toutes les informations nécessaires
-      const [ticketData, paiementsData] = await Promise.all([
-        this.getTicketByIdAvecPaiements(ticketId).toPromise(),
-        this.afficherParTicketAvecDetails(ticketId).toPromise()
-      ]);
-      
-      if (!ticketData || !ticketData.ticket) {
-        throw new Error('Ticket non trouvé');
-      }
-      
-      const ticket = ticketData.ticket;
-      const paiements = paiementsData || [];
-      
-      if (paiements.length === 0) {
-        throw new Error('Aucun paiement pour ce ticket');
-      }
-      
-      // Format petit pour le relevé
-      const doc = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: [105, 148] // A6
-      });
-      
-      // Titre
-      doc.setFontSize(16);
-      doc.setTextColor(67, 97, 238);
-      doc.text('RELEVÉ DES PAIEMENTS', 105/2, 15, { align: 'center' });
-      
-      doc.setDrawColor(200, 200, 200);
-      doc.setLineWidth(0.3);
-      doc.line(10, 20, 95, 20);
-      
-      let yPos = 30;
-      
-      // Informations du ticket
-      doc.setFontSize(10);
-      doc.setTextColor(0, 0, 0);
-      
-      doc.text(`Ticket N°: ${ticket.numeroTicket || ticket.id}`, 10, yPos);
-      yPos += 6;
-      
-      doc.text(`Date création: ${this.formatDate(ticket.dateCreation)}`, 10, yPos);
-      yPos += 6;
-      
-      // Informations client
-      if (ticket.client) {
-        const nomComplet = `${ticket.client.prenom || ''} ${ticket.client.nom || ''}`.trim();
-        if (nomComplet) {
-          doc.text(`Client: ${nomComplet}`, 10, yPos);
-          yPos += 6;
-        }
-        
-        if (ticket.client.telephone) {
-          doc.text(`Téléphone: ${ticket.client.telephone}`, 10, yPos);
-          yPos += 6;
-        }
-      } else if (ticket.clientId) {
-        doc.text(`Client: ID #${ticket.clientId}`, 10, yPos);
-        yPos += 6;
-      } else {
-        doc.text('Client: Non spécifié', 10, yPos);
-        yPos += 6;
-      }
-      
-      yPos += 5;
-      
-      // Liste des paiements
-      doc.setFontSize(12);
-      doc.setTextColor(39, 174, 96);
-      doc.text('LISTE DES PAIEMENTS', 10, yPos);
-      yPos += 8;
-      
-      const tableData = paiements.map(p => [
-        this.formatDate(p.datePaiement),
-        this.getModePaiementLibelle(p.modePaiement).substring(0, 10),
-        this.formatMontant(p.montant)
-      ]);
-      
-      autoTable(doc, {
-        startY: yPos,
-        head: [['Date', 'Mode', 'Montant']],
-        body: tableData,
-        theme: 'striped',
-        headStyles: { 
-          fillColor: [39, 174, 96], 
-          textColor: [255, 255, 255],
-          fontSize: 9 
-        },
-        margin: { left: 10, right: 10 },
-        tableWidth: 85,
-        styles: { fontSize: 8 }
-      });
-      
-      // Calcul des totaux
-      const totalPaye = paiements.reduce((sum, p) => sum + p.montant, 0);
-      const resteAPayer = this.calculerResteAPayer(totalPaye, ticket.prixTotal || 0);
-      
-      yPos = (doc as any).lastAutoTable.finalY + 10;
-      
-      doc.setFontSize(10);
-      doc.setTextColor(0, 0, 0);
-      doc.text(`Total payé: ${this.formatMontant(totalPaye)}`, 10, yPos);
-      yPos += 6;
-      
-      if (resteAPayer > 0) {
-        doc.setTextColor(231, 76, 60);
-      } else {
-        doc.setTextColor(46, 204, 113);
-      }
-      doc.text(`Reste à payer: ${this.formatMontant(resteAPayer)}`, 10, yPos);
-      
-      // QR Code
-      const qrData = `TICKET#${ticket.id}#${totalPaye}#${resteAPayer}`;
-      const qrCodeUrl = await QRCode.toDataURL(qrData, { width: 40, margin: 0 });
-      
-      doc.addImage(qrCodeUrl, 'PNG', 60, yPos - 20, 35, 35);
-      
-      // Signature
-      yPos += 25;
-      doc.setFontSize(8);
-      doc.setTextColor(100, 100, 100);
-      doc.text('Signature client:', 10, yPos);
-      doc.line(10, yPos + 2, 50, yPos + 2);
-      
-      // Sauvegarder
-      const fileName = `releve-ticket-${ticket.numeroTicket || ticket.id}.pdf`;
-      doc.save(fileName);
-      
-      console.log('Relevé petit format généré avec succès:', fileName);
-      
-    } catch (error) {
-      console.error('Erreur génération relevé petit format:', error);
-      throw new Error('Erreur lors de la génération du relevé: ' + (error instanceof Error ? error.message : String(error)));
+    const [ticketData, paiementsData] = await Promise.all([
+      this.getTicketByIdAvecPaiements(ticketId).toPromise(),
+      this.afficherParTicketAvecDetails(ticketId).toPromise()
+    ]);
+
+    if (!ticketData || !ticketData.ticket) {
+      throw new Error('Ticket non trouvé');
     }
+
+    const ticket = ticketData.ticket;
+    const paiements = paiementsData || [];
+
+    if (paiements.length === 0) {
+      throw new Error('Aucun paiement pour ce ticket');
+    }
+
+    const totalPaye = paiements.reduce((sum, p) => sum + p.montant, 0);
+    const resteAPayer = this.calculerResteAPayer(totalPaye, ticket.prixTotal || 0);
+
+    const clientNom = ticket.client
+      ? [ticket.client.prenom, ticket.client.nom].filter(Boolean).join(' ') || 'N/A'
+      : 'N/A';
+
+    const lignes = paiements.map(p => [
+      this.formatDate(p.datePaiement),
+      this.getModePaiementLibelle(p.modePaiement),
+      this.formatMontant(p.montant)
+    ]);
+
+    this.factureService.ouvrirDocumentPDF({
+      titre: 'RELEVÉ DES PAIEMENTS',
+      sousTitre: `Ticket N° ${ticket.numeroTicket || ticket.id} — Client : ${clientNom}`,
+      colonnes: ['Date', 'Mode', 'Montant'],
+      lignes,
+      totaux: [
+        { label: 'Total payé', valeur: this.formatMontant(totalPaye) },
+        { label: 'Reste à payer', valeur: this.formatMontant(resteAPayer) }
+      ]
+    });
   }
 
   async getTicketPaymentInfo(ticketId: number): Promise<{

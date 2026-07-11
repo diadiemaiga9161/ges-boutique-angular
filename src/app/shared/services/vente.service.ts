@@ -6,9 +6,8 @@ import { Observable, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { BoutiqueService } from './boutique.service';
 import { environment } from '../../../environments/environment';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { AuthService } from './auth.service';
+import { FactureService } from './facture.service';
 
 // =====================================================
 // ENUMS
@@ -166,6 +165,8 @@ export interface VenteMap {
   montantRestant?: number;
   dateReglement?: string;
   creditRegle?: boolean;
+  regleParNom?: string;
+  regleParId?: number;
   beneficeTotal?: number;
   annulee?: boolean;
   motifAnnulation?: string;
@@ -287,7 +288,8 @@ export class VenteService {
   constructor(
     private http: HttpClient,
     private authService: AuthService,
-    private boutiqueService: BoutiqueService
+    private boutiqueService: BoutiqueService,
+    private factureService: FactureService
   ) { }
 
   private getAuthHeaders(): HttpHeaders {
@@ -956,47 +958,89 @@ export class VenteService {
     this.genererFacturePDF(vente);
   }
 
-  private genererFacturePDF(vente: VenteMap): void {
+  private async fetchImageAsBase64(url: string): Promise<string> {
     try {
-      const html = this.creerHTMLFactureAvecLogo(vente);
-      const fenetre = window.open('', '_blank');
-      if (!fenetre) throw new Error('Impossible d\'ouvrir la fenêtre');
-      fenetre.document.write(html);
-      fenetre.document.close();
-      fenetre.onload = () => setTimeout(() => { fenetre.focus(); fenetre.print(); fenetre.addEventListener('afterprint', () => fenetre.close()); }, 500);
-    } catch (error) {
-      console.error('Erreur génération facture:', error);
-      throw new Error('Impossible de générer la facture');
+      const response = await fetch(url);
+      const blob = await response.blob();
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = () => resolve('');
+        reader.readAsDataURL(blob);
+      });
+    } catch {
+      return '';
     }
   }
 
-  private creerHTMLFactureAvecLogo(vente: VenteMap): string {
+  private genererFacturePDF(vente: VenteMap): void {
+    this.creerHTMLFactureAvecLogo(vente).then(html => {
+    document.getElementById('vente-inv-overlay')?.remove();
+    const overlay = document.createElement('div');
+    overlay.id = 'vente-inv-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;background:rgba(0,0,0,.65)';
+
+    const frame = document.createElement('iframe');
+    frame.style.cssText = 'flex:1;width:100%;border:none;background:#f8fafc';
+    frame.setAttribute('srcdoc', html);
+
+    const bar = document.createElement('div');
+    bar.style.cssText = 'background:#1a56db;padding:10px 16px;display:flex;gap:10px;align-items:center;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,.3)';
+
+    const btnClose = document.createElement('button');
+    btnClose.textContent = '✕ Fermer';
+    btnClose.style.cssText = 'background:#ef4444;color:#fff;border:none;border-radius:8px;padding:9px 20px;font-size:14px;font-weight:700;cursor:pointer';
+    btnClose.addEventListener('click', () => overlay.remove());
+
+    const btnPrint = document.createElement('button');
+    btnPrint.textContent = '🖨 Imprimer / PDF';
+    btnPrint.style.cssText = 'background:#fff;color:#1a56db;border:none;border-radius:8px;padding:9px 20px;font-size:14px;font-weight:700;cursor:pointer';
+    btnPrint.addEventListener('click', () => frame.contentWindow?.print());
+
+    bar.appendChild(btnClose);
+    bar.appendChild(btnPrint);
+    overlay.appendChild(bar);
+    overlay.appendChild(frame);
+    document.body.appendChild(overlay);
+    });
+  }
+
+  private async creerHTMLFactureAvecLogo(vente: VenteMap): Promise<string> {
     const date = this.formatDate(vente.dateVente);
     const boutique = this.boutiqueService.getInfo();
-    
-    // Utilisation du logo depuis assets/images/logo.png
-    const logoSrc = this.LOGO_PATH;
-    
+    const design = parseInt(localStorage.getItem('facture_design') || '1', 10);
+
+    const logoSrc = boutique.logo && (boutique.logo.startsWith('data:') || boutique.logo.startsWith('http'))
+      ? boutique.logo : this.LOGO_PATH;
+
+    const headerBg = design === 2
+      ? 'background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%)'
+      : design === 3 ? 'background:#ffffff;border-bottom:3px solid #18181b'
+      : 'background:linear-gradient(135deg,#081648 0%,#1a56db 100%)';
+    const headerColor = design === 3 ? '#18181b' : '#ffffff';
+    const accentColor = design === 2 ? '#f59e0b' : design === 3 ? '#18181b' : '#1a56db';
+    const thBg = design === 2 ? '#0f172a' : design === 3 ? '#18181b' : '#1a56db';
+
     const styles = `
       <style>
-        @media print { 
-          @page { margin: 10mm; } 
+        @media print {
+          @page { margin: 10mm; }
           body { font-family: Arial, sans-serif; font-size: 9pt; margin: 0; padding: 0; }
           .no-print { display: none; }
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 20px; }
-        .invoice-container { 
-          max-width: 800px; 
-          margin: 0 auto; 
-          background: white; 
+        .invoice-container {
+          max-width: 800px;
+          margin: 0 auto;
+          background: white;
           border-radius: 10px;
           box-shadow: 0 5px 20px rgba(0,0,0,0.1);
           overflow: hidden;
         }
-        .invoice-header { 
-          background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-          color: white; 
+        .invoice-header {
+          ${headerBg};
+          color: ${headerColor};
           padding: 20px;
           text-align: center;
         }
@@ -1028,12 +1072,12 @@ export class VenteService {
           background: #f8f9fa;
           padding: 12px;
           text-align: center;
-          border-bottom: 2px solid #2a5298;
+          border-bottom: 2px solid ${accentColor};
         }
         .facture-num { 
           font-size: 16pt; 
           font-weight: bold; 
-          color: #2a5298;
+          color: ${accentColor};
         }
         .info-section {
           display: flex;
@@ -1048,7 +1092,7 @@ export class VenteService {
           border-radius: 8px;
         }
         .info-card h4 {
-          color: #2a5298;
+          color: ${accentColor};
           font-size: 10pt;
           margin-bottom: 10px;
           border-bottom: 1px solid #dee2e6;
@@ -1078,7 +1122,7 @@ export class VenteService {
           text-align: left; 
         }
         th { 
-          background: #2a5298; 
+          background: ${thBg};
           color: white;
           font-weight: bold;
         }
@@ -1117,7 +1161,7 @@ export class VenteService {
           display: block; 
           margin: 20px auto; 
           padding: 10px 30px; 
-          background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+          background: ${thBg};
           color: white; 
           border: none; 
           border-radius: 25px;
@@ -1152,6 +1196,16 @@ export class VenteService {
         <td class="text-right"><strong>${this.formatPrice(p.sousTotal)}</strong></td>
       </tr>
     `).join('');
+
+    let venteQrBlock = '';
+    if (vente.id) {
+      const publicUrl = `${window.location.origin}/api/public/ventes/${vente.id}/facture`;
+      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=${encodeURIComponent(publicUrl)}`;
+      const qrBase64 = await this.fetchImageAsBase64(qrApiUrl);
+      if (qrBase64) {
+        venteQrBlock = `<div style="margin-top:10px;text-align:center"><img src="${qrBase64}" width="90" height="90" alt="QR" style="border-radius:6px"><div style="font-size:9pt;color:#94a3b8;margin-top:4px">Scanner pour voir la facture</div></div>`;
+      }
+    }
 
     const html = `
       <!DOCTYPE html>
@@ -1244,6 +1298,7 @@ export class VenteService {
           <div class="footer">
             <p>Merci de votre confiance ! À bientôt chez ${this.escapeHtml(boutique.nom || this.BOUTIQUE_NOM)}</p>
             <p style="margin-top: 5px;">Ce document fait office de facture et doit être conservé</p>
+            ${venteQrBlock}
           </div>
           
           <button class="print-btn no-print" onclick="window.print()">🖨️ Imprimer / Enregistrer en PDF</button>
@@ -1378,186 +1433,54 @@ export class VenteService {
   // ==================== EXPORTS PDF ====================
 
   exportVentesDetailToPDF(
-    ventes: VenteMap[], 
-    titre: string, 
-    produits: any[], 
-    dateDebut?: string, 
+    ventes: VenteMap[],
+    titre: string,
+    produits?: any[],
+    dateDebut?: string,
     dateFin?: string,
-    clientInfo?: { nom: string, prenom?: string, telephone?: string }
+    clientInfo?: { nom?: string; prenom?: string; telephone?: string }
   ): void {
     if (!ventes || ventes.length === 0) {
       throw new Error('Aucune vente à exporter');
     }
 
-    try {
-      const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-      const boutique = this.boutiqueService.getInfo();
-      const stats = this.calculateExportStats(ventes, produits);
-      const dateGeneration = new Date();
+    const boutique = this.boutiqueService.getInfo();
+    const stats = this.calculateExportStats(ventes, produits || []);
 
-      doc.setFontSize(20);
-      doc.setTextColor(40, 40, 40);
-      doc.text(boutique.nom || this.BOUTIQUE_NOM, doc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
-      
-      doc.setFontSize(10);
-      doc.setTextColor(100, 100, 100);
-      doc.text(boutique.adresse || this.BOUTIQUE_ADRESSE, doc.internal.pageSize.getWidth() / 2, 22, { align: 'center' });
-      doc.text(`Tel: ${boutique.telephone || this.BOUTIQUE_TELEPHONE}`, doc.internal.pageSize.getWidth() / 2, 29, { align: 'center' });
-      doc.text(`Email: ${boutique.email || this.BOUTIQUE_EMAIL}`, doc.internal.pageSize.getWidth() / 2, 36, { align: 'center' });
-      
-      doc.setFontSize(16);
-      doc.setTextColor(0, 0, 0);
-      doc.text(titre.replace(/_/g, ' '), doc.internal.pageSize.getWidth() / 2, 48, { align: 'center' });
-      
-      doc.setFontSize(9);
-      doc.setTextColor(80, 80, 80);
-      const dateStr = this.formatDateTimeForExport(dateGeneration.toISOString());
-      doc.text(`Généré le: ${dateStr}`, doc.internal.pageSize.getWidth() - 20, 55, { align: 'right' });
-
-      let periodeText = '';
-      if (dateDebut && dateFin) {
-        periodeText = `Période: du ${this.formatDateShort(dateDebut)} au ${this.formatDateShort(dateFin)}`;
-      } else if (dateDebut) {
-        periodeText = `Période: à partir du ${this.formatDateShort(dateDebut)}`;
-      } else if (dateFin) {
-        periodeText = `Période: jusqu'au ${this.formatDateShort(dateFin)}`;
-      } else {
-        periodeText = `Période: Toutes les ventes`;
-      }
-      doc.text(periodeText, 20, 55);
-
-      if (clientInfo && clientInfo.nom) {
-        doc.text(`Client: ${clientInfo.nom} ${clientInfo.prenom || ''}${clientInfo.telephone ? ` - Tél: ${clientInfo.telephone}` : ''}`, 20, 62);
-      }
-
-      let startY = 72;
-      const cardWidth = 45;
-      const cardHeight = 28;
-      
-      const statsCards = [
-        { label: 'CA Total', value: this.formatPlainNumber(stats.caTotal), color: [52, 152, 219] },
-        { label: 'Bénéfice Total', value: this.formatPlainNumber(stats.beneficeTotal), color: [46, 204, 113] },
-        { label: 'Marge Moyenne', value: `${stats.margeMoyenne.toFixed(1)}%`, color: [241, 196, 15] },
-        { label: 'CA Aujourd\'hui', value: this.formatPlainNumber(stats.caToday), color: [155, 89, 182] },
-        { label: 'Bénéfice Aujourd\'hui', value: this.formatPlainNumber(stats.beneficeToday), color: [230, 126, 34] },
-        { label: 'Marge Aujourd\'hui', value: `${stats.margeToday.toFixed(1)}%`, color: [231, 76, 60] }
-      ];
-
-      statsCards.forEach((card, index) => {
-        const x = 20 + (index * (cardWidth + 5));
-        if (x + cardWidth <= doc.internal.pageSize.getWidth() - 20) {
-          doc.setFillColor(card.color[0], card.color[1], card.color[2]);
-          doc.rect(x, startY, cardWidth, cardHeight, 'F');
-          doc.setTextColor(255, 255, 255);
-          doc.setFontSize(7);
-          doc.text(card.label, x + cardWidth / 2, startY + 7, { align: 'center' });
-          doc.setFontSize(9);
-          doc.setFont(undefined, 'bold');
-          doc.text(card.value, x + cardWidth / 2, startY + 18, { align: 'center' });
-        }
-      });
-
-      startY += cardHeight + 5;
-      const secondRowCards = [
-        { label: 'Total Ventes', value: stats.nombreVentes.toString(), color: [52, 73, 94] },
-        { label: 'Ventes Comptant', value: stats.nombreVentesComptant.toString(), color: [39, 174, 96] },
-        { label: 'Montant Comptant', value: this.formatPlainNumber(stats.montantTotalComptant), color: [39, 174, 96] },
-        { label: 'Ventes Crédit', value: stats.nombreVentesCredit.toString(), color: [241, 196, 15] },
-        { label: 'Montant Crédit', value: this.formatPlainNumber(stats.montantTotalCredit), color: [241, 196, 15] },
-        { label: 'Crédits en cours', value: this.formatPlainNumber(stats.montantCreditsEnCours), color: [230, 126, 34] }
-      ];
-
-      secondRowCards.forEach((card, index) => {
-        const x = 20 + (index * (cardWidth + 4));
-        if (x + cardWidth <= doc.internal.pageSize.getWidth() - 20) {
-          doc.setFillColor(card.color[0], card.color[1], card.color[2]);
-          doc.rect(x, startY, cardWidth, cardHeight, 'F');
-          doc.setTextColor(255, 255, 255);
-          doc.setFontSize(7);
-          doc.text(card.label, x + cardWidth / 2, startY + 7, { align: 'center' });
-          doc.setFontSize(9);
-          doc.setFont(undefined, 'bold');
-          doc.text(card.value, x + cardWidth / 2, startY + 18, { align: 'center' });
-        }
-      });
-
-      doc.setFont(undefined, 'normal');
-      doc.setTextColor(0, 0, 0);
-
-      doc.addPage();
-      
-      doc.setFontSize(14);
-      doc.text('DÉTAIL DES VENTES', doc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
-      
-      doc.setFontSize(9);
-      doc.setTextColor(100, 100, 100);
-      doc.text(`Nombre total de ventes: ${ventes.length}`, 20, 25);
-
-      const tableData = ventes.map(vente => [
-        vente.numeroVente,
-        this.formatDateShort(vente.dateVente),
-        this.formatTime(vente.dateVente),
-        vente.clientNom || (vente.clientDivers ? 'Client divers' : '-'),
-        vente.clientTelephone || '-',
-        vente.annulee ? 'ANNULÉE' : (!vente.estCredit ? 'COMPTANT' : (vente.creditRegle ? 'CRÉDIT RÉGLÉ' : (this.isCreditEnRetard(vente) ? 'CRÉDIT RETARD' : 'CRÉDIT'))),
-        this.getModePaiementLabel(vente.modePaiement),
-        this.formatPlainNumber(vente.montantTotal),
-        vente.estCredit ? this.formatPlainNumber(vente.montantVerse || 0) : '-',
-        vente.estCredit ? this.formatPlainNumber(vente.montantRestant || vente.montantTotal) : '-',
-        vente.vendeurNom,
-        vente.produits?.map(p => `${p.quantite}x ${p.produitNom}`).join(', ') || '-'
-      ]);
-
-      autoTable(doc, {
-        startY: 32,
-        head: [['N°', 'Date', 'Heure', 'Client', 'Tél', 'Type', 'Paiement', 'Montant', 'Versé', 'Reste', 'Vendeur', 'Produits']],
-        body: tableData,
-        theme: 'grid',
-        styles: { fontSize: 7, cellPadding: 2, overflow: 'linebreak' },
-        headStyles: { fillColor: [52, 73, 94], textColor: 255, fontSize: 7, fontStyle: 'bold' },
-        alternateRowStyles: { fillColor: [245, 245, 245] },
-        columnStyles: {
-          0: { cellWidth: 25 },
-          1: { cellWidth: 20 },
-          2: { cellWidth: 15 },
-          3: { cellWidth: 30 },
-          4: { cellWidth: 20 },
-          5: { cellWidth: 22 },
-          6: { cellWidth: 20 },
-          7: { cellWidth: 22, halign: 'right' },
-          8: { cellWidth: 20, halign: 'right' },
-          9: { cellWidth: 20, halign: 'right' },
-          10: { cellWidth: 25 },
-          11: { cellWidth: 50 }
-        },
-        didDrawPage: (data: any) => {
-          const pageCount = doc.getNumberOfPages();
-          doc.setFontSize(8);
-          doc.setTextColor(100, 100, 100);
-          doc.text(`Page ${data.pageNumber} / ${pageCount}`, doc.internal.pageSize.getWidth() - 20, doc.internal.pageSize.getHeight() - 10);
-          doc.text('Merci de votre confiance !', doc.internal.pageSize.getWidth() / 2, doc.internal.pageSize.getHeight() - 10, { align: 'center' });
-        }
-      });
-
-      let fileName = `${titre.replace(/ /g, '_')}`;
-      if (dateDebut && dateFin) {
-        fileName += `_${this.formatDateForFileName(dateDebut)}_AU_${this.formatDateForFileName(dateFin)}`;
-      } else if (dateDebut) {
-        fileName += `_DEPUIS_${this.formatDateForFileName(dateDebut)}`;
-      } else if (dateFin) {
-        fileName += `_JUSQUAU_${this.formatDateForFileName(dateFin)}`;
-      }
-      if (clientInfo && clientInfo.nom) {
-        fileName += `_CLIENT_${clientInfo.nom}`;
-      }
-      fileName += `_${this.formatDateForFileName(dateGeneration.toISOString())}.pdf`;
-      
-      doc.save(fileName);
-      
-    } catch (error) {
-      console.error('Erreur lors de la génération du PDF:', error);
-      throw new Error('Impossible de générer le PDF');
+    let sousTitre = boutique?.nom || '';
+    if (dateDebut && dateFin) {
+      sousTitre += ` · Du ${this.formatDateShort(dateDebut)} au ${this.formatDateShort(dateFin)}`;
+    } else if (dateDebut) {
+      sousTitre += ` · À partir du ${this.formatDateShort(dateDebut)}`;
+    } else if (dateFin) {
+      sousTitre += ` · Jusqu'au ${this.formatDateShort(dateFin)}`;
     }
+    if (clientInfo?.nom) {
+      sousTitre += ` · Client : ${clientInfo.nom} ${clientInfo.prenom || ''}`.replace(/\s+$/, '');
+    }
+
+    const lignes = ventes.map(v => [
+      v.numeroVente || '',
+      this.formatDateForExport(v.dateVente),
+      v.clientNom || (v.clientDivers ? 'Client divers' : '-'),
+      v.vendeurNom || '-',
+      v.annulee ? 'ANNULÉE' : (!v.estCredit ? 'Comptant' : (v.creditRegle ? 'Crédit réglé' : (this.isCreditEnRetard(v) ? 'Crédit retard' : 'Crédit'))),
+      this.formatPlainNumber(v.montantTotal),
+      this.getModePaiementLabel(v.modePaiement) || '-'
+    ]);
+
+    this.factureService.ouvrirDocumentPDF({
+      titre: titre.replace(/_/g, ' '),
+      sousTitre,
+      colonnes: ['N°', 'Date', 'Client', 'Vendeur', 'Type', 'Montant', 'Mode'],
+      lignes,
+      totaux: [
+        { label: 'Total ventes', valeur: String(ventes.length) },
+        { label: 'CA Total', valeur: this.formatPlainNumber(stats.caTotal) },
+        { label: 'Comptant', valeur: this.formatPlainNumber(stats.montantTotalComptant) },
+        { label: 'Crédit', valeur: this.formatPlainNumber(stats.montantTotalCredit) }
+      ]
+    });
   }
 
   exportVentesParPeriodeToPDF(ventes: VenteMap[], produits: any[], dateDebut: string, dateFin: string, titre?: string): void {
@@ -1626,204 +1549,65 @@ export class VenteService {
   }
 
   exportVentesToPDF(ventes: VenteMap[], titre: string = 'LISTE_DES_VENTES'): void {
-    try {
-      const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-      const boutique = this.boutiqueService.getInfo();
-      const date = new Date();
-
-      doc.setFontSize(18);
-      doc.setTextColor(40, 40, 40);
-      doc.text(boutique.nom || this.BOUTIQUE_NOM, doc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
-      
-      doc.setFontSize(10);
-      doc.setTextColor(100, 100, 100);
-      doc.text(boutique.adresse || this.BOUTIQUE_ADRESSE, doc.internal.pageSize.getWidth() / 2, 22, { align: 'center' });
-      doc.text(`Tel: ${boutique.telephone || this.BOUTIQUE_TELEPHONE}`, doc.internal.pageSize.getWidth() / 2, 29, { align: 'center' });
-      
-      doc.setFontSize(14);
-      doc.setTextColor(0, 0, 0);
-      doc.text(titre.replace(/_/g, ' '), doc.internal.pageSize.getWidth() / 2, 40, { align: 'center' });
-      
-      doc.setFontSize(9);
-      doc.setTextColor(80, 80, 80);
-      const dateStr = this.formatDateTimeForExport(date.toISOString());
-      doc.text(`Généré le: ${dateStr}`, doc.internal.pageSize.getWidth() - 20, 50, { align: 'right' });
-      doc.text(`Nombre total: ${ventes.length} vente(s)`, 20, 50);
-
-      const tableData = ventes.map(vente => [
-        vente.numeroVente,
-        this.formatDateForExport(vente.dateVente),
-        this.formatHeureForExport(vente.dateVente),
-        vente.clientNom || 'Client divers',
-        vente.clientTelephone || '-',
-        vente.annulee ? 'ANNULÉE' : (!vente.estCredit ? 'COMPTANT' : (vente.creditRegle ? 'CRÉDIT RÉGLÉ' : (this.isCreditEnRetard(vente) ? 'CRÉDIT RETARD' : 'CRÉDIT'))),
-        this.getModePaiementLabel(vente.modePaiement),
-        this.formatPlainNumber(vente.montantTotal),
-        vente.estCredit ? this.formatPlainNumber(vente.montantVerse || 0) : '-',
-        vente.estCredit ? this.formatPlainNumber(vente.montantRestant || vente.montantTotal) : '-',
-        vente.vendeurNom
-      ]);
-
-      autoTable(doc, {
-        startY: 58,
-        head: [['N° Facture', 'Date', 'Heure', 'Client', 'Téléphone', 'Type', 'Paiement', 'Montant', 'Versé', 'Reste', 'Vendeur']],
-        body: tableData,
-        theme: 'grid',
-        styles: { fontSize: 7, cellPadding: 2, overflow: 'linebreak' },
-        headStyles: { fillColor: [52, 73, 94], textColor: 255, fontSize: 7, fontStyle: 'bold' },
-        alternateRowStyles: { fillColor: [245, 245, 245] },
-        columnStyles: {
-          0: { cellWidth: 30 },
-          1: { cellWidth: 22 },
-          2: { cellWidth: 18 },
-          3: { cellWidth: 35 },
-          4: { cellWidth: 22 },
-          5: { cellWidth: 25 },
-          6: { cellWidth: 22 },
-          7: { cellWidth: 20, halign: 'right' },
-          8: { cellWidth: 20, halign: 'right' },
-          9: { cellWidth: 20, halign: 'right' },
-          10: { cellWidth: 28 }
-        },
-        didDrawPage: (data: any) => {
-          const pageCount = doc.getNumberOfPages();
-          doc.setFontSize(8);
-          doc.setTextColor(100, 100, 100);
-          doc.text(`Page ${data.pageNumber} / ${pageCount}`, doc.internal.pageSize.getWidth() - 20, doc.internal.pageSize.getHeight() - 10);
-        }
-      });
-
-      const finalY = (doc as any).lastAutoTable.finalY || 58;
-      doc.setFontSize(8);
-      doc.setTextColor(100, 100, 100);
-      doc.text('Merci de votre confiance !', doc.internal.pageSize.getWidth() / 2, finalY + 10, { align: 'center' });
-
-      const fileName = `${titre}_${this.formatDateForFileName(new Date().toISOString())}.pdf`;
-      doc.save(fileName);
-      
-    } catch (error) {
-      console.error('Erreur lors de la génération du PDF:', error);
-      throw new Error('Impossible de générer le PDF');
+    if (!ventes || ventes.length === 0) {
+      throw new Error('Aucune vente à exporter');
     }
+
+    const boutique = this.boutiqueService.getInfo();
+
+    const lignes = ventes.map(v => [
+      v.numeroVente || '',
+      this.formatDateForExport(v.dateVente),
+      v.clientNom || (v.clientDivers ? 'Client divers' : '-'),
+      v.vendeurNom || '-',
+      v.annulee ? 'ANNULÉE' : (!v.estCredit ? 'Comptant' : (v.creditRegle ? 'Crédit réglé' : (this.isCreditEnRetard(v) ? 'Crédit retard' : 'Crédit'))),
+      this.formatPlainNumber(v.montantTotal),
+      this.getModePaiementLabel(v.modePaiement) || '-'
+    ]);
+
+    const caTotal = ventes.filter(v => !v.annulee).reduce((s, v) => s + v.montantTotal, 0);
+
+    this.factureService.ouvrirDocumentPDF({
+      titre: titre.replace(/_/g, ' '),
+      sousTitre: boutique?.nom || '',
+      colonnes: ['N°', 'Date', 'Client', 'Vendeur', 'Type', 'Montant', 'Mode'],
+      lignes,
+      totaux: [
+        { label: 'Total ventes', valeur: String(ventes.length) },
+        { label: 'CA Total', valeur: this.formatPlainNumber(caTotal) }
+      ]
+    });
   }
 
   exportAllVentesDetailToPDF(ventes: VenteMap[], titre: string = 'RAPPORT_COMPLET_DES_VENTES'): void {
     if (!ventes || ventes.length === 0) {
       throw new Error('Aucune vente à exporter');
     }
-    
-    try {
-      const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-      const boutique = this.boutiqueService.getInfo();
-      const date = new Date();
 
-      doc.setFontSize(18);
-      doc.setTextColor(40, 40, 40);
-      doc.text(boutique.nom || this.BOUTIQUE_NOM, doc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
-      
-      doc.setFontSize(10);
-      doc.setTextColor(100, 100, 100);
-      doc.text(boutique.adresse || this.BOUTIQUE_ADRESSE, doc.internal.pageSize.getWidth() / 2, 22, { align: 'center' });
-      doc.text(`Tel: ${boutique.telephone || this.BOUTIQUE_TELEPHONE}`, doc.internal.pageSize.getWidth() / 2, 29, { align: 'center' });
-      
-      doc.setFontSize(14);
-      doc.setTextColor(0, 0, 0);
-      doc.text(titre.replace(/_/g, ' '), doc.internal.pageSize.getWidth() / 2, 40, { align: 'center' });
-      
-      doc.setFontSize(9);
-      doc.setTextColor(80, 80, 80);
-      doc.text(`Généré le: ${this.formatDateTimeForExport(date.toISOString())}`, doc.internal.pageSize.getWidth() - 20, 50, { align: 'right' });
+    const boutique = this.boutiqueService.getInfo();
 
-      let currentY = 58;
-      
-      for (let index = 0; index < ventes.length; index++) {
-        const vente = ventes[index];
-        
-        if (currentY > 180) {
-          doc.addPage();
-          currentY = 20;
-        }
-        
-        doc.setFillColor(52, 73, 94);
-        doc.rect(20, currentY, 280, 8, 'F');
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(8);
-        doc.text(`VENTE N° ${vente.numeroVente}`, 25, currentY + 5);
-        doc.text(`Date: ${this.formatDateForExport(vente.dateVente)} ${this.formatHeureForExport(vente.dateVente)}`, 150, currentY + 5);
-        doc.text(`Type: ${vente.annulee ? 'ANNULÉE' : (!vente.estCredit ? 'COMPTANT' : (vente.creditRegle ? 'CRÉDIT RÉGLÉ' : 'CRÉDIT'))}`, 230, currentY + 5);
-        
-        currentY += 12;
-        
-        doc.setFillColor(240, 240, 240);
-        doc.rect(20, currentY, 280, 20, 'F');
-        doc.setTextColor(0, 0, 0);
-        doc.setFontSize(7);
-        doc.text(`Client: ${vente.clientNom || 'Client divers'} ${vente.clientPrenom || ''}`, 25, currentY + 5);
-        doc.text(`Téléphone: ${vente.clientTelephone || '-'}`, 25, currentY + 10);
-        doc.text(`Vendeur: ${vente.vendeurNom}`, 25, currentY + 15);
-        doc.text(`Mode paiement: ${this.getModePaiementLabel(vente.modePaiement)}`, 180, currentY + 5);
-        doc.text(`Référence: ${vente.referencePaiement || '-'}`, 180, currentY + 10);
-        if (vente.estCredit) {
-          doc.text(`Échéance: ${this.formatDateForExport(vente.dateEcheance || '')}`, 180, currentY + 15);
-        }
-        
-        currentY += 24;
-        
-        const produitsData = vente.produits.map(p => [
-          p.produitNom || 'Produit',
-          p.quantite.toString(),
-          this.formatPlainNumber(p.prixUnitaire),
-          p.remisePourcentage ? `${p.remisePourcentage}%` : (p.remiseMontant ? this.formatPlainNumber(p.remiseMontant) : '-'),
-          this.formatPlainNumber(p.sousTotal)
-        ]);
-        
-        autoTable(doc, {
-          startY: currentY,
-          head: [['Désignation', 'Qté', 'Prix U.', 'Remise', 'Total']],
-          body: produitsData,
-          theme: 'striped',
-          styles: { fontSize: 7, cellPadding: 2 },
-          headStyles: { fillColor: [100, 100, 100], textColor: 255, fontSize: 7 },
-          columnStyles: {
-            0: { cellWidth: 120 },
-            1: { cellWidth: 30, halign: 'center' },
-            2: { cellWidth: 40, halign: 'right' },
-            3: { cellWidth: 40, halign: 'right' },
-            4: { cellWidth: 45, halign: 'right' }
-          },
-          margin: { left: 20, right: 20 }
-        });
-        
-        currentY = (doc as any).lastAutoTable.finalY + 5;
-        
-        doc.setFillColor(52, 152, 219);
-        doc.rect(200, currentY, 100, 8, 'F');
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(8);
-        doc.setFont(undefined, 'bold');
-        doc.text(`TOTAL: ${this.formatPlainNumber(vente.montantTotal)}`, 250, currentY + 5, { align: 'right' });
-        
-        currentY += 15;
-        doc.setDrawColor(200, 200, 200);
-        doc.line(20, currentY, 300, currentY);
-        currentY += 8;
-      }
-      
-      const pageCount = doc.getNumberOfPages();
-      for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-        doc.setFontSize(8);
-        doc.setTextColor(100, 100, 100);
-        doc.text(`Page ${i} / ${pageCount}`, doc.internal.pageSize.getWidth() - 20, doc.internal.pageSize.getHeight() - 10);
-        doc.text('Merci de votre confiance !', doc.internal.pageSize.getWidth() / 2, doc.internal.pageSize.getHeight() - 10, { align: 'center' });
-      }
-      
-      doc.save(`${titre.replace(/\s/g, '_')}_${this.formatDateForFileName(new Date().toISOString())}.pdf`);
-      
-    } catch (error) {
-      console.error('Erreur lors de la génération du PDF:', error);
-      throw new Error('Impossible de générer le PDF');
-    }
+    const lignes = ventes.map(v => [
+      v.numeroVente || '',
+      this.formatDateForExport(v.dateVente),
+      v.clientNom || (v.clientDivers ? 'Client divers' : '-'),
+      v.vendeurNom || '-',
+      v.annulee ? 'ANNULÉE' : (!v.estCredit ? 'Comptant' : (v.creditRegle ? 'Crédit réglé' : (this.isCreditEnRetard(v) ? 'Crédit retard' : 'Crédit'))),
+      this.formatPlainNumber(v.montantTotal),
+      this.getModePaiementLabel(v.modePaiement) || '-'
+    ]);
+
+    const caTotal = ventes.filter(v => !v.annulee).reduce((s, v) => s + v.montantTotal, 0);
+
+    this.factureService.ouvrirDocumentPDF({
+      titre: titre.replace(/_/g, ' '),
+      sousTitre: boutique?.nom || '',
+      colonnes: ['N°', 'Date', 'Client', 'Vendeur', 'Type', 'Montant', 'Mode'],
+      lignes,
+      totaux: [
+        { label: 'Total ventes', valeur: String(ventes.length) },
+        { label: 'CA Total', valeur: this.formatPlainNumber(caTotal) }
+      ]
+    });
   }
 
   exportVentesComptantToPDF(ventes: VenteMap[]): void {

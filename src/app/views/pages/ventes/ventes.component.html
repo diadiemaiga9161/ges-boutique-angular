@@ -1,4 +1,4 @@
-﻿<div class="container-fluid py-4 app-page">
+<div class="container-fluid py-4 app-page">
   <!-- En-tête -->
   <div class="app-page-header mb-4">
     <div class="app-page-header-left">
@@ -13,65 +13,65 @@
       <!-- Menu déroulant Exports PDF - Version avec bouton personnalisé (sans Bootstrap JS) -->
       <div class="dropdown d-inline-block" >
         <button class="btn btn-success" type="button" (click)="toggleExportDropdown()" [disabled]="isLoading">
-          <i class="fa fa-file-pdf-o me-1"> Exports PDF </i> Exports PDF {{ isLoading ? '...' : '' }}
+          <i class="fa fa-file-pdf-o me-1"></i> Exports PDF {{ isLoading ? '...' : '' }}
           <i class="fa fa-chevron-down ms-1" [class.fa-rotate-180]="showExportDropdown"></i>
         </button>
         <div class="dropdown-menu-custom" [class.show]="showExportDropdown" (click)="$event.stopPropagation()">
           <!-- Exports complets avec statistiques -->
-          <div class="dropdown-header fw-bold text-primary"><i class="fa fa-bar-chart me-1"> Exports complets (CA, Bénéfices)</i> Exports complets (CA, Bénéfices)</div>
+          <div class="dropdown-header fw-bold text-primary"><i class="fa fa-bar-chart me-1"></i> Exports complets (CA, Bénéfices)</div>
           <a class="dropdown-item" href="javascript:void(0)" (click)="exportAllVentesWithStats(); closeExportDropdown()">
-            <i class="fa fa-file-pdf-o me-2 text-danger"> Toutes les ventes</i> Toutes les ventes
+            <i class="fa fa-file-pdf-o me-2 text-danger"></i> Toutes les ventes
           </a>
           <a class="dropdown-item" href="javascript:void(0)" (click)="exportTodayVentesWithStats(); closeExportDropdown()">
-            <i class="fa fa-sun-o me-2 text-warning"> Ventes du jour</i> Ventes du jour
+            <i class="fa fa-sun-o me-2 text-warning"></i> Ventes du jour
           </a>
           <a class="dropdown-item" href="javascript:void(0)" (click)="exportWeekVentesWithStats(); closeExportDropdown()">
-            <i class="fa fa-calendar-week me-2 text-info"> Ventes de la semaine</i> Ventes de la semaine
+            <i class="fa fa-calendar-week me-2 text-info"></i> Ventes de la semaine
           </a>
           <a class="dropdown-item" href="javascript:void(0)" (click)="exportMonthVentesWithStats(); closeExportDropdown()">
-            <i class="fa fa-calendar me-2 text-primary"> Ventes du mois</i> Ventes du mois
+            <i class="fa fa-calendar me-2 text-primary"></i> Ventes du mois
           </a>
           <a class="dropdown-item" href="javascript:void(0)" (click)="exportCustomPeriodVentesWithStats(); closeExportDropdown()">
-            <i class="fa fa-calendar-range me-2 text-secondary"> Période personnalisée</i> Période personnalisée
+            <i class="fa fa-calendar-range me-2 text-secondary"></i> Période personnalisée
           </a>
 
           <div class="dropdown-divider"></div>
 
           <!-- Exports par type -->
-          <div class="dropdown-header fw-bold text-warning"><i class="fa fa-tags me-1"> Exports par type</i> Exports par type</div>
+          <div class="dropdown-header fw-bold text-warning"><i class="fa fa-tags me-1"></i> Exports par type</div>
           <a class="dropdown-item" href="javascript:void(0)" (click)="exportOnlyCreditVentesWithStats(); closeExportDropdown()">
-            <i class="fa fa-credit-card me-2 text-warning"> Ventes crédit</i> Ventes crédit
+            <i class="fa fa-credit-card me-2 text-warning"></i> Ventes crédit
           </a>
           <a class="dropdown-item" href="javascript:void(0)" (click)="exportCreditsRetardWithStats(); closeExportDropdown()">
-            <i class="fa fa-exclamation-triangle me-2 text-danger"> Crédits en retard</i> Crédits en retard
+            <i class="fa fa-exclamation-triangle me-2 text-danger"></i> Crédits en retard
           </a>
 
           <div class="dropdown-divider"></div>
 
           <!-- Exports par client -->
-          <div class="dropdown-header fw-bold text-success"><i class="fa fa-users me-1"> Exports par client</i> Exports par client</div>
+          <div class="dropdown-header fw-bold text-success"><i class="fa fa-users me-1"></i> Exports par client</div>
           <a class="dropdown-item" href="javascript:void(0)" (click)="exportClientDiversVentesWithStats(); closeExportDropdown()">
-            <i class="fa fa-users me-2 text-secondary"> Clients divers</i> Clients divers
+            <i class="fa fa-users me-2 text-secondary"></i> Clients divers
           </a>
           <a class="dropdown-item" href="javascript:void(0)" (click)="openClientExportSelector(); closeExportDropdown()">
-            <i class="fa fa-user me-2 text-info"> Client spécifique</i> Client spécifique
+            <i class="fa fa-user me-2 text-info"></i> Client spécifique
           </a>
 
           <div class="dropdown-divider"></div>
 
           <!-- Version simplifiée -->
-          <div class="dropdown-header fw-bold text-muted"><i class="fa fa-file-text me-1"> Version simplifiée</i> Version simplifiée</div>
+          <div class="dropdown-header fw-bold text-muted"><i class="fa fa-file-text me-1"></i> Version simplifiée</div>
           <a class="dropdown-item" href="javascript:void(0)" (click)="exportAllVentesSimplePDF(); closeExportDropdown()">
-            <i class="fa fa-file-pdf-o me-2"> Liste simple des ventes</i> Liste simple des ventes
+            <i class="fa fa-file-pdf-o me-2"></i> Liste simple des ventes
           </a>
           <a class="dropdown-item" href="javascript:void(0)" (click)="exportAllVentesDetailToPDF(); closeExportDropdown()">
-            <i class="fa fa-file-pdf-o me-2 text-danger"> PDF détaillé - Toutes les ventes</i> PDF détaillé - Toutes les ventes
+            <i class="fa fa-file-pdf-o me-2 text-danger"></i> PDF détaillé - Toutes les ventes
           </a>
           <a class="dropdown-item" href="javascript:void(0)" (click)="exportCreditDetailToPDF(); closeExportDropdown()">
-            <i class="fa fa-file-pdf-o me-2 text-warning"> PDF détaillé - Ventes crédit</i> PDF détaillé - Ventes crédit
+            <i class="fa fa-file-pdf-o me-2 text-warning"></i> PDF détaillé - Ventes crédit
           </a>
           <a class="dropdown-item" href="javascript:void(0)" (click)="exportCreditsRetardDetailToPDF(); closeExportDropdown()">
-            <i class="fa fa-file-pdf-o me-2 text-danger"> PDF détaillé - Crédits en retard</i> PDF détaillé - Crédits en retard
+            <i class="fa fa-file-pdf-o me-2 text-danger"></i> PDF détaillé - Crédits en retard
           </a>
         </div>
       </div>
@@ -84,16 +84,16 @@
       </button>
       <!-- <div class="dropdown d-inline-block" *ngIf="isAdmin">
         <button class="btn btn-secondary" type="button" (click)="toggleOptionsDropdown()">
-          <i class="fa fa-cog me-1"> Options</i> Options
+          <i class="fa fa-cog me-1"></i> Options
           <i class="fa fa-chevron-down ms-1" [class.fa-rotate-180]="showOptionsDropdown"></i>
         </button>
         <div class="dropdown-menu-custom" [class.show]="showOptionsDropdown" (click)="$event.stopPropagation()">
-          <a class="dropdown-item" (click)="openStatsModal(); closeOptionsDropdown()"><i class="fa fa-chart-bar me-2">Statistiques</i>Statistiques</a>
-          <a class="dropdown-item" (click)="openCreditsModal(); closeOptionsDropdown()"><i class="fa fa-hand-holding-usd me-2">Crédits en cours</i>Crédits en cours</a>
-          <a class="dropdown-item" (click)="openStatsCreditsModal(); closeOptionsDropdown()"><i class="fa fa-pie-chart me-2">Statistiques crédits</i>Statistiques crédits</a>
-          <a class="dropdown-item" (click)="openSearchClientModal(); closeOptionsDropdown()"><i class="fa fa-search me-2">Rechercher client</i>Rechercher client</a>
+          <a class="dropdown-item" (click)="openStatsModal(); closeOptionsDropdown()"><i class="fa fa-chart-bar me-2"></i>Statistiques</a>
+          <a class="dropdown-item" (click)="openCreditsModal(); closeOptionsDropdown()"><i class="fa fa-hand-holding-usd me-2"></i>Crédits en cours</a>
+          <a class="dropdown-item" (click)="openStatsCreditsModal(); closeOptionsDropdown()"><i class="fa fa-pie-chart me-2"></i>Statistiques crédits</a>
+          <a class="dropdown-item" (click)="openSearchClientModal(); closeOptionsDropdown()"><i class="fa fa-search me-2"></i>Rechercher client</a>
           <div class="dropdown-divider"></div>
-          <a class="dropdown-item" (click)="exportToExcel(); closeOptionsDropdown()"><i class="fa fa-file-excel me-2">Exporter</i>Exporter</a>
+          <a class="dropdown-item" (click)="exportToExcel(); closeOptionsDropdown()"><i class="fa fa-file-excel me-2"></i>Exporter</a>
         </div>
       </div> -->
     </div>
@@ -269,10 +269,10 @@
         </div>
         <div class="col-12 d-flex justify-content-end gap-2 mt-2">
           <button class="btn btn-primary btn-sm" (click)="applyFilters()">
-            <i class="fa fa-filter me-1">Appliquer filtres</i>Appliquer filtres
+            <i class="fa fa-filter me-1"></i>Appliquer filtres
           </button>
           <button class="btn btn-outline-secondary btn-sm" (click)="resetFilters()">
-            <i class="fa fa-refresh me-1">Réinitialiser</i>Réinitialiser
+            <i class="fa fa-refresh me-1"></i>Réinitialiser
           </button>
         </div>
       </div>
@@ -318,12 +318,12 @@
             <td><span [class]="'badge ' + getVenteStatusBadgeClass(vente)">{{ getVenteStatusLabel(vente) }}</span></td>
             <td class="text-center">
               <div class="btn-group btn-group-sm">
-                <button type="button" class="btn btn-outline-info" (click)="openVenteDetailModal(vente); $event.stopPropagation()" title="Détails"><i class="fa fa-eye"> Détails</i> Détails</button>
+                <button type="button" class="btn btn-outline-info" (click)="openVenteDetailModal(vente); $event.stopPropagation()" title="Détails"><i class="fa fa-eye"></i> Détails</button>
                 <button type="button" class="btn btn-outline-secondary" (click)="ouvrirModificationLignes(vente); $event.stopPropagation()" title="Changer des produits" *ngIf="canManageVentes && !vente.annulee">
-                  <i class="fa fa-exchange-alt"> Modifier</i> Modifier
+                  <i class="fa fa-exchange-alt"></i> Modifier
                 </button>
-                <button type="button" class="btn btn-outline-danger" (click)="openAnnulationModal(vente); $event.stopPropagation()" title="Annuler" *ngIf="canManageVentes && peutAnnulerVente(vente)"><i class="fa fa-ban"> Annuler</i> Annuler</button>
-                <button type="button" class="btn btn-outline-primary" (click)="openFactureDateModal(vente.id); $event.stopPropagation()" title="Facture"><i class="fa fa-file-pdf"> Facture</i> Facture</button>
+                <button type="button" class="btn btn-outline-danger" (click)="openAnnulationModal(vente); $event.stopPropagation()" title="Annuler" *ngIf="canManageVentes && peutAnnulerVente(vente)"><i class="fa fa-ban"></i> Annuler</button>
+                <button type="button" class="btn btn-outline-primary" (click)="openFactureDateModal(vente.id); $event.stopPropagation()" title="Facture"><i class="fa fa-file-pdf"></i> Facture</button>
               </div>
             </td>
           </tr>
@@ -346,7 +346,7 @@
     <nav>
       <ul class="pagination">
         <li class="page-item" [class.disabled]="currentPage === 1">
-          <a class="page-link" (click)="changePage(currentPage - 1)"><i class="fa fa-chevron-left"> Précédent</i> Précédent</a>
+          <a class="page-link" (click)="changePage(currentPage - 1)"><i class="fa fa-chevron-left"></i> Précédent</a>
         </li>
         <li *ngFor="let page of pageNumbers" class="page-item" [class.active]="currentPage === page">
           <a class="page-link" (click)="changePage(page)">{{ page }}</a>
@@ -365,7 +365,7 @@
   <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" (click)="$event.stopPropagation()">
     <div class="modal-content">
       <div class="modal-header bg-info text-white py-2">
-        <h5 class="modal-title"><i class="fa fa-user me-2"> Sélectionner un client pour l'export PDF</i> Sélectionner un client pour l'export PDF</h5>
+        <h5 class="modal-title"><i class="fa fa-user me-2"></i> Sélectionner un client pour l'export PDF</h5>
         <button type="button" class="btn-close btn-close-white" (click)="closeClientExportSelector()"></button>
       </div>
       <div class="modal-body">
@@ -376,7 +376,7 @@
           </div>
           <div class="col-md-6">
             <button class="btn btn-outline-secondary btn-sm w-100" (click)="rechercherClients()">
-              <i class="fa fa-search"> Rechercher</i> Rechercher
+              <i class="fa fa-search"></i> Rechercher
             </button>
           </div>
         </div>
@@ -399,7 +399,7 @@
                 <td>{{ client.email || '-' }}</td>
                 <td class="text-center">
                   <button class="btn btn-sm btn-primary" (click)="selectClientForExport(client)">
-                    <i class="fa fa-file-pdf-o"> Exporter PDF</i> Exporter PDF
+                    <i class="fa fa-file-pdf-o"></i> Exporter PDF
                   </button>
                 </td>
               </tr>
@@ -425,7 +425,7 @@
   <div class="modal-dialog modal-sm modal-dialog-centered" (click)="$event.stopPropagation()">
     <div class="modal-content">
       <div class="modal-header bg-primary text-white py-2">
-        <h6 class="modal-title"><i class="fa fa-layer-group me-2">Choisir le niveau — </i>Choisir le niveau — {{ produitEnAttente?.nom }}</h6>
+        <h6 class="modal-title"><i class="fa fa-layer-group me-2"></i>Choisir le niveau — {{ produitEnAttente?.nom }}</h6>
         <button type="button" class="btn-close btn-close-white" (click)="showNiveauModal=false; produitEnAttente=null"></button>
       </div>
       <div class="modal-body p-2">
@@ -464,17 +464,17 @@
   <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" (click)="$event.stopPropagation()">
     <div class="modal-content">
       <div class="modal-header bg-primary text-white py-2">
-        <h5 class="modal-title"><i class="fa fa-plus-circle me-2"> Nouvelle Vente</i> Nouvelle Vente</h5>
+        <h5 class="modal-title"><i class="fa fa-plus-circle me-2"></i> Nouvelle Vente</h5>
         <button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button>
       </div>
       <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
         <div class="alert alert-info py-2 mb-3">
-          <i class="fa fa-user me-2"> Vendeur: </i> Vendeur: <strong>{{ currentUser?.nomComplet || 'N/A' }}</strong>
+          <i class="fa fa-user me-2"></i> Vendeur: <strong>{{ currentUser?.nomComplet || 'N/A' }}</strong>
         </div>
 
         <div class="card mb-3">
           <div class="card-header bg-secondary text-white py-2">
-            <h6 class="mb-0"><i class="fa fa-user me-2"> Client</i> Client</h6>
+            <h6 class="mb-0"><i class="fa fa-user me-2"></i> Client</h6>
           </div>
           <div class="card-body py-2">
             <div class="row g-2">
@@ -492,7 +492,7 @@
               </div>
               <div class="col-md-4" *ngIf="!venteForm.clientDivers">
                 <button class="btn btn-outline-primary btn-sm w-100" (click)="openClientSelectorModal()">
-                  <i class="fa fa-search me-1"> Sélectionner client</i> Sélectionner client
+                  <i class="fa fa-search me-1"></i> Sélectionner client
                 </button>
               </div>
             </div>
@@ -533,7 +533,7 @@
                   </div>
                 </div>
                 <button class="btn btn-sm btn-outline-primary" (click)="addProduitToVente(produit)" [disabled]="isProduitSansStock(produit)">
-                  <i class="fa fa-plus"> Ajouter</i> Ajouter
+                  <i class="fa fa-plus"></i> Ajouter
                 </button>
               </div>
               <div *ngIf="filteredProduits.length === 0" class="text-center text-muted p-3">
@@ -545,9 +545,9 @@
           <div class="col-md-5">
             <div class="card border-primary">
               <div class="card-header bg-primary text-white py-2 d-flex justify-content-between align-items-center">
-                <h6 class="mb-0"><i class="fa fa-shopping-cart me-2"> Panier (</i> Panier ({{ produitsPanier.length }})</h6>
+                <h6 class="mb-0"><i class="fa fa-shopping-cart me-2"></i> Panier ({{ produitsPanier.length }})</h6>
                 <button class="btn btn-sm btn-light" (click)="resetForms()" title="Vider le panier">
-                  <i class="fa fa-trash"> Vider</i> Vider
+                  <i class="fa fa-trash"></i> Vider
                 </button>
               </div>
               <div class="card-body p-0">
@@ -660,7 +660,7 @@
 
         <div class="card">
           <div class="card-header bg-secondary text-white py-2">
-            <h6 class="mb-0"><i class="fa fa-credit-card me-2"> Informations de paiement</i> Informations de paiement</h6>
+            <h6 class="mb-0"><i class="fa fa-credit-card me-2"></i> Informations de paiement</h6>
           </div>
           <div class="card-body py-2">
             <div class="row g-2">
@@ -679,9 +679,9 @@
         </div>
       </div>
       <div class="modal-footer py-2">
-        <button class="btn btn-secondary btn-sm" (click)="closeAllModals()"><i class="fa fa-times me-1"> Annuler</i> Annuler</button>
+        <button class="btn btn-secondary btn-sm" (click)="closeAllModals()"><i class="fa fa-times me-1"></i> Annuler</button>
         <button class="btn btn-primary btn-sm" (click)="createVente()" [disabled]="produitsPanier.length === 0">
-          <i class="fa fa-save me-1"> Enregistrer la vente</i> Enregistrer la vente
+          <i class="fa fa-save me-1"></i> Enregistrer la vente
         </button>
       </div>
     </div>
@@ -694,28 +694,28 @@
   <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" (click)="$event.stopPropagation()">
     <div class="modal-content">
       <div class="modal-header bg-warning text-white py-2">
-        <h5 class="modal-title"><i class="fa fa-credit-card me-2"> Vente à Crédit</i> Vente à Crédit</h5>
+        <h5 class="modal-title"><i class="fa fa-credit-card me-2"></i> Vente à Crédit</h5>
         <button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button>
       </div>
       <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
         <div class="alert alert-info py-2 mb-3">
-          <i class="fa fa-user me-2"> Vendeur: </i> Vendeur: <strong>{{ currentUser?.nomComplet || 'N/A' }}</strong>
+          <i class="fa fa-user me-2"></i> Vendeur: <strong>{{ currentUser?.nomComplet || 'N/A' }}</strong>
         </div>
 
         <div class="card border-warning mb-3">
           <div class="card-header bg-warning text-white py-2">
-            <h6 class="mb-0"><i class="fa fa-user me-2"> Client (obligatoire)</i> Client (obligatoire)</h6>
+            <h6 class="mb-0"><i class="fa fa-user me-2"></i> Client (obligatoire)</h6>
           </div>
           <div class="card-body py-2">
             <div class="row g-2">
               <div class="col-md-8">
                 <button class="btn btn-outline-primary btn-sm w-100" (click)="openClientSelectorModal()">
-                  <i class="fa fa-search me-1"> Sélectionner un client</i> Sélectionner un client
+                  <i class="fa fa-search me-1"></i> Sélectionner un client
                 </button>
               </div>
             </div>
             <div *ngIf="clientSelectionne" class="mt-2 alert alert-success py-1 mb-0 small">
-              <i class="fa fa-check-circle me-1"> Client sélectionné: </i> Client sélectionné: <strong>{{ clientSelectionne.nom }} {{ clientSelectionne.prenom }}</strong> ({{ clientSelectionne.numeroTelephone }})
+              <i class="fa fa-check-circle me-1"></i> Client sélectionné: <strong>{{ clientSelectionne.nom }} {{ clientSelectionne.prenom }}</strong> ({{ clientSelectionne.numeroTelephone }})
             </div>
             <div class="row g-2 mt-2" *ngIf="clientSelectionne">
               <div class="col-md-6">
@@ -732,7 +732,7 @@
                 <div class="alert alert-primary py-2 mb-0 small d-flex align-items-center justify-content-between flex-wrap gap-2">
                   <div>
                     <i class="fa fa-money me-1"></i>
-                    <span *ngIf="isLoadingAvance"><i class="fa fa-spinner fa-spin me-1"> Chargement avance...</i> Chargement avance...</span>
+                    <span *ngIf="isLoadingAvance"><i class="fa fa-spinner fa-spin me-1"></i> Chargement avance...</span>
                     <span *ngIf="!isLoadingAvance && soldeAvanceClient > 0">
                       Ce client a une avance disponible de <strong>{{ formatPrice(soldeAvanceClient) }}</strong>
                     </span>
@@ -791,7 +791,7 @@
                   <div class="small text-muted">{{ formatPrice(produit.prixVente) }} | Stock: {{ getStockAfficheProduit(produit) }}</div>
                 </div>
                 <button class="btn btn-sm btn-outline-warning" (click)="addProduitToVente(produit)" [disabled]="isProduitSansStock(produit)">
-                  <i class="fa fa-plus"> Ajouter</i> Ajouter
+                  <i class="fa fa-plus"></i> Ajouter
                 </button>
               </div>
               <div *ngIf="filteredProduits.length === 0" class="text-center text-muted p-3">Aucun produit disponible</div>
@@ -800,9 +800,9 @@
           <div class="col-md-5">
             <div class="card border-warning">
               <div class="card-header bg-warning text-white py-2 d-flex justify-content-between align-items-center">
-                <h6 class="mb-0"><i class="fa fa-shopping-cart me-2"> Panier (</i> Panier ({{ produitsPanier.length }})</h6>
+                <h6 class="mb-0"><i class="fa fa-shopping-cart me-2"></i> Panier ({{ produitsPanier.length }})</h6>
                 <button class="btn btn-sm btn-light" (click)="resetForms()" title="Vider le panier">
-                  <i class="fa fa-trash"> Vider</i> Vider
+                  <i class="fa fa-trash"></i> Vider
                 </button>
               </div>
               <div class="card-body p-0">
@@ -886,9 +886,9 @@
         </div>
       </div>
       <div class="modal-footer py-2">
-        <button class="btn btn-secondary btn-sm" (click)="closeAllModals()"><i class="fa fa-times me-1"> Annuler</i> Annuler</button>
+        <button class="btn btn-secondary btn-sm" (click)="closeAllModals()"><i class="fa fa-times me-1"></i> Annuler</button>
         <button class="btn btn-warning btn-sm" (click)="createVenteCredit()" [disabled]="produitsPanier.length === 0 || !clientSelectionne">
-          <i class="fa fa-save me-1"> Enregistrer le crédit</i> Enregistrer le crédit
+          <i class="fa fa-save me-1"></i> Enregistrer le crédit
         </button>
       </div>
     </div>
@@ -901,7 +901,7 @@
   <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" (click)="$event.stopPropagation()">
     <div class="modal-content">
       <div class="modal-header bg-primary text-white py-2">
-        <h5 class="modal-title"><i class="fa fa-users me-2"> Sélectionner un client</i> Sélectionner un client</h5>
+        <h5 class="modal-title"><i class="fa fa-users me-2"></i> Sélectionner un client</h5>
         <button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button>
       </div>
       <div class="modal-body">
@@ -913,7 +913,7 @@
             <input type="text" class="form-control form-control-sm" placeholder="Téléphone" [(ngModel)]="clientSearchForm.telephone" (input)="rechercherClients()">
           </div>
           <div class="col-md-2">
-            <button class="btn btn-success btn-sm w-100" (click)="ouvrirFormulaireNouveauClient()"><i class="fa fa-plus"> Nouveau</i> Nouveau</button>
+            <button class="btn btn-success btn-sm w-100" (click)="ouvrirFormulaireNouveauClient()"><i class="fa fa-plus"></i> Nouveau</button>
           </div>
         </div>
         <div class="table-responsive">
@@ -935,7 +935,7 @@
                 <td>{{ client.email || '-' }}</td>
                 <td class="text-center">
                   <button class="btn btn-sm btn-primary" (click)="selectionnerClient(client)">
-                    <i class="fa fa-check"> Choisir</i> Choisir
+                    <i class="fa fa-check"></i> Choisir
                   </button>
                 </td>
               </tr>
@@ -948,7 +948,7 @@
       </div>
       <div class="modal-footer py-2">
         <button class="btn btn-secondary btn-sm" (click)="closeAllModals()">Fermer</button>
-        <button class="btn btn-info btn-sm" (click)="utiliserClientDivers()" *ngIf="!isModificationCredit"><i class="fa fa-user-circle"> Client divers</i> Client divers</button>
+        <button class="btn btn-info btn-sm" (click)="utiliserClientDivers()" *ngIf="!isModificationCredit"><i class="fa fa-user-circle"></i> Client divers</button>
       </div>
     </div>
   </div>
@@ -962,7 +962,7 @@
       <div class="modal-header" [style.background]="design === 2 ? '#0f172a' : (design === 3 ? '#fff' : '#1e40af')"
            [style.border-bottom]="design === 3 ? '2px solid #18181b' : 'none'">
         <h5 class="modal-title" [style.color]="design === 2 ? '#f59e0b' : (design === 3 ? '#18181b' : '#fff')">
-          <i class="fa fa-receipt me-2">Reçu · </i>Reçu · {{ selectedVente?.numeroVente }}
+          <i class="fa fa-receipt me-2"></i>Reçu · {{ selectedVente?.numeroVente }}
         </h5>
         <button type="button" class="btn-close" [class.btn-close-white]="design !== 3" (click)="closeAllModals()"></button>
       </div>
@@ -1137,10 +1137,10 @@
         <button type="button" class="btn btn-warning"
                 *ngIf="selectedVente && !selectedVente.annulee"
                 (click)="openRetourVenteModal(selectedVente!); closeAllModals()">
-          <i class="fa fa-undo me-1"> Retour produit</i> Retour produit
+          <i class="fa fa-undo me-1"></i> Retour produit
         </button>
         <button type="button" class="btn btn-primary" (click)="openFactureDateModal(selectedVente!.id)">
-          <i class="fa fa-file-pdf me-1"> Télécharger facture</i> Télécharger facture
+          <i class="fa fa-file-pdf me-1"></i> Télécharger facture
         </button>
       </div>
     </div>
@@ -1194,7 +1194,7 @@
         <!-- Informations client pour crédit -->
         <div *ngIf="isModificationCredit" class="card border-warning mb-4">
           <div class="card-header bg-warning text-white">
-            <h6 class="mb-0"><i class="fa fa-user me-2"> Informations client</i> Informations client</h6>
+            <h6 class="mb-0"><i class="fa fa-user me-2"></i> Informations client</h6>
           </div>
           <div class="card-body">
             <div class="row">
@@ -1249,7 +1249,7 @@
                 </div>
                 <button class="btn btn-sm btn-outline-primary" (click)="addProduitToVente(produit)"
                   [disabled]="isProduitSansStock(produit)">
-                  <i class="fa fa-plus me-1"> Ajouter</i> Ajouter
+                  <i class="fa fa-plus me-1"></i> Ajouter
                 </button>
               </div>
             </div>
@@ -1260,7 +1260,7 @@
               [class.border-primary]="!isModificationCredit">
               <div class="card-header" [class.bg-warning]="isModificationCredit"
                 [class.bg-primary]="!isModificationCredit" class="text-white">
-                <h6 class="mb-0"><i class="fa fa-shopping-cart me-2"> Panier</i> Panier</h6>
+                <h6 class="mb-0"><i class="fa fa-shopping-cart me-2"></i> Panier</h6>
               </div>
               <div class="card-body" style="max-height: 500px; overflow-y: auto;">
                 <div *ngIf="produitsPanier.length === 0" class="text-center text-muted py-4">
@@ -1370,7 +1370,7 @@
         <!-- Informations de paiement -->
         <div class="card mb-4">
           <div class="card-header">
-            <h6 class="mb-0"><i class="fa fa-credit-card me-2"> Informations de paiement</i> Informations de paiement</h6>
+            <h6 class="mb-0"><i class="fa fa-credit-card me-2"></i> Informations de paiement</h6>
           </div>
           <div class="card-body">
             <div class="row" *ngIf="!isModificationCredit">
@@ -1435,10 +1435,10 @@
           [class.btn-primary]="!isModificationCredit" (click)="modifierVente()"
           [disabled]="isLoading || produitsPanier.length === 0">
           <span *ngIf="!isLoading">
-            <i class="fa fa-save me-1"> Enregistrer les modifications</i> Enregistrer les modifications
+            <i class="fa fa-save me-1"></i> Enregistrer les modifications
           </span>
           <span *ngIf="isLoading">
-            <i class="fa fa-spinner fa-spin me-1"> Enregistrement...</i> Enregistrement...
+            <i class="fa fa-spinner fa-spin me-1"></i> Enregistrement...
           </span>
         </button>
       </div>
@@ -1452,7 +1452,7 @@
     <div class="modal-content">
       <div class="modal-header bg-danger text-white">
         <h5 class="modal-title">
-          <i class="fa fa-ban me-2"> Annulation de vente</i> Annulation de vente
+          <i class="fa fa-ban me-2"></i> Annulation de vente
         </h5>
         <button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button>
       </div>
@@ -1512,10 +1512,10 @@
         <button type="button" class="btn btn-danger" (click)="annulerVente()"
           [disabled]="isLoading || !annulationForm.motif">
           <span *ngIf="!isLoading">
-            <i class="fa fa-ban me-1"> Confirmer l'annulation</i> Confirmer l'annulation
+            <i class="fa fa-ban me-1"></i> Confirmer l'annulation
           </span>
           <span *ngIf="isLoading">
-            <i class="fa fa-spinner fa-spin me-1"> Annulation...</i> Annulation...
+            <i class="fa fa-spinner fa-spin me-1"></i> Annulation...
           </span>
         </button>
       </div>
@@ -1529,7 +1529,7 @@
   <div class="modal-dialog modal-dialog-centered" style="max-width: 420px;" (click)="$event.stopPropagation()">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title"><i class="fa fa-file-pdf me-2 text-primary"> Générer la facture</i> Générer la facture</h5>
+        <h5 class="modal-title"><i class="fa fa-file-pdf me-2 text-primary"></i> Générer la facture</h5>
         <button type="button" class="btn-close" (click)="showFactureDateModal = false; venteForFacture = null"></button>
       </div>
       <div class="modal-body">
@@ -1545,7 +1545,7 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" (click)="showFactureDateModal = false; venteForFacture = null">Annuler</button>
         <button type="button" class="btn btn-primary" (click)="confirmerGenerationFacture()" [disabled]="!factureDateCustom">
-          <i class="fa fa-print me-1"> Générer</i> Générer
+          <i class="fa fa-print me-1"></i> Générer
         </button>
       </div>
     </div>
@@ -1651,8 +1651,8 @@
           Annuler
         </button>
         <button class="btn btn-warning" (click)="submitRetourVente()" [disabled]="isLoading || totalRetourVente <= 0">
-          <span *ngIf="!isLoading"><i class="fa fa-undo me-1"> Confirmer le retour</i> Confirmer le retour</span>
-          <span *ngIf="isLoading"><i class="fa fa-spinner fa-spin me-1"> Traitement...</i> Traitement...</span>
+          <span *ngIf="!isLoading"><i class="fa fa-undo me-1"></i> Confirmer le retour</span>
+          <span *ngIf="isLoading"><i class="fa fa-spinner fa-spin me-1"></i> Traitement...</span>
         </button>
       </div>
     </div>
@@ -1764,7 +1764,7 @@
                 <strong>{{ vente.clientNom || 'Client divers' }}</strong>
                 <span class="badge bg-secondary">{{ vente.numeroVente }}</span>
                 <span *ngIf="vente.dateEcheance && vente.dateEcheance < today" class="badge bg-danger">
-                  <i class="fa fa-exclamation-triangle me-1"> Retard</i> Retard
+                  <i class="fa fa-exclamation-triangle me-1"></i> Retard
                 </span>
               </div>
               <div class="d-flex flex-wrap gap-3" style="font-size:0.85rem;">
@@ -1782,7 +1782,7 @@
               </button>
               <button class="btn btn-sm btn-success"
                       (click)="openReglementCreditModal(vente); showCreditsModal = false; creditDetailVente = null">
-                <i class="fa fa-money-bill-wave me-1"> Régler</i> Régler
+                <i class="fa fa-money-bill-wave me-1"></i> Régler
               </button>
             </div>
           </div>
@@ -1823,7 +1823,7 @@
 
       <div class="modal-footer">
         <button class="btn btn-secondary" (click)="showCreditsModal = false; creditDetailVente = null">
-          <i class="fa fa-times me-1"> Fermer</i> Fermer
+          <i class="fa fa-times me-1"></i> Fermer
         </button>
       </div>
     </div>
@@ -1880,7 +1880,7 @@
         <!-- Produits achetés -->
         <div *ngIf="(selectedCredit.produits || selectedCredit.lignes || []).length > 0" class="mb-3">
           <p class="fw-bold text-muted mb-2" style="font-size:0.87rem;">
-            <i class="fa fa-shopping-bag me-1"> Produits achetés</i> Produits achetés
+            <i class="fa fa-shopping-bag me-1"></i> Produits achetés
           </p>
           <table class="table table-sm table-bordered" style="font-size:0.85rem;">
             <thead class="table-light">
@@ -1940,7 +1940,7 @@
 
       <div class="modal-footer">
         <button class="btn btn-secondary" (click)="showReglementCreditModal = false">
-          <i class="fa fa-times me-1"> Annuler</i> Annuler
+          <i class="fa fa-times me-1"></i> Annuler
         </button>
         <button class="btn btn-success" (click)="reglementCredit()" [disabled]="isLoading">
           <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-1"></span>
@@ -2042,7 +2042,7 @@
                   </select>
                   <small *ngIf="ligne.ancienProduitId && ligne.ancienProduitId !== ligne.produitId"
                          class="text-warning mt-1 d-block">
-                    <i class="fa fa-exchange-alt me-1"> Produit changé</i> Produit changé
+                    <i class="fa fa-exchange-alt me-1"></i> Produit changé
                   </small>
                 </td>
                 <td>
@@ -2060,7 +2060,7 @@
                   <button class="btn btn-sm btn-outline-danger"
                           (click)="supprimerLigneModification(i)"
                           title="Supprimer cette ligne">
-                    <i class="fa fa-trash">Supprimer</i>
+                    <i class="fa fa-trash"></i>
                   </button>
                 </td>
               </tr>
@@ -2070,7 +2070,7 @@
 
         <!-- Ajouter une ligne -->
         <button class="btn btn-sm btn-outline-success mb-3" (click)="ajouterLigneModification()">
-          <i class="fa fa-plus me-1"> Ajouter un produit</i> Ajouter un produit
+          <i class="fa fa-plus me-1"></i> Ajouter un produit
         </button>
 
         <!-- Motif -->
@@ -2086,7 +2086,7 @@
       <!-- Footer -->
       <div class="modal-footer">
         <button class="btn btn-secondary" (click)="showModificationLignesModal = false">
-          <i class="fa fa-times me-1"> Annuler</i> Annuler
+          <i class="fa fa-times me-1"></i> Annuler
         </button>
         <button class="btn btn-primary" (click)="confirmerModificationLignes()" [disabled]="isModificationLoading">
           <span *ngIf="isModificationLoading" class="spinner-border spinner-border-sm me-1"></span>

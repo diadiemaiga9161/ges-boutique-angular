@@ -5,12 +5,12 @@ import { map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { AuthService } from './auth.service';
 import { BoutiqueService } from './boutique.service';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import { FactureService } from './facture.service';
 
 export enum StatutCommande {
   BROUILLON = 'BROUILLON',
-  VALIDEE = 'VALIDEE'
+  VALIDEE = 'VALIDEE',
+  ANNULEE = 'ANNULEE'
 }
 
 export interface LigneCommande {
@@ -69,7 +69,8 @@ export class CommandeService {
   constructor(
     private http: HttpClient,
     private auth: AuthService,
-    private boutiqueService: BoutiqueService
+    private boutiqueService: BoutiqueService,
+    private factureService: FactureService
   ) {}
 
   private get headers() {
@@ -100,6 +101,18 @@ export class CommandeService {
     return this.http.delete<any>(`${this.apiUrl}/${id}`, this.headers);
   }
 
+  payerCredit(id: number, montant: number): Observable<any> {
+    return this.http.patch<any>(`${this.apiUrl}/${id}/payer-credit`, { montant }, this.headers);
+  }
+
+  payerCreditsGroupes(ids: number[], montantTotal: number): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/payer-credits-groupes`, { ids, montantTotal }, this.headers);
+  }
+
+  annuler(id: number, utilisateurId?: number): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/${id}/annuler`, { utilisateurId }, this.headers);
+  }
+
   // ─── Utilitaires ──────────────────────────────────────────────────────────
 
   formatMontant(v: number): string {
@@ -114,105 +127,36 @@ export class CommandeService {
   // ─── Facture BON DE COMMANDE ──────────────────────────────────────────────
 
   imprimerFactureCommande(commande: Commande): void {
-    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
     const boutique = this.boutiqueService.getInfo();
-    const nomBoutique = boutique?.nom || 'Boutique';
-    const adresse = boutique?.adresse || '';
-    const tel = boutique?.telephone || '';
-    const W = doc.internal.pageSize.getWidth();
-
-    // En-tête
-    doc.setFillColor(30, 64, 175);
-    doc.rect(0, 0, W, 32, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(18);
-    doc.setFont('helvetica', 'bold');
-    doc.text(nomBoutique.toUpperCase(), W / 2, 12, { align: 'center' });
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text([adresse, tel].filter(Boolean).join(' · '), W / 2, 20, { align: 'center' });
-
-    // Titre BON DE COMMANDE
-    doc.setFillColor(245, 247, 255);
-    doc.rect(0, 32, W, 18, 'F');
-    doc.setTextColor(30, 64, 175);
-    doc.setFontSize(15);
-    doc.setFont('helvetica', 'bold');
-    doc.text('BON DE COMMANDE', W / 2, 42, { align: 'center' });
-
-    // Infos commande
-    doc.setTextColor(30, 30, 30);
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
     const clientNom = [commande.clientNom, commande.clientPrenom].filter(Boolean).join(' ') || commande.client?.nom || 'N/A';
-    const dateCmd = this.formatDate(commande.dateCommande);
     const statut = commande.statut === StatutCommande.VALIDEE ? 'VALIDÉE' : 'BROUILLON';
 
-    doc.text(`N° Commande : ${commande.numeroCommande}`, 14, 58);
-    doc.text(`Statut : ${statut}`, W - 14, 58, { align: 'right' });
-    doc.text(`Client : ${clientNom}`, 14, 64);
-    doc.text(`Date : ${dateCmd}`, W - 14, 64, { align: 'right' });
-    if (commande.clientTelephone) {
-      doc.text(`Tél : ${commande.clientTelephone}`, 14, 70);
-    }
-    if (commande.dateValidation) {
-      doc.text(`Validée le : ${this.formatDate(commande.dateValidation)}`, W - 14, 70, { align: 'right' });
-    }
-
-    // Tableau lignes
-    const rows = commande.lignes.map((l, i) => [
-      i + 1,
+    const lignes = commande.lignes.map((l, i) => [
+      String(i + 1),
       l.produit?.nom || l.produitNom || 'Produit',
-      l.quantite,
+      String(l.quantite),
       this.formatMontant(l.prixUnitaire),
-      this.formatMontant(l.sousTotal || l.prixUnitaire * l.quantite)
+      this.formatMontant(l.sousTotal ?? l.prixUnitaire * l.quantite)
     ]);
 
-    autoTable(doc, {
-      startY: 78,
-      head: [['#', 'Produit', 'Qté', 'Prix unitaire', 'Sous-total']],
-      body: rows,
-      styles: { fontSize: 9, cellPadding: 3 },
-      headStyles: { fillColor: [30, 64, 175], textColor: 255, fontStyle: 'bold' },
-      alternateRowStyles: { fillColor: [245, 247, 255] },
-      columnStyles: { 0: { cellWidth: 8 }, 2: { halign: 'center' }, 3: { halign: 'right' }, 4: { halign: 'right' } }
-    });
-
-    const finalY: number = (doc as any).lastAutoTable.finalY + 6;
-
-    // Totaux
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(11);
-    doc.text(`TOTAL : ${this.formatMontant(commande.montantTotal)}`, W - 14, finalY, { align: 'right' });
-
+    const totaux: { label: string; valeur: string }[] = [
+      { label: 'TOTAL', valeur: this.formatMontant(commande.montantTotal) }
+    ];
     if (commande.estCredit) {
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'normal');
-      doc.text(`Versé : ${this.formatMontant(commande.montantVerse)}`, W - 14, finalY + 6, { align: 'right' });
-      doc.setTextColor(220, 38, 38);
-      doc.text(`Reste dû : ${this.formatMontant(commande.montantRestant)}`, W - 14, finalY + 12, { align: 'right' });
-      doc.setTextColor(30, 30, 30);
+      totaux.push({ label: 'Versé', valeur: this.formatMontant(commande.montantVerse) });
+      totaux.push({ label: 'Reste dû', valeur: this.formatMontant(commande.montantRestant) });
       if (commande.dateEcheance) {
-        doc.text(`Échéance : ${commande.dateEcheance}`, W - 14, finalY + 18, { align: 'right' });
+        totaux.push({ label: 'Échéance', valeur: commande.dateEcheance });
       }
     }
 
-    // Mode de paiement
-    doc.setFontSize(9);
-    doc.text(`Mode de paiement : ${commande.modePaiement || ''}`, 14, finalY);
-    if (commande.notes) {
-      doc.text(`Notes : ${commande.notes}`, 14, finalY + 6);
-    }
-
-    // Pied
-    doc.setFontSize(8);
-    doc.setTextColor(120, 120, 120);
-    doc.text('Document généré par Ges-Boutique', W / 2, 285, { align: 'center' });
-
-    const filename = `commande-${commande.numeroCommande}.pdf`;
-    const blob = doc.output('blob');
-    const url = URL.createObjectURL(blob);
-    const w = window.open(url, '_blank');
-    if (w) w.onload = () => URL.revokeObjectURL(url);
+    this.factureService.ouvrirDocumentPDF({
+      titre: 'BON DE COMMANDE',
+      sousTitre: `${boutique?.nom || ''} · N° ${commande.numeroCommande} · Client : ${clientNom} · ${statut} · Date : ${this.formatDate(commande.dateCommande)}`,
+      colonnes: ['#', 'Produit', 'Qté', 'Prix unitaire', 'Sous-total'],
+      lignes,
+      totaux,
+      pied: commande.notes || undefined
+    });
   }
 }

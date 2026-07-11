@@ -1,4 +1,4 @@
-﻿<div class="container-fluid py-4 app-page">
+<div class="container-fluid py-4 app-page">
 
   <!-- En-tête -->
   <div class="app-page-header mb-4">
@@ -62,12 +62,12 @@
       <button type="button" class="btn btn-sm"
         [ngClass]="vueMode === 'liste' ? 'btn-primary' : 'btn-outline-primary'"
         (click)="basculerVue('liste')">
-        <i class="fa fa-list me-1"> Liste</i> Liste
+        <i class="fa fa-list me-1"></i> Liste
       </button>
       <button type="button" class="btn btn-sm"
         [ngClass]="vueMode === 'groupes' ? 'btn-primary' : 'btn-outline-primary'"
         (click)="basculerVue('groupes')">
-        <i class="fa fa-users me-1"> Par client</i> Par client
+        <i class="fa fa-users me-1"></i> Par client
       </button>
     </div>
   </div>
@@ -144,7 +144,7 @@
           </div>
           <div class="card-footer py-2 text-right">
             <button class="btn btn-sm btn-danger" (click)="ouvrirRetraitGlobal(client)">
-              <i class="fa fa-arrow-down mr-1"> Retrait global</i> Retrait global
+              <i class="fa fa-arrow-down mr-1"></i> Retrait global
             </button>
           </div>
         </div>
@@ -155,7 +155,7 @@
   <!-- Tableau (liste seulement) -->
   <div class="app-table-card" *ngIf="vueMode === 'liste'">
     <div class="app-table-header">
-      <div class="app-table-title"><i class="fa fa-archive me-2">Liste des dépôts</i>Liste des dépôts</div>
+      <div class="app-table-title"><i class="fa fa-archive me-2"></i>Liste des dépôts</div>
     </div>
       <div *ngIf="isLoading" class="text-center p-4">
         <div class="spinner-border text-primary"></div>
@@ -254,7 +254,7 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header bg-danger text-white">
-        <h5 class="modal-title"><i class="fa fa-arrow-down mr-2"> Retrait global — </i> Retrait global — {{ clientRetraitGlobal!.nomComplet }}</h5>
+        <h5 class="modal-title"><i class="fa fa-arrow-down mr-2"></i> Retrait global — {{ clientRetraitGlobal!.nomComplet }}</h5>
         <button type="button" class="close text-white" (click)="fermerModal()"><span>&times;</span></button>
       </div>
       <div class="modal-body">
@@ -302,7 +302,7 @@
       <div class="modal-footer">
         <button class="btn btn-secondary" (click)="fermerModal()">Annuler</button>
         <button class="btn btn-danger" (click)="confirmerRetraitGlobal()">
-          <i class="fa fa-arrow-down mr-1"> Confirmer le retrait global</i> Confirmer le retrait global
+          <i class="fa fa-arrow-down mr-1"></i> Confirmer le retrait global
         </button>
       </div>
     </div>

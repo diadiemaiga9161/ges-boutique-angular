@@ -739,7 +739,7 @@ h1.h3, h1.h4 {
   gap: 16px;
   box-shadow: 0 4px 20px rgba(8,22,72,0.20);
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .app-page-header::before {

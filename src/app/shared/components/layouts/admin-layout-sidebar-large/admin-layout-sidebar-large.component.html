@@ -26,23 +26,23 @@
 
 <!-- Mobile Bottom Navigation -->
 <nav class="mobile-bottom-nav d-flex d-md-none">
-  <a class="mobile-nav-item" routerLink="/pages/vente" routerLinkActive="active">
+  <a class="mobile-nav-item" routerLink="/vente" routerLinkActive="active">
     <i class="i-Money-2"></i>
     <span>Ventes</span>
   </a>
-  <a *ngIf="authService.isAdmin()" class="mobile-nav-item" routerLink="/pages/caisse" routerLinkActive="active">
+  <a *ngIf="authService.isAdmin()" class="mobile-nav-item" routerLink="/caisse" routerLinkActive="active">
     <i class="i-Cash-register-2"></i>
     <span>Caisse</span>
   </a>
-  <a class="mobile-nav-item" routerLink="/pages/produit" routerLinkActive="active">
+  <a class="mobile-nav-item" routerLink="/produit" routerLinkActive="active">
     <i class="i-Clothing-Store"></i>
     <span>Produits</span>
   </a>
-  <a class="mobile-nav-item" routerLink="/pages/client" routerLinkActive="active">
+  <a class="mobile-nav-item" routerLink="/client" routerLinkActive="active">
     <i class="i-Business-ManWoman"></i>
     <span>Clients</span>
   </a>
-  <a class="mobile-nav-item" routerLink="/pages/profile" routerLinkActive="active">
+  <a class="mobile-nav-item" routerLink="/profile" routerLinkActive="active">
     <i class="i-Administrator"></i>
     <span>Profil</span>
   </a>

@@ -27,11 +27,11 @@ export class LanguageService {
 
   constructor(private translate: TranslateService) {}
 
-  init(): void {
+  init(): Promise<void> {
     const saved = localStorage.getItem(STORAGE_KEY) || 'fr';
     this.translate.addLangs(LANGUAGES.map(l => l.code));
     this.translate.setDefaultLang('fr');
-    this.applyLang(saved);
+    return this.applyLang(saved);
   }
 
   setLanguage(code: string): void {
@@ -48,10 +48,17 @@ export class LanguageService {
     return LANGUAGES.find(l => l.code === code) || LANGUAGES[0];
   }
 
-  private applyLang(code: string): void {
-    this.translate.use(code);
-    const lang = LANGUAGES.find(l => l.code === code);
-    document.documentElement.lang = code;
-    document.documentElement.dir = lang?.dir || 'ltr';
+  private applyLang(code: string): Promise<void> {
+    return new Promise(resolve => {
+      this.translate.use(code).subscribe({
+        next: () => {
+          const lang = LANGUAGES.find(l => l.code === code);
+          document.documentElement.lang = code;
+          document.documentElement.dir = lang?.dir || 'ltr';
+          resolve();
+        },
+        error: () => resolve()
+      });
+    });
   }
 }

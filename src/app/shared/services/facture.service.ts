@@ -255,12 +255,207 @@ export class FactureService {
 
   // Impression et PDF avec logo
   imprimerFacture(facture: Facture): void {
-    const html = this.genererHTMLFacture(facture);
-    const win = window.open('', '_blank');
-    if (!win) throw new Error('Impossible d\'ouvrir la fenêtre');
-    win.document.write(html);
-    win.document.close();
-    win.onload = () => setTimeout(() => { win.focus(); win.print(); win.addEventListener('afterprint', () => win.close()); }, 500);
+    this.openHtmlBlob(this.genererHTMLFacture(facture), true);
+  }
+
+  ouvrirFacture(facture: Facture): void {
+    this.openHtmlBlob(this.genererHTMLFacture(facture), false);
+  }
+
+  ouvrirRecuPaiementFournisseur(paiement: any, fournisseur: any): void {
+    const boutique = this.boutiqueService.getInfo();
+    const nom = boutique.nom || 'Ges Boutique';
+    const tel = boutique.telephone || '';
+    const adr = boutique.adresse || '';
+    const date = new Date().toLocaleDateString('fr-FR');
+    const datePai = paiement.datePaiement
+      ? new Date(paiement.datePaiement).toLocaleDateString('fr-FR')
+      : date;
+
+    const qrData = encodeURIComponent(
+      `RECU PAIEMENT FOURNISSEUR\nFournisseur: ${fournisseur.nom}\nDate: ${datePai}\nMontant: ${this.formatPlainNumber(paiement.montant)} FCFA\nMode: ${paiement.modePaiement || 'ESPECES'}\nRef: ${paiement.reference || '-'}\nBoutique: ${nom}`
+    );
+
+    const html = this.buildHtmlRecu({
+      type: 'PAIEMENT FOURNISSEUR',
+      numero: paiement.id ? `PAI-${paiement.id}` : 'PAI-XXX',
+      date: datePai,
+      entite: fournisseur.nom + (fournisseur.code ? ` (${fournisseur.code})` : ''),
+      entiteLabel: 'Fournisseur',
+      telephone: fournisseur.telephone,
+      rows: [
+        ['Mode de paiement', paiement.modePaiement || 'ESPECES'],
+        ...(paiement.reference ? [['Référence', paiement.reference]] : []),
+        ...(paiement.observation ? [['Observation', paiement.observation]] : []),
+      ],
+      montant: paiement.montant,
+      montantLabel: 'MONTANT PAYÉ',
+      boutique: nom, tel, adr, qrData
+    });
+    this.openHtmlBlob(html, false);
+  }
+
+  ouvrirRecuReglementCredit(reglement: any, client: any): void {
+    const boutique = this.boutiqueService.getInfo();
+    const nom = boutique.nom || 'Ges Boutique';
+    const tel = boutique.telephone || '';
+    const adr = boutique.adresse || '';
+    const date = new Date().toLocaleDateString('fr-FR');
+    const dateReg = reglement.datePaiement
+      ? new Date(reglement.datePaiement).toLocaleDateString('fr-FR')
+      : date;
+    const clientNom = [client.prenom, client.nom].filter(Boolean).join(' ') || client.nom || 'Client';
+
+    const qrData = encodeURIComponent(
+      `RECU REGLEMENT CREDIT\nClient: ${clientNom}\nDate: ${dateReg}\nMontant: ${this.formatPlainNumber(reglement.montant)} FCFA\nMode: ${reglement.modePaiement || 'ESPECES'}\nBoutique: ${nom}`
+    );
+
+    const html = this.buildHtmlRecu({
+      type: 'RÈGLEMENT CRÉDIT',
+      numero: reglement.id ? `REG-${reglement.id}` : 'REG-XXX',
+      date: dateReg,
+      entite: clientNom,
+      entiteLabel: 'Client',
+      telephone: client.telephone,
+      rows: [
+        ['Mode de paiement', reglement.modePaiement || 'ESPECES'],
+        ...(reglement.montantRestant != null ? [['Reste dû', this.formatPlainNumber(reglement.montantRestant) + ' FCFA']] : []),
+      ],
+      montant: reglement.montant,
+      montantLabel: 'MONTANT RÉGLÉ',
+      boutique: nom, tel, adr, qrData
+    });
+    this.openHtmlBlob(html, false);
+  }
+
+  private buildHtmlRecu(c: {
+    type: string; numero: string; date: string; entite: string; entiteLabel: string;
+    telephone?: string; rows: string[][]; montant: number; montantLabel: string;
+    boutique: string; tel: string; adr: string; qrData: string;
+  }): string {
+    const design = this.designService.getDesign();
+    const acc = design === 2 ? '#f59e0b' : design === 3 ? '#18181b' : '#1a56db';
+    const hdrGrad = design === 2
+      ? 'linear-gradient(135deg,#0f172a,#1e293b)'
+      : design === 3 ? '#18181b'
+      : 'linear-gradient(135deg,#081648,#1a56db)';
+    const rowsHtml = c.rows.map(([l, v]) =>
+      `<div class="r"><span class="rl">${l}</span><span class="rv">${v}</span></div>`
+    ).join('');
+    return `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8">
+<title>${c.type} — ${c.numero}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;padding:24px;font-size:13px}
+.sheet{background:#fff;max-width:520px;margin:0 auto;border-radius:14px;overflow:hidden;box-shadow:0 4px 24px rgba(8,22,72,.12)}
+.hdr{background:${hdrGrad};color:#fff;padding:28px 24px;text-align:center}
+.hdr-type{font-size:11px;letter-spacing:3px;opacity:.7;text-transform:uppercase;margin-bottom:6px}
+.hdr-title{font-size:24px;font-weight:900;letter-spacing:1px}
+.hdr-num{font-size:12px;opacity:.65;margin-top:6px}
+.body{padding:24px}
+.section{margin-bottom:18px}
+.section-title{font-size:10px;letter-spacing:2px;color:#94a3b8;text-transform:uppercase;margin-bottom:8px}
+.entity{font-size:17px;font-weight:700;color:#1e293b}
+.entity-sub{font-size:12px;color:#64748b;margin-top:2px}
+.r{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #f1f5f9}
+.rl{color:#64748b;font-size:12px}
+.rv{font-weight:600;color:#1e293b;font-size:12px}
+.total-box{background:#eff6ff;border:2px solid ${acc};border-radius:10px;padding:18px;text-align:center;margin:18px 0}
+.total-lbl{font-size:11px;letter-spacing:2px;color:${acc};text-transform:uppercase;margin-bottom:6px}
+.total-val{font-size:32px;font-weight:900;color:${acc}}
+.qr-block{text-align:center;padding:12px 0}
+.qr-block img{border-radius:8px;border:3px solid #e2e8f0}
+.qr-hint{font-size:10px;color:#94a3b8;margin-top:6px}
+.ftr{background:${hdrGrad};color:rgba(255,255,255,.6);text-align:center;padding:14px;font-size:11px}
+.btn-bar{display:flex;gap:8px;justify-content:center;padding:12px;background:#f8fafc;border-bottom:1px solid #e5e7eb}
+.btn{border:none;border-radius:8px;padding:9px 20px;font-size:13px;font-weight:700;cursor:pointer}
+.btn-p{background:${acc};color:#fff}
+.btn-d{background:#16a34a;color:#fff}
+.btn-c{background:#ef4444;color:#fff}
+@media print{.btn-bar{display:none}body{background:#fff;padding:0}.sheet{box-shadow:none;border-radius:0;max-width:100%}}
+</style></head><body>
+<div class="sheet">
+  <div class="hdr">
+    <div class="hdr-type">${c.boutique}</div>
+    <div class="hdr-title">RECU</div>
+    <div class="hdr-num">${c.type} &middot; ${c.numero} &middot; ${c.date}</div>
+  </div>
+  <div class="btn-bar">
+    <button class="btn btn-p" onclick="window.print()">Imprimer</button>
+    <button class="btn btn-d" onclick="dl()">Telecharger</button>
+    <button class="btn btn-c" onclick="window.close()">Fermer</button>
+  </div>
+  <div class="body">
+    <div class="section">
+      <div class="section-title">${c.entiteLabel}</div>
+      <div class="entity">${c.entite}</div>
+      ${c.telephone ? `<div class="entity-sub">${c.telephone}</div>` : ''}
+    </div>
+    <div class="section">
+      <div class="section-title">Details</div>
+      ${rowsHtml}
+    </div>
+    <div class="total-box">
+      <div class="total-lbl">${c.montantLabel}</div>
+      <div class="total-val">${this.formatPlainNumber(c.montant)} FCFA</div>
+    </div>
+    <div class="qr-block">
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=${c.qrData}" width="110" height="110" alt="QR Code" onerror="this.style.display='none'">
+      <div class="qr-hint">Scanner pour verifier ce recu</div>
+    </div>
+    ${c.adr || c.tel ? `<div style="text-align:center;color:#94a3b8;font-size:11px">${[c.boutique, c.adr, c.tel].filter(Boolean).join(' &middot; ')}</div>` : ''}
+  </div>
+  <div class="ftr">Document officiel - Ges Boutique &middot; Genere le ${new Date().toLocaleDateString('fr-FR')}</div>
+</div>
+<script>
+function dl(){
+  var h=document.documentElement.outerHTML;
+  var b=new Blob([h],{type:'text/html'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(b);
+  a.download='recu-${c.numero}.html';
+  a.click();
+}
+<\/script>
+</body></html>`;
+  }
+
+  protected openHtmlBlob(html: string, autoprint: boolean): void {
+    document.getElementById('ang-inv-overlay')?.remove();
+    const overlay = document.createElement('div');
+    overlay.id = 'ang-inv-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;background:rgba(0,0,0,.65)';
+
+    const frame = document.createElement('iframe');
+    frame.id = 'ang-inv-frame';
+    frame.style.cssText = 'flex:1;width:100%;border:none;background:#f8fafc';
+    frame.setAttribute('srcdoc', html);
+
+    const bar = document.createElement('div');
+    bar.style.cssText = 'background:#1a56db;padding:10px 16px;display:flex;gap:10px;align-items:center;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,.3)';
+
+    const btnClose = document.createElement('button');
+    btnClose.textContent = '✕ Fermer';
+    btnClose.style.cssText = 'background:#ef4444;color:#fff;border:none;border-radius:8px;padding:9px 20px;font-size:14px;font-weight:700;cursor:pointer';
+    btnClose.addEventListener('click', () => overlay.remove());
+
+    const btnPrint = document.createElement('button');
+    btnPrint.textContent = '🖨 Imprimer / PDF';
+    btnPrint.style.cssText = 'background:#fff;color:#1a56db;border:none;border-radius:8px;padding:9px 20px;font-size:14px;font-weight:700;cursor:pointer';
+    btnPrint.addEventListener('click', () => frame.contentWindow?.print());
+
+    bar.appendChild(btnClose);
+    bar.appendChild(btnPrint);
+    overlay.appendChild(bar);
+    overlay.appendChild(frame);
+    document.body.appendChild(overlay);
+
+    if (autoprint) {
+      frame.addEventListener('load', () => setTimeout(() => {
+        frame.contentWindow?.focus();
+        frame.contentWindow?.print();
+      }, 400));
+    }
   }
 
   exportFactureToPDF(facture: Facture): void {
@@ -433,7 +628,7 @@ export class FactureService {
   isFactureModifiable(facture: Facture): boolean { return facture.statut === 'BROUILLON'; }
   isFactureSupprimable(facture: Facture): boolean { return facture.statut === 'BROUILLON'; }
 
-  private formatPlainNumber(price: number): string {
+  protected formatPlainNumber(price: number): string {
     return (price === undefined || price === null) ? '0' : Math.round(price).toLocaleString('fr-FR');
   }
   private formatDateTimeForExport(dateString: string): string {
@@ -446,96 +641,332 @@ export class FactureService {
     try { const d = new Date(dateString); return `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')}`; } catch { return 'date'; }
   }
 
-  private genererHTMLFacture(facture: Facture): string {
+  // ══════════════════════════════════════════
+  // DOCUMENT GÉNÉRIQUE (même look que les factures)
+  // ══════════════════════════════════════════
+
+  genererHTMLDocument(config: {
+    titre: string;
+    sousTitre?: string;
+    colonnes: string[];
+    lignes: any[][];
+    totaux?: { label: string; valeur: string }[];
+    pied?: string;
+  }): string {
+    const design = this.designService.getDesign();
     const boutique = this.boutiqueService.getInfo();
-    const entreprise = {
-      nom: boutique.nom || this.BOUTIQUE_NOM,
-      adresse: boutique.adresse || this.BOUTIQUE_ADRESSE,
-      telephone: boutique.telephone || this.BOUTIQUE_TELEPHONE,
-      email: boutique.email || this.BOUTIQUE_EMAIL
-    };
+    const nom = boutique.nom || this.BOUTIQUE_NOM;
+    const adr = boutique.adresse || this.BOUTIQUE_ADRESSE;
+    const tel = boutique.telephone || this.BOUTIQUE_TELEPHONE;
+    const date = new Date().toLocaleDateString('fr-FR');
+
+    // Couleurs selon design (identiques à genererHTMLFacture)
+    let primaryColor = '#1a56db';
+    let headerBg = 'linear-gradient(135deg,#081648 0%,#0d2b85 50%,#1a56db 100%)';
+    let headerTextColor = '#ffffff';
+    let tblHeadBg = 'linear-gradient(135deg,#081648,#1a56db)';
+    if (design === 2) {
+      primaryColor = '#f59e0b';
+      headerBg = 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)';
+      headerTextColor = '#ffffff';
+      tblHeadBg = 'linear-gradient(135deg,#0f172a,#1e293b)';
+    } else if (design === 3) {
+      primaryColor = '#18181b';
+      headerBg = '#ffffff';
+      headerTextColor = '#18181b';
+      tblHeadBg = '#18181b';
+    }
+
+    const colonnesHTML = config.colonnes.map(c => `<th>${c}</th>`).join('');
+    const lignesHTML = config.lignes.map((row, ri) =>
+      `<tr class="${ri % 2 === 0 ? 'even' : ''}">${row.map((cell, ci) =>
+        `<td style="${ci === row.length - 1 ? 'text-align:right;font-weight:700' : ''}">${cell ?? ''}</td>`
+      ).join('')}</tr>`
+    ).join('');
+
+    const totauxHTML = (config.totaux || []).map(t =>
+      `<tr class="total-row">
+        <td colspan="${config.colonnes.length - 1}" style="text-align:right;font-weight:700;color:${primaryColor}">${t.label}</td>
+        <td style="text-align:right;font-weight:900;color:${primaryColor}">${t.valeur}</td>
+      </tr>`
+    ).join('');
+
+    const footerBg = design === 3 ? '#18181b'
+      : design === 2 ? 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)'
+      : 'linear-gradient(135deg,#081648 0%,#0d2b85 100%)';
+
+    return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>${config.titre} — ${nom}</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',Arial,sans-serif;color:#1e293b;background:#f8fafc;padding:32px 24px;font-size:13px;line-height:1.5}
+  .doc-sheet{background:#fff;border-radius:16px;box-shadow:0 4px 32px rgba(8,22,72,.10);max-width:900px;margin:0 auto;overflow:hidden}
+  .doc-header{background:${headerBg};padding:24px 32px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+  .doc-header-brand{color:${headerTextColor}}
+  .doc-header-brand h1{font-size:20px;font-weight:900;margin-bottom:4px}
+  .doc-header-brand p{font-size:11px;opacity:0.75}
+  .doc-header-right{text-align:right;color:${headerTextColor}}
+  .doc-header-right .doc-title{font-size:22px;font-weight:900;opacity:0.9;text-transform:uppercase}
+  .doc-header-right .doc-subtitle{font-size:13px;margin-top:4px;opacity:0.75}
+  .doc-header-right .doc-date{font-size:11px;margin-top:6px;opacity:0.6}
+  .doc-body{padding:24px 32px}
+  table{width:100%;border-collapse:collapse;margin-top:8px}
+  thead tr th{background:${tblHeadBg};color:#fff;padding:10px 14px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;text-align:left}
+  tbody tr.even td{background:#f8fafc}
+  tbody tr td{padding:9px 14px;font-size:12.5px;border-bottom:1px solid #f1f5f9;color:#334155}
+  tfoot tr.total-row td{padding:12px 14px;background:${design === 2 ? '#fef3c7' : design === 3 ? '#f4f4f5' : '#eff6ff'};border-top:2px solid ${primaryColor};font-size:13px}
+  .doc-footer{background:${footerBg};padding:14px 32px;display:flex;align-items:center;justify-content:space-between}
+  .doc-footer span{color:rgba(255,255,255,.75);font-size:12px}
+  .doc-footer-right{color:rgba(255,255,255,.55);font-size:11px;font-style:italic}
+  .doc-pied{padding:12px 32px 20px;font-size:11px;color:#94a3b8;text-align:center}
+  @media print{@page{size:A4;margin:10mm}body{background:white;padding:0}.doc-sheet{box-shadow:none;border-radius:0;max-width:100%;margin:0}}
+</style></head><body>
+<div class="doc-sheet">
+  <div class="doc-header">
+    <div class="doc-header-brand">
+      <h1>${nom}</h1>
+      <p>${adr ? adr + (tel ? ' — ' : '') : ''}${tel ? 'Tél : ' + tel : ''}</p>
+    </div>
+    <div class="doc-header-right">
+      <div class="doc-title">${config.titre}</div>
+      ${config.sousTitre ? `<div class="doc-subtitle">${config.sousTitre}</div>` : ''}
+      <div class="doc-date">Généré le ${date}</div>
+    </div>
+  </div>
+  <div class="doc-body">
+    <table>
+      <thead><tr>${colonnesHTML}</tr></thead>
+      <tbody>${lignesHTML}</tbody>
+      ${totauxHTML ? `<tfoot>${totauxHTML}</tfoot>` : ''}
+    </table>
+  </div>
+  <div class="doc-footer">
+    <span>${nom}</span>
+    <span class="doc-footer-right">Document généré par Ges Boutique</span>
+  </div>
+  ${config.pied ? `<div class="doc-pied">${config.pied}</div>` : ''}
+</div>
+</body></html>`;
+  }
+
+  ouvrirHtmlPersonnalise(html: string): void {
+    this.openHtmlBlob(html, false);
+  }
+
+  ouvrirDocumentPDF(config: {
+    titre: string;
+    sousTitre?: string;
+    colonnes: string[];
+    lignes: any[][];
+    totaux?: { label: string; valeur: string }[];
+    pied?: string;
+  }): void {
+    const html = this.genererHTMLDocument(config);
+    this.openHtmlBlob(html, false);
+  }
+
+  private genererHTMLFacture(facture: Facture): string {
+    const design = this.designService.getDesign();
+    const shop   = this.boutiqueService.getInfo();
+    const nom    = shop.nom  || this.BOUTIQUE_NOM;
+    const adr    = shop.adresse   || this.BOUTIQUE_ADRESSE;
+    const ville  = shop.ville || '';
+    const tel    = shop.telephone || this.BOUTIQUE_TELEPHONE;
+    const email  = shop.email || this.BOUTIQUE_EMAIL;
+    const rc     = shop.numeroRc  || '';
+    const ifu    = shop.numeroIfu || '';
+
+    // Priorité : logo boutique uploadé, sinon logo base64 codé en dur
+    const shopLogo = shop.logo || shop.logoPath || '';
+    const rawLogo = (shopLogo.startsWith('data:') || shopLogo.startsWith('http')) ? shopLogo : (this.LOGO_BASE64 || '');
+    const logoUrl = rawLogo.startsWith('data:') || rawLogo.startsWith('http') ? rawLogo
+      : rawLogo ? `${window.location.origin}${rawLogo.startsWith('/') ? '' : '/'}${rawLogo}` : '';
+    const initial = (nom.charAt(0) || 'B').toUpperCase();
+    const logoBlock = logoUrl
+      ? `<img src="${logoUrl}" alt="${nom}" class="inv-logo-img" onerror="this.style.display='none';document.getElementById('inv-logo-fb').style.display='flex'">
+         <div id="inv-logo-fb" class="inv-logo-fallback" style="display:none">${initial}</div>`
+      : `<div class="inv-logo-fallback">${initial}</div>`;
+
+    const rows = facture.lignes.map((l, i) => {
+      const remise = l.remisePourcentage ? `${l.remisePourcentage}%`
+        : l.remiseMontant ? `${this.formatPlainNumber(l.remiseMontant)} FCFA` : '—';
+      return `<tr class="${i % 2 === 0 ? 'even' : ''}">
+        <td class="td-name">${l.designation || 'Produit'}</td>
+        <td class="td-center">${l.quantite}</td>
+        <td class="td-right">${this.formatPlainNumber(l.prixUnitaire)} FCFA</td>
+        <td class="td-center td-remise">${remise}</td>
+        <td class="td-right td-bold">${this.formatPlainNumber(l.sousTotal || l.quantite * l.prixUnitaire)} FCFA</td>
+      </tr>`;
+    }).join('');
+
+    const sousTotal = (facture.montantTotal || 0) + (facture.montantRemiseTotal || 0);
+    const totauxRows = `
+      <tr class="subtotal-row"><td colspan="4" class="td-right td-light">Sous-total</td><td class="td-right">${this.formatPlainNumber(sousTotal)} FCFA</td></tr>
+      ${facture.montantRemiseTotal > 0 ? `<tr class="subtotal-row"><td colspan="4" class="td-right td-light">Remise</td><td class="td-right td-red">-${this.formatPlainNumber(facture.montantRemiseTotal)} FCFA</td></tr>` : ''}
+      <tr class="total-row">
+        <td colspan="4" class="td-right td-total-label">TOTAL À PAYER</td>
+        <td class="td-right td-total-val">${this.formatPlainNumber(facture.montantTotal)} FCFA</td>
+      </tr>`;
+
+    const pdfAbsoluteUrl = encodeURIComponent(`${window.location.origin}/api/caisse/factures/${facture.id}/pdf`);
+    const qrBlock = `<div style="margin-top:10px;text-align:center">
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${pdfAbsoluteUrl}"
+           width="72" height="72" style="border-radius:6px;background:#fff;padding:3px" alt="QR" onerror="this.style.display='none'">
+      <p style="font-size:9px;margin-top:2px;opacity:.65">Scanner pour télécharger le PDF</p>
+    </div>`;
+
+    // Couleurs selon design
+    const p1 = design === 2 ? '#0f172a' : design === 3 ? '#18181b' : '#081648';
+    const p2 = design === 2 ? '#1e293b' : design === 3 ? '#3f3f46' : '#1a56db';
+    const acc = design === 2 ? '#f59e0b' : design === 3 ? '#18181b' : '#1a56db';
+    const accLight = design === 2 ? '#fef3c7' : design === 3 ? '#f4f4f5' : '#eff6ff';
+    const headerGrad = design === 2
+      ? `background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);`
+      : design === 3 ? `background:#ffffff;border-bottom:3px solid #18181b;`
+      : `background:linear-gradient(135deg,#081648 0%,#0d2b85 50%,#1a56db 100%);`;
+    const headerTextColor = design === 3 ? '#18181b' : '#ffffff';
+    const headerSubColor  = design === 3 ? '#52525b' : design === 2 ? '#94a3b8' : 'rgba(255,255,255,0.60)';
+    const logoFallbackBg  = design === 3 ? '#e4e4e7' : 'rgba(255,255,255,0.15)';
+    const logoFallbackColor = design === 3 ? '#18181b' : '#ffffff';
+    const numColor = design === 2 ? '#fbbf24' : design === 3 ? '#52525b' : '#93c5fd';
+    const footerGrad = design === 2
+      ? `background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);`
+      : design === 3 ? `background:#18181b;`
+      : `background:linear-gradient(135deg,#081648 0%,#0d2b85 100%);`;
+    const tblHead = design === 2 ? `background:linear-gradient(135deg,#0f172a,#1e293b);`
+      : design === 3 ? `background:#18181b;`
+      : `background:linear-gradient(135deg,#081648,#1a56db);`;
+
+    const statutBadge = `<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;${
+      facture.statut === 'PAYEE' ? 'background:#d1fae5;color:#065f46' :
+      facture.statut === 'ANNULEE' ? 'background:#fee2e2;color:#991b1b' :
+      facture.statut === 'VALIDE' ? 'background:#dbeafe;color:#1e40af' :
+      'background:#fef3c7;color:#92400e'}">${this.getStatutText(facture.statut)}</span>`;
+
     return `<!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="UTF-8">
-      <title>Facture ${facture.numeroFacture}</title>
-      <style>
-        @media print { @page { margin: 15mm; size: A4; } body { margin: 0; padding: 0; } .print-btn { display: none; } }
-        body { font-family: Arial, Helvetica, sans-serif; margin: 20px; padding: 0; }
-        .invoice-container { max-width: 800px; margin: 0 auto; background: white; }
-        .header { text-align: center; border-bottom: 2px solid #27ae60; padding-bottom: 15px; margin-bottom: 20px; position: relative; }
-        .logo { position: absolute; left: 0; top: 0; width: 80px; height: auto; }
-        .shop-name { font-size: 22px; font-weight: bold; color: #27ae60; margin-bottom: 5px; }
-        .shop-info { font-size: 11px; color: #666; margin: 3px 0; }
-        .invoice-title { font-size: 18px; font-weight: bold; margin: 15px 0 5px; }
-        .invoice-number { font-size: 14px; font-weight: bold; margin-bottom: 10px; }
-        .info-section { margin: 20px 0; padding: 10px; background: #f5f5f5; border-radius: 5px; }
-        .info-row { display: flex; margin: 5px 0; font-size: 11px; }
-        .info-label { width: 100px; font-weight: bold; }
-        .info-value { flex: 1; }
-        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background: #f0f0f0; font-weight: bold; font-size: 11px; }
-        td { font-size: 10px; }
-        .text-right { text-align: right; }
-        .text-center { text-align: center; }
-        .total-section { text-align: right; margin-top: 20px; padding-top: 10px; border-top: 2px solid #27ae60; }
-        .total-row { margin: 5px 0; font-size: 12px; }
-        .grand-total { font-size: 16px; font-weight: bold; color: #27ae60; }
-        .notes { margin-top: 20px; padding: 10px; background: #fef9e6; border-left: 3px solid #f39c12; font-size: 10px; }
-        .footer { text-align: center; margin-top: 30px; padding-top: 10px; border-top: 1px solid #ddd; font-size: 9px; color: #999; }
-        .print-btn { display: block; margin: 20px auto; padding: 10px 20px; background: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer; }
-        .badge { display: inline-block; padding: 3px 8px; border-radius: 3px; font-size: 10px; font-weight: bold; }
-        .badge-warning { background: #f39c12; color: white; }
-        .badge-info { background: #16a085; color: white; }
-        .badge-success { background: #27ae60; color: white; }
-        .badge-danger { background: #e74c3c; color: white; }
-      </style>
-    </head>
-    <body>
-      <div class="invoice-container">
-        <div class="header">
-          <img src="${this.LOGO_BASE64}" class="logo" alt="Logo">
-          <div class="shop-name">${entreprise.nom}</div>
-          <div class="shop-info">📍 ${entreprise.adresse}</div>
-          <div class="shop-info">📞 ${entreprise.telephone}</div>
-          <div class="shop-info">✉ ${entreprise.email}</div>
-          <div class="invoice-title">FACTURE</div>
-          <div class="invoice-number">N° ${facture.numeroFacture}</div>
-          <div>Date: ${this.formatDate(facture.dateCreation)}</div>
+<html lang="fr">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Facture ${facture.numeroFacture} — ${nom}</title>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',Arial,sans-serif;color:#1e293b;background:#f8fafc;padding:32px 24px;font-size:13px;line-height:1.5}
+    .invoice-sheet{background:#fff;border-radius:16px;box-shadow:0 4px 32px rgba(8,22,72,.10);max-width:820px;margin:0 auto;overflow:hidden}
+    .inv-header{${headerGrad}padding:28px 32px 24px;display:flex;align-items:flex-start;justify-content:space-between;gap:24px}
+    .inv-brand{display:flex;align-items:center;gap:14px}
+    .inv-logo{flex-shrink:0;display:flex;align-items:center;justify-content:center}
+    .inv-logo-img{width:72px;height:72px;object-fit:contain;border-radius:12px;border:1.5px solid rgba(128,128,128,.3)}
+    .inv-logo-fallback{width:64px;height:64px;border-radius:16px;background:${logoFallbackBg};border:2px solid rgba(128,128,128,.25);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:${logoFallbackColor};flex-shrink:0}
+    .inv-brand-text{color:${headerTextColor}}
+    .inv-brand-name{font-size:22px;font-weight:900;letter-spacing:.5px;margin-bottom:3px}
+    .inv-brand-sub{font-size:12px;color:${headerSubColor};letter-spacing:.4px}
+    .inv-brand-contact{margin-top:8px;font-size:11.5px;color:${headerSubColor};line-height:1.7}
+    .inv-title-block{text-align:right;color:${headerTextColor}}
+    .inv-title{font-size:28px;font-weight:900;letter-spacing:-.5px;text-transform:uppercase;opacity:.9}
+    .inv-number{font-size:16px;font-weight:700;color:${numColor};margin-top:4px;letter-spacing:.5px}
+    .inv-date{font-size:12px;color:${headerSubColor};margin-top:6px}
+    .inv-info{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #f1f5f9}
+    .inv-info-block{padding:20px 32px;border-right:1px solid #f1f5f9}
+    .inv-info-block:last-child{border-right:none}
+    .inv-info-label{font-size:10px;font-weight:800;color:${acc};text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
+    .inv-info-name{font-size:15px;font-weight:700;color:#0f172a;margin-bottom:4px}
+    .inv-info-detail{font-size:12.5px;color:#64748b;line-height:1.7}
+    .inv-table-wrap{overflow:hidden}
+    table{width:100%;border-collapse:collapse}
+    thead tr{${tblHead}color:#fff}
+    thead th{padding:11px 16px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px}
+    .th-right{text-align:right}.th-center{text-align:center}
+    tbody tr.even{background:#f8fafc}
+    td{padding:10px 16px;font-size:13px;border-bottom:1px solid #f1f5f9}
+    .td-name{font-weight:600;color:#0f172a}.td-center{text-align:center;color:#475569}
+    .td-right{text-align:right;color:#475569}.td-bold{font-weight:700;color:#0f172a}
+    .td-remise{color:#dc2626;font-weight:600}.td-light{color:#64748b;font-size:12px}.td-red{color:#dc2626;font-weight:700}
+    .subtotal-row td{border-bottom:none;padding:6px 16px}
+    .total-row{background:${accLight}}
+    .total-row td{padding:14px 16px;border-top:2px solid ${acc}}
+    .td-total-label{font-size:13px;font-weight:700;color:${acc};text-transform:uppercase;letter-spacing:.5px}
+    .td-total-val{font-size:20px;font-weight:900;color:${acc}}
+    .inv-footer{${footerGrad}padding:16px 32px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+    .inv-footer-brand{display:flex;align-items:center;gap:10px;color:rgba(255,255,255,.75);font-size:12px}
+    .inv-footer-shop-name{font-weight:800;font-size:14px;color:#fff}
+    .inv-footer-thank{font-size:12px;color:rgba(255,255,255,.60);font-style:italic}
+    @media print{
+      @page{size:A4;margin:10mm}
+      body{background:white;padding:0;margin:0}
+      .invoice-sheet{box-shadow:none;border-radius:0;max-width:100%;margin:0}
+    }
+  </style>
+</head>
+<body>
+<div class="invoice-sheet">
+  <div class="inv-header">
+    <div class="inv-brand">
+      <div class="inv-logo">${logoBlock}</div>
+      <div class="inv-brand-text">
+        <p class="inv-brand-name">${nom}</p>
+        <p class="inv-brand-sub">${ville || 'Gestion de boutique'}</p>
+        <div class="inv-brand-contact">
+          ${adr ? `📍 ${adr}${ville ? ', ' + ville : ''}<br>` : ''}
+          ${tel ? `📞 ${tel}<br>` : ''}
+          ${email ? `✉ ${email}<br>` : ''}
+          ${rc ? `RC: ${rc}` : ''}${rc && ifu ? ' · ' : ''}${ifu ? `IFU: ${ifu}` : ''}
         </div>
-        <div class="info-section">
-          <div class="info-row"><div class="info-label">Client :</div><div class="info-value">${facture.clientNom || 'Client divers'} ${facture.clientPrenom || ''}</div></div>
-          ${facture.clientTelephone ? `<div class="info-row"><div class="info-label">Téléphone :</div><div class="info-value">${facture.clientTelephone}</div></div>` : ''}
-          ${facture.clientAdresse ? `<div class="info-row"><div class="info-label">Adresse :</div><div class="info-value">${facture.clientAdresse}</div></div>` : ''}
-          <div class="info-row"><div class="info-label">Statut :</div><div class="info-value"><span class="badge ${this.getStatutClass(facture.statut)}">${this.getStatutText(facture.statut)}</span></div></div>
-          ${facture.utilisateurNom ? `<div class="info-row"><div class="info-label">Vendeur :</div><div class="info-value">${facture.utilisateurNom}</div></div>` : ''}
-        </div>
-        <table>
-          <thead><tr><th>Désignation</th><th class="text-center">Qté</th><th class="text-right">Prix U.</th><th class="text-right">Remise</th><th class="text-right">Total</th></tr></thead>
-          <tbody>
-            ${facture.lignes.map(l => `
-            <tr>
-              <td>${l.designation || 'Produit'}</td>
-              <td class="text-center">${l.quantite}</td>
-              <td class="text-right">${this.formatPlainNumber(l.prixUnitaire)} FCFA</td>
-              <td class="text-right">${l.remisePourcentage ? l.remisePourcentage + '%' : (l.remiseMontant ? this.formatPlainNumber(l.remiseMontant) + ' FCFA' : '-')}</td>
-              <td class="text-right">${this.formatPlainNumber(l.sousTotal || l.quantite * l.prixUnitaire)} FCFA</td>
-            </tr>`).join('')}
-          </tbody>
-        </table>
-        <div class="total-section">
-          <div class="total-row">Sous-total : ${this.formatPlainNumber(facture.montantTotal + facture.montantRemiseTotal)} FCFA</div>
-          ${facture.montantRemiseTotal > 0 ? `<div class="total-row">Remise : -${this.formatPlainNumber(facture.montantRemiseTotal)} FCFA</div>` : ''}
-          <div class="total-row grand-total">TOTAL À PAYER : ${this.formatPlainNumber(facture.montantTotal)} FCFA</div>
-        </div>
-        ${facture.notes ? `<div class="notes"><strong>Notes :</strong><br>${facture.notes}</div>` : ''}
-        <div class="footer"><div>Merci de votre confiance ! À bientôt chez ${entreprise.nom}</div><div>© ${new Date().getFullYear()} - ${entreprise.nom}</div></div>
-        <button class="print-btn" onclick="window.print()">🖨️ Imprimer / Télécharger PDF</button>
-        <button style="margin-left:10px;padding:10px 22px;background:#ef4444;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer" onclick="window.close()">✕ Fermer</button>
-        <script>window.addEventListener('afterprint',function(){window.close();});<\/script>
       </div>
-    </body>
-    </html>`;
+    </div>
+    <div class="inv-title-block">
+      <p class="inv-title">Facture</p>
+      <p class="inv-number">${facture.numeroFacture}</p>
+      <p class="inv-date">Émise le ${this.formatDate(facture.dateCreation)}</p>
+      ${facture.utilisateurNom ? `<p class="inv-date">Vendeur : ${facture.utilisateurNom}</p>` : ''}
+      ${qrBlock}
+    </div>
+  </div>
+
+  <div class="inv-info">
+    <div class="inv-info-block">
+      <p class="inv-info-label">Facturé à</p>
+      <p class="inv-info-name">${facture.clientNom || 'Client divers'} ${facture.clientPrenom || ''}</p>
+      <div class="inv-info-detail">
+        ${facture.clientTelephone ? `📞 ${facture.clientTelephone}<br>` : ''}
+        ${facture.clientAdresse ? `📍 ${facture.clientAdresse}<br>` : ''}
+        ${!facture.clientTelephone && !facture.clientAdresse ? 'Aucune coordonnée' : ''}
+      </div>
+    </div>
+    <div class="inv-info-block">
+      <p class="inv-info-label">Détails facture</p>
+      <div class="inv-info-detail">
+        <strong>N° :</strong> ${facture.numeroFacture}<br>
+        <strong>Date :</strong> ${this.formatDate(facture.dateCreation)}<br>
+        <strong>Statut :</strong> ${statutBadge}<br>
+        ${facture.notes ? `<strong>Notes :</strong> ${facture.notes}` : ''}
+      </div>
+    </div>
+  </div>
+
+  <div class="inv-table-wrap">
+    <table>
+      <thead><tr>
+        <th>Désignation</th>
+        <th class="th-center">Qté</th>
+        <th class="th-right">Prix unitaire</th>
+        <th class="th-center">Remise</th>
+        <th class="th-right">Sous-total</th>
+      </tr></thead>
+      <tbody>${rows}${totauxRows}</tbody>
+    </table>
+  </div>
+
+  <div class="inv-footer">
+    <div class="inv-footer-brand">
+      <span class="inv-footer-shop-name">${nom}</span>
+      ${adr || tel ? `<span style="color:rgba(255,255,255,.35);margin:0 6px">·</span><span>${adr}${ville ? ' ' + ville : ''}${tel ? ' — ' + tel : ''}</span>` : ''}
+    </div>
+    <p class="inv-footer-thank">Merci pour votre confiance !</p>
+  </div>
+</div>
+</body>
+</html>`;
   }
 }
