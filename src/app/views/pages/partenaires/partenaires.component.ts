@@ -21,6 +21,7 @@ interface HistoriquePaiementEntry {
   numeroVente: string;
   venteId: number;
   vente: VenteMap;
+  vendeur: string;
 }
 
 @Component({
@@ -522,6 +523,21 @@ export class PartenairesComponent implements OnInit {
     }
   }
 
+  formatDateHeurePrecise(dateString: string): string {
+    if (!dateString) return '-';
+    try {
+      const date = new Date(dateString);
+      const jours = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+      const mois = ['jan.', 'fév.', 'mar.', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sep.', 'oct.', 'nov.', 'déc.'];
+      const j = jours[date.getDay()];
+      const d = String(date.getDate()).padStart(2, '0');
+      const m = mois[date.getMonth()];
+      const h = String(date.getHours()).padStart(2, '0');
+      const min = String(date.getMinutes()).padStart(2, '0');
+      return `${j} ${d} ${m} · ${h}h${min}`;
+    } catch { return dateString; }
+  }
+
   formatDateLong(dateString: string): string {
     if (!dateString) return '-';
     try {
@@ -711,7 +727,8 @@ export class PartenairesComponent implements OnInit {
             reference: v.referencePaiement || '',
             numeroVente: v.numeroVente,
             venteId: v.id,
-            vente: v
+            vente: v,
+            vendeur: v.vendeurNom || ''
           });
         });
 
@@ -739,7 +756,8 @@ export class PartenairesComponent implements OnInit {
                   reference: r.referencePaiement || '',
                   numeroVente: vente.numeroVente,
                   venteId: vente.id,
-                  vente: vente
+                  vente: vente,
+                  vendeur: (r as any).regleParNom || (r as any).utilisateurNom || vente.vendeurNom || ''
                 });
               });
             });
@@ -777,7 +795,8 @@ export class PartenairesComponent implements OnInit {
             reference: v.referencePaiement || '',
             numeroVente: v.numeroVente,
             venteId: v.id,
-            vente: v
+            vente: v,
+            vendeur: v.vendeurNom || ''
           });
         });
 
@@ -805,7 +824,8 @@ export class PartenairesComponent implements OnInit {
                   reference: r.referencePaiement || '',
                   numeroVente: vente.numeroVente,
                   venteId: vente.id,
-                  vente: vente
+                  vente: vente,
+                  vendeur: (r as any).regleParNom || (r as any).utilisateurNom || vente.vendeurNom || ''
                 });
               });
             });

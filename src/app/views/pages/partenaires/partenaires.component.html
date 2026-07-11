@@ -572,11 +572,12 @@
             <table class="table table-hover mb-0" style="font-size:0.88rem">
               <thead class="table-light">
                 <tr>
-                  <th>Date</th>
+                  <th>Date &amp; Heure</th>
                   <th>N° Vente</th>
                   <th>Type</th>
                   <th>Mode</th>
                   <th class="text-end">Montant</th>
+                  <th><i class="fa fa-user me-1"></i>Par</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -584,8 +585,7 @@
                 <tr *ngFor="let p of historiquePaiementsFiltres"
                     [style.background]="p.typeLabel === 'Comptant' ? '#f0fdf4' : '#fffbeb'">
                   <td>
-                    <div class="fw-semibold small">{{ formatDateLong(p.date) }}</div>
-                    <div class="text-muted" style="font-size:0.75rem">{{ formatHeure(p.date) }}</div>
+                    <div class="fw-semibold" style="font-size:0.82rem">{{ formatDateHeurePrecise(p.date) }}</div>
                   </td>
                   <td><strong>{{ p.numeroVente }}</strong></td>
                   <td>
@@ -604,6 +604,12 @@
                   </td>
                   <td class="text-end fw-bold">{{ formatPrice(p.montant) }} <small class="text-muted fw-normal fs-6">FCFA</small></td>
                   <td>
+                    <span *ngIf="p.vendeur" class="small fw-semibold text-primary">
+                      <i class="fa fa-user-circle me-1"></i>{{ p.vendeur }}
+                    </span>
+                    <span *ngIf="!p.vendeur" class="text-muted small">-</span>
+                  </td>
+                  <td>
                     <div class="d-flex gap-1">
                       <button class="btn btn-sm btn-outline-primary" (click)="voirVenteDepuisHistorique(p)">
                         <i class="fa fa-eye me-1"></i>Voir vente
@@ -619,50 +625,62 @@
           </div>
         </div>
 
-        <!-- VUE GROUPÉE -->
+        <!-- VUE GROUPÉE (timeline) -->
         <div *ngIf="!isLoadingHistorique && viewModePaiement === 'groupe' && historiquePaiementsFiltres.length > 0">
-          <div *ngFor="let groupe of historiquePaiementsGroupes" class="mb-3 rounded overflow-hidden border">
-            <!-- En-tête groupe -->
-            <div class="d-flex justify-content-between align-items-center px-3 py-2"
-                 style="background: linear-gradient(135deg,#eff6ff,#dbeafe); border-bottom:1px solid #bfdbfe;">
+          <div *ngFor="let groupe of historiquePaiementsGroupes" class="mb-4">
+            <!-- En-tête groupe date -->
+            <div class="d-flex justify-content-between align-items-center px-3 py-2 rounded mb-2"
+                 style="background: linear-gradient(135deg,#1e40af,#2563eb); color:#fff;">
               <div>
-                <i class="fa fa-calendar-o me-2 text-primary"></i>
-                <span class="fw-bold text-primary" style="text-transform:capitalize">{{ formatDateLong(groupe.entries[0].date) }}</span>
-                <span class="text-muted small ms-2">· {{ groupe.entries.length }} paiement(s)</span>
+                <i class="fa fa-calendar me-2"></i>
+                <span class="fw-bold" style="text-transform:capitalize">{{ formatDateLong(groupe.entries[0].date) }}</span>
+                <span class="ms-2 opacity-75 small">· {{ groupe.entries.length }} paiement(s)</span>
               </div>
-              <span class="badge bg-primary fs-6 px-3 py-2">{{ formatPrice(groupe.total) }} FCFA</span>
+              <span class="fw-bold fs-6">{{ formatPrice(groupe.total) }} FCFA</span>
             </div>
-            <!-- Lignes du groupe -->
-            <div *ngFor="let p of groupe.entries; let last = last"
-                 class="d-flex align-items-center px-3 py-2"
-                 [class.border-bottom]="!last"
-                 [style.background]="p.typeLabel === 'Comptant' ? '#f0fdf4' : '#fffbeb'">
-              <div class="flex-grow-1">
-                <div class="d-flex align-items-center gap-2 flex-wrap">
-                  <span class="fw-bold fs-6">{{ formatPrice(p.montant) }} <small class="text-muted fw-normal">FCFA</small></span>
-                  <span class="badge rounded-pill"
-                        [class.bg-success]="p.typeLabel === 'Comptant'"
-                        [class.bg-warning]="p.typeLabel !== 'Comptant'"
-                        [class.text-dark]="p.typeLabel !== 'Comptant'">
-                    {{ p.typeLabel }}
-                  </span>
-                  <span *ngIf="p.modePaiement" class="badge" [ngClass]="getModePaiementBadgeClass(p.modePaiement)">
-                    <i class="me-1" [ngClass]="getModePaiementIcon(p.modePaiement)"></i>{{ getModePaiementLabel(p.modePaiement) }}
-                  </span>
+            <!-- Timeline des entrées -->
+            <div style="border-left:3px solid #bfdbfe; margin-left:1rem; padding-left:1rem;">
+              <div *ngFor="let p of groupe.entries; let last = last"
+                   class="position-relative mb-2 p-3 rounded"
+                   [style.background]="p.typeLabel === 'Comptant' ? '#f0fdf4' : '#fffbeb'"
+                   style="border:1px solid #e2e8f0;">
+                <!-- Bullet de timeline -->
+                <div style="position:absolute; left:-1.45rem; top:1rem; width:14px; height:14px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 0 2px #3b82f6;"
+                     [style.background]="p.typeLabel === 'Comptant' ? '#22c55e' : '#f59e0b'"></div>
+                <div class="d-flex align-items-start justify-content-between gap-2">
+                  <div class="flex-grow-1">
+                    <!-- Ligne 1 : montant + badges -->
+                    <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                      <span class="fw-bold" style="font-size:1.05rem">{{ formatPrice(p.montant) }} <small class="text-muted fw-normal" style="font-size:0.75rem">FCFA</small></span>
+                      <span class="badge rounded-pill"
+                            [class.bg-success]="p.typeLabel === 'Comptant'"
+                            [class.bg-warning]="p.typeLabel !== 'Comptant'"
+                            [class.text-dark]="p.typeLabel !== 'Comptant'">
+                        {{ p.typeLabel }}
+                      </span>
+                      <span *ngIf="p.modePaiement" class="badge" [ngClass]="getModePaiementBadgeClass(p.modePaiement)">
+                        <i class="me-1" [ngClass]="getModePaiementIcon(p.modePaiement)"></i>{{ getModePaiementLabel(p.modePaiement) }}
+                      </span>
+                    </div>
+                    <!-- Ligne 2 : heure · numéro · vendeur · référence -->
+                    <div class="small text-muted d-flex flex-wrap gap-2">
+                      <span><i class="fa fa-clock-o me-1"></i><strong>{{ formatHeure(p.date) }}</strong></span>
+                      <span>· N° <strong>{{ p.numeroVente }}</strong></span>
+                      <span *ngIf="p.vendeur" class="text-primary fw-semibold">
+                        <i class="fa fa-user-circle me-1"></i>{{ p.vendeur }}
+                      </span>
+                      <span *ngIf="p.reference"><i class="fa fa-tag me-1"></i>{{ p.reference }}</span>
+                    </div>
+                  </div>
+                  <div class="d-flex gap-1 flex-shrink-0">
+                    <button class="btn btn-sm btn-outline-primary" (click)="voirVenteDepuisHistorique(p)" title="Voir vente">
+                      <i class="fa fa-eye"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" (click)="imprimerFactureHistorique(p)" title="Facture">
+                      <i class="fa fa-file-pdf-o"></i>
+                    </button>
+                  </div>
                 </div>
-                <div class="small text-muted mt-1">
-                  <i class="fa fa-clock-o me-1"></i>{{ formatHeure(p.date) }}
-                  &nbsp;·&nbsp; N° <strong>{{ p.numeroVente }}</strong>
-                  <span *ngIf="p.reference">&nbsp;·&nbsp; Réf: {{ p.reference }}</span>
-                </div>
-              </div>
-              <div class="ms-3 d-flex gap-1">
-                <button class="btn btn-sm btn-outline-primary" (click)="voirVenteDepuisHistorique(p)">
-                  <i class="fa fa-eye me-1"></i>Voir vente
-                </button>
-                <button class="btn btn-sm btn-outline-danger" (click)="imprimerFactureHistorique(p)">
-                  <i class="fa fa-file-pdf-o me-1"></i>Facture
-                </button>
               </div>
             </div>
           </div>
@@ -919,94 +937,116 @@
 
         <!-- VUE SIMPLE: tableau ligne par ligne -->
         <div *ngIf="viewModePaiement === 'simple' && historiquePaiementsFiltres.length > 0">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>N° Vente</th>
-                <th>Type</th>
-                <th>Mode</th>
-                <th class="text-right">Montant</th>
-                <th>Référence</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let p of historiquePaiementsFiltres"
-                  [style.background]="p.typeLabel === 'Comptant' ? '#f0fdf4' : '#fffbeb'">
-                <td class="small">{{ formatDateTime(p.date) }}</td>
-                <td><strong>{{ p.numeroVente }}</strong></td>
-                <td>
-                  <span class="badge"
-                        [class.bg-success]="p.typeLabel === 'Comptant'"
-                        [class.bg-warning]="p.typeLabel !== 'Comptant'"
-                        [class.text-dark]="p.typeLabel !== 'Comptant'">
-                    {{ p.typeLabel }}
-                  </span>
-                </td>
-                <td>
-                  <span *ngIf="p.modePaiement" class="badge" [ngClass]="getModePaiementBadgeClass(p.modePaiement)">
-                    <i class="me-1" [ngClass]="getModePaiementIcon(p.modePaiement)"></i>{{ getModePaiementLabel(p.modePaiement) }}
-                  </span>
-                  <span *ngIf="!p.modePaiement" class="text-muted small">-</span>
-                </td>
-                <td class="text-right fw-semibold">{{ formatPrice(p.montant) }}</td>
-                <td class="small text-muted">{{ p.reference || '—' }}</td>
-                <td>
-                  <div class="d-flex gap-1">
-                    <button class="btn btn-outline-secondary btn-sm" (click)="voirVenteDepuisHistorique(p)" title="Voir vente">
-                      <i class="fa fa-eye me-1"></i>Voir
-                    </button>
-                    <button class="btn btn-outline-danger btn-sm" (click)="imprimerFactureHistorique(p)" title="Facture">
-                      <i class="fa fa-file-pdf-o me-1"></i>Facture
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- VUE GROUPÉE: par date -->
-        <div *ngIf="viewModePaiement === 'groupe' && historiquePaiementsGroupes.length > 0">
-          <div *ngFor="let groupe of historiquePaiementsGroupes" class="groupe-paiement mb-3">
-            <!-- En-tête du groupe -->
-            <div class="groupe-header d-flex justify-content-between align-items-center px-3 py-2 rounded-top border-bottom">
-              <span class="fw-bold">
-                <i class="fa fa-calendar me-2 text-primary"></i>{{ groupe.date }}
-              </span>
-              <span class="badge bg-primary">{{ formatPrice(groupe.total) }}</span>
-            </div>
-            <!-- Lignes du groupe -->
-            <div class="groupe-body border border-top-0 rounded-bottom">
-              <div *ngFor="let p of groupe.entries; let last = last"
-                   class="d-flex align-items-center px-3 py-2"
-                   [class.border-bottom]="!last">
-                <div class="flex-grow-1">
-                  <div class="d-flex align-items-center gap-2 flex-wrap">
-                    <span class="fw-semibold">{{ formatPrice(p.montant) }}</span>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Date &amp; Heure</th>
+                  <th>N° Vente</th>
+                  <th>Type</th>
+                  <th>Mode</th>
+                  <th class="text-right">Montant</th>
+                  <th><i class="fa fa-user me-1"></i>Par</th>
+                  <th>Réf.</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let p of historiquePaiementsFiltres"
+                    [style.background]="p.typeLabel === 'Comptant' ? '#f0fdf4' : '#fffbeb'">
+                  <td>
+                    <div class="fw-semibold" style="font-size:0.82rem">{{ formatDateHeurePrecise(p.date) }}</div>
+                  </td>
+                  <td><strong>{{ p.numeroVente }}</strong></td>
+                  <td>
                     <span class="badge"
                           [class.bg-success]="p.typeLabel === 'Comptant'"
                           [class.bg-warning]="p.typeLabel !== 'Comptant'"
                           [class.text-dark]="p.typeLabel !== 'Comptant'">
                       {{ p.typeLabel }}
                     </span>
+                  </td>
+                  <td>
                     <span *ngIf="p.modePaiement" class="badge" [ngClass]="getModePaiementBadgeClass(p.modePaiement)">
                       <i class="me-1" [ngClass]="getModePaiementIcon(p.modePaiement)"></i>{{ getModePaiementLabel(p.modePaiement) }}
                     </span>
+                    <span *ngIf="!p.modePaiement" class="text-muted small">-</span>
+                  </td>
+                  <td class="text-right fw-bold">{{ formatPrice(p.montant) }} <small class="text-muted fw-normal">FCFA</small></td>
+                  <td>
+                    <span *ngIf="p.vendeur" class="small fw-semibold text-primary">
+                      <i class="fa fa-user-circle me-1"></i>{{ p.vendeur }}
+                    </span>
+                    <span *ngIf="!p.vendeur" class="text-muted small">-</span>
+                  </td>
+                  <td class="small text-muted">{{ p.reference || '—' }}</td>
+                  <td>
+                    <div class="d-flex gap-1">
+                      <button class="btn btn-outline-secondary btn-sm" (click)="voirVenteDepuisHistorique(p)" title="Voir vente">
+                        <i class="fa fa-eye me-1"></i>Voir
+                      </button>
+                      <button class="btn btn-outline-danger btn-sm" (click)="imprimerFactureHistorique(p)" title="Facture">
+                        <i class="fa fa-file-pdf-o me-1"></i>Facture
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- VUE GROUPÉE: timeline par date -->
+        <div *ngIf="viewModePaiement === 'groupe' && historiquePaiementsGroupes.length > 0">
+          <div *ngFor="let groupe of historiquePaiementsGroupes" class="mb-4">
+            <!-- En-tête du groupe -->
+            <div class="d-flex justify-content-between align-items-center px-3 py-2 rounded mb-2"
+                 style="background: linear-gradient(135deg,#1e40af,#2563eb); color:#fff;">
+              <span class="fw-bold" style="text-transform:capitalize">
+                <i class="fa fa-calendar me-2"></i>{{ formatDateLong(groupe.entries[0].date) }}
+                <span class="ms-2 opacity-75 small">· {{ groupe.entries.length }} paiement(s)</span>
+              </span>
+              <span class="fw-bold">{{ formatPrice(groupe.total) }} FCFA</span>
+            </div>
+            <!-- Timeline des entrées -->
+            <div style="border-left:3px solid #bfdbfe; margin-left:1rem; padding-left:1rem;">
+              <div *ngFor="let p of groupe.entries; let last = last"
+                   class="position-relative mb-2 p-3 rounded"
+                   [style.background]="p.typeLabel === 'Comptant' ? '#f0fdf4' : '#fffbeb'"
+                   style="border:1px solid #e2e8f0;">
+                <div style="position:absolute; left:-1.45rem; top:1rem; width:14px; height:14px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 0 2px #3b82f6;"
+                     [style.background]="p.typeLabel === 'Comptant' ? '#22c55e' : '#f59e0b'"></div>
+                <div class="d-flex align-items-start justify-content-between gap-2">
+                  <div class="flex-grow-1">
+                    <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                      <span class="fw-bold" style="font-size:1.05rem">{{ formatPrice(p.montant) }} <small class="text-muted fw-normal" style="font-size:0.75rem">FCFA</small></span>
+                      <span class="badge"
+                            [class.bg-success]="p.typeLabel === 'Comptant'"
+                            [class.bg-warning]="p.typeLabel !== 'Comptant'"
+                            [class.text-dark]="p.typeLabel !== 'Comptant'">
+                        {{ p.typeLabel }}
+                      </span>
+                      <span *ngIf="p.modePaiement" class="badge" [ngClass]="getModePaiementBadgeClass(p.modePaiement)">
+                        <i class="me-1" [ngClass]="getModePaiementIcon(p.modePaiement)"></i>{{ getModePaiementLabel(p.modePaiement) }}
+                      </span>
+                    </div>
+                    <div class="small text-muted d-flex flex-wrap gap-2">
+                      <span><i class="fa fa-clock-o me-1"></i><strong>{{ formatHeure(p.date) }}</strong></span>
+                      <span>· N° <strong>{{ p.numeroVente }}</strong></span>
+                      <span *ngIf="p.vendeur" class="text-primary fw-semibold">
+                        <i class="fa fa-user-circle me-1"></i>{{ p.vendeur }}
+                      </span>
+                      <span *ngIf="p.reference"><i class="fa fa-tag me-1"></i>{{ p.reference }}</span>
+                    </div>
                   </div>
-                  <div class="small text-muted mt-1">
-                    N° <strong>{{ p.numeroVente }}</strong>
-                    <span *ngIf="p.reference">&nbsp;·&nbsp; Réf: {{ p.reference }}</span>
+                  <div class="d-flex gap-1 flex-shrink-0">
+                    <button class="btn btn-outline-secondary btn-sm" (click)="voirVenteDepuisHistorique(p)" title="Voir la vente">
+                      <i class="fa fa-eye"></i>
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm" (click)="imprimerFactureHistorique(p)" title="Imprimer facture">
+                      <i class="fa fa-file-pdf-o"></i>
+                    </button>
                   </div>
-                </div>
-                <div class="text-end ms-3 d-flex gap-1">
-                  <button class="btn btn-outline-secondary btn-sm" (click)="voirVenteDepuisHistorique(p)" title="Voir la vente">
-                    <i class="fa fa-eye me-1"></i>Voir
-                  </button>
-                  <button class="btn btn-outline-danger btn-sm" (click)="imprimerFactureHistorique(p)" title="Imprimer facture">
-                    <i class="fa fa-file-pdf-o me-1"></i>Facture
-                  </button>
                 </div>
               </div>
             </div>
