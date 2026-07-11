@@ -77,13 +77,9 @@ export class AuthService {
   }
 
   signin(credentials: LoginCredentials): Observable<LoginResponse> {
-    console.log('🔑 Tentative de connexion avec:', credentials.username);
-    
     return this.http.post<LoginResponse>(`${this.apiUrl}/login`, credentials)
       .pipe(
         tap(response => {
-          console.log('✅ Réponse de connexion:', response);
-          
           // Sauvegarder le token et horodatage de connexion
           this.store.setItem(this.tokenKey, response.token);
           this.store.setItem(this.loginTimestampKey, Date.now().toString());
@@ -107,7 +103,6 @@ export class AuthService {
           this.currentUserSubject.next(userData);
           this.authenticated = true;
           
-          console.log('💾 Utilisateur sauvegardé:', userData);
         }),
         catchError(error => {
           console.error('❌ Erreur de connexion:', error);
@@ -344,8 +339,7 @@ export class AuthService {
     
     const token = this.getToken();
     if (token) {
-      const decoded = this.decodeJwtToken(token);
-      console.log('🎫 Token JWT décodé:', decoded);
+      this.decodeJwtToken(token);
     }
     
     console.log('👤 Utilisateur:', this.getUser());
