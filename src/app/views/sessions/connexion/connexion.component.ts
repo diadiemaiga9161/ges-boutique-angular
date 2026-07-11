@@ -82,6 +82,11 @@ export class ConnexionComponent implements OnInit {
         }).then(() => {
           this.router.navigate(['/produit']);
         });
+      },
+      error: (err: Error) => {
+        this.isLoading = false;
+        const msg = err.message || 'Identifiant ou mot de passe incorrect';
+        this.showMessage(msg, true);
       }
     });
   }
