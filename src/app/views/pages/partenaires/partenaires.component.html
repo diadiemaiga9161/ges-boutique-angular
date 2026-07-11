@@ -118,13 +118,13 @@
               <i class="fa fa-shopping-cart"></i>
             </button>
             <button type="button" class="btn btn-sm btn-success" (click)="loadHistoriquePaiements(client)" title="Paiements">
-              <i class="fa fa-history">Paiements</i>
+              <i class="fa fa-history"></i>
             </button>
             <button type="button" class="btn btn-sm btn-warning" (click)="editClient(client)" title="Modifier">
-              <i class="fa fa-edit">Modifier</i>
+              <i class="fa fa-edit"></i>
             </button>
             <button type="button" class="btn btn-sm btn-danger" (click)="deleteClient(client)" title="Supprimer">
-              <i class="fa fa-trash">Supprimer</i>
+              <i class="fa fa-trash"></i>
             </button>
           </div>
         </div>
@@ -417,7 +417,7 @@
                   <td class="fw-semibold">{{ vente.regleParNom || '-' }}</td>
                   <td>
                     <button type="button" class="btn-sm btn-detail" (click)="showVenteDetail(vente)">
-                      <i class="fa fa-eye">Détails</i> Détails
+                      <i class="fa fa-eye"></i> Détails
                     </button>
                   </td>
                 </tr>
@@ -835,7 +835,7 @@
          [style.border-top]="design === 2 ? '1px solid #334155' : ''">
       <button type="button" class="btn-secondary" (click)="closeDetailModal()">Fermer</button>
       <button type="button" class="btn-primary" (click)="telechargerFacture(selectedVenteDetail.id)">
-        <i class="fa fa-file-pdf-o">Télécharger</i> Télécharger facture
+        <i class="fa fa-file-pdf-o"></i> Télécharger facture
       </button>
     </div>
   </div>
