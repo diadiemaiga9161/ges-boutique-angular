@@ -212,8 +212,24 @@
     </div>
   </div>
 
+  <!-- NavPills Onglets -->
+  <ul class="nav nav-pills mb-3" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" [class.active]="activeTab === 'toutes'" (click)="setActiveTab('toutes')" type="button">
+        <i class="fa fa-list me-1"></i>{{ 'SALES.TAB_ALL' | translate }}
+        <span class="badge ms-1" [class.bg-primary]="activeTab !== 'toutes'" [class.bg-white]="activeTab === 'toutes'" [class.text-primary]="activeTab === 'toutes'">{{ filteredVentes.length }}</span>
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" [class.active]="activeTab === 'annulees'" (click)="setActiveTab('annulees')" type="button">
+        <i class="fa fa-ban me-1"></i>{{ 'SALES.TAB_CANCELLED' | translate }}
+        <span class="badge ms-1" [class.bg-danger]="activeTab !== 'annulees'" [class.bg-white]="activeTab === 'annulees'" [class.text-danger]="activeTab === 'annulees'">{{ ventesAnnulees.length }}</span>
+      </button>
+    </li>
+  </ul>
+
   <!-- Filtres -->
-  <div class="app-filter-card mb-4">
+  <div class="app-filter-card mb-4" *ngIf="activeTab === 'toutes'">
       <!-- Boutons de période rapide -->
       <div class="d-flex gap-2 flex-wrap mb-3">
         <button class="btn btn-sm btn-outline-primary" (click)="filterToday()">
@@ -279,7 +295,7 @@
   </div>
 
   <!-- TABLEAU DES VENTES -->
-  <div class="app-table-card">
+  <div class="app-table-card" *ngIf="activeTab === 'toutes'">
     <div class="app-table-header">
       <div class="app-table-title">
         <i class="fa fa-list me-2"></i>{{ 'SALES.TITLE' | translate }}
@@ -342,7 +358,7 @@
   </div>
 
   <!-- Pagination -->
-  <div *ngIf="totalPages > 1" class="d-flex justify-content-center mt-4">
+  <div *ngIf="totalPages > 1 && activeTab === 'toutes'" class="d-flex justify-content-center mt-4">
     <nav>
       <ul class="pagination">
         <li class="page-item" [class.disabled]="currentPage === 1">
@@ -357,7 +373,102 @@
       </ul>
     </nav>
   </div>
+
+  <!-- ==================== ONGLET VENTES ANNULÉES ==================== -->
+<div *ngIf="activeTab === 'annulees'" class="app-table-card mt-3">
+  <div class="app-table-header">
+    <div class="app-table-title">
+      <i class="fa fa-ban me-2 text-danger"></i>{{ 'SALES.CANCELLED_LIST' | translate }}
+      <span class="app-table-count bg-danger">{{ annuleesFiltered.length }}</span>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <div class="input-group input-group-sm" style="width:280px">
+        <span class="input-group-text"><i class="fa fa-search"></i></span>
+        <input type="text" class="form-control" [placeholder]="'COMMON.SEARCH' | translate"
+               [(ngModel)]="searchAnnulees" (input)="filterAnnulees()">
+        <button class="btn btn-outline-secondary" type="button" *ngIf="searchAnnulees" (click)="searchAnnulees=''; filterAnnulees()">
+          <i class="fa fa-times"></i>
+        </button>
+      </div>
+      <button class="btn btn-sm btn-outline-secondary" (click)="loadVentesAnnulees()" [disabled]="isLoadingAnnulees">
+        <i class="fa fa-refresh" [class.fa-spin]="isLoadingAnnulees"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- Spinner chargement -->
+  <div *ngIf="isLoadingAnnulees" class="text-center py-4">
+    <div class="spinner-border text-danger" role="status"></div>
+    <p class="mt-2 text-muted small">Chargement des ventes annulées...</p>
+  </div>
+
+  <!-- Tableau des annulées -->
+  <div class="table-responsive" *ngIf="!isLoadingAnnulees">
+    <table class="table table-hover mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>N° Vente</th>
+          <th>{{ 'COMMON.DATE' | translate }} vente</th>
+          <th>{{ 'CLIENTS.NAME' | translate }}</th>
+          <th class="text-end">{{ 'COMMON.AMOUNT' | translate }}</th>
+          <th>{{ 'SALES.SELLER' | translate }}</th>
+          <th>{{ 'SALES.CANCELLED_BY' | translate }}</th>
+          <th>{{ 'SALES.CANCELLATION_DATE' | translate }}</th>
+          <th>{{ 'SALES.CANCELLATION_REASON' | translate }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let v of annuleesFiltered">
+          <td><strong class="text-danger">{{ v.numeroVente }}</strong></td>
+          <td>
+            <span>{{ formatDateShort(v.dateVente) }}</span>
+            <br><small class="text-muted">{{ formatTime(v.dateVente) }}</small>
+          </td>
+          <td>{{ v.clientNom || '-' }}</td>
+          <td class="text-end">
+            <strong>{{ formatPrice(v.montantTotal) }}</strong>
+          </td>
+          <td>
+            <i class="fa fa-user me-1 text-primary"></i>{{ v.vendeurNom || '-' }}
+          </td>
+          <td>
+            <span class="badge bg-danger">
+              <i class="fa fa-ban me-1"></i>{{ v.annuleurNom || '-' }}
+            </span>
+          </td>
+          <td>
+            <span>{{ formatDateShort(v.dateAnnulation) }}</span>
+            <br><small class="text-muted">{{ formatTime(v.dateAnnulation) }}</small>
+          </td>
+          <td>
+            <span *ngIf="v.motifAnnulation" class="text-muted small fst-italic">"{{ v.motifAnnulation }}"</span>
+            <span *ngIf="!v.motifAnnulation" class="text-muted small">-</span>
+          </td>
+        </tr>
+        <tr *ngIf="annuleesFiltered.length === 0 && !isLoadingAnnulees">
+          <td colspan="8" class="text-center py-5">
+            <div class="app-empty-state">
+              <i class="fa fa-ban fa-3x mb-3 text-muted"></i>
+              <p class="text-muted">Aucune vente annulée</p>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Résumé annulées -->
+  <div *ngIf="!isLoadingAnnulees && annuleesFiltered.length > 0" class="p-3 border-top d-flex justify-content-between align-items-center bg-light">
+    <span class="text-muted small">{{ annuleesFiltered.length }} vente(s) annulée(s)</span>
+    <span class="fw-bold text-danger">
+      Total annulé : {{ formatPrice(getTotalMontantAnnulees()) }}
+    </span>
+  </div>
 </div>
+<!-- fin onglet annulées -->
+
+</div>
+<!-- fin container-fluid app-page -->
 
 <!-- ==================== MODALE SÉLECTION CLIENT POUR EXPORT ==================== -->
 <div class="modal fade show" [class.d-block]="showClientExportSelector" *ngIf="showClientExportSelector" 

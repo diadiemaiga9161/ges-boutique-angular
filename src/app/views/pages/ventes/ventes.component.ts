@@ -26,6 +26,7 @@ import { AuthService, User } from '../../../shared/services/auth.service';
 import { ClientService } from '../../../shared/services/client.service';
 import { DesignFacture, FactureDesignService } from '../../../shared/services/facture-design.service';
 import { ProduitNiveau, ProduitNiveauService } from '../../../shared/services/produit-niveau.service';
+import { BoutiqueService } from '../../../shared/services/boutique.service';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
@@ -269,6 +270,15 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
   montantAvanceAUtiliser: number = 0;
   isLoadingAvance: boolean = false;
 
+  // ==================== ONGLETS ====================
+  activeTab: 'toutes' | 'annulees' = 'toutes';
+
+  // ==================== VENTES ANNULÉES (endpoint dédié) ====================
+  ventesAnnulees: any[] = [];
+  annuleesFiltered: any[] = [];
+  searchAnnulees: string = '';
+  isLoadingAnnulees: boolean = false;
+
   constructor(
     private venteService: VenteService,
     private productService: ProductService,
@@ -278,7 +288,8 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
     private clientService: ClientService,
     private ws: WebSocketService,
     private designService: FactureDesignService,
-    private niveauService: ProduitNiveauService
+    private niveauService: ProduitNiveauService,
+    private boutiqueService: BoutiqueService
   ) {}
 
   ngOnInit(): void {
@@ -288,10 +299,12 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
     this.loadCategories();
     this.loadClients();
     this.subscribeToUser();
+    this.loadVentesAnnulees();
 
     // Temps réel : rafraîchir automatiquement à chaque nouvelle vente / règlement
     const wsSub = this.ws.subscribeTopic('/topic/ventes').subscribe(() => {
       this.loadData();
+      this.loadVentesAnnulees();
     });
     this.subscriptions.push(wsSub);
   }
@@ -2172,8 +2185,49 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   voirVentesAnnulees(): void {
-    this.typeVenteFilter = 'ANNULEES';
-    this.applyFilters();
+    this.setActiveTab('annulees');
+  }
+
+  setActiveTab(tab: 'toutes' | 'annulees'): void {
+    this.activeTab = tab;
+    if (tab === 'annulees') {
+      this.loadVentesAnnulees();
+    }
+    this.cdr.detectChanges();
+  }
+
+  loadVentesAnnulees(): void {
+    const boutiqueId = this.boutiqueService.getInfo().id;
+    if (!boutiqueId) return;
+    this.isLoadingAnnulees = true;
+    this.venteService.getVentesAnnulees(boutiqueId).subscribe({
+      next: (data) => {
+        this.ventesAnnulees = data || [];
+        this.filterAnnulees();
+        this.isLoadingAnnulees = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.isLoadingAnnulees = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  filterAnnulees(): void {
+    if (!this.searchAnnulees.trim()) {
+      this.annuleesFiltered = [...this.ventesAnnulees];
+    } else {
+      const term = this.searchAnnulees.toLowerCase();
+      this.annuleesFiltered = this.ventesAnnulees.filter(v =>
+        (v.numeroVente || '').toLowerCase().includes(term) ||
+        (v.clientNom || '').toLowerCase().includes(term) ||
+        (v.vendeurNom || '').toLowerCase().includes(term) ||
+        (v.annuleurNom || '').toLowerCase().includes(term) ||
+        (v.motifAnnulation || '').toLowerCase().includes(term)
+      );
+    }
+    this.cdr.detectChanges();
   }
 
   // ==================== DÉLÉGATION AU SERVICE ====================
@@ -2252,6 +2306,14 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
 
   formatDateShort(dateString: string): string {
     return this.venteService.formatDateShort(dateString);
+  }
+
+  formatTime(dateString: string): string {
+    return this.venteService.formatTime(dateString);
+  }
+
+  getTotalMontantAnnulees(): number {
+    return this.annuleesFiltered.reduce((sum, v) => sum + (v.montantTotal || 0), 0);
   }
 
   isCreditEnRetard(vente: VenteMap): boolean {
@@ -2797,6 +2859,7 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
           this.loadData();
           this.loadCreditsData();
           this.loadProduits();
+          this.loadVentesAnnulees();
           this.isLoading = false;
           this.cdr.detectChanges();
           Swal.fire({ icon: 'success', title: 'Annulée', text: `Vente ${numVente} annulée avec succès.`, timer: 2500, timerProgressBar: true, confirmButtonColor: '#198754' });

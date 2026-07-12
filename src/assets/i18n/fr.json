@@ -144,7 +144,14 @@
     "MOBILE_MONEY": "Mobile Money",
     "CARD": "Carte",
     "CHEQUE": "Chèque",
-    "TRANSFER": "Virement"
+    "TRANSFER": "Virement",
+    "TAB_ALL": "Toutes",
+    "TAB_CANCELLED": "Annulées",
+    "CANCELLED_LIST": "Ventes annulées",
+    "CANCELLATION_DATE": "Date annulation",
+    "CANCELLED_BY": "Annulé par",
+    "SELLER": "Vendeur",
+    "CANCELLATION_REASON": "Motif annulation"
   },
   "CLIENTS": {
     "TITLE": "Clients",

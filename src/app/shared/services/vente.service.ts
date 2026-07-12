@@ -926,9 +926,9 @@ export class VenteService {
     let params = new HttpParams();
     if (user?.id) params = params.set('utilisateurId', user.id.toString());
     if (motif) params = params.set('motif', motif);
-    
+
     params = params.set('repercuterCaisse', 'true');
-    
+
     return this.http.post<any>(`${this.apiUrl}/credits/${venteId}/annuler`, null, {
       headers: this.getAuthHeaders(),
       params
@@ -939,6 +939,15 @@ export class VenteService {
         return venteAnnulee;
       }),
       catchError(error => this.handleError(error, 'annuler le crédit'))
+    );
+  }
+
+  getVentesAnnulees(boutiqueId: number): Observable<any[]> {
+    return this.http.get<any>(`${this.apiUrl}/${boutiqueId}/annulees`, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(response => Array.isArray(response) ? response : (response?.data || response?.ventes || [])),
+      catchError(error => this.handleError(error, 'récupérer les ventes annulées'))
     );
   }
 

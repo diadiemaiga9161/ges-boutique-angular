@@ -124,7 +124,14 @@
     "MOBILE_MONEY": "موبايل موني",
     "CARD": "بطاقة",
     "CHEQUE": "شيك",
-    "TRANSFER": "تحويل بنكي"
+    "TRANSFER": "تحويل بنكي",
+    "TAB_ALL": "الكل",
+    "TAB_CANCELLED": "الملغاة",
+    "CANCELLED_LIST": "المبيعات الملغاة",
+    "CANCELLATION_DATE": "تاريخ الإلغاء",
+    "CANCELLED_BY": "ألغاه",
+    "SELLER": "البائع",
+    "CANCELLATION_REASON": "سبب الإلغاء"
   },
   "CLIENTS": {
     "TITLE": "العملاء",
