@@ -414,6 +414,26 @@ tr:last-child td{border-bottom:none}
     this.factureService.ouvrirHtmlPersonnalise(html);
   }
 
+  getIconeType(nom: string): string {
+    const n = (nom || '').toLowerCase();
+    if (/loyer|maison|location|logement|appartement|bail/.test(n)) return 'fa-home';
+    if (/transport|carburant|essence|voiture|taxi|moto|bus|véhicule|vehicule/.test(n)) return 'fa-car';
+    if (/électricité|electricite|courant|énergie|energie|lumière|lumiere|kwh/.test(n)) return 'fa-bolt';
+    if (/\beau\b|eau courante/.test(n)) return 'fa-tint';
+    if (/nourriture|alimentation|repas|restaurant|manger|vivres|provisions|courses/.test(n)) return 'fa-cutlery';
+    if (/téléphone|telephone|mobile|forfait|appel/.test(n)) return 'fa-phone';
+    if (/internet|wifi|connexion|web|fibre/.test(n)) return 'fa-wifi';
+    if (/salaire|employé|employe|paie|personnel/.test(n)) return 'fa-users';
+    if (/santé|sante|médecin|medecin|pharmacie|médicament|medicament|hôpital|hopital/.test(n)) return 'fa-heartbeat';
+    if (/publicité|publicite|marketing|\bpub\b|annonce/.test(n)) return 'fa-bullhorn';
+    if (/entretien|nettoyage|maintenance|réparation|reparation|fourniture|matériel|materiel|bureau|papeterie/.test(n)) return 'fa-wrench';
+    if (/impôt|impot|taxe|fiscalité|fiscalite|douane/.test(n)) return 'fa-file-text';
+    if (/assurance/.test(n)) return 'fa-shield';
+    if (/formation|école|ecole|éducation|education|cours/.test(n)) return 'fa-graduation-cap';
+    if (/pétrole|petrole|fuel/.test(n)) return 'fa-fire';
+    return 'fa-tag';
+  }
+
   private emptyForm(): DepenseRequest {
     return { nom: '', motif: '', date: this.today, montant: 0, typeDepense: '' };
   }
