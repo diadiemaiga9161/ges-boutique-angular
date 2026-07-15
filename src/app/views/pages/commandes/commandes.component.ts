@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { CommandeService, Commande, CommandeRequest, StatutCommande, LigneCommande } from '../../../shared/services/commande.service';
 import { ProductService, Produit } from '../../../shared/services/product.service';
 import { ClientService } from '../../../shared/services/client.service';
-import { Client } from '../../../shared/services/vente.service';
+import { Client, ModePaiement, VenteService } from '../../../shared/services/vente.service';
 import { AuthService } from '../../../shared/services/auth.service';
 import Swal from 'sweetalert2';
 
@@ -24,6 +24,8 @@ interface LigneForm {
   styleUrl: './commandes.component.scss'
 })
 export class CommandesComponent implements OnInit {
+
+  ModePaiementEnum = ModePaiement;
 
   commandes: Commande[] = [];
   commandesFiltrees: Commande[] = [];
@@ -77,7 +79,8 @@ export class CommandesComponent implements OnInit {
     private commandeService: CommandeService,
     private productService: ProductService,
     private clientService: ClientService,
-    private auth: AuthService
+    private auth: AuthService,
+    private venteService: VenteService
   ) {}
 
   ngOnInit(): void {
@@ -226,6 +229,29 @@ export class CommandesComponent implements OnInit {
     this.editingId = null;
   }
 
+  getModePaiementOptions(): ModePaiement[] {
+    return this.venteService.getModePaiementOptions();
+  }
+
+  getModePaiementLabel(mode: string): string {
+    return this.venteService.getModePaiementLabel(mode);
+  }
+
+  getModePaiementPlaceholder(): string {
+    switch (this.form.modePaiement) {
+      case ModePaiement.ORANGE_MONEY:
+      case ModePaiement.MOOV_MONEY:
+      case ModePaiement.WAVE_MONEY:
+        return 'Numéro de transaction';
+      case ModePaiement.CARTE_BANCAIRE:
+        return 'Référence carte bancaire';
+      case ModePaiement.VIREMENT:
+        return 'Référence virement';
+      default:
+        return 'Référence paiement';
+    }
+  }
+
   enregistrer(): void {
     if (this.lignesForm.length === 0) {
       Swal.fire('Erreur', 'Ajoutez au moins un produit', 'error');
@@ -233,6 +259,10 @@ export class CommandesComponent implements OnInit {
     }
     if (!this.form.modePaiement) {
       Swal.fire('Erreur', 'Choisissez un mode de paiement', 'error');
+      return;
+    }
+    if (this.form.modePaiement !== ModePaiement.ESPECES && !this.form.referencePaiement?.trim()) {
+      Swal.fire('Erreur', `Référence requise pour ${this.getModePaiementLabel(this.form.modePaiement)}`, 'error');
       return;
     }
 

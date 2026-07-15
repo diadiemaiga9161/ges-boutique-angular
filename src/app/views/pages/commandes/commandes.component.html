@@ -191,7 +191,7 @@
               </div>
             </td>
             <td>
-              <div>{{ c.modePaiement }}</div>
+              <div>{{ getModePaiementLabel(c.modePaiement) }}</div>
               <div *ngIf="c.estCredit">
                 <span class="badge bg-warning text-dark">
                   <i class="bi bi-credit-card me-1"></i>Crédit
@@ -359,18 +359,18 @@
           <div class="row g-2 mb-2">
             <div class="col-md-6">
               <label class="form-label small">Mode de paiement *</label>
-              <select class="form-select" [(ngModel)]="form.modePaiement">
-                <option value="ESPECES">Espèces</option>
-                <option value="ORANGE_MONEY">Orange Money</option>
-                <option value="MOOV_MONEY">Moov Money</option>
-                <option value="WAVE_MONEY">Wave</option>
-                <option value="CARTE_BANCAIRE">Carte bancaire</option>
-                <option value="VIREMENT">Virement</option>
+              <select class="form-select" [(ngModel)]="form.modePaiement" required>
+                <option *ngFor="let mode of getModePaiementOptions()" [value]="mode">{{ getModePaiementLabel(mode) }}</option>
               </select>
             </div>
             <div class="col-md-6">
-              <label class="form-label small">Référence paiement</label>
-              <input type="text" class="form-control" [(ngModel)]="form.referencePaiement" placeholder="N° transaction..." />
+              <label class="form-label small" [class.text-danger]="form.modePaiement !== ModePaiementEnum.ESPECES">
+                Référence paiement
+                <span *ngIf="form.modePaiement !== ModePaiementEnum.ESPECES" class="text-danger">*</span>
+              </label>
+              <input type="text" class="form-control" [(ngModel)]="form.referencePaiement"
+                [required]="form.modePaiement !== ModePaiementEnum.ESPECES"
+                [placeholder]="getModePaiementPlaceholder()" />
             </div>
           </div>
 
