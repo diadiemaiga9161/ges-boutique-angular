@@ -22,6 +22,12 @@ export class TransfertsComponent implements OnInit {
   produits: any[] = [];
   isLoading = false;
 
+  // Onglets
+  ongletActif: 'tous' | 'envoyes' | 'recus' = 'tous';
+  transfertsEnvoyes: TransfertStock[] = [];
+  transfertsRecus: TransfertStock[] = [];
+  nbEnAttente = 0;
+
   // Formulaire nouveau transfert
   afficherFormulaire = false;
   editingTransfert: TransfertStock | null = null;
@@ -49,14 +55,22 @@ export class TransfertsComponent implements OnInit {
   readonly STATUT_LABELS: Record<string, string> = {
     CREE: 'Créé',
     EN_ATTENTE_CONFIRMATION: 'En attente',
+    EN_ATTENTE: 'En attente',
     CONFIRME: 'Confirmé',
+    ACCEPTE: 'Accepté',
+    REJETE: 'Rejeté',
+    COMPLETE: 'Complété',
     ANNULE: 'Annulé'
   };
 
   readonly STATUT_COLORS: Record<string, string> = {
     CREE: 'primary',
     EN_ATTENTE_CONFIRMATION: 'warning',
+    EN_ATTENTE: 'warning',
     CONFIRME: 'success',
+    ACCEPTE: 'success',
+    REJETE: 'danger',
+    COMPLETE: 'info',
     ANNULE: 'secondary'
   };
 
@@ -69,6 +83,7 @@ export class TransfertsComponent implements OnInit {
     this.charger();
     this.chargerPartenaires();
     this.chargerProduits();
+    this.chargerOnglets();
   }
 
   charger(): void {
@@ -274,6 +289,70 @@ export class TransfertsComponent implements OnInit {
           this.transfertService.supprimerPartenaire(p.id!).subscribe(() => this.chargerPartenaires());
         }
       });
+  }
+
+  chargerOnglets(): void {
+    this.transfertService.getEnvoyes().subscribe({
+      next: t => { this.transfertsEnvoyes = t; },
+      error: () => {}
+    });
+    this.transfertService.getRecus().subscribe({
+      next: t => {
+        this.transfertsRecus = t;
+        this.nbEnAttente = t.filter(tr =>
+          tr.statut === 'EN_ATTENTE_CONFIRMATION' || tr.statut === 'EN_ATTENTE'
+        ).length;
+      },
+      error: () => {}
+    });
+  }
+
+  changerOnglet(o: 'tous' | 'envoyes' | 'recus'): void {
+    this.ongletActif = o;
+    if (o === 'envoyes' || o === 'recus') this.chargerOnglets();
+  }
+
+  get transfertsAffiches(): TransfertStock[] {
+    if (this.ongletActif === 'envoyes') return this.transfertsEnvoyes;
+    if (this.ongletActif === 'recus') return this.transfertsRecus;
+    return this.transferts;
+  }
+
+  accepterTransfert(t: TransfertStock): void {
+    Swal.fire({
+      title: 'Accepter ce transfert ?',
+      text: 'Les produits seront ajoutés à votre stock.',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Accepter',
+      cancelButtonText: 'Annuler'
+    }).then(r => {
+      if (r.isConfirmed) {
+        this.transfertService.accepter(t.id!).subscribe({
+          next: () => { this.charger(); this.chargerOnglets(); Swal.fire('Accepté !', 'Stock mis à jour.', 'success'); },
+          error: e => Swal.fire('Erreur', e.error?.message ?? 'Erreur', 'error')
+        });
+      }
+    });
+  }
+
+  rejeterTransfert(t: TransfertStock): void {
+    Swal.fire({
+      title: 'Rejeter ce transfert ?',
+      input: 'text',
+      inputPlaceholder: 'Motif du rejet (optionnel)',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Rejeter',
+      cancelButtonText: 'Annuler'
+    }).then(r => {
+      if (r.isConfirmed) {
+        this.transfertService.rejeter(t.id!, r.value).subscribe({
+          next: () => { this.charger(); this.chargerOnglets(); Swal.fire('Rejeté', '', 'info'); },
+          error: e => Swal.fire('Erreur', e.error?.message ?? 'Erreur', 'error')
+        });
+      }
+    });
   }
 
   labelPaiement(v: string): string {

@@ -341,4 +341,92 @@
  <div class="spinner-border text-primary"></div>
  <p class="mt-3">Chargement des données...</p>
  </div>
+
+ <!-- ===== SECTION ANALYTIQUE ===== -->
+ <div class="card mt-4" *ngIf="!isLoadingAnalytics">
+   <div class="card-header">
+     <h5 class="card-title mb-0">Analyses visuelles</h5>
+   </div>
+   <div class="card-body">
+
+     <!-- CA 30 jours -->
+     <h6 class="mb-2">CA des 30 derniers jours</h6>
+     <div style="display:flex;align-items:flex-end;gap:2px;height:80px;margin-bottom:16px;overflow-x:auto">
+       <ng-container *ngFor="let d of ca30Jours">
+         <div style="display:flex;flex-direction:column;align-items:center;flex:1;min-width:14px">
+           <div [style.height.%]="pct(d.ca, maxCA)"
+                [title]="d.date + ': ' + d.ca"
+                style="width:100%;background:#4f46e5;border-radius:2px 2px 0 0;min-height:2px;transition:height .3s"></div>
+         </div>
+       </ng-container>
+     </div>
+
+     <hr>
+
+     <!-- Top produits -->
+     <h6 class="mb-2">Top 10 produits (30 jours)</h6>
+     <div *ngFor="let p of topProduits" style="margin-bottom:6px">
+       <div style="display:flex;justify-content:space-between;font-size:.8rem;margin-bottom:2px">
+         <span>{{ p.produitNom }}</span>
+         <span class="text-muted">{{ p.quantiteVendue }} vendus</span>
+       </div>
+       <div style="background:#e5e7eb;border-radius:4px;height:8px">
+         <div [style.width.%]="pct(p.quantiteVendue, maxQte)"
+              style="background:#10b981;height:100%;border-radius:4px;transition:width .3s"></div>
+       </div>
+     </div>
+
+     <hr>
+
+     <!-- Ventes par heure -->
+     <h6 class="mb-2">Ventes par heure</h6>
+     <div style="display:flex;align-items:flex-end;gap:4px;height:60px;margin-bottom:16px">
+       <ng-container *ngFor="let h of ventesParHeure">
+         <div style="display:flex;flex-direction:column;align-items:center;flex:1">
+           <div [style.height.%]="pct(h.nbVentes, maxVentes)"
+                [title]="h.heure + 'h: ' + h.nbVentes + ' ventes'"
+                style="width:100%;background:#f59e0b;border-radius:2px 2px 0 0;min-height:2px"></div>
+           <span style="font-size:.55rem;color:#6b7280">{{ h.heure }}h</span>
+         </div>
+       </ng-container>
+     </div>
+
+     <hr>
+
+     <!-- Prévisions de stock IA -->
+     <h6 class="mb-3">Prévisions de stock</h6>
+     <div class="table-responsive" *ngIf="previsionStock.length > 0">
+       <table class="table table-sm table-hover">
+         <thead>
+           <tr>
+             <th>Produit</th>
+             <th class="text-center">Stock actuel</th>
+             <th class="text-center">Jours avant rupture</th>
+             <th class="text-center">Qté recommandée</th>
+             <th class="text-center">Urgence</th>
+           </tr>
+         </thead>
+         <tbody>
+           <tr *ngFor="let p of previsionStock">
+             <td>{{ p.produitNom }}</td>
+             <td class="text-center">{{ p.stockActuel }}</td>
+             <td class="text-center">{{ p.joursAvantRupture >= 999 ? '—' : p.joursAvantRupture }}</td>
+             <td class="text-center">{{ p.quantiteRecommandee }}</td>
+             <td class="text-center">
+               <span class="badge"
+                 [class.bg-danger]="p.urgence === 'CRITIQUE'"
+                 [class.bg-warning]="p.urgence === 'ATTENTION'"
+                 [class.bg-success]="p.urgence === 'OK'">
+                 {{ p.urgence }}
+               </span>
+             </td>
+           </tr>
+         </tbody>
+       </table>
+     </div>
+     <p *ngIf="previsionStock.length === 0" class="text-muted">Pas de données de prévision</p>
+
+   </div>
+ </div>
+
 </div>

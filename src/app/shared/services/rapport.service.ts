@@ -1108,4 +1108,26 @@ export class RapportService {
     date.setDate(date.getDate() + 6);
     return this.formaterDate(date);
   }
+
+  // ===== Analytique =====
+
+  getCA30Jours(): Observable<Array<{date: string, ca: number}>> {
+    return this.http.get<Array<{date: string, ca: number}>>(`${this.baseUrl}/rapports/ca-30-jours`);
+  }
+
+  getTopProduits(): Observable<Array<{produitNom: string, quantiteVendue: number, ca: number}>> {
+    return this.http.get<Array<{produitNom: string, quantiteVendue: number, ca: number}>>(`${this.baseUrl}/rapports/top-produits`);
+  }
+
+  getVentesParHeure(): Observable<Array<{heure: number, nbVentes: number}>> {
+    return this.http.get<Array<{heure: number, nbVentes: number}>>(`${this.baseUrl}/rapports/ventes-par-heure`);
+  }
+
+  getMarges(): Observable<Array<{produitNom: string, ca: number, coutAchat: number, marge: number, tauxMarge: number}>> {
+    return this.http.get<Array<{produitNom: string, ca: number, coutAchat: number, marge: number, tauxMarge: number}>>(`${this.baseUrl}/rapports/marges`);
+  }
+
+  getPrevisionStock(): Observable<Array<any>> {
+    return this.http.get<Array<any>>(`${this.baseUrl}/previsions/stock`);
+  }
 }

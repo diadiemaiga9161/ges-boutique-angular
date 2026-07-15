@@ -75,6 +75,18 @@ export class RapportsComponent implements OnInit, OnDestroy, AfterViewInit {
 
   Math = Math;
 
+  // Analytique
+  ca30Jours: Array<{date: string, ca: number}> = [];
+  topProduits: Array<{produitNom: string, quantiteVendue: number, ca: number}> = [];
+  ventesParHeure: Array<{heure: number, nbVentes: number}> = [];
+  marges: Array<{produitNom: string, ca: number, coutAchat: number, marge: number, tauxMarge: number}> = [];
+  previsionStock: any[] = [];
+  isLoadingAnalytics = false;
+  maxCA = 0;
+  maxQte = 0;
+  maxVentes = 0;
+  maxMarge = 0;
+
   constructor(
     public rapportService: RapportService,
     private authService: AuthService,
@@ -86,6 +98,7 @@ export class RapportsComponent implements OnInit, OnDestroy, AfterViewInit {
     this.initialiserDates();
     this.chargerDonneesInitiales();
     this.chargerDonneesCredits();
+    this.chargerAnalytics();
 
     // Temps réel : rafraîchir les statistiques quand le dashboard change
     const wsSub = this.ws.subscribeTopic('/topic/dashboard').subscribe(() => {
@@ -810,6 +823,53 @@ export class RapportsComponent implements OnInit, OnDestroy, AfterViewInit {
       case 'En retard': return 'badge bg-danger';
       default: return 'badge bg-secondary';
     }
+  }
+
+  chargerAnalytics(): void {
+    this.isLoadingAnalytics = true;
+    this.rapportService.getCA30Jours().subscribe({
+      next: d => {
+        this.ca30Jours = d;
+        this.maxCA = Math.max(...d.map(x => x.ca), 1);
+      },
+      error: () => {}
+    });
+    this.rapportService.getTopProduits().subscribe({
+      next: d => {
+        this.topProduits = d;
+        this.maxQte = Math.max(...d.map(x => x.quantiteVendue), 1);
+      },
+      error: () => {}
+    });
+    this.rapportService.getVentesParHeure().subscribe({
+      next: d => {
+        this.ventesParHeure = d;
+        this.maxVentes = Math.max(...d.map(x => x.nbVentes), 1);
+        this.isLoadingAnalytics = false;
+      },
+      error: () => { this.isLoadingAnalytics = false; }
+    });
+    this.rapportService.getMarges().subscribe({
+      next: d => {
+        this.marges = d.slice(0, 10);
+        this.maxMarge = Math.max(...d.map(x => x.ca), 1);
+      },
+      error: () => {}
+    });
+    this.rapportService.getPrevisionStock().subscribe({
+      next: d => this.previsionStock = d,
+      error: () => {}
+    });
+  }
+
+  pct(val: number, max: number): number {
+    return max > 0 ? Math.round((val / max) * 100) : 0;
+  }
+
+  urgenceColor(u: string): string {
+    if (u === 'CRITIQUE') return 'danger';
+    if (u === 'ATTENTION') return 'warning';
+    return 'success';
   }
 
   get isAdmin(): boolean {

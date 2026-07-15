@@ -44,6 +44,7 @@ export interface TransfertStock {
   creePar?: string;
   lignes: LigneTransfert[];
   historique?: HistoriqueTransfert[];
+  motifRejet?: string;
 }
 
 export interface TransfertRequest {
@@ -90,5 +91,19 @@ export class TransfertService {
   }
   annuler(id: number, motif?: string): Observable<TransfertStock> {
     return this.http.put<TransfertStock>(`${URL}/${id}/annuler`, { motif });
+  }
+
+  // Nouveaux endpoints
+  getEnvoyes(): Observable<TransfertStock[]> {
+    return this.http.get<TransfertStock[]>(`${URL}/envoyes`);
+  }
+  getRecus(): Observable<TransfertStock[]> {
+    return this.http.get<TransfertStock[]>(`${URL}/recus`);
+  }
+  accepter(id: number): Observable<TransfertStock> {
+    return this.http.post<TransfertStock>(`${URL}/${id}/accepter`, {});
+  }
+  rejeter(id: number, motif?: string): Observable<TransfertStock> {
+    return this.http.post<TransfertStock>(`${URL}/${id}/rejeter`, { motif });
   }
 }

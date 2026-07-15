@@ -127,11 +127,37 @@
     <div class="spinner-border text-primary"></div>
   </div>
 
+  <!-- Onglets Envoyés / Reçus / Tous -->
+  <div class="d-flex gap-2 mb-3 align-items-center flex-wrap">
+    <button class="btn btn-sm"
+      [class.btn-primary]="ongletActif === 'tous'"
+      [class.btn-outline-primary]="ongletActif !== 'tous'"
+      (click)="changerOnglet('tous')">
+      Tous ({{ transferts.length }})
+    </button>
+    <button class="btn btn-sm"
+      [class.btn-primary]="ongletActif === 'envoyes'"
+      [class.btn-outline-primary]="ongletActif !== 'envoyes'"
+      (click)="changerOnglet('envoyes')">
+      Envoyés ({{ transfertsEnvoyes.length }})
+    </button>
+    <button class="btn btn-sm position-relative"
+      [class.btn-primary]="ongletActif === 'recus'"
+      [class.btn-outline-primary]="ongletActif !== 'recus'"
+      (click)="changerOnglet('recus')">
+      Reçus ({{ transfertsRecus.length }})
+      <span *ngIf="nbEnAttente > 0" class="badge bg-warning text-dark position-absolute"
+        style="top:-6px;right:-6px;font-size:.65rem">
+        {{ nbEnAttente }}
+      </span>
+    </button>
+  </div>
+
   <!-- LISTE TRANSFERTS -->
   <div class="card shadow-sm" *ngIf="!isLoading">
     <div class="card-header bg-white"><strong>Historique des transferts</strong></div>
     <div class="card-body p-0">
-      <table class="table table-hover mb-0" *ngIf="transferts.length > 0">
+      <table class="table table-hover mb-0" *ngIf="transfertsAffiches.length > 0">
         <thead class="table-light">
           <tr>
             <th>N°</th><th>Source</th><th>Destination</th><th>Statut</th>
@@ -139,7 +165,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let t of transferts">
+          <tr *ngFor="let t of transfertsAffiches">
             <td class="fw-semibold">{{ t.numeroTransfert }}</td>
             <td>{{ t.boutiqueSourceNom }}</td>
             <td>{{ t.boutiqueDestNom }}</td>
@@ -153,22 +179,35 @@
                 <i class="i-Eye"></i>
               </button>
               <button class="btn btn-xs btn-outline-primary me-1" (click)="editerTransfert(t)"
-                *ngIf="t.statut !== 'CONFIRME' && t.statut !== 'ANNULE'" title="Modifier">
+                *ngIf="t.statut !== 'CONFIRME' && t.statut !== 'ACCEPTE' && t.statut !== 'ANNULE' && t.statut !== 'REJETE'" title="Modifier">
                 <i class="i-Pen-2"></i>
               </button>
-              <button class="btn btn-xs btn-outline-success me-1" (click)="confirmer(t)"
-                *ngIf="t.statut !== 'CONFIRME' && t.statut !== 'ANNULE'" title="Confirmer">
-                <i class="i-Check"></i>
-              </button>
-              <button class="btn btn-xs btn-outline-danger" (click)="annuler(t)"
-                *ngIf="t.statut !== 'CONFIRME' && t.statut !== 'ANNULE'" title="Annuler">
-                <i class="i-Close-Window"></i>
-              </button>
+              <!-- Boutons selon statut -->
+              <ng-container *ngIf="ongletActif !== 'recus'">
+                <button class="btn btn-xs btn-outline-success me-1"
+                  *ngIf="t.statut !== 'CONFIRME' && t.statut !== 'ACCEPTE' && t.statut !== 'ANNULE' && t.statut !== 'REJETE'"
+                  (click)="confirmer(t)" title="Confirmer">
+                  <i class="i-Check"></i>
+                </button>
+                <button class="btn btn-xs btn-outline-danger"
+                  *ngIf="t.statut !== 'CONFIRME' && t.statut !== 'ACCEPTE' && t.statut !== 'ANNULE' && t.statut !== 'REJETE'"
+                  (click)="annuler(t)" title="Annuler">
+                  <i class="i-Close-Window"></i>
+                </button>
+              </ng-container>
+              <ng-container *ngIf="ongletActif === 'recus' && (t.statut === 'EN_ATTENTE_CONFIRMATION' || t.statut === 'EN_ATTENTE')">
+                <button class="btn btn-xs btn-outline-success me-1" (click)="accepterTransfert(t)" title="Accepter">
+                  <i class="i-Check-2"></i>
+                </button>
+                <button class="btn btn-xs btn-outline-danger" (click)="rejeterTransfert(t)" title="Rejeter">
+                  <i class="i-Close-Window"></i>
+                </button>
+              </ng-container>
             </td>
           </tr>
         </tbody>
       </table>
-      <div class="text-center py-5 text-muted" *ngIf="transferts.length === 0">
+      <div class="text-center py-5 text-muted" *ngIf="transfertsAffiches.length === 0">
         <i class="i-Arrow-Right fs-1"></i>
         <p class="mt-2">{{ 'TRANSFERS.EMPTY' | translate }}</p>
       </div>
@@ -197,7 +236,7 @@
       <div class="row mb-3">
         <div class="col-6"><span class="text-muted small">Source</span><p class="fw-bold">{{ transfertDetail.boutiqueSourceNom }}</p></div>
         <div class="col-6"><span class="text-muted small">Destination</span><p class="fw-bold">{{ transfertDetail.boutiqueDestNom }}</p></div>
-        <div class="col-6"><span class="text-muted small">Paiement</span><p>{{ TYPES_PAIEMENT | find:transfertDetail.typePaiement:'v':'l' }}</p></div>
+        <div class="col-6"><span class="text-muted small">Paiement</span><p>{{ labelPaiement(transfertDetail.typePaiement) }}</p></div>
         <div class="col-6"><span class="text-muted small">Créé par</span><p>{{ transfertDetail.creePar }}</p></div>
       </div>
 
