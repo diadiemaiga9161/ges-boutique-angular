@@ -67,20 +67,11 @@ export class ConnexionComponent implements OnInit {
         const nom = user?.nomComplet || user?.username || 'Utilisateur';
         const role = (user?.role || '').replace('ROLE_', '');
         const roleLabel = role === 'ADMIN' ? '👑 Administrateur' : '🛒 Vendeur';
-        const boutique = this.boutiqueService.getInfo().nom || 'Boutique';
 
-        Swal.fire({
-          title: `Bienvenue, ${nom} !`,
-          html: `<p style="margin:8px 0"><strong>${roleLabel}</strong></p>
-                 <p style="color:#6c757d;font-size:0.9rem">${boutique}</p>`,
-          icon: 'success',
-          confirmButtonText: 'OK',
-          confirmButtonColor: '#2563eb',
-          timer: 4000,
-          timerProgressBar: true,
-          showClass: { popup: 'animate__animated animate__fadeInDown' }
-        }).then(() => {
-          this.router.navigate(['/produit']);
+        // Recharger les infos boutique depuis le serveur pour avoir le bon nom
+        this.boutiqueService.refreshBoutique().subscribe({
+          next: (info) => this.afficherBienvenue(nom, roleLabel, info.nom),
+          error: () => this.afficherBienvenue(nom, roleLabel, '')
         });
       },
       error: (err: Error) => {
@@ -88,6 +79,22 @@ export class ConnexionComponent implements OnInit {
         const msg = err.message || 'Identifiant ou mot de passe incorrect';
         this.showMessage(msg, true);
       }
+    });
+  }
+
+  private afficherBienvenue(nom: string, roleLabel: string, boutique: string) {
+    Swal.fire({
+      title: `Bienvenue, ${nom} !`,
+      html: `<p style="margin:8px 0"><strong>${roleLabel}</strong></p>
+             ${boutique ? `<p style="color:#6c757d;font-size:0.9rem">${boutique}</p>` : ''}`,
+      icon: 'success',
+      confirmButtonText: 'OK',
+      confirmButtonColor: '#2563eb',
+      timer: 4000,
+      timerProgressBar: true,
+      showClass: { popup: 'animate__animated animate__fadeInDown' }
+    }).then(() => {
+      this.router.navigate(['/produit']);
     });
   }
 
