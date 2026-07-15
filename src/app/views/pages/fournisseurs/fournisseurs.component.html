@@ -842,10 +842,20 @@
         <div class="form-group col-md-6">
           <label>Mode de paiement</label>
           <select class="form-control" [(ngModel)]="paiementForm.modePaiement">
-            <option value="ESPECES">Espèces</option>
+            <option value="ESPECES">Espèces (Caisse)</option>
             <option value="BANQUE">Banque</option>
           </select>
         </div>
+      </div>
+      <div class="form-group" *ngIf="paiementForm.modePaiement === 'BANQUE'">
+        <label>Compte bancaire <span class="text-danger">*</span></label>
+        <select class="form-control" [(ngModel)]="paiementForm.compteId">
+          <option [ngValue]="undefined">-- Choisir un compte --</option>
+          <option *ngFor="let c of comptes" [ngValue]="c.id">
+            {{ c.nomBanque }} — Solde : {{ c.soldeActuel | number:'1.0-0' }} FCFA
+          </option>
+        </select>
+        <small class="text-muted">Le montant sera déduit du compte bancaire sélectionné</small>
       </div>
       <div class="form-group">
         <label>Référence</label>
@@ -890,10 +900,20 @@
         <div class="form-group col-md-6">
           <label>Source</label>
           <select class="form-control" [(ngModel)]="avanceForm.sourceFinancement">
-            <option value="CAISSE">Caisse</option>
+            <option value="CAISSE">Caisse (Espèces)</option>
             <option value="BANQUE">Banque</option>
           </select>
         </div>
+      </div>
+      <div class="form-group" *ngIf="avanceForm.sourceFinancement === 'BANQUE'">
+        <label>Compte bancaire <span class="text-danger">*</span></label>
+        <select class="form-control" [(ngModel)]="avanceForm.compteId">
+          <option [ngValue]="undefined">-- Choisir un compte --</option>
+          <option *ngFor="let c of comptes" [ngValue]="c.id">
+            {{ c.nomBanque }} — Solde : {{ c.soldeActuel | number:'1.0-0' }} FCFA
+          </option>
+        </select>
+        <small class="text-muted">Le montant sera déduit du compte bancaire sélectionné</small>
       </div>
       <div class="form-group">
         <label>Motif</label>

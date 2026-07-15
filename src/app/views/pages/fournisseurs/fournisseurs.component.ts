@@ -18,6 +18,7 @@ import {
 } from '../../../shared/services/product.service';
 import { AuthService } from '../../../shared/services/auth.service';
 import { FactureService } from '../../../shared/services/facture.service';
+import { CompteService, Compte } from '../../../shared/services/compte.service';
 import { environment } from '../../../../environments/environment';
 import Swal from 'sweetalert2';
 import { TranslateModule } from '@ngx-translate/core';
@@ -36,6 +37,7 @@ export class FournisseursComponent implements OnInit {
 
   // ─── Données ───────────────────────────────────────
   fournisseurs: Fournisseur[] = [];
+  comptes: Compte[] = [];
   achats: AchatFournisseur[] = [];
   paiements: PaiementFournisseur[] = [];
   avances: AvanceFournisseur[] = [];
@@ -140,12 +142,14 @@ export class FournisseursComponent implements OnInit {
     private productService: ProductService,
     private authService: AuthService,
     private http: HttpClient,
-    private factureService: FactureService
+    private factureService: FactureService,
+    private compteService: CompteService
   ) {}
 
   ngOnInit(): void {
     this.chargerFournisseurs();
     this.chargerProduits();
+    this.chargerComptes();
   }
 
   // ══════════════════════════════════════════
@@ -200,6 +204,13 @@ export class FournisseursComponent implements OnInit {
     this.productService.getProduitsSimples().subscribe({
       next: data => this.produits = data,
       error: () => {}
+    });
+  }
+
+  chargerComptes(): void {
+    this.compteService.getTousLesComptes().subscribe({
+      next: data => this.comptes = data,
+      error: () => this.comptes = []
     });
   }
 
@@ -348,6 +359,7 @@ export class FournisseursComponent implements OnInit {
       fournisseurId: fId,
       montant: achat ? achat.montantRestant : 0,
       modePaiement: 'ESPECES', reference: '', observation: '',
+      compteId: undefined,
       achatCibleId: achat?.id,
       utilisateurId: this.authService.getUserId() || undefined
     };
@@ -361,6 +373,9 @@ export class FournisseursComponent implements OnInit {
     }
     if (!this.paiementForm.montant || this.paiementForm.montant <= 0) {
       Swal.fire({ icon: 'warning', title: 'Montant invalide', text: 'Le montant doit être supérieur à 0.' }); return;
+    }
+    if (this.paiementForm.modePaiement === 'BANQUE' && !this.paiementForm.compteId) {
+      Swal.fire({ icon: 'warning', title: 'Compte bancaire requis', text: 'Choisissez un compte bancaire pour ce paiement.' }); return;
     }
     this.isSaving = true;
     this.productService.payerFournisseur({ ...this.paiementForm, utilisateurId: this.authService.getUserId() || undefined }).subscribe({
@@ -386,6 +401,7 @@ export class FournisseursComponent implements OnInit {
     this.avanceForm = {
       fournisseurId: this.filtreFournisseurId,
       montant: 0, motif: '', sourceFinancement: 'CAISSE',
+      compteId: undefined,
       utilisateurId: this.authService.getUserId() || undefined
     };
     this.showAvanceModal = true;
@@ -397,6 +413,9 @@ export class FournisseursComponent implements OnInit {
     }
     if (!this.avanceForm.montant || this.avanceForm.montant <= 0) {
       Swal.fire({ icon: 'warning', title: 'Montant invalide' }); return;
+    }
+    if (this.avanceForm.sourceFinancement === 'BANQUE' && !this.avanceForm.compteId) {
+      Swal.fire({ icon: 'warning', title: 'Compte bancaire requis', text: 'Choisissez un compte bancaire pour cette avance.' }); return;
     }
     this.isSaving = true;
     this.productService.enregistrerAvanceFournisseur({ ...this.avanceForm, utilisateurId: this.authService.getUserId() || undefined }).subscribe({
