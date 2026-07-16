@@ -100,8 +100,8 @@ export class NavigationService {
         { name: 'Design facture',      type: 'link', icon: 'i-Pen-2',                       state: '/facture-design' },
         { name: 'Annulation paiements',type: 'link', icon: 'i-Remove',                      state: '/annulation-paiements' },
         // { name: 'Promotions',          type: 'link', icon: 'i-Tag-2',                       state: '/promotions' }, // gérer depuis l'app mobile
-        // --- Intelligence Artificielle ---
-        { name: 'Intelligence IA',     type: 'link', icon: 'i-Idea-5',                      state: '/ia' },
+        // --- Intelligence Artificielle --- (mobile uniquement : Ionic / React Native / Flutter)
+        // { name: 'Intelligence IA',     type: 'link', icon: 'i-Idea-5',                      state: '/ia' },
         { name: 'Profil',              type: 'link', icon: 'i-Administrator',               state: '/profile' },
         { name: 'En savoir plus',      type: 'link', icon: 'i-Information',                 state: '/ressources' },
     ];
