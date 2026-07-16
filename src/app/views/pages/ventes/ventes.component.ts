@@ -2174,7 +2174,9 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   get nombreVentesAnnulees(): number {
-    return this.ventes.filter(v => v.annulee).length;
+    // Utilise ventesAnnulees (endpoint dédié) au lieu de filtrer this.ventes
+    // car loadAllVentes() ne retourne pas les ventes annulées dans toutes les configs
+    return this.ventesAnnulees.length;
   }
 
   get totalCreditsEnCours(): number {

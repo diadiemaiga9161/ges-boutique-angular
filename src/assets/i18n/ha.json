@@ -566,5 +566,26 @@
     "VERSION": "Sigar",
     "DEVELOPER": "Mai haɓakawa",
     "COPYRIGHT": "Haƙƙin mallaka"
+  },
+  "SETTINGS": {
+    "TITLE": "Saitunan",
+    "SUBTITLE": "Sake saita da share bayanai",
+    "SELECT_ALL": "Zaɓi duka",
+    "SECTION_RESET": "Sake saita",
+    "SECTION_DELETE": "Share na dindindin",
+    "CASH_BALANCE": "Ma'aunin akwatin kudi",
+    "CASH_HISTORY": "Tarihin ayyukan akwati",
+    "CREDITS_SETTLED": "Bashi da aka biya (ajiye)",
+    "CANCELLED_SALES": "Tarihin sayarwa da aka soke",
+    "BTN_RESET": "Sake saita",
+    "BTN_DELETE": "Share na dindindin",
+    "CONFIRM_RESET": "Kun tabbata kuna son sake saita abubuwan da aka zaɓa?",
+    "CONFIRM_DELETE": "Wannan aikin ba za a iya juyawa ba. Tabbatar da share?",
+    "CONFIRM_TYPE": "Rubuta CONFIRMER don tabbatarwa",
+    "ADMIN_ONLY": "Damar shiga an keɓe ta don masu gudanarwa",
+    "DEPLOYING": "Ana shigar da fasali",
+    "NO_SELECTION": "Da fatan za a zaɓi aƙalla abu ɗaya",
+    "SUCCESS_RESET": "An sake saita cikin nasara",
+    "SUCCESS_DELETE": "An share cikin nasara"
   }
 }

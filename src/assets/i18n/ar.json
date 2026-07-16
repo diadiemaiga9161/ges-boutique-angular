@@ -432,5 +432,26 @@
     "VERSION": "الإصدار",
     "DEVELOPER": "المطور",
     "COPYRIGHT": "حقوق النشر"
+  },
+  "SETTINGS": {
+    "TITLE": "الإعدادات",
+    "SUBTITLE": "إعادة تعيين البيانات وحذفها",
+    "SELECT_ALL": "تحديد الكل",
+    "SECTION_RESET": "إعادة التعيين",
+    "SECTION_DELETE": "حذف نهائي",
+    "CASH_BALANCE": "رصيد الصندوق",
+    "CASH_HISTORY": "تاريخ عمليات الصندوق",
+    "CREDITS_SETTLED": "الائتمانات المسواة (الأرشيف)",
+    "CANCELLED_SALES": "تاريخ المبيعات الملغاة",
+    "BTN_RESET": "إعادة التعيين",
+    "BTN_DELETE": "حذف نهائي",
+    "CONFIRM_RESET": "هل أنت متأكد من إعادة تعيين العناصر المحددة؟",
+    "CONFIRM_DELETE": "هذا الإجراء لا رجعة فيه. تأكيد الحذف؟",
+    "CONFIRM_TYPE": "اكتب CONFIRMER للتحقق",
+    "ADMIN_ONLY": "الوصول مخصص للمسؤولين فقط",
+    "DEPLOYING": "الميزة قيد النشر",
+    "NO_SELECTION": "يرجى تحديد عنصر واحد على الأقل",
+    "SUCCESS_RESET": "تمت إعادة التعيين بنجاح",
+    "SUCCESS_DELETE": "تم الحذف بنجاح"
   }
 }

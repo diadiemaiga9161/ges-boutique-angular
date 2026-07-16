@@ -566,5 +566,26 @@
     "VERSION": "Vërsion",
     "DEVELOPER": "Baabatuut",
     "COPYRIGHT": "Ndeer ba"
+  },
+  "SETTINGS": {
+    "TITLE": "Seetkat",
+    "SUBTITLE": "Rafetal ak lëkkal mbindaat",
+    "SELECT_ALL": "Tànn lépp",
+    "SECTION_RESET": "Rafetal",
+    "SECTION_DELETE": "Lëkkal gu dëkkal",
+    "CASH_BALANCE": "Sàll caisse",
+    "CASH_HISTORY": "Tariix liggéeyu caisse",
+    "CREDITS_SETTLED": "Krediti yëglël (arkiiv)",
+    "CANCELLED_SALES": "Tariix ventiu annulée yi",
+    "BTN_RESET": "Rafetal",
+    "BTN_DELETE": "Lëkkal gu dëkkal",
+    "CONFIRM_RESET": "Dëgg nga bëgg na a rafetal yii bu tànn yi?",
+    "CONFIRM_DELETE": "Liggéey bii du dëkk ci kanam. Jàppale lëkkal?",
+    "CONFIRM_TYPE": "Bind CONFIRMER ngir jàppale",
+    "ADMIN_ONLY": "Jëfandikoo bu dëkk rekk ngir administrateur yi",
+    "DEPLOYING": "Fonctionnalité bi dafa mujj",
+    "NO_SELECTION": "Tànn na benn ci kanam",
+    "SUCCESS_RESET": "Rafetal def na mu baax",
+    "SUCCESS_DELETE": "Lëkkal def na mu baax"
   }
 }

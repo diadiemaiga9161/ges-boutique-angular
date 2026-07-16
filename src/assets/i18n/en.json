@@ -333,5 +333,26 @@
     "VERSION": "Version",
     "DEVELOPER": "Developer",
     "COPYRIGHT": "Copyright"
+  },
+  "SETTINGS": {
+    "TITLE": "Settings",
+    "SUBTITLE": "Data reset and deletion",
+    "SELECT_ALL": "Select all",
+    "SECTION_RESET": "Reset",
+    "SECTION_DELETE": "Permanent deletion",
+    "CASH_BALANCE": "Cash balance",
+    "CASH_HISTORY": "Cash operations history",
+    "CREDITS_SETTLED": "Settled credits (archives)",
+    "CANCELLED_SALES": "Cancelled sales history",
+    "BTN_RESET": "Reset",
+    "BTN_DELETE": "Delete permanently",
+    "CONFIRM_RESET": "Are you sure you want to reset the selected items?",
+    "CONFIRM_DELETE": "This action is irreversible. Confirm deletion?",
+    "CONFIRM_TYPE": "Type CONFIRM to validate",
+    "ADMIN_ONLY": "Access reserved for administrators",
+    "DEPLOYING": "Feature being deployed",
+    "NO_SELECTION": "Please select at least one item",
+    "SUCCESS_RESET": "Reset completed successfully",
+    "SUCCESS_DELETE": "Deletion completed successfully"
   }
 }

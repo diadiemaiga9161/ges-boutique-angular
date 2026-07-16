@@ -129,25 +129,26 @@
  </div>
  </div>
 
- <ng-container *ngIf="!isVendeur">
- <div class="stat-card" style="background: linear-gradient(135deg, #11998e, #38ef7d);">
- <div class="stat-icon"><i class="fas fa-money-bill-wave"></i></div>
- <div class="stat-content">
- <h3>{{ formatPrice(getBilanNet()) }}</h3>
- <p> Ce que vous avez gagné</p>
- <small>Ventes - Dépenses</small>
- </div>
- </div>
-
- <div class="stat-card" style="background: linear-gradient(135deg, #f093fb, #f5576c);">
- <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
- <div class="stat-content">
- <h3>{{ getMargeBrute() | number:'1.1-1' }}%</h3>
- <p> Rentabilité</p>
- <small>Ce que vous gardez sur 100 FCFA</small>
- </div>
- </div>
+ <!-- RÉSULTAT NET / BILAN NET et RENTABILITÉ : masqués pour tous les rôles
+ <ng-container>
+   <div class="stat-card" style="background: linear-gradient(135deg, #11998e, #38ef7d);">
+     <div class="stat-icon"><i class="fas fa-money-bill-wave"></i></div>
+     <div class="stat-content">
+       <h3>getBilanNet()</h3>
+       <p>Ce que vous avez gagné</p>
+       <small>Ventes - Dépenses</small>
+     </div>
+   </div>
+   <div class="stat-card" style="background: linear-gradient(135deg, #f093fb, #f5576c);">
+     <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
+     <div class="stat-content">
+       <h3>getMargeBrute()%</h3>
+       <p>Rentabilité</p>
+       <small>Ce que vous gardez sur 100 FCFA</small>
+     </div>
+   </div>
  </ng-container>
+ -->
 
  <div class="stat-card bg-warning">
  <div class="stat-icon"><i class="fas fa-box"></i></div>
@@ -201,38 +202,30 @@
  <i class="fas fa-check-circle"></i> Aucun crédit en cours, tout est payé !
  </div>
  </div>
- <!-- GAINS vs PERTES - admin seulement -->
- <div *ngIf="(getTotalGains() > 0 || getTotalPertes() > 0) && !isVendeur" class="gains-pertes-card fade-in">
- <h4><i class="fas fa-chart-pie"></i> Votre argent : Ce qui rentre vs Ce qui sort</h4>
- <div class="row">
- <div class="col-md-6">
- <div class="gain-card">
- <div class="gain-icon"><i class="fas fa-arrow-up"></i></div>
- <div class="gain-content">
- <h5> CE QUI RENTRE</h5>
- <h3>{{ formatPrice(getTotalGains()) }}</h3>
- <p>Total des ventes + règlements</p>
+ <!-- GAINS vs PERTES (REVENU / RÉSULTAT NET) : masqué pour tous les rôles
+ <div class="gains-pertes-card fade-in">
+   <h4>Votre argent : Ce qui rentre vs Ce qui sort</h4>
+   <div class="row">
+     <div class="col-md-6">
+       <div class="gain-card">
+         <h5>CE QUI RENTRE</h5>
+         <h3>getTotalGains()</h3>
+       </div>
+     </div>
+     <div class="col-md-6">
+       <div class="perte-card">
+         <h5>CE QUI SORT</h5>
+         <h3>getTotalPertes()</h3>
+       </div>
+     </div>
+   </div>
+   <div class="bilan-simple text-center mt-3">
+     <div class="bilan-card">
+       CE QUE VOUS GARDEZ : getBilanNet()
+     </div>
+   </div>
  </div>
- </div>
- </div>
- <div class="col-md-6">
- <div class="perte-card">
- <div class="perte-icon"><i class="fas fa-arrow-down"></i></div>
- <div class="perte-content">
- <h5> CE QUI SORT</h5>
- <h3>{{ formatPrice(getTotalPertes()) }}</h3>
- <p>Annulations, dépenses, pertes</p>
- </div>
- </div>
- </div>
- </div>
- <div class="bilan-simple text-center mt-3">
- <div class="bilan-card" [ngClass]="getBilanNet() >= 0 ? 'positive' : 'negative'">
- <i class="fas fa-chart-line"></i>
- <span> CE QUE VOUS GARDEZ : <strong>{{ formatPrice(getBilanNet()) }}</strong></span>
- </div>
- </div>
- </div>
+ -->
 
 
  <!-- TOP PRODUITS (DONNÉES RÉELLES) -->

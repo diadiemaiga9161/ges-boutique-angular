@@ -452,5 +452,26 @@
     "VERSION": "Version",
     "DEVELOPER": "Développeur",
     "COPYRIGHT": "Copyright"
+  },
+  "SETTINGS": {
+    "TITLE": "Paramètres",
+    "SUBTITLE": "Réinitialisation et suppression de données",
+    "SELECT_ALL": "Tout sélectionner",
+    "SECTION_RESET": "Réinitialisation",
+    "SECTION_DELETE": "Suppression définitive",
+    "CASH_BALANCE": "Solde caisse",
+    "CASH_HISTORY": "Historique opérations caisse",
+    "CREDITS_SETTLED": "Crédits réglés (archives)",
+    "CANCELLED_SALES": "Historique des ventes annulées",
+    "BTN_RESET": "Réinitialiser",
+    "BTN_DELETE": "Supprimer définitivement",
+    "CONFIRM_RESET": "Êtes-vous sûr de vouloir réinitialiser les éléments sélectionnés ?",
+    "CONFIRM_DELETE": "Cette action est irréversible. Confirmer la suppression ?",
+    "CONFIRM_TYPE": "Tapez CONFIRMER pour valider",
+    "ADMIN_ONLY": "Accès réservé aux administrateurs",
+    "DEPLOYING": "Fonctionnalité en cours de déploiement",
+    "NO_SELECTION": "Veuillez sélectionner au moins un élément",
+    "SUCCESS_RESET": "Réinitialisation effectuée avec succès",
+    "SUCCESS_DELETE": "Suppression effectuée avec succès"
   }
 }

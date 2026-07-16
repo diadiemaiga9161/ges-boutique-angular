@@ -566,5 +566,26 @@
     "VERSION": "Versão",
     "DEVELOPER": "Desenvolvedor",
     "COPYRIGHT": "Direitos autorais"
+  },
+  "SETTINGS": {
+    "TITLE": "Configurações",
+    "SUBTITLE": "Redefinição e exclusão de dados",
+    "SELECT_ALL": "Selecionar tudo",
+    "SECTION_RESET": "Redefinição",
+    "SECTION_DELETE": "Exclusão permanente",
+    "CASH_BALANCE": "Saldo do caixa",
+    "CASH_HISTORY": "Histórico de operações do caixa",
+    "CREDITS_SETTLED": "Créditos liquidados (arquivos)",
+    "CANCELLED_SALES": "Histórico de vendas canceladas",
+    "BTN_RESET": "Redefinir",
+    "BTN_DELETE": "Excluir definitivamente",
+    "CONFIRM_RESET": "Tem certeza de que deseja redefinir os itens selecionados?",
+    "CONFIRM_DELETE": "Esta ação é irreversível. Confirmar exclusão?",
+    "CONFIRM_TYPE": "Digite CONFIRMAR para validar",
+    "ADMIN_ONLY": "Acesso reservado aos administradores",
+    "DEPLOYING": "Funcionalidade em implantação",
+    "NO_SELECTION": "Selecione pelo menos um item",
+    "SUCCESS_RESET": "Redefinição realizada com sucesso",
+    "SUCCESS_DELETE": "Exclusão realizada com sucesso"
   }
 }

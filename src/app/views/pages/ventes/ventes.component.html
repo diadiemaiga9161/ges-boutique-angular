@@ -114,46 +114,51 @@
 
   <!-- Cartes de résumé -->
   <div class="row g-3 mb-4">
+    <!-- CA GLOBAL (REVENU) : masqué pour tous les rôles — consulter la page Rapports pour ces KPI
     <div class="col-6 col-md-3">
       <div class="app-stat-card">
         <div class="app-stat-icon blue"><i class="fa fa-chart-line"></i></div>
         <div class="app-stat-body">
-          <div class="app-stat-label">{{ 'NET_RESULT.REVENUE' | translate }}</div>
-          <div class="app-stat-value">{{ formatPrice(chiffreAffaireTotal) }}</div>
-          <div class="app-stat-sub">{{ 'SALES.ALL' | translate }}</div>
+          <div class="app-stat-label">NET_RESULT.REVENUE</div>
+          <div class="app-stat-value">chiffreAffaireTotal</div>
+          <div class="app-stat-sub">SALES.ALL</div>
         </div>
       </div>
     </div>
-    <div class="col-6 col-md-3" *ngIf="isAdmin">
+    -->
+    <!-- BÉNÉFICE BRUT GLOBAL (AVANTAGES BRUT / MARGE) : masqué pour tous les rôles
+    <div class="col-6 col-md-3">
       <div class="app-stat-card">
         <div class="app-stat-icon green"><i class="fa fa-trophy"></i></div>
         <div class="app-stat-body">
-          <div class="app-stat-label">{{ 'BENEFITS.GROSS' | translate }}</div>
-          <div class="app-stat-value">{{ formatPrice(beneficeTotal) }}</div>
-          <div class="app-stat-sub">Marge: {{ margeMoyenne | number:'1.1-1' }}%</div>
+          <div class="app-stat-label">BENEFITS.GROSS</div>
+          <div class="app-stat-value">beneficeTotal — margeMoyenne%</div>
         </div>
       </div>
     </div>
+    -->
+    <!-- CA DU JOUR (REVENU JOUR) : masqué pour tous les rôles
     <div class="col-6 col-md-3">
       <div class="app-stat-card">
         <div class="app-stat-icon teal"><i class="fa fa-calendar-day"></i></div>
         <div class="app-stat-body">
-          <div class="app-stat-label">{{ 'NET_RESULT.REVENUE' | translate }} - {{ 'SALES.TODAY' | translate }}</div>
-          <div class="app-stat-value">{{ formatPrice(chiffreAffaireJour) }}</div>
-          <div class="app-stat-sub">{{ 'SALES.TODAY' | translate }}</div>
+          <div class="app-stat-label">NET_RESULT.REVENUE - SALES.TODAY</div>
+          <div class="app-stat-value">chiffreAffaireJour</div>
         </div>
       </div>
     </div>
-    <div class="col-6 col-md-3" *ngIf="isAdmin">
+    -->
+    <!-- BÉNÉFICE DU JOUR (AVANTAGES BRUT JOUR) : masqué pour tous les rôles
+    <div class="col-6 col-md-3">
       <div class="app-stat-card">
         <div class="app-stat-icon orange"><i class="fa fa-coins"></i></div>
         <div class="app-stat-body">
-          <div class="app-stat-label">{{ 'BENEFITS.GROSS' | translate }} - {{ 'SALES.TODAY' | translate }}</div>
-          <div class="app-stat-value">{{ formatPrice(beneficeJour) }}</div>
-          <div class="app-stat-sub">Marge: {{ margeJour | number:'1.1-1' }}%</div>
+          <div class="app-stat-label">BENEFITS.GROSS - SALES.TODAY</div>
+          <div class="app-stat-value">beneficeJour — margeJour%</div>
         </div>
       </div>
     </div>
+    -->
     <div class="col-6 col-md-3">
       <div class="app-stat-card">
         <div class="app-stat-icon purple"><i class="fa fa-shopping-cart"></i></div>

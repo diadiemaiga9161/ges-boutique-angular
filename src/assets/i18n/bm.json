@@ -564,5 +564,26 @@
     "VERSION": "Vɛrisɔn",
     "DEVELOPER": "Dalili mɔgɔ",
     "COPYRIGHT": "Sariya"
+  },
+  "SETTINGS": {
+    "TITLE": "Sɛbɛnni",
+    "SUBTITLE": "Kunnafonibali ni jɔyɔrɔ yɔrɔla",
+    "SELECT_ALL": "Bɛɛ sɛlɛkɛ",
+    "SECTION_RESET": "Sɛgɛsɛgɛli",
+    "SECTION_DELETE": "Jɔsili tunmabali",
+    "CASH_BALANCE": "Wari sikili",
+    "CASH_HISTORY": "Waridenni kunnafoni",
+    "CREDITS_SETTLED": "Kreditiw bɛn (arka)",
+    "CANCELLED_SALES": "Kɔselenw sɔrɔli",
+    "BTN_RESET": "Sɛgɛsɛgɛ",
+    "BTN_DELETE": "Jɔsi tunmabali",
+    "CONFIRM_RESET": "I y'a dɔn k'a sɔrɔ i bɛ sɛlɛkɛlenw sɛgɛsɛgɛ?",
+    "CONFIRM_DELETE": "Nin kɛtɔ tɛ se ka segin. Jɔsili dafa?",
+    "CONFIRM_TYPE": "Sɛbɛn CONFIRMER k'a jabi",
+    "ADMIN_ONLY": "Weeleli dɔrɔn administrate ye",
+    "DEPLOYING": "Baara bɛ yɛlɛma",
+    "NO_SELECTION": "I k'a sɔrɔ i bɛ fɛn kelen sɛlɛkɛ",
+    "SUCCESS_RESET": "Sɛgɛsɛgɛli kɛra ka ɲɛ",
+    "SUCCESS_DELETE": "Jɔsili kɛra ka ɲɛ"
   }
 }
