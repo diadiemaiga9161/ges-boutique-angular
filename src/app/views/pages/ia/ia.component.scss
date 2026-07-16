@@ -1,0 +1,537 @@
+// src/app/views/pages/ia/ia.component.scss
+
+// ================================================================
+// Variables
+// ================================================================
+$primary:   #1a56db;
+$dark:      #081648;
+$border:    #e5e7eb;
+$radius:    12px;
+$shadow:    0 1px 4px rgba(0, 0, 0, 0.06);
+
+// ================================================================
+// État chargement / vide
+// ================================================================
+.ia-loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 80px 20px;
+}
+
+.ia-empty-state {
+  text-align: center;
+  padding: 64px 20px;
+  color: #9ca3af;
+
+  .ia-empty-icon {
+    font-size: 3rem;
+    display: block;
+  }
+}
+
+// ================================================================
+// Onglets
+// ================================================================
+.ia-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  border-bottom: 2px solid $border;
+
+  .ia-tab {
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    padding: 10px 18px;
+    font-size: 14px;
+    color: #6b7280;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: color 0.2s, border-color 0.2s;
+    white-space: nowrap;
+
+    &.active {
+      color: $primary;
+      border-bottom-color: $primary;
+      font-weight: 600;
+    }
+
+    &:hover:not(.active) {
+      color: $dark;
+    }
+  }
+
+  .ia-tab-badge {
+    background: #ef4444;
+    color: #fff;
+    border-radius: 9999px;
+    padding: 1px 7px;
+    font-size: 11px;
+    font-weight: 700;
+    min-width: 18px;
+    text-align: center;
+  }
+}
+
+// ================================================================
+// Cards génériques
+// ================================================================
+.ia-card {
+  background: #fff;
+  border: 1px solid $border;
+  border-radius: $radius;
+  padding: 20px;
+  box-shadow: $shadow;
+  height: 100%;
+
+  &.ia-card-score {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  &.ia-card-forecast {
+    border-left: 4px solid $primary;
+    background: linear-gradient(135deg, #eff6ff 0%, #fff 70%);
+  }
+}
+
+.ia-card-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #9ca3af;
+  margin-bottom: 10px;
+}
+
+.ia-card-hint {
+  font-size: 12px;
+  color: #9ca3af;
+  margin: 4px 0 0;
+}
+
+// ================================================================
+// Score SVG
+// ================================================================
+.ia-score-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  svg circle:last-of-type {
+    transition: stroke-dashoffset 0.8s ease;
+  }
+}
+
+// ================================================================
+// Métriques
+// ================================================================
+.ia-metric-value {
+  font-size: 30px;
+  font-weight: 800;
+  color: $dark;
+  line-height: 1.1;
+}
+
+.ia-metric-large {
+  font-size: 26px;
+  font-weight: 800;
+  color: $dark;
+
+  .ia-metric-unit {
+    font-size: 14px;
+    font-weight: 400;
+    color: #9ca3af;
+    margin-left: 4px;
+  }
+}
+
+// ================================================================
+// Tendance
+// ================================================================
+.ia-trend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+
+  .ia-trend-icon {
+    font-size: 32px;
+    line-height: 1;
+  }
+
+  .ia-trend-pct {
+    font-size: 28px;
+    font-weight: 800;
+  }
+}
+
+// ================================================================
+// Graphique barres CSS pur
+// ================================================================
+.ia-bar-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ia-bar-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  .ia-bar-date {
+    width: 44px;
+    font-size: 12px;
+    color: #6b7280;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .ia-bar-track {
+    flex: 1;
+    height: 14px;
+    background: #f1f5f9;
+    border-radius: 7px;
+    overflow: hidden;
+  }
+
+  .ia-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, $primary 0%, #60a5fa 100%);
+    border-radius: 7px;
+    transition: width 0.6s ease;
+    min-width: 4px;
+  }
+
+  .ia-bar-val {
+    width: 68px;
+    font-size: 12px;
+    color: #374151;
+    text-align: right;
+    flex-shrink: 0;
+  }
+}
+
+// ================================================================
+// Alertes
+// ================================================================
+.ia-alerte {
+  border-radius: $radius;
+}
+
+// ================================================================
+// Recommandations
+// ================================================================
+.ia-reco-card {
+  background: #fff;
+  border: 1px solid $border;
+  border-radius: $radius;
+  padding: 20px;
+  transition: opacity 0.3s ease, transform 0.2s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  &.ia-reco-traitee {
+    opacity: 0.45;
+    pointer-events: none;
+  }
+}
+
+.ia-reco-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.ia-reco-type {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.ia-reco-titre {
+  font-size: 15px;
+  font-weight: 700;
+  color: $dark;
+  margin-bottom: 6px;
+}
+
+.ia-reco-desc {
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+.ia-tag-done {
+  font-size: 12px;
+  color: #16a34a;
+  font-weight: 700;
+}
+
+// Badges priorité
+.ia-badge-priorite {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+
+  &.badge-critique { background: #fee2e2; color: #b91c1c; }
+  &.badge-haute    { background: #ffedd5; color: #c2410c; }
+  &.badge-moyenne  { background: #dbeafe; color: #1d4ed8; }
+  &.badge-basse    { background: #f3f4f6; color: #6b7280; }
+}
+
+// Barre confiance
+.ia-confidence {
+  .ia-confidence-label {
+    display: block;
+    font-size: 12px;
+    color: #6b7280;
+    margin-bottom: 4px;
+  }
+
+  .ia-confidence-track {
+    height: 6px;
+    background: #f1f5f9;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .ia-confidence-fill {
+    height: 100%;
+    background: linear-gradient(90deg, $primary 0%, #60a5fa 100%);
+    border-radius: 3px;
+    transition: width 0.6s ease;
+  }
+}
+
+.ia-reco-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+// ================================================================
+// Segments RFM
+// ================================================================
+.ia-section-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: $dark;
+}
+
+.ia-segment-card {
+  border-radius: $radius;
+  padding: 20px;
+  border-left: 4px solid $border;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  }
+}
+
+.ia-segment-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.ia-segment-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.ia-segment-name {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.ia-segment-count {
+  font-size: 36px;
+  font-weight: 800;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.ia-segment-sub {
+  font-size: 12px;
+  color: #9ca3af;
+  margin: 0;
+}
+
+// ================================================================
+// Wizard overlay
+// ================================================================
+.ia-wizard-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  backdrop-filter: blur(3px);
+}
+
+.ia-wizard-box {
+  background: #fff;
+  border-radius: 18px;
+  padding: 32px 28px;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.22);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.ia-wizard-head {
+  text-align: center;
+  margin-bottom: 24px;
+
+  .ia-wizard-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, $primary, #60a5fa);
+    color: #fff;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 12px;
+  }
+
+  h5 {
+    font-size: 20px;
+    font-weight: 800;
+    color: $dark;
+    margin-bottom: 4px;
+  }
+}
+
+// Barre de progression
+.ia-wizard-prog-wrap {
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.ia-wizard-prog-bar {
+  height: 100%;
+  background: linear-gradient(90deg, $primary, #60a5fa);
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.ia-wizard-step-info {
+  text-align: center;
+  font-size: 12px;
+  color: #9ca3af;
+  margin-bottom: 24px;
+}
+
+.ia-wizard-step-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: $dark;
+  margin-bottom: 16px;
+}
+
+.ia-wizard-body {
+  min-height: 140px;
+}
+
+// Grille de choix (radio, jours, valeurs numériques)
+.ia-choice-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ia-choice-btn {
+  padding: 8px 16px;
+  border: 2px solid $border;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 13px;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.18s ease;
+
+  &:hover {
+    border-color: $primary;
+    color: $primary;
+  }
+
+  &.ia-choice-active {
+    border-color: $primary;
+    background: $primary;
+    color: #fff;
+    font-weight: 700;
+  }
+}
+
+// Footer wizard
+.ia-wizard-footer {
+  margin-top: 28px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.ia-btn-wizard {
+  background: $primary;
+  border-color: $primary;
+  padding: 10px 28px;
+  font-weight: 700;
+  border-radius: 8px;
+  font-size: 14px;
+
+  &:hover:not(:disabled) {
+    background: #1447b5;
+    border-color: #1447b5;
+  }
+}
+
+// ================================================================
+// Responsive
+// ================================================================
+@media (max-width: 576px) {
+  .ia-wizard-box {
+    padding: 24px 16px;
+  }
+
+  .ia-metric-value {
+    font-size: 24px;
+  }
+
+  .ia-metric-large {
+    font-size: 22px;
+  }
+
+  .ia-bar-val {
+    display: none;
+  }
+}

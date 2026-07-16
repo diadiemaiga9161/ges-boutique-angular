@@ -97,7 +97,10 @@ export class NavigationService {
         // --- Administration ---
         { name: 'Boutique',            type: 'link', icon: 'i-Shop-2',                      state: '/boutique' },
         { name: 'Design facture',      type: 'link', icon: 'i-Pen-2',                       state: '/facture-design' },
+        { name: 'Annulation paiements',type: 'link', icon: 'i-Remove',                      state: '/annulation-paiements' },
         // { name: 'Promotions',          type: 'link', icon: 'i-Tag-2',                       state: '/promotions' }, // gérer depuis l'app mobile
+        // --- Intelligence Artificielle ---
+        { name: 'Intelligence IA',     type: 'link', icon: 'i-Idea-5',                      state: '/ia' },
         { name: 'Profil',              type: 'link', icon: 'i-Administrator',               state: '/profile' },
     ];
 

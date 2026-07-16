@@ -29,6 +29,8 @@ import { PromotionsComponent } from './promotions/promotions.component';
 import { ReglementCreditsComponent } from './reglement-credits/reglement-credits.component';
 import { CommandesComponent } from './commandes/commandes.component';
 import { PartenairesComponent } from './partenaires/partenaires.component';
+import { AnnulationPaiementsComponent } from './annulation-paiements/annulation-paiements.component';
+import { IaComponent } from './ia/ia.component';
 
 const routes: Routes = [
     {
@@ -141,6 +143,14 @@ const routes: Routes = [
     {
         path: 'partenaires',
         component: PartenairesComponent
+    },
+    {
+        path: 'annulation-paiements',
+        component: AnnulationPaiementsComponent
+    },
+    {
+        path: 'ia',
+        component: IaComponent
     },
 ];
 
