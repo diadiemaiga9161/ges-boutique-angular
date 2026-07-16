@@ -31,6 +31,7 @@ import { CommandesComponent } from './commandes/commandes.component';
 import { PartenairesComponent } from './partenaires/partenaires.component';
 import { AnnulationPaiementsComponent } from './annulation-paiements/annulation-paiements.component';
 import { IaComponent } from './ia/ia.component';
+import { RessourcesComponent } from './ressources/ressources.component';
 
 const routes: Routes = [
     {
@@ -151,6 +152,10 @@ const routes: Routes = [
     {
         path: 'ia',
         component: IaComponent
+    },
+    {
+        path: 'ressources',
+        component: RessourcesComponent
     },
 ];
 

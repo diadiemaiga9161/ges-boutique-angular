@@ -61,6 +61,7 @@ export class NavigationService {
         { name: 'Rapport',             type: 'link', icon: 'i-Receipt-4',                   state: '/rapport' },
         // --- Compte ---
         { name: 'Profil',              type: 'link', icon: 'i-Administrator',               state: '/profile' },
+        { name: 'En savoir plus',      type: 'link', icon: 'i-Information',                 state: '/ressources' },
     ];
 
     private adminMenu: IMenuItem[] = [
@@ -102,6 +103,7 @@ export class NavigationService {
         // --- Intelligence Artificielle ---
         { name: 'Intelligence IA',     type: 'link', icon: 'i-Idea-5',                      state: '/ia' },
         { name: 'Profil',              type: 'link', icon: 'i-Administrator',               state: '/profile' },
+        { name: 'En savoir plus',      type: 'link', icon: 'i-Information',                 state: '/ressources' },
     ];
 
     menuItems = new BehaviorSubject<IMenuItem[]>([]);

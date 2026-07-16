@@ -1,0 +1,118 @@
+<div class="container-fluid py-4 app-page">
+
+  <!-- ===== EN-TÊTE PAGE ===== -->
+  <div class="app-page-header mb-4">
+    <div class="app-page-header-left">
+      <div class="app-page-icon">
+        <i class="i-Information"></i>
+      </div>
+      <div>
+        <h1 class="app-page-title">{{ 'RESSOURCES.TITLE' | translate }}</h1>
+        <p class="app-page-subtitle">{{ 'RESSOURCES.SUBTITLE' | translate }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== HERO CARD ===== -->
+  <div class="res-hero mb-4">
+    <div class="res-hero-inner">
+      <img src="assets/images/logo.png" alt="Ges Lafia logo" class="res-hero-logo" />
+      <div class="res-hero-text">
+        <h2 class="res-hero-name">Ges Lafia</h2>
+        <p class="res-hero-tagline">{{ 'RESSOURCES.TAGLINE' | translate }}</p>
+      </div>
+      <span class="res-hero-badge">v1.0</span>
+    </div>
+  </div>
+
+  <!-- ===== FONCTIONNALITES ===== -->
+  <h2 class="res-section-title mb-3">{{ 'RESSOURCES.FEATURES_TITLE' | translate }}</h2>
+
+  <div class="row g-3 mb-5">
+    <div class="col-12 col-sm-6 col-lg-3" *ngFor="let feat of features">
+      <div class="res-feat-card">
+        <div class="res-feat-icon" [style.background-color]="feat.color + '1a'" [style.color]="feat.color">
+          <i [class]="feat.icon"></i>
+        </div>
+        <h6 class="res-feat-title">{{ feat.titleKey | translate }}</h6>
+        <p class="res-feat-desc">{{ feat.descKey | translate }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== CONTACT ===== -->
+  <h2 class="res-section-title mb-3">{{ 'RESSOURCES.CONTACT_TITLE' | translate }}</h2>
+
+  <div class="row g-3 mb-5">
+
+    <!-- WhatsApp -->
+    <div class="col-12 col-sm-4">
+      <button class="res-contact-card res-contact-wa" (click)="openLink(whatsappUrl)">
+        <div class="res-contact-icon">
+          <i class="fab fa-whatsapp"></i>
+        </div>
+        <div class="res-contact-info">
+          <span class="res-contact-label">{{ 'RESSOURCES.CONTACT_WHATSAPP' | translate }}</span>
+          <span class="res-contact-value">+223 79 99 99 99</span>
+        </div>
+        <i class="i-Arrow-Right-2 res-contact-arrow"></i>
+      </button>
+    </div>
+
+    <!-- Email -->
+    <div class="col-12 col-sm-4">
+      <button class="res-contact-card res-contact-email" (click)="openEmail()">
+        <div class="res-contact-icon">
+          <i class="i-Email"></i>
+        </div>
+        <div class="res-contact-info">
+          <span class="res-contact-label">{{ 'RESSOURCES.CONTACT_EMAIL' | translate }}</span>
+          <span class="res-contact-value">contact&#64;mg-consulting.site</span>
+        </div>
+        <i class="i-Arrow-Right-2 res-contact-arrow"></i>
+      </button>
+    </div>
+
+    <!-- Site web -->
+    <div class="col-12 col-sm-4">
+      <button class="res-contact-card res-contact-web" (click)="openLink(website)">
+        <div class="res-contact-icon">
+          <i class="i-Globe"></i>
+        </div>
+        <div class="res-contact-info">
+          <span class="res-contact-label">{{ 'RESSOURCES.CONTACT_WEBSITE' | translate }}</span>
+          <span class="res-contact-value">moh.mg-consulting.site</span>
+        </div>
+        <i class="i-Arrow-Right-2 res-contact-arrow"></i>
+      </button>
+    </div>
+
+  </div>
+
+  <!-- ===== A PROPOS ===== -->
+  <h2 class="res-section-title mb-3">{{ 'RESSOURCES.ABOUT_TITLE' | translate }}</h2>
+
+  <div class="res-about-card mb-5">
+    <div class="res-about-row">
+      <span class="res-about-key">
+        <i class="i-Tag-2 me-2"></i>{{ 'RESSOURCES.VERSION' | translate }}
+      </span>
+      <span class="res-about-val">{{ version }}</span>
+    </div>
+    <div class="res-about-divider"></div>
+    <div class="res-about-row">
+      <span class="res-about-key">
+        <i class="i-Business-Man me-2"></i>{{ 'RESSOURCES.DEVELOPER' | translate }}
+      </span>
+      <span class="res-about-val">{{ developer }}</span>
+    </div>
+    <div class="res-about-divider"></div>
+    <div class="res-about-row">
+      <span class="res-about-key">
+        <i class="i-Copyright me-2"></i>{{ 'RESSOURCES.COPYRIGHT' | translate }}
+      </span>
+      <span class="res-about-val">&copy; {{ copyright }} Maiga Consulting</span>
+    </div>
+  </div>
+
+</div>
