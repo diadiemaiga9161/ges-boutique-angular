@@ -17,7 +17,11 @@ export class RessourcesComponent {
 
   readonly whatsappUrl = 'https://wa.me/22379999999';
   readonly email = 'contact@mg-consulting.site';
-  readonly website = 'https://moh.mg-consulting.site';
+  readonly website = 'https://diadiemaiga9161.github.io/Portfolio-Maiga-/';
+  readonly founder = 'Amadou Maiga';
+  readonly vision = 'Digitaliser la gestion des boutiques en Afrique avec des outils simples, puissants et accessibles offline';
+  readonly sector = 'FinTech / Commerce';
+  readonly techStack = 'Angular, Ionic, React Native, Flutter, Spring Boot';
 
   readonly features = [
     {
