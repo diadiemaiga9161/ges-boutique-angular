@@ -21,7 +21,6 @@ export class RessourcesComponent {
   readonly founder = 'Amadou Maiga';
   readonly vision = 'Digitaliser la gestion des boutiques en Afrique avec des outils simples, puissants et accessibles offline';
   readonly sector = 'FinTech / Commerce';
-  readonly techStack = 'Angular, Ionic, React Native, Flutter, Spring Boot';
 
   readonly features = [
     {
