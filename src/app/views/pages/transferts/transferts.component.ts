@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import Swal from 'sweetalert2';
 import {
-  TransfertService, TransfertStock, BoutiquePartenaire, TransfertRequest
+  TransfertService, TransfertStock, BoutiquePartenaire, TransfertRequest, PaiementTransfert
 } from '../../../shared/services/transfert.service';
 import { ProductService } from '../../../shared/services/product.service';
 import { TranslateModule } from '@ngx-translate/core';
@@ -45,6 +45,24 @@ export class TransfertsComponent implements OnInit {
 
   // Détail
   transfertDetail: TransfertStock | null = null;
+
+  // Produits de la boutique destinataire
+  produitsBoutiqueDestinee: any[] = [];
+  chargementProduitsDest = false;
+
+  // Paiements inter-boutiques
+  paiementsTransfert: PaiementTransfert[] = [];
+  afficherFormPaiement = false;
+  formPaiement = { montant: 0, modePaiement: 'ESPECES', notes: '' };
+  savingPaiement = false;
+
+  readonly MODES_PAIEMENT = [
+    { v: 'ESPECES', l: 'Espèces' },
+    { v: 'ORANGE_MONEY', l: 'Orange Money' },
+    { v: 'MOOV_MONEY', l: 'Moov Money' },
+    { v: 'WAVE_MONEY', l: 'Wave Money' },
+    { v: 'VIREMENT', l: 'Virement' }
+  ];
 
   readonly TYPES_PAIEMENT = [
     { v: 'SANS_PAIEMENT', l: 'Sans paiement' },
@@ -202,7 +220,47 @@ export class TransfertsComponent implements OnInit {
   }
 
   voirDetail(t: TransfertStock): void {
-    this.transfertService.getById(t.id!).subscribe(detail => this.transfertDetail = detail);
+    this.paiementsTransfert = [];
+    this.afficherFormPaiement = false;
+    this.transfertService.getById(t.id!).subscribe(detail => {
+      this.transfertDetail = detail;
+      this.chargerPaiements(detail.id!);
+    });
+  }
+
+  chargerPaiements(transfertId: number): void {
+    this.transfertService.getPaiementsTransfert(transfertId).subscribe(p => this.paiementsTransfert = p);
+  }
+
+  enregistrerPaiement(): void {
+    if (!this.transfertDetail || !this.formPaiement.montant) return;
+    this.savingPaiement = true;
+    this.transfertService.ajouterPaiement(this.transfertDetail.id!, this.formPaiement).subscribe({
+      next: () => {
+        this.savingPaiement = false;
+        this.afficherFormPaiement = false;
+        this.chargerPaiements(this.transfertDetail!.id!);
+        Swal.fire('Paiement enregistré', '', 'success');
+      },
+      error: e => { this.savingPaiement = false; Swal.fire('Erreur', e.error?.message, 'error'); }
+    });
+  }
+
+  onBoutiqueDestChange(): void {
+    if (!this.form.boutiqueDestId) { this.produitsBoutiqueDestinee = []; return; }
+    this.chargementProduitsDest = true;
+    this.transfertService.getProduitsBoutique(this.form.boutiqueDestId).subscribe({
+      next: p => { this.produitsBoutiqueDestinee = p; this.chargementProduitsDest = false; },
+      error: () => this.chargementProduitsDest = false
+    });
+  }
+
+  labelModePaiement(v: string): string {
+    return this.MODES_PAIEMENT.find(m => m.v === v)?.l ?? v;
+  }
+
+  getNomPartenaire(id: number): string {
+    return this.partenaires.find(p => p.id === +id)?.nom ?? '';
   }
 
   exporterFacture(): void {
@@ -361,5 +419,9 @@ export class TransfertsComponent implements OnInit {
 
   fmt(v: number): string {
     return new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0 }).format(v) + ' FCFA';
+  }
+
+  get totalPaiements(): number {
+    return this.paiementsTransfert.reduce((s, p) => s + (p.montant || 0), 0);
   }
 }
