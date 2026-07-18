@@ -55,6 +55,8 @@
     "highlight.js": "^11.6.0",
     "jspdf": "^3.0.4",
     "jspdf-autotable": "^5.0.7",
+    "apexcharts": "^4.5.0",
+    "ng-apexcharts": "^1.14.0",
     "ngx-color-picker": "16.0.0",
     "ngx-echarts": "19.0.0",
     "ngx-extended-pdf-viewer": "^25.6.4",

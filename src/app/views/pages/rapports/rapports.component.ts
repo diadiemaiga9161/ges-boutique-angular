@@ -6,16 +6,17 @@ import { Chart, registerables } from 'chart.js';
 import { Subscription } from 'rxjs';
 import { WebSocketService } from '../../../shared/services/websocket.service';
 
-import { 
-  RapportService, 
-  RapportJournalier, 
-  RapportHebdomadaire, 
-  RapportMensuel, 
+import {
+  RapportService,
+  RapportJournalier,
+  RapportHebdomadaire,
+  RapportMensuel,
   StatistiquesGenerales
 } from '../../../shared/services/rapport.service';
 import { AuthService } from '../../../shared/services/auth.service';
 import { CaisseService, CreditInfo, SituationCredits } from '../../../shared/services/caisse.service';
 import { TranslateModule } from '@ngx-translate/core';
+import { DashboardChartsComponent } from '../../../shared/components/charts/dashboard-charts.component';
 
 Chart.register(...registerables);
 
@@ -24,7 +25,7 @@ Chart.register(...registerables);
   templateUrl: './rapports.component.html',
   styleUrls: ['./rapports.component.scss'],
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule]
+  imports: [CommonModule, FormsModule, TranslateModule, DashboardChartsComponent]
 })
 export class RapportsComponent implements OnInit, OnDestroy, AfterViewInit {
   
