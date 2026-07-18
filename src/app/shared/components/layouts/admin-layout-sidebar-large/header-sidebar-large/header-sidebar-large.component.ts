@@ -15,6 +15,9 @@ import {
 import { filter, Subscription } from 'rxjs';
 import { Utils } from 'src/app/shared/utils';
 import { BoutiqueService } from 'src/app/shared/services/boutique.service';
+import { HttpClient } from '@angular/common/http';
+import { WebSocketService } from 'src/app/shared/services/websocket.service';
+import { environment } from 'src/environments/environment';
 
 
 
@@ -38,6 +41,12 @@ selectedItem: IMenuItem;
   private userSub?: Subscription;
   showLangMenu = false;
 
+  // ==================== BADGE TRANSFERTS ====================
+  transfertCount = 0;
+  private intervalTransferts?: any;
+  private wsSub?: Subscription;
+  private readonly apiUrl = environment.apiUrl;
+
     constructor(
       public searchService: SearchService,
       private router: Router,
@@ -45,7 +54,9 @@ selectedItem: IMenuItem;
       private authService: AuthService,
       private boutiqueService: BoutiqueService,
       public langService: LanguageService,
-      private elRef: ElementRef
+      private elRef: ElementRef,
+      private http: HttpClient,
+      private wsService: WebSocketService
     ) {
       this.notifications = [
         {
@@ -121,6 +132,10 @@ selectedItem: IMenuItem;
 
   ngOnDestroy(): void {
     this.userSub?.unsubscribe();
+    this.wsSub?.unsubscribe();
+    if (this.intervalTransferts) {
+      clearInterval(this.intervalTransferts);
+    }
   }
 
   ngOnInit() {
@@ -146,6 +161,9 @@ selectedItem: IMenuItem;
       this.nav = items;
       this.setActiveFlag();
     });
+
+    // Badge transferts en attente
+    this.connecterWebSocket();
   }
 
   selectItem(item) {
@@ -246,6 +264,40 @@ selectedItem: IMenuItem;
     if (!this.elRef.nativeElement.contains(event.target)) {
       this.showLangMenu = false;
     }
+  }
+
+  // ==================== BADGE TRANSFERTS EN ATTENTE ====================
+
+  private connecterWebSocket(): void {
+    // Connexion WebSocket pour mises à jour en temps réel
+    this.wsService.connect();
+    const boutiqueId = this.boutiqueService.getInfo().id || 0;
+    if (boutiqueId > 0) {
+      const topic = `/topic/transferts/${boutiqueId}`;
+      this.wsSub = this.wsService.subscribeTopic(topic).subscribe(() => {
+        // Rafraîchir le compteur à chaque événement WS reçu
+        this.verifierTransfertsEnAttente();
+      });
+    }
+
+    // Premier chargement immédiat + polling toutes les 60 secondes
+    this.verifierTransfertsEnAttente();
+    this.intervalTransferts = setInterval(() => {
+      this.verifierTransfertsEnAttente();
+    }, 60000);
+  }
+
+  private verifierTransfertsEnAttente(): void {
+    this.http.get<any[]>(`${this.apiUrl}/transferts/recus`).subscribe({
+      next: (recus) => {
+        this.transfertCount = (recus || []).filter(t =>
+          t.statut === 'EN_ATTENTE_CONFIRMATION' || t.statut === 'CREE'
+        ).length;
+      },
+      error: () => {
+        // silencieux — le badge reste à 0 si l'API est indisponible
+      }
+    });
   }
 
 }

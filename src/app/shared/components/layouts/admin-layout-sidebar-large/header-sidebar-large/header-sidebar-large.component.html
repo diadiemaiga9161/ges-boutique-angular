@@ -19,6 +19,14 @@
   <div class="header-part-right d-flex align-items-center gap-3 pe-3">
     <app-notification-bell></app-notification-bell>
 
+    <!-- Badge transferts en attente -->
+    <a routerLink="/transferts" class="header-transfert-btn" title="Transferts en attente">
+      <i class="i-Arrow-Right"></i>
+      <span class="header-transfert-badge" *ngIf="transfertCount > 0">
+        {{ transfertCount > 99 ? '99+' : transfertCount }}
+      </span>
+    </a>
+
     <!-- Sélecteur de langue (Angular pur, sans Bootstrap JS) -->
     <div class="lang-dropdown" style="position:relative">
       <button class="lang-btn" type="button" (click)="toggleLangMenu($event)" title="{{ 'LANG.SELECT' | translate }}">
@@ -58,6 +66,46 @@
 </div>
 
 <style>
+  /* Badge transferts */
+  .header-transfert-btn {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: inherit;
+    text-decoration: none;
+    font-size: 1.1rem;
+    transition: background 0.15s;
+    cursor: pointer;
+  }
+  .header-transfert-btn:hover {
+    background: rgba(255,255,255,0.18);
+    color: inherit;
+  }
+  .header-transfert-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: #ef4444;
+    color: #fff;
+    border-radius: 10px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    min-width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    line-height: 1;
+    border: 2px solid transparent;
+  }
+
   .lang-dropdown { position: relative; }
   .lang-btn {
     background: rgba(255,255,255,0.08);
