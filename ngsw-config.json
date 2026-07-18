@@ -1,5 +1,5 @@
 {
-  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "$schema": "./node_modules/@angular/service-worker/config/schema.json",
   "index": "/index.html",
   "assetGroups": [
     {
@@ -22,6 +22,7 @@
       "updateMode": "prefetch",
       "resources": {
         "files": [
+          "/assets/**",
           "/**/*.(svg|cur|jpg|jpeg|png|apng|webp|avif|gif|otf|ttf|woff|woff2)"
         ]
       }
@@ -29,12 +30,32 @@
   ],
   "dataGroups": [
     {
-      "name": "api-no-cache",
-      "urls": ["/api/**"],
+      "name": "api-produits",
+      "urls": ["/api/produits", "/api/produits/**"],
       "cacheConfig": {
-        "maxSize": 1,
-        "maxAge": "0s",
-        "timeout": "30s",
+        "maxSize": 100,
+        "maxAge": "1h",
+        "timeout": "5s",
+        "strategy": "freshness"
+      }
+    },
+    {
+      "name": "api-ventes",
+      "urls": ["/api/ventes", "/api/rapports/**", "/api/ia/**"],
+      "cacheConfig": {
+        "maxSize": 200,
+        "maxAge": "30m",
+        "timeout": "5s",
+        "strategy": "freshness"
+      }
+    },
+    {
+      "name": "api-other",
+      "urls": ["/api/boutiques/**", "/api/clients/**", "/api/categories/**"],
+      "cacheConfig": {
+        "maxSize": 50,
+        "maxAge": "2h",
+        "timeout": "5s",
         "strategy": "freshness"
       }
     }

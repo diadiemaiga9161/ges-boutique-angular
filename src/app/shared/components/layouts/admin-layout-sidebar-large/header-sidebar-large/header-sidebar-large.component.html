@@ -49,6 +49,7 @@
         <p class="header-role">{{ currentUserRole }}</p>
       </div>
     </div>
+    <app-offline-badge></app-offline-badge>
     <button class="header-logout-btn" (click)="logout()" title="{{ 'PROFILE.LOGOUT' | translate }}">
       <i class="i-Lock-User"></i>
       <span class="d-none d-sm-inline ms-1">{{ 'PROFILE.LOGOUT' | translate }}</span>

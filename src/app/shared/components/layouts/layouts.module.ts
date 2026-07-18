@@ -19,6 +19,7 @@ import { FormsModule } from '@angular/forms';
 import { NotificationBellComponent } from '../notification-bell/notification-bell.component';
 import { LoadingBarComponent } from '../loading-bar/loading-bar.component';
 import { TranslateModule } from '@ngx-translate/core';
+import { OfflineBadgeComponent } from '../offline-badge/offline-badge.component';
 
 // Regular components for declaration
 const components = [
@@ -35,6 +36,7 @@ const components = [
 const standaloneComponents = [
     NotificationBellComponent,
     LoadingBarComponent,
+    OfflineBadgeComponent,
 ];
 
 @NgModule({
