@@ -40,13 +40,10 @@
           <small class="form-text text-muted">Minimum 6 caractères</small>
         </div>
 
-        <button class="btn btn-primary btn-block"
-                type="submit"
+        <button type="submit" class="btn btn-primary btn-block mt-3 btn-login"
                 [disabled]="isLoading || !username || !password">
-          <span *ngIf="!isLoading">Se connecter</span>
-          <span *ngIf="isLoading">
-            <i class="fa fa-spinner fa-spin"></i> Connexion...
-          </span>
+          <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-2"></span>
+          <span>{{ isLoading ? 'Connexion...' : 'Se connecter' }}</span>
         </button>
 
         <div class="text-center mt-3">

@@ -1348,6 +1348,59 @@
  </div>
 </div>
 
+<!-- ── Modal Fin de journée 23h59 — design premium ── -->
+<div class="modal fade show" [class.d-block]="showFinJourneeModal" *ngIf="showFinJourneeModal"
+     style="background-color: rgba(0,0,0,0.6); z-index:1055;" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content fin-journee-modal">
+      <!-- Header avec dégradé -->
+      <div class="fin-journee-header">
+        <div class="fin-journee-icon">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="40" height="40">
+            <circle cx="12" cy="12" r="10" stroke="white" stroke-width="1.5"/>
+            <path d="M12 6v6l4 2" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h4 class="fin-journee-titre">Fermeture de la journée</h4>
+        <p class="fin-journee-sous-titre">Il est 23h59 — la caisse va se clôturer automatiquement</p>
+      </div>
+      <!-- Corps -->
+      <div class="modal-body fin-journee-body">
+        <div class="fin-journee-info">
+          <div class="info-item">
+            <span class="info-icon">📊</span>
+            <div>
+              <div class="info-label">Opérations du jour</div>
+              <div class="info-val">{{ statistiquesJour?.nombreOperations ?? '—' }}</div>
+            </div>
+          </div>
+          <div class="info-item">
+            <span class="info-icon">💰</span>
+            <div>
+              <div class="info-label">Ventes comptant</div>
+              <div class="info-val text-success">
+                {{ statistiquesJour ? (statistiquesJour.totalVentesComptant | number:'1.0-0') + ' FCFA' : '—' }}
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="fin-journee-msg">
+          La journée se termine. Vérifiez que toutes les ventes sont bien enregistrées avant la clôture.
+        </p>
+      </div>
+      <!-- Footer -->
+      <div class="modal-footer fin-journee-footer">
+        <button type="button" class="btn-fin-journee" (click)="showFinJourneeModal = false">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          Compris — Clôturer la journée
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <style>
  .spin { animation: spin 1s linear infinite; }
  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }

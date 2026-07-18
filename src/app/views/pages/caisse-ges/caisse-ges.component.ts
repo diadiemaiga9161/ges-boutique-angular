@@ -117,6 +117,10 @@ export class CaisseGesComponent implements OnInit, OnDestroy {
   repartitionGroupe: { credit: CreditInfo; montantAPayer: number }[] = [];
   ventesCredit: VentesCreditDuJour | null = null;
   
+  // Modal fin de journée 23h59
+  showFinJourneeModal: boolean = false;
+  private finJourneeTimer: ReturnType<typeof setTimeout> | null = null;
+
   // Transfert vers banque
   showTransfertBanqueModal: boolean = false;
   isLoadingTransfert: boolean = false;
@@ -191,6 +195,7 @@ export class CaisseGesComponent implements OnInit, OnDestroy {
     this.loadAllData();
     this.subscribeToUser();
     this.loadCaissesSessions();
+    this.planifierFinJournee();
 
     // Temps réel : rafraîchir la caisse à chaque opération / règlement
     const wsSub = this.ws.subscribeTopic('/topic/caisse').subscribe(() => {
@@ -201,6 +206,25 @@ export class CaisseGesComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.subscriptions.forEach(sub => sub.unsubscribe());
+    if (this.finJourneeTimer) {
+      clearTimeout(this.finJourneeTimer);
+    }
+  }
+
+  /** Planifie l'affichage du modal de fin de journée à 23h59 */
+  private planifierFinJournee(): void {
+    const maintenant = new Date();
+    const cible = new Date(maintenant);
+    cible.setHours(23, 59, 0, 0);
+    let delai = cible.getTime() - maintenant.getTime();
+    // Si 23h59 est déjà passé aujourd'hui, planifier pour demain
+    if (delai <= 0) {
+      cible.setDate(cible.getDate() + 1);
+      delai = cible.getTime() - maintenant.getTime();
+    }
+    this.finJourneeTimer = setTimeout(() => {
+      this.showFinJourneeModal = true;
+    }, delai);
   }
 
   subscribeToUser(): void {

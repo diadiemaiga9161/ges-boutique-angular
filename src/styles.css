@@ -1089,5 +1089,253 @@ h1.h3, h1.h4 {
 .fd-credit-label { color: #94a3b8; }
 .fd-credit-val   { font-weight: 700; color: #d97706; }
 
+/* ======================================================
+   DARK MODE — variables CSS (media query système)
+   ====================================================== */
 
+:root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f9fa;
+  --bg-card: #ffffff;
+  --text-primary: #212529;
+  --text-secondary: #6c757d;
+  --border-color: #dee2e6;
+  --blue-primary: #1a56db;
+  --blue-light: #e8f1ff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-primary: #111827;
+    --bg-secondary: #1f2937;
+    --bg-card: #1f2937;
+    --text-primary: #f9fafb;
+    --text-secondary: #9ca3af;
+    --border-color: #374151;
+    --shadow: 0 2px 8px rgba(0,0,0,0.4);
+    --blue-light: #1e3a5f;
+  }
+
+  body:not(.dark-mode) {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+  }
+
+  body:not(.dark-mode) .card {
+    background-color: var(--bg-card);
+    border-color: var(--border-color);
+  }
+
+  body:not(.dark-mode) .table {
+    color: var(--text-primary);
+  }
+}
+
+/* ======================================================
+   MODALS — centrage universel
+   ====================================================== */
+
+.modal-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: rgba(0,0,0,0.5) !important;
+  z-index: 1050 !important;
+  padding: 16px !important;
+}
+
+.modal-dialog-centered {
+  margin: 0 auto !important;
+}
+
+.modal {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.modal-dialog {
+  margin: 0 !important;
+  max-height: 85vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+  width: calc(100% - 32px) !important;
+  max-width: 700px !important;
+}
+
+.modal-content {
+  max-height: 85vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+  border-radius: 16px !important;
+  overflow: hidden !important;
+}
+
+.modal-body {
+  overflow-y: auto !important;
+  flex: 1 !important;
+}
+
+/* ======================================================
+   MODAL FIN DE JOURNÉE — design premium
+   ====================================================== */
+
+.fin-journee-modal {
+  border: none;
+  border-radius: 20px !important;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3) !important;
+}
+
+.fin-journee-header {
+  background: linear-gradient(135deg, #1a56db 0%, #0e3a8c 100%);
+  padding: 32px 24px 24px;
+  text-align: center;
+  color: white;
+}
+
+.fin-journee-icon {
+  width: 72px;
+  height: 72px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+  animation: pulse-clock 2s ease-in-out infinite;
+}
+
+@keyframes pulse-clock {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,255,255,0.3); }
+  50% { transform: scale(1.05); box-shadow: 0 0 0 12px rgba(255,255,255,0); }
+}
+
+.fin-journee-titre { font-size: 1.4rem; font-weight: 700; margin-bottom: 6px; }
+.fin-journee-sous-titre { font-size: 0.85rem; opacity: 0.85; margin: 0; }
+
+.fin-journee-body { padding: 20px 24px; }
+
+.fin-journee-info {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.info-item {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--blue-light, #e8f1ff);
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.info-icon { font-size: 1.4rem; }
+.info-label { font-size: 11px; color: var(--text-secondary, #6c757d); }
+.info-val { font-size: 1rem; font-weight: 700; color: var(--text-primary, #212529); }
+
+.fin-journee-msg {
+  font-size: 0.875rem;
+  color: var(--text-secondary, #6c757d);
+  background: var(--bg-secondary, #f8f9fa);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin: 0;
+}
+
+.fin-journee-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--border-color, #dee2e6);
+  background: var(--bg-card, #fff);
+}
+
+.btn-fin-journee {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(135deg, #1a56db, #0e3a8c);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.btn-fin-journee:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(26,86,219,0.4);
+}
+
+@media (prefers-color-scheme: dark) {
+  .fin-journee-header { background: linear-gradient(135deg, #1e40af, #1e3a8a); }
+  .fin-journee-body { background: #1f2937; }
+  .fin-journee-footer { background: #1f2937; border-color: #374151; }
+  .info-item { background: #1e3a5f; }
+  .fin-journee-msg { background: #111827; color: #9ca3af; }
+}
+
+/* ======================================================
+   RESPONSIVE — tableaux en cartes sur mobile
+   ====================================================== */
+
+@media (max-width: 767px) {
+  .table-responsive-cards table,
+  .table-responsive-cards thead,
+  .table-responsive-cards tbody,
+  .table-responsive-cards th,
+  .table-responsive-cards td,
+  .table-responsive-cards tr { display: block; }
+
+  .table-responsive-cards thead tr { position: absolute; top: -9999px; left: -9999px; }
+
+  .table-responsive-cards tbody tr {
+    background: var(--bg-card, #fff);
+    border-radius: 10px;
+    margin-bottom: 10px;
+    padding: 10px;
+    box-shadow: var(--shadow, 0 2px 8px rgba(0,0,0,0.08));
+    border: 1px solid var(--border-color, #dee2e6);
+  }
+
+  .table-responsive-cards td {
+    border: none;
+    padding: 4px 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .table-responsive-cards td::before {
+    content: attr(data-label);
+    font-size: 11px;
+    color: var(--text-secondary, #6c757d);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    min-width: 120px;
+  }
+
+  .sidebar-left {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+  .sidebar-left.open { transform: translateX(0); }
+
+  .btn { min-height: 44px; }
+
+  .row > [class*="col-"] { margin-bottom: 12px; }
+}
+
+/* Badges stock */
+.badge-stock-ok { background: #d1fae5; color: #065f46; border-radius: 20px; padding: 3px 10px; font-size: 11px; font-weight: 600; }
+.badge-stock-bas { background: #fef3c7; color: #92400e; border-radius: 20px; padding: 3px 10px; font-size: 11px; font-weight: 600; }
+.badge-stock-rupture { background: #fee2e2; color: #991b1b; border-radius: 20px; padding: 3px 10px; font-size: 11px; font-weight: 600; }
 

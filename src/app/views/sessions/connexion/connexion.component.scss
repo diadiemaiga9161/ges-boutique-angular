@@ -166,6 +166,25 @@
   margin-right: 8px;
 }
 
+.btn-login {
+  background: linear-gradient(135deg, #1a56db, #0e3a8c);
+  border: none;
+  border-radius: 10px;
+  padding: 12px;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: transform 0.15s, box-shadow 0.15s;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(26,86,219,0.4);
+  }
+
+  &:disabled {
+    opacity: 0.7;
+  }
+}
+
 @media (max-width: 768px) {
   .auth-card {
     padding: 28px;
