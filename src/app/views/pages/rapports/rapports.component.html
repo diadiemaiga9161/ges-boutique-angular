@@ -52,6 +52,27 @@
  </div>
  </div>
  </div>
+
+  <!-- ===== ACTIONS PDF ===== -->
+  <div class="pdf-actions" *ngIf="!isVendeur">
+    <h6 class="pdf-title"><i class="fas fa-file-pdf me-2"></i>Telecharger des rapports PDF</h6>
+    <div class="pdf-buttons">
+      <button class="btn-pdf btn-pdf--ventes" (click)="telechargerPDFVentes()" [disabled]="pdfEnCours">
+        <span *ngIf="!pdfEnCours"><i class="fas fa-file-pdf"></i> Rapport ventes</span>
+        <span *ngIf="pdfEnCours" class="spinner-border spinner-border-sm"></span>
+      </button>
+      <button class="btn-pdf btn-pdf--inventaire" (click)="telechargerPDFInventaire()" [disabled]="pdfEnCours">
+        <i class="fas fa-file-pdf"></i> Inventaire
+      </button>
+      <button class="btn-pdf btn-pdf--credits" (click)="telechargerPDFCredits()" [disabled]="pdfEnCours">
+        <i class="fas fa-file-pdf"></i> Credits
+      </button>
+      <button class="btn-pdf btn-pdf--transferts" (click)="telechargerPDFTransferts()" [disabled]="pdfEnCours">
+        <i class="fas fa-file-pdf"></i> Transferts
+      </button>
+    </div>
+  </div>
+
  <!-- RAPPORT ACTIF (DONNÉES RÉELLES DE LA PÉRIODE SÉLECTIONNÉE) -->
  <div *ngIf="rapportActif" class="rapport-detail fade-in">
  <div class="rapport-header">

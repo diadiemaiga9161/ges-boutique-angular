@@ -15,6 +15,7 @@ import {
 } from '../../../shared/services/rapport.service';
 import { AuthService } from '../../../shared/services/auth.service';
 import { CaisseService, CreditInfo, SituationCredits } from '../../../shared/services/caisse.service';
+import { PdfRapportService } from '../../../shared/services/pdf-rapport.service';
 import { TranslateModule } from '@ngx-translate/core';
 import { DashboardChartsComponent } from '../../../shared/components/charts/dashboard-charts.component';
 
@@ -88,11 +89,15 @@ export class RapportsComponent implements OnInit, OnDestroy, AfterViewInit {
   maxVentes = 0;
   maxMarge = 0;
 
+  // ==================== PDF ====================
+  pdfEnCours = false;
+
   constructor(
     public rapportService: RapportService,
     private authService: AuthService,
     private caisseService: CaisseService,
-    private ws: WebSocketService
+    private ws: WebSocketService,
+    private pdfService: PdfRapportService
   ) {}
 
   ngOnInit(): void {
@@ -879,5 +884,51 @@ export class RapportsComponent implements OnInit, OnDestroy, AfterViewInit {
 
   get isVendeur(): boolean {
     return this.authService.isVendeur();
+  }
+
+  // ==================== TÉLÉCHARGEMENT PDF ====================
+
+  telechargerPDFVentes(): void {
+    this.pdfEnCours = true;
+    this.pdfService.getVentes().subscribe({
+      next: async (ventes) => {
+        await this.pdfService.genererRapportVentes(ventes);
+        this.pdfEnCours = false;
+      },
+      error: () => { this.pdfEnCours = false; }
+    });
+  }
+
+  telechargerPDFInventaire(): void {
+    this.pdfEnCours = true;
+    this.pdfService.getProduits().subscribe({
+      next: async (produits) => {
+        await this.pdfService.genererRapportInventaire(produits);
+        this.pdfEnCours = false;
+      },
+      error: () => { this.pdfEnCours = false; }
+    });
+  }
+
+  telechargerPDFCredits(): void {
+    this.pdfEnCours = true;
+    this.pdfService.getCredits().subscribe({
+      next: async (credits) => {
+        await this.pdfService.genererRapportCredits(credits);
+        this.pdfEnCours = false;
+      },
+      error: () => { this.pdfEnCours = false; }
+    });
+  }
+
+  telechargerPDFTransferts(): void {
+    this.pdfEnCours = true;
+    this.pdfService.getTransferts().subscribe({
+      next: async (transferts) => {
+        await this.pdfService.genererRapportTransferts(transferts);
+        this.pdfEnCours = false;
+      },
+      error: () => { this.pdfEnCours = false; }
+    });
   }
 }

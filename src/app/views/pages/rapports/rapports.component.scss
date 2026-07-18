@@ -741,11 +741,86 @@
     grid-template-columns: repeat(2, 1fr);
     gap: 10px;
   }
-  
+
   .gain-card, .perte-card {
     margin-bottom: 15px;
   }
-  
+
   h1 { font-size: 1.5rem; }
   h3 { font-size: 1.2rem; }
+}
+
+// ===== ACTIONS PDF =====
+.pdf-actions {
+  background: var(--bg-card, #fff);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #eef2f7;
+}
+
+.pdf-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #212529;
+  margin-bottom: 12px;
+
+  i { color: #dc3545; }
+}
+
+.pdf-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.btn-pdf {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.2s;
+
+  &:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  &--ventes {
+    background: #1a56db;
+    color: #fff;
+    &:hover:not(:disabled) { background: #1448b8; }
+  }
+
+  &--inventaire {
+    background: #059669;
+    color: #fff;
+    &:hover:not(:disabled) { background: #047857; }
+  }
+
+  &--credits {
+    background: #f59e0b;
+    color: #fff;
+    &:hover:not(:disabled) { background: #d97706; }
+  }
+
+  &--transferts {
+    background: #7c3aed;
+    color: #fff;
+    &:hover:not(:disabled) { background: #6d28d9; }
+  }
+}
+
+@media (max-width: 576px) {
+  .pdf-buttons {
+    flex-direction: column;
+  }
+
+  .btn-pdf {
+    width: 100%;
+    justify-content: center;
+  }
 }
