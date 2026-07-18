@@ -25,6 +25,7 @@
     };
     motif: string;
     dateMouvement: string;
+    typeSortie?: string;
   }
 
   export enum TypeMouvement {
@@ -33,6 +34,14 @@
     AJUSTEMENT = 'AJUSTEMENT',
     RETOUR = 'RETOUR',
     BONUS_FOURNISSEUR = 'BONUS_FOURNISSEUR'
+  }
+
+  export enum TypeSortie {
+    DETAIL = 'DETAIL',
+    CONSOMMATION = 'CONSOMMATION',
+    UTILISATION = 'UTILISATION',
+    PERTE = 'PERTE',
+    AUTRE = 'AUTRE'
   }
 
   export interface ProduitStock {
@@ -67,6 +76,7 @@
     motif: string;
     utilisateurId?: number;
     dateMouvement?: string; // Date et heure optionnelles
+    typeSortie?: string;
   }
 
   export interface AjustementRequest {
@@ -187,7 +197,8 @@
         produitId: mouvement.produitId,
         quantite: mouvement.quantite,
         motif: mouvement.motif,
-        utilisateurId: mouvement.utilisateurId || this.authService.getUser()?.id
+        utilisateurId: mouvement.utilisateurId || this.authService.getUser()?.id,
+        typeSortie: mouvement.typeSortie || null
       };
 
       // Ajouter la date si fournie, sinon le backend utilisera la date actuelle

@@ -586,6 +586,8 @@
     "DEPLOYING": "Ana shigar da fasali",
     "NO_SELECTION": "Da fatan za a zaɓi aƙalla abu ɗaya",
     "SUCCESS_RESET": "An sake saita cikin nasara",
-    "SUCCESS_DELETE": "An share cikin nasara"
+    "SUCCESS_DELETE": "An share cikin nasara",
+    "LOADING_STATS": "Ana loda bayanai...",
+    "STATUT_ERROR": "Ba a iya loda bayanai ba"
   }
 }

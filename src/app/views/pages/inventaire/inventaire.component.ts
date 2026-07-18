@@ -6,7 +6,7 @@ import { RouterModule } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { WebSocketService } from '../../../shared/services/websocket.service';
 import Swal from 'sweetalert2';
-import { InventaireService, MouvementStock, ProduitStock, StatistiquesInventaire, TypeMouvement, MouvementRequest, AjustementRequest } from '../../../shared/services/inventaire.service';
+import { InventaireService, MouvementStock, ProduitStock, StatistiquesInventaire, TypeMouvement, TypeSortie, MouvementRequest, AjustementRequest } from '../../../shared/services/inventaire.service';
 import { ProductService, Produit, Categorie } from '../../../shared/services/product.service';
 import { AuthService } from '../../../shared/services/auth.service';
 import { ProduitNiveau, ProduitNiveauService } from '../../../shared/services/produit-niveau.service';
@@ -108,6 +108,16 @@ export class InventaireComponent implements OnInit {
   
   // Déclaration pour le template
   TypeMouvement = TypeMouvement;
+  TypeSortie = TypeSortie;
+  typeSortieSortie: string = 'DETAIL';
+
+  readonly typesSortie = [
+    { value: 'DETAIL', label: 'Détail / Vente' },
+    { value: 'CONSOMMATION', label: 'Consommation interne' },
+    { value: 'UTILISATION', label: 'Utilisation' },
+    { value: 'PERTE', label: 'Perte / Détérioration' },
+    { value: 'AUTRE', label: 'Autre' }
+  ];
 
   // Niveaux conditionnement
   niveauxMap: { [produitId: number]: ProduitNiveau[] } = {};
@@ -641,6 +651,7 @@ export class InventaireComponent implements OnInit {
     }).then((result) => {
       if (result.isConfirmed) {
         this.isLoading = true;
+        this.sortieForm.typeSortie = this.typeSortieSortie;
         this.inventaireService.sortieStock(this.sortieForm).subscribe({
           next: () => {
             this.showSortieModal = false;
@@ -856,13 +867,14 @@ export class InventaireComponent implements OnInit {
   openSortieModal(produit?: Produit): void {
     this.rechercheProduitSortie = produit ? produit.nom : '';
     this.categorieSortieFilter = null;
-    this.sortieForm = { 
-      produitId: produit ? produit.id : 0, 
-      quantite: 1, 
+    this.sortieForm = {
+      produitId: produit ? produit.id : 0,
+      quantite: 1,
       motif: '',
       dateMouvement: this.getCurrentDateTimeLocal()
     };
     this.filtrerProduitsPourModales();
+    this.typeSortieSortie = 'DETAIL';
     this.showSortieModal = true;
   }
 
@@ -1060,6 +1072,17 @@ export class InventaireComponent implements OnInit {
   getVariation(mouvement: MouvementStock): string {
     const variation = mouvement.quantiteApres - mouvement.quantiteAvant;
     return variation > 0 ? `+${variation}` : variation.toString();
+  }
+
+  getTypeSortieLabel(type: string): string {
+    const labels: Record<string, string> = {
+      DETAIL: 'Détail',
+      CONSOMMATION: 'Consommation',
+      UTILISATION: 'Utilisation',
+      PERTE: 'Perte',
+      AUTRE: 'Autre'
+    };
+    return labels[type] || type;
   }
 
   getVariationClass(mouvement: MouvementStock): string {

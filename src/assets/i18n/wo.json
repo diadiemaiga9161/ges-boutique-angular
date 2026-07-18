@@ -586,6 +586,8 @@
     "DEPLOYING": "Fonctionnalité bi dafa mujj",
     "NO_SELECTION": "Tànn na benn ci kanam",
     "SUCCESS_RESET": "Rafetal def na mu baax",
-    "SUCCESS_DELETE": "Lëkkal def na mu baax"
+    "SUCCESS_DELETE": "Lëkkal def na mu baax",
+    "LOADING_STATS": "Bëgg naa yéegal mbindaat...",
+    "STATUT_ERROR": "Jafe-jafe ci yéegal mbindaat"
   }
 }

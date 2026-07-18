@@ -584,6 +584,8 @@
     "DEPLOYING": "Baara bɛ yɛlɛma",
     "NO_SELECTION": "I k'a sɔrɔ i bɛ fɛn kelen sɛlɛkɛ",
     "SUCCESS_RESET": "Sɛgɛsɛgɛli kɛra ka ɲɛ",
-    "SUCCESS_DELETE": "Jɔsili kɛra ka ɲɛ"
+    "SUCCESS_DELETE": "Jɔsili kɛra ka ɲɛ",
+    "LOADING_STATS": "Kunnafoniw bɛ bɔ...",
+    "STATUT_ERROR": "Kunnafoniw ma se ka bɔ"
   }
 }

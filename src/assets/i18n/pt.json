@@ -586,6 +586,8 @@
     "DEPLOYING": "Funcionalidade em implantação",
     "NO_SELECTION": "Selecione pelo menos um item",
     "SUCCESS_RESET": "Redefinição realizada com sucesso",
-    "SUCCESS_DELETE": "Exclusão realizada com sucesso"
+    "SUCCESS_DELETE": "Exclusão realizada com sucesso",
+    "LOADING_STATS": "Carregando dados...",
+    "STATUT_ERROR": "Não foi possível carregar os dados"
   }
 }

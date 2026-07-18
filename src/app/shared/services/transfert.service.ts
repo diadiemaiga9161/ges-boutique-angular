@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 
 const URL = `${environment.apiUrl}/transferts`;
@@ -54,6 +55,16 @@ export interface TransfertRequest {
   lignes: { produitId: number; produitNom: string; quantite: number; prixUnitaire?: number }[];
 }
 
+export interface PaiementTransfert {
+  id?: number;
+  transfertId: number;
+  montant: number;
+  modePaiement: string; // ESPECES | ORANGE_MONEY | MOOV_MONEY | WAVE_MONEY | VIREMENT
+  datePaiement?: string;
+  notes?: string;
+  enregistrePar?: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class TransfertService {
 
@@ -105,5 +116,25 @@ export class TransfertService {
   }
   rejeter(id: number, motif?: string): Observable<TransfertStock> {
     return this.http.post<TransfertStock>(`${URL}/${id}/rejeter`, { motif });
+  }
+
+  // Produits d'une boutique partenaire
+  getProduitsBoutique(partenaireId: number): Observable<any[]> {
+    return this.http.get<any>(`${URL}/partenaires/${partenaireId}/produits`).pipe(
+      map((r: any) => Array.isArray(r) ? r : (r?.data || r?.produits || [])),
+      catchError(() => of([]))
+    );
+  }
+
+  // Paiements inter-boutiques
+  getPaiementsTransfert(transfertId: number): Observable<PaiementTransfert[]> {
+    return this.http.get<PaiementTransfert[]>(`${URL}/${transfertId}/paiements`).pipe(
+      map((r: any) => Array.isArray(r) ? r : (r?.data || [])),
+      catchError(() => of([]))
+    );
+  }
+
+  ajouterPaiement(transfertId: number, paiement: { montant: number; modePaiement: string; notes?: string }): Observable<PaiementTransfert> {
+    return this.http.post<PaiementTransfert>(`${URL}/${transfertId}/paiements`, paiement);
   }
 }

@@ -25,13 +25,22 @@
   <!-- Contenu admin uniquement -->
   <div *ngIf="isAdmin">
 
-    <!-- Avertissement déploiement -->
-    <div *ngIf="!endpointsDisponibles" class="alert alert-info d-flex align-items-center gap-2 mb-4">
-      <i class="fas fa-tools text-info"></i>
-      <span><strong>Information :</strong> {{ 'SETTINGS.DEPLOYING' | translate }}</span>
+    <!-- Spinner chargement statistiques -->
+    <div *ngIf="isLoadingStatut" class="alert alert-light d-flex align-items-center gap-2 mb-3 py-2">
+      <span class="spinner-border spinner-border-sm text-warning" role="status"></span>
+      <span class="text-muted small">{{ 'SETTINGS.LOADING_STATS' | translate }}</span>
     </div>
 
-    <!-- Messages -->
+    <!-- Erreur chargement statistiques (non bloquante) -->
+    <div *ngIf="statut_erreur && !isLoadingStatut" class="alert alert-light d-flex align-items-center gap-2 mb-3 py-2">
+      <i class="fas fa-exclamation-circle text-warning small"></i>
+      <span class="text-muted small">{{ 'SETTINGS.STATUT_ERROR' | translate }}</span>
+      <button class="btn btn-sm btn-outline-secondary ms-auto py-0" (click)="chargerStatut()">
+        <i class="fas fa-sync-alt"></i>
+      </button>
+    </div>
+
+    <!-- Messages succès/erreur -->
     <div *ngIf="errorMessage" class="alert alert-danger alert-dismissible fade show">
       <i class="fas fa-exclamation-triangle me-2"></i>{{ errorMessage }}
       <button type="button" class="btn-close" (click)="errorMessage = ''"></button>
@@ -59,6 +68,7 @@
       <hr class="my-3">
 
       <div class="row g-3">
+
         <!-- Solde caisse -->
         <div class="col-md-6">
           <div class="card h-100 border" [class.border-warning]="selectionSoldeCaisse"
@@ -66,11 +76,17 @@
             <div class="card-body d-flex align-items-start gap-3">
               <input class="form-check-input mt-1 flex-shrink-0" type="checkbox"
                      [(ngModel)]="selectionSoldeCaisse" (click)="$event.stopPropagation()">
-              <div>
+              <div class="flex-grow-1">
                 <div class="fw-bold"><i class="fas fa-cash-register me-2 text-warning"></i>
                   {{ 'SETTINGS.CASH_BALANCE' | translate }}
                 </div>
                 <small class="text-muted">Remet le solde de la caisse à zéro (les opérations sont conservées)</small>
+                <div class="mt-2" *ngIf="!isLoadingStatut && !statut_erreur">
+                  <span class="badge bg-warning text-dark">
+                    <i class="fas fa-coins me-1"></i>
+                    Solde actuel : {{ formatMontant(statut.soldeCaisse) }} FCFA
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -83,11 +99,17 @@
             <div class="card-body d-flex align-items-start gap-3">
               <input class="form-check-input mt-1 flex-shrink-0" type="checkbox"
                      [(ngModel)]="selectionHistoriqueCaisse" (click)="$event.stopPropagation()">
-              <div>
+              <div class="flex-grow-1">
                 <div class="fw-bold"><i class="fas fa-history me-2 text-warning"></i>
                   {{ 'SETTINGS.CASH_HISTORY' | translate }}
                 </div>
                 <small class="text-muted">Supprime l'historique des opérations de caisse</small>
+                <div class="mt-2" *ngIf="!isLoadingStatut && !statut_erreur">
+                  <span class="badge bg-secondary">
+                    <i class="fas fa-list-ul me-1"></i>
+                    {{ statut.nombreOperationsCaisse }} opération(s)
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -100,11 +122,17 @@
             <div class="card-body d-flex align-items-start gap-3">
               <input class="form-check-input mt-1 flex-shrink-0" type="checkbox"
                      [(ngModel)]="selectionCreditsRegles" (click)="$event.stopPropagation()">
-              <div>
+              <div class="flex-grow-1">
                 <div class="fw-bold"><i class="fas fa-check-double me-2 text-warning"></i>
                   {{ 'SETTINGS.CREDITS_SETTLED' | translate }}
                 </div>
                 <small class="text-muted">Archive les crédits entièrement réglés (crédits soldés)</small>
+                <div class="mt-2" *ngIf="!isLoadingStatut && !statut_erreur">
+                  <span class="badge bg-success">
+                    <i class="fas fa-check me-1"></i>
+                    {{ statut.nombreCreditsRegles }} crédit(s) réglé(s)
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -117,15 +145,22 @@
             <div class="card-body d-flex align-items-start gap-3">
               <input class="form-check-input mt-1 flex-shrink-0" type="checkbox"
                      [(ngModel)]="selectionVentesAnnulees" (click)="$event.stopPropagation()">
-              <div>
+              <div class="flex-grow-1">
                 <div class="fw-bold"><i class="fas fa-ban me-2 text-warning"></i>
                   {{ 'SETTINGS.CANCELLED_SALES' | translate }}
                 </div>
                 <small class="text-muted">Purge l'historique des ventes annulées</small>
+                <div class="mt-2" *ngIf="!isLoadingStatut && !statut_erreur">
+                  <span class="badge bg-danger">
+                    <i class="fas fa-times me-1"></i>
+                    {{ statut.nombreVentesAnnulees }} vente(s) annulée(s)
+                  </span>
+                </div>
               </div>
             </div>
           </div>
         </div>
+
       </div>
 
       <!-- Résumé sélection -->
@@ -149,20 +184,15 @@
               Remet à zéro les soldes et compteurs sélectionnés.<br>
               <strong>L'historique détaillé est conservé.</strong>
             </p>
-            <div class="alert alert-warning py-2 small mb-3" *ngIf="!endpointsDisponibles">
-              <i class="fas fa-wrench me-1"></i>
-              {{ 'SETTINGS.DEPLOYING' | translate }}
-            </div>
             <button class="btn btn-warning w-100"
                     (click)="reinitialiser()"
-                    [disabled]="isLoading || aucuneSelection"
-                    [title]="!endpointsDisponibles ? ('SETTINGS.DEPLOYING' | translate) : ''">
+                    [disabled]="isLoading || aucuneSelection">
               <span *ngIf="!isLoading">
                 <i class="fas fa-undo-alt me-1"></i>
                 {{ 'SETTINGS.BTN_RESET' | translate }}
               </span>
               <span *ngIf="isLoading">
-                <i class="fas fa-spinner fa-spin me-1"></i>Traitement...
+                <span class="spinner-border spinner-border-sm me-1"></span>Traitement...
               </span>
             </button>
           </div>
@@ -180,25 +210,21 @@
               <span class="text-danger fw-bold">Action irréversible.</span>
               Les données sélectionnées seront définitivement supprimées de la base de données.
             </p>
-            <div class="alert alert-danger py-2 small mb-3" *ngIf="!endpointsDisponibles">
-              <i class="fas fa-wrench me-1"></i>
-              {{ 'SETTINGS.DEPLOYING' | translate }}
-            </div>
             <button class="btn btn-danger w-100"
                     (click)="ouvrirConfirmationSuppression()"
-                    [disabled]="isLoading || aucuneSelection"
-                    [title]="!endpointsDisponibles ? ('SETTINGS.DEPLOYING' | translate) : ''">
+                    [disabled]="isLoading || aucuneSelection">
               <span *ngIf="!isLoading">
                 <i class="fas fa-trash-alt me-1"></i>
                 {{ 'SETTINGS.BTN_DELETE' | translate }}
               </span>
               <span *ngIf="isLoading">
-                <i class="fas fa-spinner fa-spin me-1"></i>Traitement...
+                <span class="spinner-border spinner-border-sm me-1"></span>Traitement...
               </span>
             </button>
           </div>
         </div>
       </div>
+
     </div>
 
   </div><!-- /isAdmin -->
@@ -244,7 +270,7 @@
     </div>
   </div>
 
-  <!-- Loading overlay -->
+  <!-- Loading overlay (réinitialiser / supprimer) -->
   <div *ngIf="isLoading" class="loading-overlay">
     <div class="spinner-border text-primary"></div>
     <p class="mt-3">Traitement en cours...</p>

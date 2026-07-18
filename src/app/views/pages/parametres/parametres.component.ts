@@ -4,8 +4,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../../shared/services/auth.service';
-import { HttpClient } from '@angular/common/http';
-import { environment } from '../../../../environments/environment';
+import { ParametresService, ParametresSelection, ParametresStatut } from '../../../shared/services/parametres.service';
 
 @Component({
   selector: 'app-parametres',
@@ -18,8 +17,21 @@ export class ParametresComponent implements OnInit {
 
   // ==================== ÉTATS ====================
   isLoading: boolean = false;
+  isLoadingStatut: boolean = false;
   errorMessage: string = '';
   successMessage: string = '';
+
+  // ==================== STATUT BACKEND (compteurs) ====================
+  statut: ParametresStatut = {
+    soldeCaisse: 0,
+    nombreOperationsCaisse: 0,
+    nombreCreditsRegles: 0,
+    nombreVentesAnnulees: 0
+  };
+  statut_erreur: boolean = false;
+
+  // ==================== ENDPOINTS DISPONIBLES ====================
+  endpointsDisponibles: boolean = true;
 
   // ==================== SÉLECTIONS ====================
   selectionSoldeCaisse: boolean = false;
@@ -31,22 +43,35 @@ export class ParametresComponent implements OnInit {
   texteConfirmation: string = '';
   showConfirmDelete: boolean = false;
 
-  // ==================== ENDPOINTS (vérifiés) ====================
-  // Ces endpoints ne sont pas encore disponibles côté backend
-  private readonly endpointReinitialiser = `${environment.apiUrl}/caisse/reinitialiser`;
-  private readonly endpointSupprimerHistorique = `${environment.apiUrl}/caisse/historique`;
-
-  // Indicateur disponibilité backend (false = fonctionnalité en cours de déploiement)
-  endpointsDisponibles: boolean = false;
-
   constructor(
     private authService: AuthService,
-    private http: HttpClient
+    private parametresService: ParametresService
   ) {}
 
   ngOnInit(): void {
-    // Vérifier disponibilité des endpoints (optionnel : on désactive par défaut)
-    this.endpointsDisponibles = false;
+    this.chargerStatut();
+  }
+
+  // ==================== CHARGEMENT STATUT ====================
+
+  chargerStatut(): void {
+    this.isLoadingStatut = true;
+    this.statut_erreur = false;
+    this.parametresService.getStatut().subscribe({
+      next: (data) => {
+        this.statut = {
+          soldeCaisse: data?.soldeCaisse ?? 0,
+          nombreOperationsCaisse: data?.nombreOperationsCaisse ?? 0,
+          nombreCreditsRegles: data?.nombreCreditsRegles ?? 0,
+          nombreVentesAnnulees: data?.nombreVentesAnnulees ?? 0
+        };
+        this.isLoadingStatut = false;
+      },
+      error: () => {
+        this.isLoadingStatut = false;
+        this.statut_erreur = true;
+      }
+    });
   }
 
   // ==================== ACCESSEURS RÔLE ====================
@@ -85,18 +110,31 @@ export class ParametresComponent implements OnInit {
     return elements.join(', ');
   }
 
+  // ==================== PAYLOAD SÉLECTION ====================
+
+  private buildSelection(): ParametresSelection {
+    return {
+      soldeCaisse: this.selectionSoldeCaisse,
+      historiqueOperationsCaisse: this.selectionHistoriqueCaisse,
+      creditsRegles: this.selectionCreditsRegles,
+      historiqueVentesAnnulees: this.selectionVentesAnnulees
+    };
+  }
+
+  // ==================== FORMATAGE ====================
+
+  formatMontant(montant: number): string {
+    return new Intl.NumberFormat('fr-FR', {
+      maximumFractionDigits: 0
+    }).format(montant || 0);
+  }
+
   // ==================== RÉINITIALISATION ====================
 
   reinitialiser(): void {
     if (this.aucuneSelection) {
       this.errorMessage = 'Veuillez sélectionner au moins un élément à réinitialiser.';
       setTimeout(() => this.errorMessage = '', 4000);
-      return;
-    }
-
-    if (!this.endpointsDisponibles) {
-      this.errorMessage = 'Fonctionnalité en cours de déploiement. Disponible prochainement.';
-      setTimeout(() => this.errorMessage = '', 5000);
       return;
     }
 
@@ -107,24 +145,17 @@ export class ParametresComponent implements OnInit {
 
     this.isLoading = true;
     this.errorMessage = '';
-    const payload = {
-      soldeCaisse: this.selectionSoldeCaisse,
-      historiqueCaisse: this.selectionHistoriqueCaisse,
-      creditsRegles: this.selectionCreditsRegles,
-      ventesAnnulees: this.selectionVentesAnnulees
-    };
 
-    this.http.post(this.endpointReinitialiser, payload, {
-      headers: this.authService.getAuthHeaders()
-    }).subscribe({
+    this.parametresService.reinitialiser(this.buildSelection()).subscribe({
       next: () => {
         this.successMessage = 'Réinitialisation effectuée avec succès.';
         this.isLoading = false;
         this.reinitialiserSelections();
+        this.chargerStatut();
         setTimeout(() => this.successMessage = '', 5000);
       },
       error: (err) => {
-        this.errorMessage = err?.error?.message || 'Erreur lors de la réinitialisation.';
+        this.errorMessage = err?.error?.message || err?.message || 'Erreur lors de la réinitialisation.';
         this.isLoading = false;
         setTimeout(() => this.errorMessage = '', 5000);
       }
@@ -137,12 +168,6 @@ export class ParametresComponent implements OnInit {
     if (this.aucuneSelection) {
       this.errorMessage = 'Veuillez sélectionner au moins un élément à supprimer.';
       setTimeout(() => this.errorMessage = '', 4000);
-      return;
-    }
-
-    if (!this.endpointsDisponibles) {
-      this.errorMessage = 'Fonctionnalité en cours de déploiement. Disponible prochainement.';
-      setTimeout(() => this.errorMessage = '', 5000);
       return;
     }
 
@@ -166,25 +191,16 @@ export class ParametresComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = '';
 
-    const payload = {
-      soldeCaisse: this.selectionSoldeCaisse,
-      historiqueCaisse: this.selectionHistoriqueCaisse,
-      creditsRegles: this.selectionCreditsRegles,
-      ventesAnnulees: this.selectionVentesAnnulees
-    };
-
-    this.http.delete(this.endpointSupprimerHistorique, {
-      headers: this.authService.getAuthHeaders(),
-      body: payload
-    }).subscribe({
+    this.parametresService.supprimer(this.buildSelection()).subscribe({
       next: () => {
         this.successMessage = 'Suppression définitive effectuée avec succès.';
         this.isLoading = false;
         this.reinitialiserSelections();
+        this.chargerStatut();
         setTimeout(() => this.successMessage = '', 5000);
       },
       error: (err) => {
-        this.errorMessage = err?.error?.message || 'Erreur lors de la suppression.';
+        this.errorMessage = err?.error?.message || err?.message || 'Erreur lors de la suppression.';
         this.isLoading = false;
         setTimeout(() => this.errorMessage = '', 5000);
       }

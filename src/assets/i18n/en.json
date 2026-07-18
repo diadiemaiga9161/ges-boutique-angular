@@ -353,6 +353,8 @@
     "DEPLOYING": "Feature being deployed",
     "NO_SELECTION": "Please select at least one item",
     "SUCCESS_RESET": "Reset completed successfully",
-    "SUCCESS_DELETE": "Deletion completed successfully"
+    "SUCCESS_DELETE": "Deletion completed successfully",
+    "LOADING_STATS": "Loading data...",
+    "STATUT_ERROR": "Unable to load data"
   }
 }

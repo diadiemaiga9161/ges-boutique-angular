@@ -472,6 +472,8 @@
     "DEPLOYING": "Fonctionnalité en cours de déploiement",
     "NO_SELECTION": "Veuillez sélectionner au moins un élément",
     "SUCCESS_RESET": "Réinitialisation effectuée avec succès",
-    "SUCCESS_DELETE": "Suppression effectuée avec succès"
+    "SUCCESS_DELETE": "Suppression effectuée avec succès",
+    "LOADING_STATS": "Chargement des données...",
+    "STATUT_ERROR": "Impossible de charger les données"
   }
 }

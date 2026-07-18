@@ -101,7 +101,7 @@
               "sourceMap": false,
               "namedChunks": false,
               "extractLicenses": true,
-              "serviceWorker": false,
+              "serviceWorker": "ngsw-config.json",
               "baseHref": "/"
             }
           },
@@ -165,7 +165,7 @@
             "sourceMap": false,
             "namedChunks": false,
             "extractLicenses": true,
-            "serviceWorker": false,
+            "serviceWorker": "ngsw-config.json",
             "baseHref": "/"
           }
         },

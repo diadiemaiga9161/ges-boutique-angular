@@ -147,17 +147,17 @@
     <!-- Onglets de navigation -->
     <ul class="nav nav-tabs mb-3">
       <li class="nav-item">
-        <a class="nav-link" [class.active]="activeTab === 'produits'" (click)="activeTab = 'produits'">
+        <a class="nav-link" style="cursor:pointer" [class.active]="activeTab === 'produits'" (click)="activeTab = 'produits'">
           <i class="fa fa-box me-1"></i> Produits <span class="badge bg-secondary ms-1">{{ filteredProducts.length }}</span>
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" [class.active]="activeTab === 'fournisseurs'" (click)="activeTab = 'fournisseurs'; loadFournisseurs()">
+        <a class="nav-link" style="cursor:pointer" [class.active]="activeTab === 'fournisseurs'" (click)="activeTab = 'fournisseurs'; loadFournisseurs()">
           <i class="fa fa-truck me-1"></i> Fournisseurs <span class="badge bg-secondary ms-1">{{ fournisseurs.length }}</span>
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" [class.active]="activeTab === 'categories'" (click)="activeTab = 'categories'">
+        <a class="nav-link" style="cursor:pointer" [class.active]="activeTab === 'categories'" (click)="activeTab = 'categories'">
           <i class="fa fa-tags me-1"></i> Catégories <span class="badge bg-secondary ms-1">{{ categories.length }}</span>
         </a>
       </li>

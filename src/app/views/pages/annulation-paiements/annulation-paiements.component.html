@@ -1,0 +1,349 @@
+<div class="container-fluid py-4 app-page">
+
+  <!-- ══ EN-TÊTE ══════════════════════════════════════════════════════════ -->
+  <div class="app-page-header mb-4">
+    <div class="app-page-header-left">
+      <div class="app-page-icon" style="background:linear-gradient(135deg,#dc2626,#991b1b)">
+        <i class="bi bi-slash-circle"></i>
+      </div>
+      <div>
+        <h1 class="app-page-title">Annulation de paiements</h1>
+        <p class="app-page-subtitle">Annulez des paiements fournisseur ou des règlements de crédit</p>
+      </div>
+    </div>
+    <div class="app-page-header-actions">
+      <button class="btn btn-outline-primary btn-sm" (click)="charger()" [disabled]="loading">
+        <i class="bi bi-arrow-clockwise me-1"></i> Actualiser
+      </button>
+    </div>
+  </div>
+
+  <!-- ══ MESSAGES ══════════════════════════════════════════════════════════ -->
+  <div *ngIf="successMsg" class="alert alert-success d-flex align-items-center mb-3" role="alert">
+    <i class="bi bi-check-circle-fill me-2"></i>
+    <span>{{ successMsg }}</span>
+  </div>
+  <div *ngIf="errorMsg" class="alert alert-danger d-flex align-items-center mb-3" role="alert">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+    <span>{{ errorMsg }}</span>
+  </div>
+
+  <!-- ══ ONGLETS PRINCIPAUX ════════════════════════════════════════════════ -->
+  <div class="card mb-3">
+    <div class="card-body py-2 px-3">
+      <div class="d-flex gap-2">
+        <button class="btn btn-sm"
+          [class.btn-danger]="onglet === 'fournisseur'"
+          [class.btn-outline-danger]="onglet !== 'fournisseur'"
+          (click)="changerOnglet('fournisseur')">
+          <i class="bi bi-building me-1"></i> Paiements fournisseur
+        </button>
+        <button class="btn btn-sm"
+          [class.btn-warning]="onglet === 'credit'"
+          [class.btn-outline-warning]="onglet !== 'credit'"
+          (click)="changerOnglet('credit')">
+          <i class="bi bi-credit-card me-1"></i> Règlements de crédit
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ FILTRES PÉRIODE ═══════════════════════════════════════════════════ -->
+  <div class="card mb-3">
+    <div class="card-body py-2 px-3">
+      <div class="d-flex gap-2 flex-wrap align-items-center">
+        <span class="text-muted small fw-semibold me-1">Période :</span>
+        <button class="btn btn-sm"
+          [class.btn-primary]="selectedPeriod === 'today'"
+          [class.btn-outline-secondary]="selectedPeriod !== 'today'"
+          (click)="filterByPeriod('today')">Aujourd'hui</button>
+        <button class="btn btn-sm"
+          [class.btn-primary]="selectedPeriod === 'week'"
+          [class.btn-outline-secondary]="selectedPeriod !== 'week'"
+          (click)="filterByPeriod('week')">Cette semaine</button>
+        <button class="btn btn-sm"
+          [class.btn-primary]="selectedPeriod === 'month'"
+          [class.btn-outline-secondary]="selectedPeriod !== 'month'"
+          (click)="filterByPeriod('month')">Ce mois</button>
+        <button class="btn btn-sm"
+          [class.btn-primary]="selectedPeriod === 'year'"
+          [class.btn-outline-secondary]="selectedPeriod !== 'year'"
+          (click)="filterByPeriod('year')">Cette année</button>
+        <button class="btn btn-sm"
+          [class.btn-secondary]="selectedPeriod === 'all'"
+          [class.btn-outline-secondary]="selectedPeriod !== 'all'"
+          (click)="filterByPeriod('all')">Tout</button>
+
+        <!-- Dates manuelles -->
+        <div class="d-flex gap-2 ms-auto flex-wrap">
+          <div>
+            <label class="form-label form-label-sm mb-0 text-muted small">Du</label>
+            <input type="date" class="form-control form-control-sm"
+              [(ngModel)]="dateDebut" (change)="charger()" style="min-width:130px">
+          </div>
+          <div>
+            <label class="form-label form-label-sm mb-0 text-muted small">Au</label>
+            <input type="date" class="form-control form-control-sm"
+              [(ngModel)]="dateFin" (change)="charger()" style="min-width:130px">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ BARRE DE RECHERCHE ════════════════════════════════════════════════ -->
+  <div class="app-filter-card mb-4">
+    <div class="input-group">
+      <span class="input-group-text"><i class="bi bi-search"></i></span>
+      <input type="text" class="form-control"
+        [placeholder]="onglet === 'fournisseur'
+          ? 'Rechercher par fournisseur ou référence…'
+          : 'Rechercher par client, téléphone ou motif…'"
+        [(ngModel)]="searchTerm"
+        (input)="appliquerFiltres()">
+      <button *ngIf="searchTerm" class="btn btn-outline-secondary" (click)="searchTerm=''; appliquerFiltres()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- ══ STATS RAPIDES ══════════════════════════════════════════════════════ -->
+  <div class="row mb-4" *ngIf="!loading && listeActive.length > 0">
+    <div class="col-md-4 mb-2">
+      <div class="card border-0 text-white h-100"
+        style="background:linear-gradient(135deg,#1a56db,#0d47a1);border-radius:12px">
+        <div class="card-body p-3 d-flex justify-content-between align-items-center">
+          <div>
+            <p class="mb-1 small" style="opacity:.75">Total éléments</p>
+            <h3 class="mb-0 fw-bold">{{ listeActive.length }}</h3>
+          </div>
+          <div style="width:44px;height:44px;border-radius:10px;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center">
+            <i class="bi bi-list-ul fs-5"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 mb-2">
+      <div class="card border-0 text-white h-100"
+        style="background:linear-gradient(135deg,#16a34a,#15803d);border-radius:12px">
+        <div class="card-body p-3 d-flex justify-content-between align-items-center">
+          <div>
+            <p class="mb-1 small" style="opacity:.75">Total montant</p>
+            <h5 class="mb-0 fw-bold">{{ formatMontant(totalMontant) }}</h5>
+          </div>
+          <div style="width:44px;height:44px;border-radius:10px;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center">
+            <i class="bi bi-cash-coin fs-5"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 mb-2">
+      <div class="card border-0 text-white h-100"
+        style="background:linear-gradient(135deg,#dc2626,#991b1b);border-radius:12px">
+        <div class="card-body p-3 d-flex justify-content-between align-items-center">
+          <div>
+            <p class="mb-1 small" style="opacity:.75">Déjà annulés</p>
+            <h3 class="mb-0 fw-bold">{{ countAnnules }}</h3>
+          </div>
+          <div style="width:44px;height:44px;border-radius:10px;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center">
+            <i class="bi bi-slash-circle fs-5"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ CHARGEMENT ════════════════════════════════════════════════════════ -->
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-danger" role="status"></div>
+    <p class="text-muted mt-2">Chargement…</p>
+  </div>
+
+  <!-- ══ ÉTAT VIDE ═════════════════════════════════════════════════════════ -->
+  <div *ngIf="!loading && listeActive.length === 0" class="text-center py-5">
+    <i class="bi bi-inbox text-muted fs-1 d-block mb-2"></i>
+    <h5 class="text-muted">Aucun élément trouvé</h5>
+    <p class="text-muted">
+      {{ onglet === 'fournisseur'
+        ? 'Aucun paiement fournisseur pour la période sélectionnée.'
+        : 'Aucun règlement de crédit pour la période sélectionnée.' }}
+    </p>
+  </div>
+
+  <!-- ══ TABLEAU PAIEMENTS FOURNISSEUR ════════════════════════════════════ -->
+  <ng-container *ngIf="!loading && onglet === 'fournisseur' && paiementsFiltres.length > 0">
+    <div class="card mb-4">
+      <div class="card-header d-flex justify-content-between align-items-center"
+        style="background:linear-gradient(135deg,#dc2626,#991b1b);color:#fff">
+        <h5 class="mb-0">
+          <i class="bi bi-building me-2"></i>
+          Paiements fournisseur ({{ paiementsFiltres.length }})
+        </h5>
+        <div class="d-flex gap-2 align-items-center">
+          <span class="badge bg-light text-dark" *ngIf="countAnnules > 0">
+            {{ countAnnules }} annulé(s)
+          </span>
+          <span class="badge bg-light text-dark">
+            Total : {{ formatMontant(totalMontant) }}
+          </span>
+        </div>
+      </div>
+
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>#</th>
+                <th>Date</th>
+                <th>Fournisseur</th>
+                <th class="text-end">Montant</th>
+                <th>Mode paiement</th>
+                <th>Référence</th>
+                <th class="text-center">Statut</th>
+                <th class="text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let p of paiementsFiltres; let i = index"
+                [class.table-danger]="p.annule"
+                [class.opacity-75]="p.annule">
+                <td class="text-muted small">{{ i + 1 }}</td>
+                <td style="white-space:nowrap">{{ formatDate(p.datePaiement) }}</td>
+                <td>
+                  <strong>{{ p.fournisseur?.nom || '—' }}</strong>
+                </td>
+                <td class="text-end fw-bold">{{ formatMontant(p.montant) }}</td>
+                <td>
+                  <span class="badge"
+                    [class.bg-success]="p.modePaiement === 'ESPECES' || p.modePaiement === 'ESPECE' || p.modePaiement === 'CASH'"
+                    [class.bg-primary]="p.modePaiement === 'ORANGE_MONEY' || p.modePaiement === 'MOBILE_MONEY'"
+                    [class.bg-info]="p.modePaiement === 'WAVE_MONEY'"
+                    [class.bg-warning]="p.modePaiement === 'MOOV_MONEY'"
+                    [class.text-dark]="p.modePaiement === 'MOOV_MONEY'"
+                    [class.bg-secondary]="!p.modePaiement || p.modePaiement === 'VIREMENT' || p.modePaiement === 'BANQUE'">
+                    {{ formatModePaiement(p.modePaiement) }}
+                  </span>
+                </td>
+                <td class="text-muted small">{{ p.reference || '—' }}</td>
+                <td class="text-center">
+                  <span *ngIf="p.annule" class="badge bg-danger">
+                    <i class="bi bi-slash-circle me-1"></i> Annulé
+                  </span>
+                  <span *ngIf="!p.annule" class="badge bg-success">
+                    <i class="bi bi-check-circle me-1"></i> Actif
+                  </span>
+                  <div *ngIf="p.annule && p.dateAnnulation" class="text-muted" style="font-size:0.72rem;margin-top:2px">
+                    le {{ formatDate(p.dateAnnulation) }}
+                  </div>
+                </td>
+                <td class="text-center">
+                  <button *ngIf="!p.annule"
+                    class="btn btn-sm btn-outline-danger"
+                    (click)="confirmerAnnulation(p, 'fournisseur')"
+                    title="Annuler ce paiement">
+                    <i class="bi bi-slash-circle me-1"></i> Annuler
+                  </button>
+                  <span *ngIf="p.annule" class="text-muted small">—</span>
+                </td>
+              </tr>
+            </tbody>
+            <tfoot class="table-light">
+              <tr>
+                <th colspan="3">Total ({{ paiementsFiltres.length }} paiements)</th>
+                <th class="text-end">{{ formatMontant(totalMontant) }}</th>
+                <th colspan="4"></th>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- ══ TABLEAU RÈGLEMENTS CRÉDIT ═════════════════════════════════════════ -->
+  <ng-container *ngIf="!loading && onglet === 'credit' && reglementsFiltres.length > 0">
+    <div class="card mb-4">
+      <div class="card-header d-flex justify-content-between align-items-center"
+        style="background:linear-gradient(135deg,#d97706,#b45309);color:#fff">
+        <h5 class="mb-0">
+          <i class="bi bi-credit-card me-2"></i>
+          Règlements de crédit ({{ reglementsFiltres.length }})
+        </h5>
+        <div class="d-flex gap-2 align-items-center">
+          <span class="badge bg-light text-dark" *ngIf="countAnnules > 0">
+            {{ countAnnules }} annulé(s)
+          </span>
+          <span class="badge bg-light text-dark">
+            Total : {{ formatMontant(totalMontant) }}
+          </span>
+        </div>
+      </div>
+
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>#</th>
+                <th>Date</th>
+                <th>Client</th>
+                <th>Téléphone</th>
+                <th class="text-end">Montant</th>
+                <th>Motif</th>
+                <th class="text-center">Statut</th>
+                <th class="text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let r of reglementsFiltres; let i = index"
+                [class.table-danger]="r.annule"
+                [class.opacity-75]="r.annule">
+                <td class="text-muted small">{{ i + 1 }}</td>
+                <td style="white-space:nowrap">{{ formatDate(r.dateOperation) }}</td>
+                <td>
+                  <strong>{{ r.clientNom || '—' }}</strong>
+                </td>
+                <td class="text-muted small">{{ r.clientTelephone || '—' }}</td>
+                <td class="text-end fw-bold text-success">{{ formatMontant(r.montant) }}</td>
+                <td class="text-muted small" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
+                  [title]="r.motif">
+                  {{ r.motif || '—' }}
+                </td>
+                <td class="text-center">
+                  <span *ngIf="r.annule" class="badge bg-danger">
+                    <i class="bi bi-slash-circle me-1"></i> Annulé
+                  </span>
+                  <span *ngIf="!r.annule" class="badge bg-success">
+                    <i class="bi bi-check-circle me-1"></i> Actif
+                  </span>
+                  <div *ngIf="r.annule && r.dateAnnulationReglement" class="text-muted"
+                    style="font-size:0.72rem;margin-top:2px">
+                    le {{ formatDate(r.dateAnnulationReglement) }}
+                  </div>
+                </td>
+                <td class="text-center">
+                  <button *ngIf="!r.annule"
+                    class="btn btn-sm btn-outline-danger"
+                    (click)="confirmerAnnulation(r, 'credit')"
+                    title="Annuler ce règlement (la dette du client reprend)">
+                    <i class="bi bi-slash-circle me-1"></i> Annuler
+                  </button>
+                  <span *ngIf="r.annule" class="text-muted small">—</span>
+                </td>
+              </tr>
+            </tbody>
+            <tfoot class="table-light">
+              <tr>
+                <th colspan="4">Total ({{ reglementsFiltres.length }} règlements)</th>
+                <th class="text-end text-success">{{ formatMontant(totalMontant) }}</th>
+                <th colspan="3"></th>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+
+</div>

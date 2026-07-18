@@ -341,6 +341,7 @@
                 <th style="min-width: 180px">{{ 'INVENTORY.PRODUCT' | translate }}</th>
                 <th style="min-width: 100px">{{ 'PRODUCTS.CATEGORY' | translate }}</th>
                 <th style="min-width: 100px">{{ 'INVENTORY.MOVEMENT' | translate }}</th>
+                <th style="min-width: 110px">Type sortie</th>
                 <th class="text-end" style="min-width: 80px">{{ 'INVENTORY.QUANTITY' | translate }}</th>
                 <th class="text-end" style="min-width: 80px">Avant</th>
                 <th class="text-end" style="min-width: 80px">Après</th>
@@ -364,11 +365,17 @@
                 </td>
                 <td>
                   <span [class]="'badge ' + getTypeMouvementClass(mouvement.typeMouvement)">
-                    <i [class]="mouvement.typeMouvement === TypeMouvement.ENTREE ? 'fa fa-arrow-down' : 
-                               mouvement.typeMouvement === TypeMouvement.SORTIE ? 'fa fa-arrow-up' : 
+                    <i [class]="mouvement.typeMouvement === TypeMouvement.ENTREE ? 'fa fa-arrow-down' :
+                               mouvement.typeMouvement === TypeMouvement.SORTIE ? 'fa fa-arrow-up' :
                                'fa fa-adjust'"></i>
                     {{ getTypeMouvementLabel(mouvement.typeMouvement) }}
                   </span>
+                </td>
+                <td>
+                  <span *ngIf="mouvement.typeSortie" class="badge bg-warning text-dark" style="font-size:0.7rem">
+                    {{ getTypeSortieLabel(mouvement.typeSortie) }}
+                  </span>
+                  <span *ngIf="!mouvement.typeSortie" class="text-muted">—</span>
                 </td>
                 <td class="text-end fw-bold">{{ mouvement.quantite }}</td>
                 <td class="text-end">{{ mouvement.quantiteAvant }}</td>
@@ -648,6 +655,14 @@
           <small class="text-muted">Nombre d'unités à retirer du stock</small>
         </div>
         
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Type de sortie <span class="text-danger">*</span></label>
+          <select class="form-select" [(ngModel)]="typeSortieSortie" required>
+            <option *ngFor="let t of typesSortie" [value]="t.value">{{ t.label }}</option>
+          </select>
+          <small class="text-muted">Raison de la sortie du stock</small>
+        </div>
+
         <div class="mb-3">
           <label class="form-label fw-semibold">Motif <span class="text-danger">*</span></label>
           <textarea class="form-control" rows="3" [(ngModel)]="sortieForm.motif" required maxlength="200"
