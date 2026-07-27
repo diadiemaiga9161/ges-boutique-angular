@@ -1391,9 +1391,10 @@ export class ProduitComponent implements OnInit, OnDestroy {
 
   /** Affiche un popup de confirmation (SweetAlert2) récapitulant le recalcul CUMP proposé. */
   private demanderConfirmationCUMP(propositions: { produitNom: string; stockActuel: number; ancienPrix: number; quantiteEntree: number; prixEntree: number; nouveauPrix: number; }[]): Promise<boolean> {
+    const escapeHtml = (s: string) => (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     const lignesHtml = propositions.map(p => `
       <div style="text-align:left;border:1px solid #e5e7eb;border-radius:6px;padding:10px;margin-bottom:8px;">
-        <strong>${p.produitNom}</strong><br>
+        <strong>${escapeHtml(p.produitNom)}</strong><br>
         Stock actuel: ${p.stockActuel} × ${this.formatPrice(p.ancienPrix)} = <strong>${this.formatPrice(p.stockActuel * p.ancienPrix)}</strong><br>
         Entrée: ${p.quantiteEntree} × ${this.formatPrice(p.prixEntree)} = <strong>${this.formatPrice(p.quantiteEntree * p.prixEntree)}</strong><br>
         <span style="color:#6b7280;font-size:0.85em;">Formule: (${p.stockActuel} × ${this.formatPrice(p.ancienPrix)} + ${p.quantiteEntree} × ${this.formatPrice(p.prixEntree)}) / (${p.stockActuel} + ${p.quantiteEntree})</span><br>
