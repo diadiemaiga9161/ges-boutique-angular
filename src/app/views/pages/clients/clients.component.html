@@ -18,6 +18,46 @@
     </div>
   </div>
 
+  <!-- Statistiques -->
+  <div class="row g-3 mb-4" *ngIf="!isLoading">
+    <div class="col-6 col-md-3">
+      <div class="app-stat-card">
+        <div class="app-stat-icon blue"><i class="fa fa-users"></i></div>
+        <div class="app-stat-body">
+          <div class="app-stat-label">Clients</div>
+          <div class="app-stat-value">{{ clients.length }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="app-stat-card">
+        <div class="app-stat-icon green"><i class="fa fa-money"></i></div>
+        <div class="app-stat-body">
+          <div class="app-stat-label">Avances disponibles</div>
+          <div class="app-stat-value">{{ formatPrice(totalAvanceDisponible) }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="app-stat-card">
+        <div class="app-stat-icon orange"><i class="fa fa-star"></i></div>
+        <div class="app-stat-body">
+          <div class="app-stat-label">Avec avance</div>
+          <div class="app-stat-value">{{ nombreClientsAvecAvance }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="app-stat-card">
+        <div class="app-stat-icon purple"><i class="fa fa-envelope"></i></div>
+        <div class="app-stat-body">
+          <div class="app-stat-label">Avec email</div>
+          <div class="app-stat-value">{{ nombreClientsAvecEmail }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Barre de recherche -->
   <div class="app-filter-card mb-4">
     <div class="row g-2 align-items-center">
@@ -78,6 +118,9 @@
                   <button type="button" class="btn btn-success" (click)="loadHistoriquePaiements(client)" title="Historique paiements">
                     <i class="fa fa-history me-1"></i>Paiements
                   </button>
+                  <button type="button" class="btn btn-dark" (click)="loadSituationClient(client)" title="Situation client">
+                    <i class="fa fa-book me-1"></i>Situation
+                  </button>
                   <button type="button" class="btn btn-warning" (click)="editClient(client)" title="Modifier">
                     <i class="fa fa-edit me-1"></i>Modifier
                   </button>
@@ -112,6 +155,9 @@
               </button>
               <button type="button" class="btn btn-sm btn-success" (click)="loadHistoriquePaiements(client)" title="Paiements">
                 <i class="fa fa-history me-1"></i>Paiements
+              </button>
+              <button type="button" class="btn btn-sm btn-dark" (click)="loadSituationClient(client)" title="Situation client">
+                <i class="fa fa-book me-1"></i>Situation
               </button>
               <button type="button" class="btn btn-sm btn-warning" (click)="editClient(client)" title="Modifier">
                 <i class="fa fa-edit me-1"></i>Modifier
@@ -168,7 +214,7 @@
   <div class="modal-card" (click)="$event.stopPropagation()">
     <div class="modal-card-header">
       <h5 class="mb-0"><i class="fa fa-user me-2"></i>{{ selectedClient ? 'Modifier le client' : 'Nouveau client' }}</h5>
-      <button type="button" class="btn-close" (click)="closeFormModal()"></button>
+      <button type="button" class="btn-close btn-close-white" (click)="closeFormModal()"></button>
     </div>
     <div class="modal-card-body">
       <form (ngSubmit)="saveClient()" id="clientForm">
@@ -1136,7 +1182,7 @@
               </div>
             </div>
             <!-- Lignes du groupe -->
-            <div style="border:1px solid #c5d3f0; border-top:none; border-radius:0 0 8px 8px; background:#fff;">
+            <div style="border:1px solid #c5d3f0; border-top:none; border-radius:0 0 8px 8px;" [style.background]="'var(--surface, #fff)'">
               <div *ngFor="let entry of groupe.entries; let last = last"
                    class="d-flex align-items-center px-3 py-2"
                    [style.border-bottom]="!last ? '1px solid #f0f0f0' : 'none'">
@@ -1199,6 +1245,122 @@
     </div>
     <div class="modal-footer">
       <button type="button" class="btn-secondary" (click)="closeHistoriquePaiementsModal()">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODALE : SITUATION CLIENT -->
+<div class="modal" [class.show]="showSituationClientModal" *ngIf="showSituationClientModal">
+  <div class="modal-backdrop" (click)="closeSituationClientModal()"></div>
+  <div class="modal-container modal-large">
+    <div class="modal-header">
+      <h3><i class="fa fa-book me-2"></i> Situation client — {{ clientPourSituation?.nom }} {{ clientPourSituation?.prenom }}</h3>
+      <button type="button" class="btn-close" (click)="closeSituationClientModal()">×</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- Chargement -->
+      <div *ngIf="isLoadingSituation" class="text-center py-5">
+        <i class="fa fa-spinner fa-spin fa-2x text-primary"></i>
+        <p class="mt-2 text-muted">Chargement de la situation...</p>
+      </div>
+
+      <!-- Vide -->
+      <div *ngIf="!isLoadingSituation && situationEntries.length === 0" class="text-center py-5">
+        <i class="fa fa-inbox fa-3x text-muted mb-3 d-block"></i>
+        <p class="text-muted">Ce client n'a aucune vente à crédit enregistrée.</p>
+      </div>
+
+      <div *ngIf="!isLoadingSituation && situationEntries.length > 0">
+
+        <!-- Filtre période -->
+        <div class="d-flex flex-wrap gap-2 align-items-end mb-3 p-3 bg-light rounded border">
+          <div class="btn-group btn-group-sm">
+            <button class="btn" [class.btn-primary]="situationPreset==='tout'" [class.btn-outline-primary]="situationPreset!=='tout'" (click)="appliquerSituationPreset('tout')">Tout</button>
+            <button class="btn" [class.btn-primary]="situationPreset==='jour'" [class.btn-outline-primary]="situationPreset!=='jour'" (click)="appliquerSituationPreset('jour')">Aujourd'hui</button>
+            <button class="btn" [class.btn-primary]="situationPreset==='semaine'" [class.btn-outline-primary]="situationPreset!=='semaine'" (click)="appliquerSituationPreset('semaine')">Semaine</button>
+            <button class="btn" [class.btn-primary]="situationPreset==='mois'" [class.btn-outline-primary]="situationPreset!=='mois'" (click)="appliquerSituationPreset('mois')">Mois</button>
+            <button class="btn" [class.btn-primary]="situationPreset==='annee'" [class.btn-outline-primary]="situationPreset!=='annee'" (click)="appliquerSituationPreset('annee')">Année</button>
+            <button class="btn" [class.btn-primary]="situationPreset==='personnalise'" [class.btn-outline-primary]="situationPreset!=='personnalise'" (click)="appliquerSituationPreset('personnalise')">Personnalisé</button>
+          </div>
+          <ng-container *ngIf="situationPreset === 'personnalise'">
+            <div>
+              <label class="form-label small fw-semibold mb-1">Date début</label>
+              <input type="date" class="form-control form-control-sm" [(ngModel)]="situationDateDebut" (change)="applySituationFilter()">
+            </div>
+            <div>
+              <label class="form-label small fw-semibold mb-1">Date fin</label>
+              <input type="date" class="form-control form-control-sm" [(ngModel)]="situationDateFin" (change)="applySituationFilter()">
+            </div>
+          </ng-container>
+          <div class="ms-auto mt-auto">
+            <button class="btn btn-outline-dark btn-sm" (click)="imprimerSituationClient()">
+              <i class="fa fa-print me-1"></i>Imprimer la Situation Client
+            </button>
+          </div>
+        </div>
+
+        <!-- Tableau chronologique -->
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Description</th>
+                <th class="text-end">Vente</th>
+                <th class="text-end">Versement</th>
+                <th class="text-end">Reliquat</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let e of situationEntriesFiltrees"
+                  [class.table-warning]="e.type === 'VENTE'"
+                  [class.table-success]="e.type === 'VERSEMENT'"
+                  [class.table-info]="e.type === 'RETOUR'">
+                <td class="small">{{ formatDate(e.date) }}</td>
+                <td>
+                  <span class="badge"
+                    [class.bg-warning]="e.type === 'VENTE'"
+                    [class.text-dark]="e.type === 'VENTE'"
+                    [class.bg-success]="e.type === 'VERSEMENT'"
+                    [class.bg-info]="e.type === 'RETOUR'">
+                    {{ e.type === 'VENTE' ? 'Vente' : (e.type === 'RETOUR' ? 'Retour' : 'Versement') }}
+                  </span>
+                </td>
+                <td class="small">{{ e.description }}</td>
+                <td class="text-end">{{ e.montantVente ? formatPrice(e.montantVente) : '—' }}</td>
+                <td class="text-end">{{ e.montantVersement ? formatPrice(e.montantVersement) : '—' }}</td>
+                <td class="text-end fw-bold">{{ formatPrice(e.reliquat) }}</td>
+              </tr>
+              <tr *ngIf="situationEntriesFiltrees.length === 0">
+                <td colspan="6" class="text-center text-muted py-4">Aucune opération pour cette période.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Totaux -->
+        <div class="d-flex flex-wrap justify-content-between align-items-center p-3 mt-3 rounded gap-2"
+             style="background: linear-gradient(135deg, #1a56db, #0e3a9e); color:#fff;">
+          <div>
+            <div class="small opacity-75">Total des ventes</div>
+            <div class="fw-bold fs-6">{{ formatPrice(totalVentesSituation) }}</div>
+          </div>
+          <div>
+            <div class="small opacity-75">Total des versements</div>
+            <div class="fw-bold fs-6">{{ formatPrice(totalVersementsSituation) }}</div>
+          </div>
+          <div>
+            <div class="small opacity-75">Reste à payer</div>
+            <div class="fw-bold fs-5">{{ formatPrice(resteAPayerSituation) }}</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn-secondary" (click)="closeSituationClientModal()">Fermer</button>
     </div>
   </div>
 </div>

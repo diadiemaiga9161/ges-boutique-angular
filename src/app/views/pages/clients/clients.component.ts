@@ -8,6 +8,8 @@ import { AuthService } from '../../../shared/services/auth.service';
 import { VenteService, VenteMap } from '../../../shared/services/vente.service';
 import { CaisseService } from '../../../shared/services/caisse.service';
 import { DesignFacture, FactureDesignService } from '../../../shared/services/facture-design.service';
+import { FactureService } from '../../../shared/services/facture.service';
+import { ProductService, RetourVente } from '../../../shared/services/product.service';
 import { forkJoin } from 'rxjs';
 import Swal from 'sweetalert2';
 import { TranslateModule } from '@ngx-translate/core';
@@ -21,6 +23,15 @@ interface HistoriquePaiementEntry {
   numeroVente: string;
   venteId: number;
   vente: VenteMap;
+}
+
+interface SituationClientEntry {
+  date: string;
+  type: 'VENTE' | 'VERSEMENT' | 'RETOUR';
+  description: string;
+  montantVente: number;
+  montantVersement: number;
+  reliquat: number;
 }
 
 @Component({
@@ -47,6 +58,18 @@ export class ClientsComponent implements OnInit {
 
   get totalPages(): number {
     return Math.ceil(this.clients.length / this.itemsPerPage);
+  }
+
+  get totalAvanceDisponible(): number {
+    return this.clients.reduce((sum, c) => sum + (c.soldeAvance || 0), 0);
+  }
+
+  get nombreClientsAvecAvance(): number {
+    return this.clients.filter(c => (c.soldeAvance || 0) > 0).length;
+  }
+
+  get nombreClientsAvecEmail(): number {
+    return this.clients.filter(c => !!c.email).length;
   }
 
   get pages(): number[] {
@@ -96,6 +119,16 @@ export class ClientsComponent implements OnInit {
   filterPaiementDateFin: string = '';
   viewModePaiement: 'simple' | 'groupe' = 'groupe';
 
+  // ==================== SITUATION CLIENT ====================
+  showSituationClientModal: boolean = false;
+  isLoadingSituation: boolean = false;
+  clientPourSituation: Client | null = null;
+  situationEntries: SituationClientEntry[] = [];
+  situationEntriesFiltrees: SituationClientEntry[] = [];
+  situationPreset: 'jour' | 'semaine' | 'mois' | 'annee' | 'personnalise' | 'tout' = 'tout';
+  situationDateDebut: string = '';
+  situationDateFin: string = '';
+
   // ==================== AVANCES CLIENT ====================
   showAvanceModal: boolean = false;
   showHistoriqueAvancesModal: boolean = false;
@@ -123,7 +156,9 @@ export class ClientsComponent implements OnInit {
     private authService: AuthService,
     private venteService: VenteService,
     private caisseService: CaisseService,
-    private designService: FactureDesignService
+    private designService: FactureDesignService,
+    private factureService: FactureService,
+    private productService: ProductService
   ) {}
 
   ngOnInit(): void {
@@ -566,6 +601,10 @@ export class ClientsComponent implements OnInit {
     return this.venteService.formatPrice(price);
   }
 
+  formatDate(dateString: string): string {
+    return this.venteService.formatDate(dateString);
+  }
+
   formatDateComplete(dateString: string): string {
     if (!dateString) return '-';
     try {
@@ -988,6 +1027,183 @@ export class ClientsComponent implements OnInit {
 
   imprimerFactureHistorique(entry: HistoriquePaiementEntry): void {
     this.venteService.imprimerFacture(entry.vente);
+  }
+
+  // ==================== SITUATION CLIENT ====================
+
+  loadSituationClient(client: Client): void {
+    if (!client.id) {
+      Swal.fire({ icon: 'warning', title: 'Client sans identifiant', text: 'Impossible de charger la situation de ce client.' });
+      return;
+    }
+    this.clientPourSituation = client;
+    this.showSituationClientModal = true;
+    this.isLoadingSituation = true;
+    this.situationEntries = [];
+    this.situationEntriesFiltrees = [];
+    this.situationPreset = 'tout';
+    this.situationDateDebut = '';
+    this.situationDateFin = '';
+
+    this.venteService.getCreditsParClientId(client.id).subscribe({
+      next: (credits) => {
+        if (credits.length === 0) {
+          this.isLoadingSituation = false;
+          return;
+        }
+
+        const calls = credits.map(v => forkJoin({
+          reglements: this.caisseService.getHistoriqueReglementsCredit(v.id),
+          retours: this.productService.getRetoursByVente(v.id)
+        }));
+
+        forkJoin(calls).subscribe({
+          next: (results) => {
+            const entries: SituationClientEntry[] = [];
+
+            credits.forEach((v, i) => {
+              const produitsDesc = (v.produits || []).map(p => `${p.produitNom} x${p.quantite}`).join(', ');
+              entries.push({
+                date: v.dateVente,
+                type: 'VENTE',
+                description: `Facture ${v.numeroVente}${produitsDesc ? ' - ' + produitsDesc : ''}`,
+                montantVente: v.montantApresRemise ?? v.montantTotal,
+                montantVersement: 0,
+                reliquat: 0
+              });
+
+              results[i].reglements.forEach(r => {
+                entries.push({
+                  date: r.dateOperation,
+                  type: 'VERSEMENT',
+                  description: `Paiement ${this.venteService.getModePaiementLabel(r.modePaiement as string) || ''}`,
+                  montantVente: 0,
+                  montantVersement: r.montant,
+                  reliquat: 0
+                });
+              });
+
+              results[i].retours.forEach((r: RetourVente) => {
+                entries.push({
+                  date: r.dateRetour,
+                  type: 'RETOUR',
+                  description: `Retour ${r.numeroRetour || ''}`.trim(),
+                  montantVente: 0,
+                  montantVersement: r.montantTotal,
+                  reliquat: 0
+                });
+              });
+            });
+
+            entries.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+            let reliquat = 0;
+            entries.forEach(e => {
+              reliquat = reliquat + (e.montantVente || 0) - (e.montantVersement || 0);
+              e.reliquat = reliquat;
+            });
+
+            this.situationEntries = entries;
+            this.applySituationFilter();
+            this.isLoadingSituation = false;
+          },
+          error: () => { this.isLoadingSituation = false; }
+        });
+      },
+      error: () => { this.isLoadingSituation = false; }
+    });
+  }
+
+  closeSituationClientModal(): void {
+    this.showSituationClientModal = false;
+    this.clientPourSituation = null;
+    this.situationEntries = [];
+    this.situationEntriesFiltrees = [];
+  }
+
+  appliquerSituationPreset(preset: 'jour' | 'semaine' | 'mois' | 'annee' | 'personnalise' | 'tout'): void {
+    this.situationPreset = preset;
+    const today = new Date();
+    const fmt = (d: Date) => d.toISOString().split('T')[0];
+
+    if (preset === 'tout') {
+      this.situationDateDebut = '';
+      this.situationDateFin = '';
+    } else if (preset === 'jour') {
+      this.situationDateDebut = fmt(today);
+      this.situationDateFin = fmt(today);
+    } else if (preset === 'semaine') {
+      const debut = new Date(today);
+      debut.setDate(today.getDate() - 6);
+      this.situationDateDebut = fmt(debut);
+      this.situationDateFin = fmt(today);
+    } else if (preset === 'mois') {
+      this.situationDateDebut = fmt(new Date(today.getFullYear(), today.getMonth(), 1));
+      this.situationDateFin = fmt(today);
+    } else if (preset === 'annee') {
+      this.situationDateDebut = fmt(new Date(today.getFullYear(), 0, 1));
+      this.situationDateFin = fmt(today);
+    }
+
+    if (preset !== 'personnalise') {
+      this.applySituationFilter();
+    }
+  }
+
+  applySituationFilter(): void {
+    this.situationEntriesFiltrees = this.situationEntries.filter(e => {
+      if (this.situationDateDebut && new Date(e.date) < new Date(this.situationDateDebut)) return false;
+      if (this.situationDateFin && new Date(e.date) > new Date(this.situationDateFin + 'T23:59:59')) return false;
+      return true;
+    });
+  }
+
+  get totalVentesSituation(): number {
+    return this.situationEntriesFiltrees.reduce((s, e) => s + (e.montantVente || 0), 0);
+  }
+
+  get totalVersementsSituation(): number {
+    return this.situationEntriesFiltrees.reduce((s, e) => s + (e.montantVersement || 0), 0);
+  }
+
+  get resteAPayerSituation(): number {
+    return this.totalVentesSituation - this.totalVersementsSituation;
+  }
+
+  get situationPeriodeLabel(): string {
+    const labels: { [k: string]: string } = { jour: "Aujourd'hui", semaine: 'Cette semaine', mois: 'Ce mois', annee: 'Cette année', tout: "Tout l'historique", personnalise: 'Période personnalisée' };
+    let label = labels[this.situationPreset] || "Tout l'historique";
+    if (this.situationPreset === 'personnalise' && this.situationDateDebut && this.situationDateFin) {
+      label += ` (${this.venteService.formatDate(this.situationDateDebut)} - ${this.venteService.formatDate(this.situationDateFin)})`;
+    }
+    return label;
+  }
+
+  imprimerSituationClient(): void {
+    if (!this.clientPourSituation) return;
+    const client = this.clientPourSituation;
+
+    const lignes = this.situationEntriesFiltrees.map(e => [
+      this.venteService.formatDate(e.date),
+      e.type === 'VENTE' ? 'Vente' : (e.type === 'RETOUR' ? 'Retour' : 'Versement'),
+      e.description,
+      e.montantVente ? this.formatPrice(e.montantVente) : '—',
+      e.montantVersement ? this.formatPrice(e.montantVersement) : '—',
+      this.formatPrice(e.reliquat)
+    ]);
+
+    this.factureService.ouvrirDocumentPDF({
+      titre: 'Situation Client',
+      sousTitre: `${client.nom} ${client.prenom || ''} — ${client.numeroTelephone || client.telephone || '—'}`.trim(),
+      colonnes: ['Date', 'Type', 'Description', 'Vente', 'Versement', 'Reliquat'],
+      lignes,
+      totaux: [
+        { label: 'Total des ventes', valeur: this.formatPrice(this.totalVentesSituation) },
+        { label: 'Total des versements', valeur: this.formatPrice(this.totalVersementsSituation) },
+        { label: 'Reste à payer', valeur: this.formatPrice(this.resteAPayerSituation) }
+      ],
+      pied: `Période : ${this.situationPeriodeLabel}`
+    });
   }
 
   private loadPaiementsForVentesModal(client: Client): void {

@@ -172,6 +172,7 @@ export interface VenteMap {
   motifAnnulation?: string;
   dateAnnulation?: string;
   estRetourne?: boolean;
+  retourPartiel?: boolean;
 }
 
 export interface VentesDuJourResponse {
@@ -293,12 +294,13 @@ export class VenteService {
   ) { }
 
   private getAuthHeaders(): HttpHeaders {
+    // Ne jamais lever d'exception ici : un throw synchrone dans un argument
+    // d'appel HTTP empêche l'Observable de se créer, et l'erreur ne remonte
+    // jamais au .subscribe({error}) de l'appelant (bouton bloqué en silence).
+    // L'AuthInterceptor gère déjà l'ajout du token et la redirection si absent.
     const token = this.authService.getToken();
-    if (!token) {
-      throw new Error('Token non disponible');
-    }
     return new HttpHeaders({
-      'Authorization': `Bearer ${token}`,
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       'Content-Type': 'application/json'
     });
   }
@@ -398,7 +400,8 @@ export class VenteService {
       annulee: data.annulee || false,
       motifAnnulation: data.motifAnnulation,
       dateAnnulation: data.dateAnnulation,
-      estRetourne: data.estRetourne || false
+      estRetourne: data.estRetourne || false,
+      retourPartiel: data.retourPartiel || false
     };
   }
 
@@ -1757,6 +1760,21 @@ export class VenteService {
     }).pipe(
       map(response => this.mapVenteResponse(response)),
       catchError(error => this.handleError(error, `récupérer le crédit ${id}`))
+    );
+  }
+
+  getCreditsParClientId(clientId: number): Observable<VenteMap[]> {
+    return this.http.get<any>(`${this.apiUrl}/credits/by-client/${clientId}`, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(response => {
+        const credits = response.credits || response.data || response;
+        if (Array.isArray(credits)) {
+          return credits.map(c => this.mapVenteResponse(c));
+        }
+        return [];
+      }),
+      catchError(error => this.handleError(error, 'récupérer les crédits du client'))
     );
   }
 

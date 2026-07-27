@@ -1,6 +1,6 @@
 // src/app/views/pages/produit/produit.component.ts
 
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -225,14 +225,28 @@ export class ProduitComponent implements OnInit, OnDestroy {
     { value: 'BANQUE', label: 'Banque' }
   ];
 
+  showGestionDropdown: boolean = false;
+
   constructor(
     private productService: ProductService,
     private authService: AuthService,
     private compteService: CompteService,
     private http: HttpClient,
     private ws: WebSocketService,
-    private factureService: FactureService
+    private factureService: FactureService,
+    private elementRef: ElementRef
   ) {}
+
+  toggleGestionDropdown(): void {
+    this.showGestionDropdown = !this.showGestionDropdown;
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (this.showGestionDropdown && !this.elementRef.nativeElement.contains(event.target)) {
+      this.showGestionDropdown = false;
+    }
+  }
 
   ngOnInit(): void {
     this.ws.connect();
@@ -1130,12 +1144,12 @@ export class ProduitComponent implements OnInit, OnDestroy {
   telechargerStockPdf(): void {
     const liste = this.produits;
     if (!liste.length) { return; }
-    const totalValeur = liste.reduce((s, p) => s + (p.quantite || 0) * (p.prixVente || 0), 0);
+    const totalValeur = liste.reduce((s, p) => s + (p.quantite || 0) * (p.prixAchat || 0), 0);
     const totalQte = liste.reduce((s, p) => s + (p.quantite || 0), 0);
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent('STOCK_' + new Date().toISOString().split('T')[0])}`;
 
     const rows = liste.map(p => {
-      const valeur = (p.quantite || 0) * (p.prixVente || 0);
+      const valeur = (p.quantite || 0) * (p.prixAchat || 0);
       const stockClass = p.quantite === 0 ? '#fee2e2' : (p.quantite || 0) <= (p.seuilAlerte || 10) ? '#fef9c3' : '#dcfce7';
       const stockColor = p.quantite === 0 ? '#991b1b' : (p.quantite || 0) <= (p.seuilAlerte || 10) ? '#854d0e' : '#166534';
       return `<tr>
@@ -1327,12 +1341,105 @@ export class ProduitComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Calcule, pour chaque ligne concernant un produit EXISTANT dont le prix d'achat saisi
+   * diffère du prix d'achat actuel du produit, le nouveau prix de vente proposé via le
+   * coût moyen pondéré (CUMP) : (stockActuel × ancienPrixAchat + quantitéEntrée × prixAchatEntrée) / (stockActuel + quantitéEntrée)
+   * Si le stock actuel est à 0, le nouveau prix = simplement le prix d'achat de l'entrée.
+   */
+  private calculerPropositionsCUMP(): {
+    ligne: LigneAchatRequest;
+    produitNom: string;
+    stockActuel: number;
+    ancienPrix: number;
+    quantiteEntree: number;
+    prixEntree: number;
+    nouveauPrix: number;
+  }[] {
+    const propositions: {
+      ligne: LigneAchatRequest;
+      produitNom: string;
+      stockActuel: number;
+      ancienPrix: number;
+      quantiteEntree: number;
+      prixEntree: number;
+      nouveauPrix: number;
+    }[] = [];
+
+    for (const ligne of this.achatForm.lignes) {
+      // Uniquement les produits EXISTANTS (produitId renseigné, pas de création de nouveau produit)
+      if (!ligne.produitId || ligne.nouveauProduitNom) continue;
+
+      const produit = this.tousLesProduits.find(p => p.id === ligne.produitId);
+      if (!produit) continue;
+
+      const ancienPrix = produit.prixAchat || 0;
+      const prixEntree = ligne.prixAchatUnitaire || 0;
+      if (prixEntree === ancienPrix) continue; // aucune différence de prix
+
+      const stockActuel = produit.quantite || 0;
+      const quantiteEntree = ligne.quantite || 0;
+      const nouveauPrix = stockActuel === 0
+        ? prixEntree
+        : (stockActuel * ancienPrix + quantiteEntree * prixEntree) / (stockActuel + quantiteEntree);
+
+      propositions.push({ ligne, produitNom: produit.nom, stockActuel, ancienPrix, quantiteEntree, prixEntree, nouveauPrix });
+    }
+
+    return propositions;
+  }
+
+  /** Affiche un popup de confirmation (SweetAlert2) récapitulant le recalcul CUMP proposé. */
+  private demanderConfirmationCUMP(propositions: { produitNom: string; stockActuel: number; ancienPrix: number; quantiteEntree: number; prixEntree: number; nouveauPrix: number; }[]): Promise<boolean> {
+    const lignesHtml = propositions.map(p => `
+      <div style="text-align:left;border:1px solid #e5e7eb;border-radius:6px;padding:10px;margin-bottom:8px;">
+        <strong>${p.produitNom}</strong><br>
+        Stock actuel: ${p.stockActuel} × ${this.formatPrice(p.ancienPrix)} = <strong>${this.formatPrice(p.stockActuel * p.ancienPrix)}</strong><br>
+        Entrée: ${p.quantiteEntree} × ${this.formatPrice(p.prixEntree)} = <strong>${this.formatPrice(p.quantiteEntree * p.prixEntree)}</strong><br>
+        <span style="color:#6b7280;font-size:0.85em;">Formule: (${p.stockActuel} × ${this.formatPrice(p.ancienPrix)} + ${p.quantiteEntree} × ${this.formatPrice(p.prixEntree)}) / (${p.stockActuel} + ${p.quantiteEntree})</span><br>
+        <span style="color:#198754;">➜ Nouveau prix de vente proposé: <strong>${this.formatPrice(p.nouveauPrix)}</strong></span>
+      </div>
+    `).join('');
+
+    return Swal.fire({
+      title: '📈 Prix d\'achat modifié',
+      html: `
+        <div class="text-start">
+          <p>Le prix d'achat saisi diffère du prix actuel pour ${propositions.length > 1 ? 'ces produits' : 'ce produit'}.
+          Voulez-vous recalculer le prix de vente avec le coût moyen pondéré (CUMP) ?</p>
+          ${lignesHtml}
+        </div>
+      `,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: '✅ Oui, recalculer le prix de vente',
+      cancelButtonText: '❌ Non, garder le prix actuel',
+      confirmButtonColor: '#198754',
+      cancelButtonColor: '#6c757d',
+      width: 600
+    }).then(result => result.isConfirmed);
+  }
+
   creerAchat(): void {
     if (!this.achatForm.lignes.length) {
       Swal.fire('Erreur', 'Ajoutez au moins un produit à l\'achat', 'error');
       return;
     }
-    
+
+    const propositionsCUMP = this.calculerPropositionsCUMP();
+    if (propositionsCUMP.length > 0) {
+      this.demanderConfirmationCUMP(propositionsCUMP).then(accepte => {
+        propositionsCUMP.forEach(p => {
+          p.ligne.nouveauPrixVente = accepte ? p.nouveauPrix : undefined;
+        });
+        this.confirmerEtEnregistrerAchat();
+      });
+    } else {
+      this.confirmerEtEnregistrerAchat();
+    }
+  }
+
+  private confirmerEtEnregistrerAchat(): void {
     const totalAchat = this.calculerTotalAchat();
     const avanceUtilisee = this.avanceFournisseurUtilisee || 0;
     const paiementImmediat = this.achatForm.montantPaye || 0;

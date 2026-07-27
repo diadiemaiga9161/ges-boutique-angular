@@ -86,6 +86,38 @@
     </div>
   </div>
 
+  <!-- ─────────────── FILTRE PÉRIODE (Achats / Paiements / Situation) ─────────────── -->
+  <div class="periode-filter mb-3" *ngIf="ongletActif !== 'liste' && filtreFournisseurId">
+    <div class="periode-buttons">
+      <button class="btn btn-sm" [class.btn-primary]="periodePreset === 'tout'" [class.btn-outline-secondary]="periodePreset !== 'tout'" (click)="appliquerPreset('tout')">
+        <i class="fa fa-infinity me-1"></i> Tout l'historique
+      </button>
+      <button class="btn btn-sm" [class.btn-primary]="periodePreset === 'jour'" [class.btn-outline-secondary]="periodePreset !== 'jour'" (click)="appliquerPreset('jour')">
+        <i class="fa fa-calendar-day me-1"></i> Aujourd'hui
+      </button>
+      <button class="btn btn-sm" [class.btn-primary]="periodePreset === 'semaine'" [class.btn-outline-secondary]="periodePreset !== 'semaine'" (click)="appliquerPreset('semaine')">
+        <i class="fa fa-calendar-week me-1"></i> Semaine
+      </button>
+      <button class="btn btn-sm" [class.btn-primary]="periodePreset === 'mois'" [class.btn-outline-secondary]="periodePreset !== 'mois'" (click)="appliquerPreset('mois')">
+        <i class="fa fa-calendar-alt me-1"></i> Mois
+      </button>
+      <button class="btn btn-sm" [class.btn-primary]="periodePreset === 'personnalise'" [class.btn-outline-secondary]="periodePreset !== 'personnalise'" (click)="appliquerPreset('personnalise')">
+        <i class="fa fa-sliders-h me-1"></i> Personnalisé
+      </button>
+    </div>
+    <div class="periode-dates" *ngIf="periodePreset === 'personnalise'">
+      <input type="date" class="form-control form-control-sm" [(ngModel)]="filtreDateDebut" />
+      <span class="mx-1">au</span>
+      <input type="date" class="form-control form-control-sm" [(ngModel)]="filtreDateFin" />
+      <button class="btn btn-sm btn-primary ml-2" (click)="rechargerOngletActif()" [disabled]="!filtreDateDebut || !filtreDateFin">
+        <i class="fa fa-search me-1"></i> Filtrer
+      </button>
+    </div>
+    <div class="periode-active-badge" *ngIf="periodePreset !== 'tout' && filtreDateDebut && filtreDateFin">
+      <i class="fa fa-filter me-1"></i> Période : du {{ formatDate(filtreDateDebut) }} au {{ formatDate(filtreDateFin) }}
+    </div>
+  </div>
+
   <!-- ══════════════════════════════════════════════════════
        ONGLET 1 — LISTE FOURNISSEURS
   ══════════════════════════════════════════════════════ -->
@@ -463,7 +495,7 @@
     <div *ngIf="filtreFournisseurId">
       <div class="toolbar mb-3">
         <div class="toolbar-left">
-          <button class="btn btn-sm btn-outline-secondary" (click)="chargerSituation()">
+          <button class="btn btn-sm btn-outline-secondary" (click)="chargerSituation(); chargerAchatsNonPayes()">
             <i class="i-Repeat-2"></i> Actualiser
           </button>
         </div>
@@ -529,6 +561,53 @@
           <div class="progress">
             <div class="progress-bar bg-success"
                  [style.width]="((situation.totalPaye / situation.totalAchats) * 100) + '%'"></div>
+          </div>
+        </div>
+
+        <!-- Achats non payés (statut EN_COURS, du plus ancien au plus récent) -->
+        <div class="mt-4 mb-3">
+          <h5 class="section-title">
+            <i class="fa fa-exclamation-triangle text-warning me-1"></i> Achats non payés
+            <span class="badge badge-warning ml-1" *ngIf="achatsNonPayes.length">{{ achatsNonPayes.length }}</span>
+          </h5>
+          <div class="empty-state-sm" *ngIf="!achatsNonPayes.length">
+            <i class="i-Like"></i><span>Aucun achat en attente de paiement</span>
+          </div>
+          <div class="table-wrapper" *ngIf="achatsNonPayes.length">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>N°</th>
+                  <th>Date</th>
+                  <th>Produits</th>
+                  <th class="text-right">Total</th>
+                  <th class="text-right">Payé</th>
+                  <th class="text-right">Restant</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let a of achatsNonPayes">
+                  <td class="font-weight-bold">#{{ a.id }}</td>
+                  <td>{{ formatDate(a.dateAchat || a.dateCreation) }}</td>
+                  <td>
+                    <div class="produits-list">
+                      <span class="produit-chip" *ngFor="let l of (a.lignes || [])">
+                        {{ l.produit?.nom }} ×{{ l.quantite }}
+                      </span>
+                    </div>
+                  </td>
+                  <td class="text-right font-weight-bold">{{ fmt(a.montantTotal) }}</td>
+                  <td class="text-right text-success">{{ fmt(a.montantPaye) }}</td>
+                  <td class="text-right text-danger font-weight-bold">{{ fmt(a.montantRestant) }}</td>
+                  <td>
+                    <button class="btn btn-xs btn-success" (click)="ouvrirPaiementModal(a)" title="Payer cet achat">
+                      <i class="i-Money-Bag"></i> Payer
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
 

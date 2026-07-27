@@ -14,6 +14,7 @@ import {
   AvanceFournisseurRequest,
   FournisseurCompteDto,
   AchatFournisseurRequest,
+  LigneAchatRequest,
   ProduitSimple
 } from '../../../shared/services/product.service';
 import { AuthService } from '../../../shared/services/auth.service';
@@ -43,11 +44,17 @@ export class FournisseursComponent implements OnInit {
   avances: AvanceFournisseur[] = [];
   produits: ProduitSimple[] = [];
   situation: FournisseurCompteDto | null = null;
+  achatsNonPayes: AchatFournisseur[] = [];
 
   // ─── Filtres ───────────────────────────────────────
   searchFournisseur = '';
   filtreFournisseurId = 0;
   filtreStatutAchat = '';
+
+  // ─── Filtre période (achats / paiements / situation) ──
+  periodePreset: 'jour' | 'semaine' | 'mois' | 'personnalise' | 'tout' = 'tout';
+  filtreDateDebut = '';
+  filtreDateFin = '';
 
   // ─── Chargement ────────────────────────────────────
   isLoading = false;
@@ -164,13 +171,20 @@ export class FournisseursComponent implements OnInit {
     });
   }
 
+  /** Retourne dateDebut/dateFin à passer au service seulement si un préréglage de période est actif. */
+  private get periodeActive(): { dateDebut?: string; dateFin?: string } {
+    if (this.periodePreset === 'tout' || !this.filtreDateDebut || !this.filtreDateFin) return {};
+    return { dateDebut: this.filtreDateDebut, dateFin: this.filtreDateFin };
+  }
+
   chargerAchats(): void {
     if (!this.filtreFournisseurId) {
       Swal.fire({ icon: 'info', title: 'Sélectionnez un fournisseur', text: 'Choisissez un fournisseur pour voir ses achats.', timer: 2000, showConfirmButton: false });
       return;
     }
     this.isLoading = true;
-    this.productService.getHistoriqueAchats(this.filtreFournisseurId).subscribe({
+    const { dateDebut, dateFin } = this.periodeActive;
+    this.productService.getHistoriqueAchats(this.filtreFournisseurId, dateDebut, dateFin).subscribe({
       next: data => { this.achats = data; this.isLoading = false; },
       error: () => { this.isLoading = false; }
     });
@@ -178,7 +192,8 @@ export class FournisseursComponent implements OnInit {
 
   chargerPaiements(): void {
     if (!this.filtreFournisseurId) return;
-    this.productService.getHistoriquePaiements(this.filtreFournisseurId).subscribe({
+    const { dateDebut, dateFin } = this.periodeActive;
+    this.productService.getHistoriquePaiements(this.filtreFournisseurId, dateDebut, dateFin).subscribe({
       next: data => this.paiements = data,
       error: () => {}
     });
@@ -194,10 +209,63 @@ export class FournisseursComponent implements OnInit {
       return;
     }
     this.isLoadingSituation = true;
-    this.productService.getSituationFournisseur(this.filtreFournisseurId).subscribe({
+    const { dateDebut, dateFin } = this.periodeActive;
+    this.productService.getSituationFournisseur(this.filtreFournisseurId, dateDebut, dateFin).subscribe({
       next: data => { this.situation = data; this.isLoadingSituation = false; },
       error: () => { this.isLoadingSituation = false; }
     });
+  }
+
+  chargerAchatsNonPayes(): void {
+    if (!this.filtreFournisseurId) { this.achatsNonPayes = []; return; }
+    this.productService.getAchatsNonPayes(this.filtreFournisseurId).subscribe({
+      next: data => this.achatsNonPayes = data,
+      error: () => this.achatsNonPayes = []
+    });
+  }
+
+  // ══════════════════════════════════════════
+  // FILTRE PÉRIODE (Achats / Paiements / Situation)
+  // ══════════════════════════════════════════
+
+  private formaterDateLocale(date: Date): string {
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  appliquerPreset(preset: 'jour' | 'semaine' | 'mois' | 'personnalise' | 'tout'): void {
+    this.periodePreset = preset;
+    const aujourdhui = new Date();
+
+    if (preset === 'jour') {
+      this.filtreDateDebut = this.formaterDateLocale(aujourdhui);
+      this.filtreDateFin = this.formaterDateLocale(aujourdhui);
+    } else if (preset === 'semaine') {
+      const debut = new Date(aujourdhui);
+      debut.setDate(debut.getDate() - 7);
+      this.filtreDateDebut = this.formaterDateLocale(debut);
+      this.filtreDateFin = this.formaterDateLocale(aujourdhui);
+    } else if (preset === 'mois') {
+      const debut = new Date(aujourdhui.getFullYear(), aujourdhui.getMonth(), 1);
+      this.filtreDateDebut = this.formaterDateLocale(debut);
+      this.filtreDateFin = this.formaterDateLocale(aujourdhui);
+    } else if (preset === 'tout') {
+      this.filtreDateDebut = '';
+      this.filtreDateFin = '';
+    }
+    // 'personnalise' : on ne touche pas aux dates, l'utilisateur les choisit via les inputs
+
+    if (preset !== 'personnalise') this.rechargerOngletActif();
+  }
+
+  /** Relance le chargement de l'onglet Achats/Paiements/Situation actuellement affiché. */
+  rechargerOngletActif(): void {
+    if (!this.filtreFournisseurId) return;
+    if (this.ongletActif === 'achats') this.chargerAchats();
+    if (this.ongletActif === 'paiements') this.chargerPaiements();
+    if (this.ongletActif === 'situation') this.chargerSituation();
   }
 
   chargerProduits(): void {
@@ -218,7 +286,10 @@ export class FournisseursComponent implements OnInit {
     this.ongletActif = onglet;
     if (onglet === 'achats' && this.filtreFournisseurId) this.chargerAchats();
     if (onglet === 'paiements' && this.filtreFournisseurId) this.chargerPaiements();
-    if (onglet === 'situation' && this.filtreFournisseurId) this.chargerSituation();
+    if (onglet === 'situation' && this.filtreFournisseurId) {
+      this.chargerSituation();
+      if (!this.achatsNonPayes.length) this.chargerAchatsNonPayes();
+    }
   }
 
   onFournisseurChange(): void {
@@ -226,9 +297,11 @@ export class FournisseursComponent implements OnInit {
     this.paiements = [];
     this.avances = [];
     this.situation = null;
+    this.achatsNonPayes = [];
     if (this.ongletActif === 'achats') this.chargerAchats();
     if (this.ongletActif === 'paiements') this.chargerPaiements();
     if (this.ongletActif === 'situation') this.chargerSituation();
+    if (this.filtreFournisseurId) this.chargerAchatsNonPayes();
   }
 
   // ══════════════════════════════════════════
@@ -326,6 +399,84 @@ export class FournisseursComponent implements OnInit {
     return this.achatForm.lignes.reduce((s, l) => s + ((l.quantite || 0) * (l.prixAchatUnitaire || 0)), 0);
   }
 
+  /**
+   * Calcule, pour chaque ligne dont le prix d'achat saisi diffère du prix d'achat actuel du produit,
+   * le nouveau prix de vente proposé via le coût moyen pondéré (CUMP) :
+   * (stockActuel × ancienPrixAchat + quantitéEntrée × prixAchatEntrée) / (stockActuel + quantitéEntrée)
+   * Si le stock actuel est à 0, le nouveau prix = simplement le prix d'achat de l'entrée.
+   * (Ce formulaire ne gère que des produits existants du catalogue.)
+   */
+  private calculerPropositionsCUMP(): {
+    ligne: LigneAchatRequest;
+    produitNom: string;
+    stockActuel: number;
+    ancienPrix: number;
+    quantiteEntree: number;
+    prixEntree: number;
+    nouveauPrix: number;
+  }[] {
+    const propositions: {
+      ligne: LigneAchatRequest;
+      produitNom: string;
+      stockActuel: number;
+      ancienPrix: number;
+      quantiteEntree: number;
+      prixEntree: number;
+      nouveauPrix: number;
+    }[] = [];
+
+    for (const ligne of this.achatForm.lignes) {
+      if (!ligne.produitId) continue;
+      const produit = this.produits.find(p => p.id === ligne.produitId);
+      if (!produit) continue;
+
+      const ancienPrix = produit.prixAchat || 0;
+      const prixEntree = ligne.prixAchatUnitaire || 0;
+      if (prixEntree === ancienPrix) continue; // aucune différence de prix
+
+      const stockActuel = produit.quantite || 0;
+      const quantiteEntree = ligne.quantite || 0;
+      const nouveauPrix = stockActuel === 0
+        ? prixEntree
+        : (stockActuel * ancienPrix + quantiteEntree * prixEntree) / (stockActuel + quantiteEntree);
+
+      propositions.push({ ligne, produitNom: produit.nom, stockActuel, ancienPrix, quantiteEntree, prixEntree, nouveauPrix });
+    }
+
+    return propositions;
+  }
+
+  /** Popup de confirmation (SweetAlert2) récapitulant le recalcul CUMP proposé. */
+  private demanderConfirmationCUMP(propositions: { produitNom: string; stockActuel: number; ancienPrix: number; quantiteEntree: number; prixEntree: number; nouveauPrix: number; }[]): Promise<boolean> {
+    const lignesHtml = propositions.map(p => `
+      <div style="text-align:left;border:1px solid #e5e7eb;border-radius:6px;padding:10px;margin-bottom:8px;">
+        <strong>${p.produitNom}</strong><br>
+        Stock actuel: ${p.stockActuel} × ${this.fmt(p.ancienPrix)} = <strong>${this.fmt(p.stockActuel * p.ancienPrix)}</strong><br>
+        Entrée: ${p.quantiteEntree} × ${this.fmt(p.prixEntree)} = <strong>${this.fmt(p.quantiteEntree * p.prixEntree)}</strong><br>
+        <span style="color:#6b7280;font-size:0.85em;">Formule: (${p.stockActuel} × ${this.fmt(p.ancienPrix)} + ${p.quantiteEntree} × ${this.fmt(p.prixEntree)}) / (${p.stockActuel} + ${p.quantiteEntree})</span><br>
+        <span style="color:#198754;">➜ Nouveau prix de vente proposé: <strong>${this.fmt(p.nouveauPrix)}</strong></span>
+      </div>
+    `).join('');
+
+    return Swal.fire({
+      title: '📈 Prix d\'achat modifié',
+      html: `
+        <div class="text-start">
+          <p>Le prix d'achat saisi diffère du prix actuel pour ${propositions.length > 1 ? 'ces produits' : 'ce produit'}.
+          Voulez-vous recalculer le prix de vente avec le coût moyen pondéré (CUMP) ?</p>
+          ${lignesHtml}
+        </div>
+      `,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: '✅ Oui, recalculer le prix de vente',
+      cancelButtonText: '❌ Non, garder le prix actuel',
+      confirmButtonColor: '#198754',
+      cancelButtonColor: '#6c757d',
+      width: 600
+    }).then(result => result.isConfirmed);
+  }
+
   enregistrerAchat(): void {
     if (!this.achatForm.fournisseurId) {
       Swal.fire({ icon: 'warning', title: 'Fournisseur requis', text: 'Sélectionnez un fournisseur.' }); return;
@@ -333,6 +484,21 @@ export class FournisseursComponent implements OnInit {
     if (this.achatForm.lignes.some(l => !l.produitId || !l.quantite || !l.prixAchatUnitaire)) {
       Swal.fire({ icon: 'warning', title: 'Lignes incomplètes', text: 'Renseignez produit, quantité et prix pour chaque ligne.' }); return;
     }
+
+    const propositionsCUMP = this.calculerPropositionsCUMP();
+    if (propositionsCUMP.length > 0) {
+      this.demanderConfirmationCUMP(propositionsCUMP).then(accepte => {
+        propositionsCUMP.forEach(p => {
+          p.ligne.nouveauPrixVente = accepte ? p.nouveauPrix : undefined;
+        });
+        this.soumettreAchat();
+      });
+    } else {
+      this.soumettreAchat();
+    }
+  }
+
+  private soumettreAchat(): void {
     this.isSaving = true;
     this.productService.creerAchat({ ...this.achatForm, utilisateurId: this.authService.getUserId() || undefined }).subscribe({
       next: () => {

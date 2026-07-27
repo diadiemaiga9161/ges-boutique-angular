@@ -228,6 +228,10 @@ export interface LigneAchatRequest {
   typeVente?: string;
   quantite: number;
   prixAchatUnitaire: number;
+  /** Si le prix d'achat de cette ligne diffère du prix d'achat actuel du produit (produit existant uniquement),
+   *  ce champ optionnel contient le nouveau prix de vente proposé (calculé via le coût moyen pondéré - CUMP)
+   *  et confirmé par l'utilisateur. Absent si l'utilisateur a refusé le recalcul ou si aucune différence de prix. */
+  nouveauPrixVente?: number;
 }
 
 export interface FournisseurRequestWithOptionalId {
@@ -1181,9 +1185,18 @@ export class ProductService {
     );
   }
 
-  getSituationFournisseur(fournisseurId: number): Observable<FournisseurCompteDto> {
+  private buildPeriodeParams(dateDebut?: string, dateFin?: string): HttpParams {
+    let params = new HttpParams();
+    if (dateDebut && dateFin) {
+      params = params.set('dateDebut', dateDebut).set('dateFin', dateFin);
+    }
+    return params;
+  }
+
+  getSituationFournisseur(fournisseurId: number, dateDebut?: string, dateFin?: string): Observable<FournisseurCompteDto> {
     return this.http.get<any>(`${this.fournisseurAchatApiUrl}/situation/${fournisseurId}`, {
-      headers: this.getAuthHeaders()
+      headers: this.getAuthHeaders(),
+      params: this.buildPeriodeParams(dateDebut, dateFin)
     }).pipe(
       map(response => this.extractData<FournisseurCompteDto>(response)),
       catchError(error => this.handleError(error, `situation du fournisseur ${fournisseurId}`))
@@ -1191,9 +1204,10 @@ export class ProductService {
   }
 
   // ===== MÉTHODE CORRIGÉE POUR getHistoriqueAchats =====
-  getHistoriqueAchats(fournisseurId: number): Observable<AchatFournisseur[]> {
+  getHistoriqueAchats(fournisseurId: number, dateDebut?: string, dateFin?: string): Observable<AchatFournisseur[]> {
     return this.http.get<any>(`${this.fournisseurAchatApiUrl}/achats/${fournisseurId}`, {
-      headers: this.getAuthHeaders()
+      headers: this.getAuthHeaders(),
+      params: this.buildPeriodeParams(dateDebut, dateFin)
     }).pipe(
       map(response => {
         console.log('🔍 Réponse getHistoriqueAchats brute:', response);
@@ -1233,9 +1247,10 @@ export class ProductService {
   }
   // =====================================================
 
-  getHistoriquePaiements(fournisseurId: number): Observable<PaiementFournisseur[]> {
+  getHistoriquePaiements(fournisseurId: number, dateDebut?: string, dateFin?: string): Observable<PaiementFournisseur[]> {
     return this.http.get<any>(`${this.fournisseurAchatApiUrl}/paiements/${fournisseurId}`, {
-      headers: this.getAuthHeaders()
+      headers: this.getAuthHeaders(),
+      params: this.buildPeriodeParams(dateDebut, dateFin)
     }).pipe(
       map(response => {
         if (response && response.paiements && Array.isArray(response.paiements)) return response.paiements;
@@ -1245,6 +1260,25 @@ export class ProductService {
       }),
       catchError(error => {
         console.error('❌ Erreur getHistoriquePaiements:', error);
+        return of([]);
+      })
+    );
+  }
+
+  // ===== ACHATS NON PAYÉS (statut EN_COURS, du plus ancien au plus récent) =====
+  getAchatsNonPayes(fournisseurId: number): Observable<AchatFournisseur[]> {
+    return this.http.get<any>(`${this.fournisseurAchatApiUrl}/achats-non-payes/${fournisseurId}`, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(response => {
+        if (response && response.success && Array.isArray(response.achats)) return response.achats;
+        if (response && response.data && Array.isArray(response.data)) return response.data;
+        if (response && response.achats && Array.isArray(response.achats)) return response.achats;
+        if (Array.isArray(response)) return response;
+        return [];
+      }),
+      catchError(error => {
+        console.error('❌ Erreur getAchatsNonPayes:', error);
         return of([]);
       })
     );
@@ -1355,9 +1389,15 @@ export class ProductService {
   }
 
   getRetoursByVente(venteId: number): Observable<RetourVente[]> {
-    return this.http.get<RetourVente[]>(`${environment.apiUrl}/retours-ventes/vente/${venteId}`, {
+    return this.http.get<any>(`${environment.apiUrl}/retours-ventes/vente/${venteId}`, {
       headers: this.getAuthHeaders()
-    }).pipe(catchError(() => of([])));
+    }).pipe(
+      map(response => {
+        const retours = response?.retours ?? response?.data ?? response;
+        return Array.isArray(retours) ? retours : [];
+      }),
+      catchError(() => of([]))
+    );
   }
 
   annulerAchatFournisseur(achatId: number, utilisateurId?: number): Observable<any> {
