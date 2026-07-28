@@ -5,11 +5,11 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ClientService, Client, AvanceClient, AvanceClientRequest, HistoriqueAvanceResponse } from '../../../shared/services/client.service';
 import { AuthService } from '../../../shared/services/auth.service';
-import { VenteService, VenteMap } from '../../../shared/services/vente.service';
+import { VenteService, VenteMap, ReleveClientLigne, ReleveClientResponse } from '../../../shared/services/vente.service';
 import { CaisseService } from '../../../shared/services/caisse.service';
 import { DesignFacture, FactureDesignService } from '../../../shared/services/facture-design.service';
 import { FactureService } from '../../../shared/services/facture.service';
-import { ProductService, RetourVente } from '../../../shared/services/product.service';
+import { ProductService } from '../../../shared/services/product.service';
 import { forkJoin } from 'rxjs';
 import Swal from 'sweetalert2';
 import { TranslateModule } from '@ngx-translate/core';
@@ -25,14 +25,7 @@ interface HistoriquePaiementEntry {
   vente: VenteMap;
 }
 
-interface SituationClientEntry {
-  date: string;
-  type: 'VENTE' | 'VERSEMENT' | 'RETOUR';
-  description: string;
-  montantVente: number;
-  montantVersement: number;
-  reliquat: number;
-}
+type SituationTypeFilter = '' | 'VENTE' | 'VERSEMENT';
 
 @Component({
   selector: 'app-clients',
@@ -119,15 +112,18 @@ export class ClientsComponent implements OnInit {
   filterPaiementDateFin: string = '';
   viewModePaiement: 'simple' | 'groupe' = 'groupe';
 
-  // ==================== SITUATION CLIENT ====================
+  // ==================== SITUATION CLIENT (relevé paginé) ====================
   showSituationClientModal: boolean = false;
   isLoadingSituation: boolean = false;
   clientPourSituation: Client | null = null;
-  situationEntries: SituationClientEntry[] = [];
-  situationEntriesFiltrees: SituationClientEntry[] = [];
-  situationPreset: 'jour' | 'semaine' | 'mois' | 'annee' | 'personnalise' | 'tout' = 'tout';
+  releveClient: ReleveClientResponse | null = null;
+  situationLignes: ReleveClientLigne[] = [];
+  situationPreset: 'jour' | 'hier' | 'semaine' | 'mois' | 'annee' | 'personnalise' | 'tout' = 'tout';
   situationDateDebut: string = '';
   situationDateFin: string = '';
+  situationTypeFilter: SituationTypeFilter = '';
+  situationPage: number = 0;
+  situationSize: number = 20;
 
   // ==================== AVANCES CLIENT ====================
   showAvanceModal: boolean = false;
@@ -1029,7 +1025,7 @@ export class ClientsComponent implements OnInit {
     this.venteService.imprimerFacture(entry.vente);
   }
 
-  // ==================== SITUATION CLIENT ====================
+  // ==================== SITUATION CLIENT (relevé paginé) ====================
 
   loadSituationClient(client: Client): void {
     if (!client.id) {
@@ -1038,90 +1034,46 @@ export class ClientsComponent implements OnInit {
     }
     this.clientPourSituation = client;
     this.showSituationClientModal = true;
-    this.isLoadingSituation = true;
-    this.situationEntries = [];
-    this.situationEntriesFiltrees = [];
+    this.releveClient = null;
+    this.situationLignes = [];
     this.situationPreset = 'tout';
     this.situationDateDebut = '';
     this.situationDateFin = '';
+    this.situationTypeFilter = '';
+    this.situationPage = 0;
+    this.fetchReleveClient();
+  }
 
-    this.venteService.getCreditsParClientId(client.id).subscribe({
-      next: (credits) => {
-        if (credits.length === 0) {
-          this.isLoadingSituation = false;
-          return;
-        }
-
-        const calls = credits.map(v => forkJoin({
-          reglements: this.caisseService.getHistoriqueReglementsCredit(v.id),
-          retours: this.productService.getRetoursByVente(v.id)
-        }));
-
-        forkJoin(calls).subscribe({
-          next: (results) => {
-            const entries: SituationClientEntry[] = [];
-
-            credits.forEach((v, i) => {
-              const produitsDesc = (v.produits || []).map(p => `${p.produitNom} x${p.quantite}`).join(', ');
-              entries.push({
-                date: v.dateVente,
-                type: 'VENTE',
-                description: `Facture ${v.numeroVente}${produitsDesc ? ' - ' + produitsDesc : ''}`,
-                montantVente: v.montantApresRemise ?? v.montantTotal,
-                montantVersement: 0,
-                reliquat: 0
-              });
-
-              results[i].reglements.forEach(r => {
-                entries.push({
-                  date: r.dateOperation,
-                  type: 'VERSEMENT',
-                  description: `Paiement ${this.venteService.getModePaiementLabel(r.modePaiement as string) || ''}`,
-                  montantVente: 0,
-                  montantVersement: r.montant,
-                  reliquat: 0
-                });
-              });
-
-              results[i].retours.forEach((r: RetourVente) => {
-                entries.push({
-                  date: r.dateRetour,
-                  type: 'RETOUR',
-                  description: `Retour ${r.numeroRetour || ''}`.trim(),
-                  montantVente: 0,
-                  montantVersement: r.montantTotal,
-                  reliquat: 0
-                });
-              });
-            });
-
-            entries.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-            let reliquat = 0;
-            entries.forEach(e => {
-              reliquat = reliquat + (e.montantVente || 0) - (e.montantVersement || 0);
-              e.reliquat = reliquat;
-            });
-
-            this.situationEntries = entries;
-            this.applySituationFilter();
-            this.isLoadingSituation = false;
-          },
-          error: () => { this.isLoadingSituation = false; }
-        });
+  private fetchReleveClient(): void {
+    if (!this.clientPourSituation?.id) return;
+    this.isLoadingSituation = true;
+    this.venteService.getReleveClient(
+      this.clientPourSituation.id,
+      this.situationPage,
+      this.situationSize,
+      this.situationDateDebut || undefined,
+      this.situationDateFin || undefined,
+      this.situationTypeFilter || undefined
+    ).subscribe({
+      next: (res) => {
+        this.releveClient = res;
+        this.situationLignes = res.lignes || [];
+        this.isLoadingSituation = false;
       },
-      error: () => { this.isLoadingSituation = false; }
+      error: () => {
+        this.isLoadingSituation = false;
+      }
     });
   }
 
   closeSituationClientModal(): void {
     this.showSituationClientModal = false;
     this.clientPourSituation = null;
-    this.situationEntries = [];
-    this.situationEntriesFiltrees = [];
+    this.releveClient = null;
+    this.situationLignes = [];
   }
 
-  appliquerSituationPreset(preset: 'jour' | 'semaine' | 'mois' | 'annee' | 'personnalise' | 'tout'): void {
+  appliquerSituationPreset(preset: 'jour' | 'hier' | 'semaine' | 'mois' | 'annee' | 'personnalise' | 'tout'): void {
     this.situationPreset = preset;
     const today = new Date();
     const fmt = (d: Date) => d.toISOString().split('T')[0];
@@ -1132,9 +1084,15 @@ export class ClientsComponent implements OnInit {
     } else if (preset === 'jour') {
       this.situationDateDebut = fmt(today);
       this.situationDateFin = fmt(today);
+    } else if (preset === 'hier') {
+      const hier = new Date(today);
+      hier.setDate(today.getDate() - 1);
+      this.situationDateDebut = fmt(hier);
+      this.situationDateFin = fmt(hier);
     } else if (preset === 'semaine') {
+      const jour = (today.getDay() + 6) % 7; // lundi = 0
       const debut = new Date(today);
-      debut.setDate(today.getDate() - 6);
+      debut.setDate(today.getDate() - jour);
       this.situationDateDebut = fmt(debut);
       this.situationDateFin = fmt(today);
     } else if (preset === 'mois') {
@@ -1146,32 +1104,48 @@ export class ClientsComponent implements OnInit {
     }
 
     if (preset !== 'personnalise') {
-      this.applySituationFilter();
+      this.situationPage = 0;
+      this.fetchReleveClient();
     }
   }
 
   applySituationFilter(): void {
-    this.situationEntriesFiltrees = this.situationEntries.filter(e => {
-      if (this.situationDateDebut && new Date(e.date) < new Date(this.situationDateDebut)) return false;
-      if (this.situationDateFin && new Date(e.date) > new Date(this.situationDateFin + 'T23:59:59')) return false;
-      return true;
-    });
+    this.situationPage = 0;
+    this.fetchReleveClient();
+  }
+
+  appliquerSituationTypeFilter(type: SituationTypeFilter): void {
+    this.situationTypeFilter = type;
+    this.situationPage = 0;
+    this.fetchReleveClient();
+  }
+
+  situationPagePrecedente(): void {
+    if (this.situationPage <= 0) return;
+    this.situationPage--;
+    this.fetchReleveClient();
+  }
+
+  situationPageSuivante(): void {
+    if (!this.releveClient || this.situationPage >= this.releveClient.totalPages - 1) return;
+    this.situationPage++;
+    this.fetchReleveClient();
   }
 
   get totalVentesSituation(): number {
-    return this.situationEntriesFiltrees.reduce((s, e) => s + (e.montantVente || 0), 0);
+    return this.releveClient?.totalVentes || 0;
   }
 
   get totalVersementsSituation(): number {
-    return this.situationEntriesFiltrees.reduce((s, e) => s + (e.montantVersement || 0), 0);
+    return this.releveClient?.totalVersements || 0;
   }
 
   get resteAPayerSituation(): number {
-    return this.totalVentesSituation - this.totalVersementsSituation;
+    return this.releveClient?.soldeActuel || 0;
   }
 
   get situationPeriodeLabel(): string {
-    const labels: { [k: string]: string } = { jour: "Aujourd'hui", semaine: 'Cette semaine', mois: 'Ce mois', annee: 'Cette année', tout: "Tout l'historique", personnalise: 'Période personnalisée' };
+    const labels: { [k: string]: string } = { jour: "Aujourd'hui", hier: 'Hier', semaine: 'Cette semaine', mois: 'Ce mois', annee: 'Cette année', tout: "Tout l'historique", personnalise: 'Période personnalisée' };
     let label = labels[this.situationPreset] || "Tout l'historique";
     if (this.situationPreset === 'personnalise' && this.situationDateDebut && this.situationDateFin) {
       label += ` (${this.venteService.formatDate(this.situationDateDebut)} - ${this.venteService.formatDate(this.situationDateFin)})`;
@@ -1179,30 +1153,45 @@ export class ClientsComponent implements OnInit {
     return label;
   }
 
+  getSituationLigneTypeLabel(ligne: ReleveClientLigne): string {
+    if (ligne.type === 'VENTE') return 'Vente';
+    if (ligne.type === 'RETOUR') return 'Retour';
+    return 'Versement';
+  }
+
+  getSituationLigneReference(ligne: ReleveClientLigne): string {
+    return ligne.referenceVente || ligne.referenceReglement || '—';
+  }
+
   imprimerSituationClient(): void {
-    if (!this.clientPourSituation) return;
+    if (!this.clientPourSituation || !this.releveClient) return;
     const client = this.clientPourSituation;
 
-    const lignes = this.situationEntriesFiltrees.map(e => [
-      this.venteService.formatDate(e.date),
-      e.type === 'VENTE' ? 'Vente' : (e.type === 'RETOUR' ? 'Retour' : 'Versement'),
-      e.description,
+    const lignes = this.situationLignes.map(e => [
+      this.formatDate(e.date),
+      this.formatHeure(e.date),
+      this.getSituationLigneTypeLabel(e),
+      this.getSituationLigneReference(e),
+      e.produitNom || '—',
+      e.quantite ?? '—',
+      e.prixUnitaire ? this.formatPrice(e.prixUnitaire) : '—',
       e.montantVente ? this.formatPrice(e.montantVente) : '—',
       e.montantVersement ? this.formatPrice(e.montantVersement) : '—',
-      this.formatPrice(e.reliquat)
+      e.resteAPayerApres !== null && e.resteAPayerApres !== undefined ? this.formatPrice(e.resteAPayerApres) : '—',
+      e.utilisateurNom || '—'
     ]);
 
     this.factureService.ouvrirDocumentPDF({
       titre: 'Situation Client',
       sousTitre: `${client.nom} ${client.prenom || ''} — ${client.numeroTelephone || client.telephone || '—'}`.trim(),
-      colonnes: ['Date', 'Type', 'Description', 'Vente', 'Versement', 'Reliquat'],
+      colonnes: ['Date', 'Heure', 'Type', 'Référence', 'Désignation', 'Qté', 'P.U.', 'Vente', 'Versement', 'Reste à payer', 'Utilisateur'],
       lignes,
       totaux: [
         { label: 'Total des ventes', valeur: this.formatPrice(this.totalVentesSituation) },
         { label: 'Total des versements', valeur: this.formatPrice(this.totalVersementsSituation) },
-        { label: 'Reste à payer', valeur: this.formatPrice(this.resteAPayerSituation) }
+        { label: 'Solde actuel', valeur: this.formatPrice(this.resteAPayerSituation) }
       ],
-      pied: `Période : ${this.situationPeriodeLabel}`
+      pied: `Période : ${this.situationPeriodeLabel} — Page ${this.situationPage + 1}/${this.releveClient.totalPages || 1}`
     });
   }
 

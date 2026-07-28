@@ -1265,19 +1265,32 @@
         <p class="mt-2 text-muted">Chargement de la situation...</p>
       </div>
 
-      <!-- Vide -->
-      <div *ngIf="!isLoadingSituation && situationEntries.length === 0" class="text-center py-5">
-        <i class="fa fa-inbox fa-3x text-muted mb-3 d-block"></i>
-        <p class="text-muted">Ce client n'a aucune vente à crédit enregistrée.</p>
-      </div>
+      <div *ngIf="!isLoadingSituation && releveClient">
 
-      <div *ngIf="!isLoadingSituation && situationEntries.length > 0">
+        <!-- En-tête client -->
+        <div class="p-3 mb-3 rounded border bg-light">
+          <div class="row g-2">
+            <div class="col-md-6">
+              <div class="fw-bold fs-5">{{ releveClient.client.nom }} {{ releveClient.client.prenom }}</div>
+              <div class="small text-muted"><i class="fa fa-phone me-1"></i>{{ releveClient.client.telephone || '—' }}</div>
+              <div class="small text-muted"><i class="fa fa-map-marker me-1"></i>{{ releveClient.client.adresse || '—' }}</div>
+            </div>
+            <div class="col-md-6 text-md-end">
+              <div class="small text-muted">Total des ventes : <span class="fw-semibold text-dark">{{ formatPrice(totalVentesSituation) }}</span></div>
+              <div class="small text-muted">Total des versements : <span class="fw-semibold text-dark">{{ formatPrice(totalVersementsSituation) }}</span></div>
+              <div class="fs-5 fw-bold" [class.text-danger]="resteAPayerSituation > 0" [class.text-success]="resteAPayerSituation <= 0">
+                Solde actuel : {{ formatPrice(resteAPayerSituation) }}
+              </div>
+            </div>
+          </div>
+        </div>
 
         <!-- Filtre période -->
-        <div class="d-flex flex-wrap gap-2 align-items-end mb-3 p-3 bg-light rounded border">
-          <div class="btn-group btn-group-sm">
+        <div class="d-flex flex-wrap gap-2 align-items-end mb-2 p-3 bg-light rounded border">
+          <div class="btn-group btn-group-sm flex-wrap">
             <button class="btn" [class.btn-primary]="situationPreset==='tout'" [class.btn-outline-primary]="situationPreset!=='tout'" (click)="appliquerSituationPreset('tout')">Tout</button>
             <button class="btn" [class.btn-primary]="situationPreset==='jour'" [class.btn-outline-primary]="situationPreset!=='jour'" (click)="appliquerSituationPreset('jour')">Aujourd'hui</button>
+            <button class="btn" [class.btn-primary]="situationPreset==='hier'" [class.btn-outline-primary]="situationPreset!=='hier'" (click)="appliquerSituationPreset('hier')">Hier</button>
             <button class="btn" [class.btn-primary]="situationPreset==='semaine'" [class.btn-outline-primary]="situationPreset!=='semaine'" (click)="appliquerSituationPreset('semaine')">Semaine</button>
             <button class="btn" [class.btn-primary]="situationPreset==='mois'" [class.btn-outline-primary]="situationPreset!=='mois'" (click)="appliquerSituationPreset('mois')">Mois</button>
             <button class="btn" [class.btn-primary]="situationPreset==='annee'" [class.btn-outline-primary]="situationPreset!=='annee'" (click)="appliquerSituationPreset('annee')">Année</button>
@@ -1300,61 +1313,80 @@
           </div>
         </div>
 
+        <!-- Filtre type d'opération -->
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <span class="small text-muted fw-semibold">Opérations :</span>
+          <div class="btn-group btn-group-sm">
+            <button class="btn" [class.btn-primary]="situationTypeFilter===''" [class.btn-outline-primary]="situationTypeFilter!==''" (click)="appliquerSituationTypeFilter('')">Toutes</button>
+            <button class="btn" [class.btn-primary]="situationTypeFilter==='VENTE'" [class.btn-outline-primary]="situationTypeFilter!=='VENTE'" (click)="appliquerSituationTypeFilter('VENTE')">Ventes</button>
+            <button class="btn" [class.btn-primary]="situationTypeFilter==='VERSEMENT'" [class.btn-outline-primary]="situationTypeFilter!=='VERSEMENT'" (click)="appliquerSituationTypeFilter('VERSEMENT')">Versements</button>
+          </div>
+        </div>
+
+        <!-- Vide -->
+        <div *ngIf="situationLignes.length === 0" class="text-center py-5">
+          <i class="fa fa-inbox fa-3x text-muted mb-3 d-block"></i>
+          <p class="text-muted">Aucune opération pour cette période.</p>
+        </div>
+
         <!-- Tableau chronologique -->
-        <div class="table-responsive">
+        <div class="table-responsive" *ngIf="situationLignes.length > 0">
           <table class="table table-hover align-middle mb-0">
             <thead class="table-light">
               <tr>
                 <th>Date</th>
+                <th>Heure</th>
                 <th>Type</th>
-                <th>Description</th>
+                <th>Référence</th>
+                <th>Désignation</th>
+                <th class="text-end">Qté</th>
+                <th class="text-end">P.U.</th>
                 <th class="text-end">Vente</th>
                 <th class="text-end">Versement</th>
-                <th class="text-end">Reliquat</th>
+                <th class="text-end">Reste à payer</th>
+                <th>Utilisateur</th>
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let e of situationEntriesFiltrees"
+              <tr *ngFor="let e of situationLignes"
                   [class.table-warning]="e.type === 'VENTE'"
                   [class.table-success]="e.type === 'VERSEMENT'"
                   [class.table-info]="e.type === 'RETOUR'">
                 <td class="small">{{ formatDate(e.date) }}</td>
+                <td class="small">{{ formatHeure(e.date) }}</td>
                 <td>
                   <span class="badge"
                     [class.bg-warning]="e.type === 'VENTE'"
                     [class.text-dark]="e.type === 'VENTE'"
                     [class.bg-success]="e.type === 'VERSEMENT'"
                     [class.bg-info]="e.type === 'RETOUR'">
-                    {{ e.type === 'VENTE' ? 'Vente' : (e.type === 'RETOUR' ? 'Retour' : 'Versement') }}
+                    {{ getSituationLigneTypeLabel(e) }}
                   </span>
                 </td>
-                <td class="small">{{ e.description }}</td>
+                <td class="small">{{ getSituationLigneReference(e) }}</td>
+                <td class="small">{{ e.produitNom || '—' }}</td>
+                <td class="text-end small">{{ e.quantite ?? '—' }}</td>
+                <td class="text-end small">{{ e.prixUnitaire ? formatPrice(e.prixUnitaire) : '—' }}</td>
                 <td class="text-end">{{ e.montantVente ? formatPrice(e.montantVente) : '—' }}</td>
                 <td class="text-end">{{ e.montantVersement ? formatPrice(e.montantVersement) : '—' }}</td>
-                <td class="text-end fw-bold">{{ formatPrice(e.reliquat) }}</td>
-              </tr>
-              <tr *ngIf="situationEntriesFiltrees.length === 0">
-                <td colspan="6" class="text-center text-muted py-4">Aucune opération pour cette période.</td>
+                <td class="text-end fw-bold">{{ (e.resteAPayerApres !== null && e.resteAPayerApres !== undefined) ? formatPrice(e.resteAPayerApres) : '—' }}</td>
+                <td class="small">{{ e.utilisateurNom || '—' }}</td>
               </tr>
             </tbody>
           </table>
         </div>
 
-        <!-- Totaux -->
-        <div class="d-flex flex-wrap justify-content-between align-items-center p-3 mt-3 rounded gap-2"
-             style="background: linear-gradient(135deg, #1a56db, #0e3a9e); color:#fff;">
-          <div>
-            <div class="small opacity-75">Total des ventes</div>
-            <div class="fw-bold fs-6">{{ formatPrice(totalVentesSituation) }}</div>
-          </div>
-          <div>
-            <div class="small opacity-75">Total des versements</div>
-            <div class="fw-bold fs-6">{{ formatPrice(totalVersementsSituation) }}</div>
-          </div>
-          <div>
-            <div class="small opacity-75">Reste à payer</div>
-            <div class="fw-bold fs-5">{{ formatPrice(resteAPayerSituation) }}</div>
-          </div>
+        <!-- Pagination -->
+        <div class="d-flex justify-content-between align-items-center mt-3" *ngIf="releveClient.totalPages > 0">
+          <button class="btn btn-outline-secondary btn-sm" [disabled]="situationPage <= 0" (click)="situationPagePrecedente()">
+            <i class="fa fa-chevron-left me-1"></i>Précédent
+          </button>
+          <span class="small text-muted">
+            Page {{ situationPage + 1 }} / {{ releveClient.totalPages }} — {{ releveClient.totalElements }} opération(s)
+          </span>
+          <button class="btn btn-outline-secondary btn-sm" [disabled]="situationPage >= releveClient.totalPages - 1" (click)="situationPageSuivante()">
+            Suivant<i class="fa fa-chevron-right ms-1"></i>
+          </button>
         </div>
 
       </div>

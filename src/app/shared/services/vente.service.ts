@@ -220,6 +220,47 @@ export interface StatistiquesCredits {
   montantTotalCreditsEnRetard: number;
 }
 
+// =====================================================
+// INTERFACES RELEVÉ CLIENT (situation client paginée)
+// =====================================================
+
+export interface ReleveClientLigne {
+  date: string;
+  type: 'VENTE' | 'VERSEMENT' | 'RETOUR';
+  referenceVente: string | null;
+  referenceReglement: string | null;
+  venteId: number;
+  produitNom: string | null;
+  quantite: number | null;
+  prixUnitaire: number | null;
+  montantVente: number | null;
+  montantVersement: number | null;
+  resteAPayerApres: number | null;
+  modePaiement: string | null;
+  utilisateurNom: string | null;
+}
+
+export interface ReleveClientInfo {
+  id: number;
+  nom: string;
+  prenom: string;
+  telephone: string;
+  adresse: string;
+}
+
+export interface ReleveClientResponse {
+  success: boolean;
+  client: ReleveClientInfo;
+  soldeActuel: number;
+  totalVentes: number;
+  totalVersements: number;
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  lignes: ReleveClientLigne[];
+}
+
 export interface CreditInfo {
   id: number;
   numeroVente: string;
@@ -548,6 +589,34 @@ export class VenteService {
     }).pipe(
       map(response => response.client || response.data),
       catchError(error => this.handleError(error, 'créer le client'))
+    );
+  }
+
+  getReleveClient(
+    clientId: number,
+    page: number = 0,
+    size: number = 20,
+    dateDebut?: string,
+    dateFin?: string,
+    type?: string
+  ): Observable<ReleveClientResponse> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString());
+    if (dateDebut) {
+      params = params.set('dateDebut', dateDebut);
+    }
+    if (dateFin) {
+      params = params.set('dateFin', dateFin);
+    }
+    if (type) {
+      params = params.set('type', type);
+    }
+    return this.http.get<ReleveClientResponse>(`${this.clientApiUrl}/${clientId}/releve`, {
+      headers: this.getAuthHeaders(),
+      params
+    }).pipe(
+      catchError(error => this.handleError(error, 'récupérer le relevé du client'))
     );
   }
 
