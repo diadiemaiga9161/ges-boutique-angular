@@ -3,7 +3,7 @@
     <div class="logo">
       <img style="height: 40px;width: 40px;object-fit:contain;" [src]="logoPath" alt="logo" />
     </div>
-    <ul class="navigation-left" style="color: blue;">
+    <ul class="navigation-left">
       @for (item of nav; track item) {
         <li [ngClass]="{ active: item.active }" (click)="onClickChangeActiveFlag(item)" class="nav-item lvl1"
           >
@@ -42,8 +42,7 @@
   <ng-scrollbar class="vh-100" visibility="hover" appearance="compact">
 
     <header>
-      <h6>Apps</h6>
-      <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit.</p>
+      <h6>{{ navService.selectedItem?.name }}</h6>
     </header>
     <ng-container *ngTemplateOutlet="menuTemplate; context: { parentItem: navService.selectedItem }"></ng-container>
   </ng-scrollbar>
