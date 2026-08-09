@@ -27,6 +27,7 @@ import { ClientService } from '../../../shared/services/client.service';
 import { DesignFacture, FactureDesignService } from '../../../shared/services/facture-design.service';
 import { ProduitNiveau, ProduitNiveauService } from '../../../shared/services/produit-niveau.service';
 import { BoutiqueService } from '../../../shared/services/boutique.service';
+import { OfflineService } from '../../../shared/services/offline.service';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
@@ -279,6 +280,13 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
   searchAnnulees: string = '';
   isLoadingAnnulees: boolean = false;
 
+  // ==================== CHARGEMENT PROGRESSIF (perf) ====================
+  // Par défaut on ne charge que les ventes du jour (endpoint dédié, rapide).
+  // Dès que l'utilisateur touche un filtre (recherche, date, semaine, mois...)
+  // on charge une seule fois l'historique complet puis on filtre côté client
+  // comme avant — évite de tout charger à chaque ouverture de page.
+  donneesCompletesChargees: boolean = false;
+
   constructor(
     private venteService: VenteService,
     private productService: ProductService,
@@ -289,7 +297,8 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
     private ws: WebSocketService,
     private designService: FactureDesignService,
     private niveauService: ProduitNiveauService,
-    private boutiqueService: BoutiqueService
+    private boutiqueService: BoutiqueService,
+    private offlineService: OfflineService
   ) {}
 
   ngOnInit(): void {
@@ -406,11 +415,14 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
     this.isLoading = true;
     this.errorMessage = '';
 
-    if (this.showTodayOnly) {
-      this.loadVentesDuJour();
-    } else {
-      this.loadAllVentes();
-    }
+    // Par défaut, ne charger que les ventes du jour pour ne pas ralentir
+    // l'ouverture de la page — voir applyFilters()/chargerToutSiBesoin()
+    // pour le chargement complet à la demande dès qu'un filtre est utilisé.
+    this.showTodayOnly = true;
+    this.donneesCompletesChargees = false;
+    this.dateDebut = this.today;
+    this.dateFin = this.today;
+    this.loadVentesDuJour();
 
     if (this.isAdmin) {
       this.loadStatistics();
@@ -442,9 +454,41 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
         this.ventes = response.toutes || [];
         this.ventesComptant = response.comptant || [];
         this.ventesCredit = response.credit || [];
+        this.donneesCompletesChargees = true;
         this.calculerRevenus();
         this.isLoading = false;
         this.cdr.detectChanges();
+      },
+      error: (error: Error) => {
+        this.errorMessage = error.message;
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  /**
+   * Charge l'historique complet une seule fois (mis en cache via
+   * donneesCompletesChargees) puis exécute `after`. Utilisé par tous les
+   * filtres (recherche, date, semaine, mois...) car le chargement par défaut
+   * ne contient que les ventes du jour.
+   */
+  private chargerToutSiBesoin(after: () => void): void {
+    if (this.donneesCompletesChargees) {
+      after();
+      return;
+    }
+    this.isLoading = true;
+    this.cdr.detectChanges();
+    this.venteService.getVentesParType().subscribe({
+      next: (response: VentesParTypeResponse) => {
+        this.ventes = response.toutes || [];
+        this.ventesComptant = response.comptant || [];
+        this.ventesCredit = response.credit || [];
+        this.donneesCompletesChargees = true;
+        this.calculerRevenus();
+        this.isLoading = false;
+        after();
       },
       error: (error: Error) => {
         this.errorMessage = error.message;
@@ -463,20 +507,7 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
     // Calcul du CA total (hors annulées)
     const ventesActives = this.ventes.filter(v => !v.annulee);
     this.chiffreAffaireTotal = ventesActives.reduce((sum, v) => sum + v.montantTotal, 0);
-    this.beneficeTotal = 0;
-
-    for (const vente of ventesActives) {
-      if (vente.produits && vente.produits.length > 0) {
-        for (const produit of vente.produits) {
-          const produitId = produit.produitId;
-          const produitComplet = this.produits.find(p => p.id === produitId);
-          if (produitComplet && produitComplet.prixAchat) {
-            const beneficeProduit = (produit.prixUnitaire - produitComplet.prixAchat) * produit.quantite;
-            this.beneficeTotal += beneficeProduit;
-          }
-        }
-      }
-    }
+    this.beneficeTotal = ventesActives.reduce((sum, v) => sum + (v.beneficeTotal || 0), 0);
 
     this.margeMoyenne = this.chiffreAffaireTotal > 0 ? (this.beneficeTotal / this.chiffreAffaireTotal) * 100 : 0;
 
@@ -488,18 +519,7 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
     const reglementsCreditJour = this.statistiques?.reglementsDuJour || 0;
     this.chiffreAffaireJour = caComptant + reglementsCreditJour;
 
-    this.beneficeJour = 0;
-    for (const vente of ventesComptantAujourdhui) {
-      if (vente.produits && vente.produits.length > 0) {
-        for (const produit of vente.produits) {
-          const produitId = produit.produitId;
-          const produitComplet = this.produits.find(p => p.id === produitId);
-          if (produitComplet && produitComplet.prixAchat) {
-            this.beneficeJour += (produit.prixUnitaire - produitComplet.prixAchat) * produit.quantite;
-          }
-        }
-      }
-    }
+    this.beneficeJour = ventesComptantAujourdhui.reduce((sum, v) => sum + (v.beneficeTotal || 0), 0);
 
     this.margeJour = this.chiffreAffaireJour > 0 ? (this.beneficeJour / this.chiffreAffaireJour) * 100 : 0;
 
@@ -989,6 +1009,7 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
   // ==================== CRÉATION DE VENTES ====================
 
   createVente(): void {
+    if (this.isLoading) return;
     if (!this.validateVenteForm(false)) return;
 
     const total = this.calculerTotalAvecRemiseGlobale();
@@ -1001,7 +1022,7 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
       cancelButtonText: 'Annuler',
       confirmButtonColor: '#198754',
       cancelButtonColor: '#6c757d'
-    }).then(result => {
+    }).then(async result => {
       if (!result.isConfirmed) return;
 
       this.prepareRemises(false);
@@ -1011,18 +1032,28 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
       this.errorMessage = '';
       this.cdr.detectChanges();
 
+      if (!this.offlineService.isOnline()) {
+        await this.queueVenteHorsLigne({ ...this.venteForm }, 'CREATE_VENTE');
+        return;
+      }
+
       this.venteService.createVente(this.venteForm).subscribe({
         next: (response: any) => {
           this.handleVenteSuccess(response, 'comptant');
         },
-        error: (error: Error) => {
-          this.handleVenteError(error);
+        error: async (error: Error) => {
+          if (this.isErreurReseau(error)) {
+            await this.queueVenteHorsLigne({ ...this.venteForm }, 'CREATE_VENTE');
+          } else {
+            this.handleVenteError(error);
+          }
         }
       });
     });
   }
 
   createVenteCredit(): void {
+    if (this.isLoading) return;
     if (!this.clientSelectionne) {
       this.errorMessage = 'Veuillez sélectionner un client';
       this.cdr.detectChanges();
@@ -1047,7 +1078,7 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
       cancelButtonText: 'Annuler',
       confirmButtonColor: '#0d6efd',
       cancelButtonColor: '#6c757d'
-    }).then(result => {
+    }).then(async result => {
       if (!result.isConfirmed) return;
 
       this.prepareRemises(true);
@@ -1058,12 +1089,21 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
       this.errorMessage = '';
       this.cdr.detectChanges();
 
+      if (!this.offlineService.isOnline()) {
+        await this.queueVenteHorsLigne({ ...this.creditForm }, 'CREATE_CREDIT');
+        return;
+      }
+
       this.venteService.createVenteCredit(this.creditForm).subscribe({
         next: (response: any) => {
           this.handleVenteSuccess(response, 'crédit');
         },
-        error: (error: Error) => {
-          this.handleVenteError(error);
+        error: async (error: Error) => {
+          if (this.isErreurReseau(error)) {
+            await this.queueVenteHorsLigne({ ...this.creditForm }, 'CREATE_CREDIT');
+          } else {
+            this.handleVenteError(error);
+          }
         }
       });
     });
@@ -1779,6 +1819,33 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
     });
   }
 
+  /** Détecte une erreur réseau (pas de connexion au serveur), par opposition à une erreur métier (stock, validation...) */
+  private isErreurReseau(error: Error): boolean {
+    return error?.message === 'Impossible de se connecter au serveur';
+  }
+
+  /** Met la vente en file d'attente locale pour synchronisation au retour de la connexion */
+  private async queueVenteHorsLigne(payload: any, type: 'CREATE_VENTE' | 'CREATE_CREDIT'): Promise<void> {
+    await this.offlineService.ajouterOperation({
+      type,
+      payload: JSON.stringify(payload),
+      createdAt: Date.now()
+    });
+
+    this.showNewVenteModal = false;
+    this.showNewVenteCreditModal = false;
+    this.resetForms();
+    this.isLoading = false;
+    this.cdr.detectChanges();
+
+    Swal.fire({
+      icon: 'info',
+      title: 'Vente enregistrée hors ligne',
+      text: 'Pas de connexion au serveur : la vente a été mise en attente et sera synchronisée automatiquement au retour de la connexion.',
+      confirmButtonColor: '#0d6efd'
+    });
+  }
+
   // ==================== GESTION DES REMISES ====================
 
   toggleRemiseLigne(index: number): void {
@@ -1939,7 +2006,9 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
         filtered = filtered.filter(v => !v.annulee);
       }
       if (!this.showRetournees) {
-        filtered = filtered.filter(v => !v.estRetourne);
+        // Un retour partiel laisse la vente active (reste des articles / solde) :
+        // seule une vente ENTIÈREMENT retournée doit disparaître par défaut.
+        filtered = filtered.filter(v => !v.estRetourne || v.retourPartiel);
       }
       if (this.typeVenteFilter === 'COMPTANT') {
         filtered = filtered.filter(v => !v.estCredit);
@@ -2021,8 +2090,12 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   applyFilters(): void {
-    this.currentPage = 1;
-    this.cdr.detectChanges();
+    // Le chargement par défaut ne contient que les ventes du jour ; dès qu'un
+    // filtre est utilisé on charge l'historique complet une seule fois.
+    this.chargerToutSiBesoin(() => {
+      this.currentPage = 1;
+      this.cdr.detectChanges();
+    });
   }
 
   resetFilters(): void {
@@ -2034,8 +2107,8 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
     this.dateFin = '';
     this.heureDebut = '';
     this.heureFin = '';
-    this.showTodayOnly = false;
     this.currentPage = 1;
+    // Revenir au comportement par défaut : ventes du jour seulement.
     this.loadData();
     this.cdr.detectChanges();
   }
@@ -2417,7 +2490,7 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
 
   getVenteStatusBadgeClass(vente: VenteMap): string {
     if (vente.annulee) return 'bg-secondary';
-    if (vente.estRetourne) return 'bg-dark';
+    if (vente.estRetourne) return vente.retourPartiel ? 'bg-warning text-dark' : 'bg-dark';
     if (!vente.estCredit) return 'bg-success';
     if (vente.creditRegle) return 'bg-info';
     if (this.isCreditEnRetard(vente)) return 'bg-danger';
@@ -2426,7 +2499,7 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
 
   getVenteStatusLabel(vente: VenteMap): string {
     if (vente.annulee) return 'Annulée';
-    if (vente.estRetourne) return 'Retourné';
+    if (vente.estRetourne) return vente.retourPartiel ? 'Retour partiel' : 'Retourné';
     if (!vente.estCredit) return 'Payé';
     if (vente.creditRegle) return 'Réglé';
     if (this.isCreditEnRetard(vente)) return 'En retard';
@@ -3378,7 +3451,7 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
       prixUnitaire: p.prixApresRemise || p.prixUnitaire || p.prixVente || 0,
       quantiteMax: p.quantite || 1,
       quantiteRetournee: p.quantite || 1,
-      selected: true
+      selected: false
     }));
     this.showRetourVenteModal = true;
   }
@@ -3406,10 +3479,14 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
 
     const montantRetour = this.totalRetourVente;
     const numVente = this.selectedVentePourRetour!.numeroVente;
+    const estCredit = !!this.selectedVentePourRetour?.estCredit;
+    const impactLabel = estCredit
+      ? 'Le stock sera mis à jour et le solde restant à payer sera réduit.'
+      : 'Le stock et la caisse seront mis à jour.';
 
     Swal.fire({
       title: 'Confirmer le retour ?',
-      html: `Retour de <strong>${this.formatPrice(montantRetour)}</strong> pour la vente <strong>${numVente}</strong>.<br>Le stock et la caisse seront mis à jour.`,
+      html: `Retour de <strong>${this.formatPrice(montantRetour)}</strong> pour la vente <strong>${numVente}</strong>.<br>${impactLabel}`,
       icon: 'question',
       showCancelButton: true,
       confirmButtonText: 'Valider le retour',
@@ -3425,7 +3502,10 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
           this.isLoading = false;
           this.loadData();
           this.loadProduits();
-          Swal.fire({ icon: 'success', title: 'Retour enregistré', text: `Remboursement de ${this.formatPrice(montantRetour)} effectué.`, timer: 3000, timerProgressBar: true, confirmButtonColor: '#198754' });
+          const successText = estCredit
+            ? `Solde réduit de ${this.formatPrice(montantRetour)}.`
+            : `Remboursement de ${this.formatPrice(montantRetour)} effectué.`;
+          Swal.fire({ icon: 'success', title: 'Retour enregistré', text: successText, timer: 3000, timerProgressBar: true, confirmButtonColor: '#198754' });
         },
         error: (err) => {
           this.errorMessage = err?.error?.message || err?.message || 'Erreur lors du retour';

@@ -212,8 +212,10 @@ export class InventaireComponent implements OnInit {
     // Charger les statistiques
     this.loadStatistiques();
 
-    // Charger tous les mouvements récents
-    this.loadTousMouvements();
+    // Par défaut, ne charger que les mouvements du jour pour ne pas ralentir
+    // l'ouverture de la page. L'utilisateur peut élargir via les boutons
+    // Semaine/Mois/Année/Tout ou une période personnalisée.
+    this.chargerParPeriode('jour');
   }
 
   /**

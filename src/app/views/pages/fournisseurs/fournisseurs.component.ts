@@ -126,7 +126,7 @@ export class FournisseursComponent implements OnInit {
   }
 
   get totalPayeFiltres(): number {
-    return this.achatsFiltres.reduce((s, a) => s + (a.montantPaye || 0), 0);
+    return this.achatsFiltres.filter(a => a.statut !== 'ANNULE').reduce((s, a) => s + (a.montantPaye || 0), 0);
   }
 
   get totalRestantFiltres(): number {
@@ -137,8 +137,21 @@ export class FournisseursComponent implements OnInit {
     return this.fournisseurs.reduce((s, f) => s + (f.solde || 0), 0);
   }
 
+  get utilisateurActuelNom(): string {
+    return this.authService?.getDisplayName() || 'Utilisateur';
+  }
+
   get fournisseursSolde(): Fournisseur[] {
     return this.fournisseurs.filter(f => (f.solde || 0) > 0).sort((a, b) => (b.solde || 0) - (a.solde || 0));
+  }
+
+  getPaiementAuteur(p: any): string {
+    return p?.utilisateurNom
+      || p?.utilisateur?.nomComplet
+      || p?.utilisateur?.username
+      || p?.nomUtilisateur
+      || p?.utilisateurName
+      || this.utilisateurActuelNom;
   }
 
   get totalAchatsGlobal(): number {
@@ -222,6 +235,14 @@ export class FournisseursComponent implements OnInit {
       next: data => this.achatsNonPayes = data,
       error: () => this.achatsNonPayes = []
     });
+  }
+
+  getPayerLabel(payment: any): string {
+    return payment?.utilisateurNom
+      || payment?.utilisateur?.nomComplet
+      || payment?.utilisateur?.username
+      || payment?.effectuePar
+      || this.authService.getDisplayName();
   }
 
   // ══════════════════════════════════════════
@@ -401,7 +422,7 @@ export class FournisseursComponent implements OnInit {
 
   /**
    * Calcule, pour chaque ligne dont le prix d'achat saisi diffère du prix d'achat actuel du produit,
-   * le nouveau prix de vente proposé via le coût moyen pondéré (CUMP) :
+   * le nouveau prix d'achat proposé via le coût moyen pondéré (CUMP) :
    * (stockActuel × ancienPrixAchat + quantitéEntrée × prixAchatEntrée) / (stockActuel + quantitéEntrée)
    * Si le stock actuel est à 0, le nouveau prix = simplement le prix d'achat de l'entrée.
    * (Ce formulaire ne gère que des produits existants du catalogue.)
@@ -455,7 +476,7 @@ export class FournisseursComponent implements OnInit {
         Stock actuel: ${p.stockActuel} × ${this.fmt(p.ancienPrix)} = <strong>${this.fmt(p.stockActuel * p.ancienPrix)}</strong><br>
         Entrée: ${p.quantiteEntree} × ${this.fmt(p.prixEntree)} = <strong>${this.fmt(p.quantiteEntree * p.prixEntree)}</strong><br>
         <span style="color:#6b7280;font-size:0.85em;">Formule: (${p.stockActuel} × ${this.fmt(p.ancienPrix)} + ${p.quantiteEntree} × ${this.fmt(p.prixEntree)}) / (${p.stockActuel} + ${p.quantiteEntree})</span><br>
-        <span style="color:#198754;">➜ Nouveau prix de vente proposé: <strong>${this.fmt(p.nouveauPrix)}</strong></span>
+        <span style="color:#198754;">➜ Nouveau prix d'achat proposé: <strong>${this.fmt(p.nouveauPrix)}</strong></span>
       </div>
     `).join('');
 
@@ -464,13 +485,13 @@ export class FournisseursComponent implements OnInit {
       html: `
         <div class="text-start">
           <p>Le prix d'achat saisi diffère du prix actuel pour ${propositions.length > 1 ? 'ces produits' : 'ce produit'}.
-          Voulez-vous recalculer le prix de vente avec le coût moyen pondéré (CUMP) ?</p>
+          Voulez-vous recalculer le prix d'achat (coût) avec le coût moyen pondéré (CUMP) ?</p>
           ${lignesHtml}
         </div>
       `,
       icon: 'question',
       showCancelButton: true,
-      confirmButtonText: '✅ Oui, recalculer le prix de vente',
+      confirmButtonText: '✅ Oui, recalculer le prix d\'achat',
       cancelButtonText: '❌ Non, garder le prix actuel',
       confirmButtonColor: '#198754',
       cancelButtonColor: '#6c757d',
@@ -490,7 +511,7 @@ export class FournisseursComponent implements OnInit {
     if (propositionsCUMP.length > 0) {
       this.demanderConfirmationCUMP(propositionsCUMP).then(accepte => {
         propositionsCUMP.forEach(p => {
-          p.ligne.nouveauPrixVente = accepte ? p.nouveauPrix : undefined;
+          p.ligne.nouveauPrixAchat = accepte ? p.nouveauPrix : undefined;
         });
         this.soumettreAchat();
       });
@@ -545,7 +566,14 @@ export class FournisseursComponent implements OnInit {
       Swal.fire({ icon: 'warning', title: 'Compte bancaire requis', text: 'Choisissez un compte bancaire pour ce paiement.' }); return;
     }
     this.isSaving = true;
-    this.productService.payerFournisseur({ ...this.paiementForm, utilisateurId: this.authService.getUserId() || undefined }).subscribe({
+    // Trace qui a effectué le paiement dans l'observation — aucune colonne
+    // "utilisateur" dédiée dans le tableau des paiements, donc on l'ajoute
+    // au texte affiché dans la colonne Observation.
+    const auteur = `Payé par ${this.authService.getDisplayName()}`;
+    const observation = this.paiementForm.observation?.trim()
+      ? `${auteur} — ${this.paiementForm.observation.trim()}`
+      : auteur;
+    this.productService.payerFournisseur({ ...this.paiementForm, observation, utilisateurId: this.authService.getUserId() || undefined }).subscribe({
       next: () => {
         this.isSaving = false;
         this.showPaiementModal = false;
