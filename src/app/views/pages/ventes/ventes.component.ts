@@ -242,6 +242,7 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
     niveauNom?: string;
     niveauPrixAchat?: number;
     niveauFacteurTotal?: number;
+    niveauStockMax?: number;
   }> = [];
 
   // Conditionnement niveaux
@@ -1370,12 +1371,17 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
   getNiveauStockDisplay(niveau: ProduitNiveau): { label: string; color: string } {
     const stock = niveau.stock || 0;
     if (stock > 0) return { label: `Stock: ${stock}`, color: '#16a34a' };
-    const parent = this.niveauxDisponibles.find(n => n.id === niveau.parentId);
-    if (parent && (parent.stock || 0) > 0) return { label: 'Disponible via cascade', color: '#d97706' };
+    const disponible = niveau.id != null ? this.disponibleNiveau(this.niveauxDisponibles, niveau.id) : 0;
+    if (disponible > 0) return { label: `Disponible via cascade (${disponible})`, color: '#d97706' };
     return { label: 'Rupture', color: '#dc2626' };
   }
 
   private addProduitAvecNiveau(produit: Produit, niveau: ProduitNiveau, facteurTotal: number): void {
+    // Cascade récursive jusqu'à la racine (pas seulement le parent direct) —
+    // sinon on bloque l'ajout au panier alors que le backend pourrait
+    // décomposer plusieurs crans (ex: Carton → Paquet → Pièce d'un coup).
+    const niveauStockMax = niveau.id != null ? this.disponibleNiveau(this.niveauxDisponibles, niveau.id) : (niveau.stock ?? 0);
+
     const existingIndex = this.produitsPanier.findIndex(p => p.id === produit.id && p.niveauId === niveau.id);
     if (existingIndex >= 0) {
       this.produitsPanier[existingIndex].quantite++;
@@ -1392,10 +1398,30 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
       prixAchat: niveau.prixAchat, prixVente: niveau.prixVente, prixModifie: niveau.prixVente,
       quantite: 1, quantiteDisponible: produit.quantite,
       codeBarre: produit.codeBarre, modifierPrix: false, categorie: produit.categorie,
-      niveauId: niveau.id, niveauNom: niveau.nom, niveauPrixAchat: niveau.prixAchat, niveauFacteurTotal: facteurTotal
+      niveauId: niveau.id, niveauNom: niveau.nom, niveauPrixAchat: niveau.prixAchat, niveauFacteurTotal: facteurTotal,
+      niveauStockMax
     });
     this.searchProduit = '';
     this.cdr.detectChanges();
+  }
+
+  /**
+   * Stock réellement disponible pour un niveau, en cascadant récursivement
+   * depuis ses parents jusqu'à la racine (produit principal) — miroir exact
+   * de calculerDisponibleNiveau() côté backend (VenteServiceImpl.java).
+   */
+  private disponibleNiveau(niveaux: ProduitNiveau[], niveauId: number): number {
+    const map = new Map<number, ProduitNiveau>(niveaux.filter(n => n.id != null).map(n => [n.id!, n]));
+    const calc = (n: ProduitNiveau): number => {
+      const direct = n.stock ?? 0;
+      if (n.parentId == null) return direct;
+      const parent = map.get(n.parentId);
+      if (!parent) return direct;
+      const facteur = n.facteur > 0 ? n.facteur : 1;
+      return direct + calc(parent) * facteur;
+    };
+    const target = map.get(niveauId);
+    return target ? calc(target) : 0;
   }
 
   addProduitSansNiveau(produit: Produit): void {
@@ -1715,6 +1741,16 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
   getMaxQuantite(index: number): number {
     const produitPanier = this.produitsPanier[index];
     if (!produitPanier) return 0;
+
+    // Ligne vendue par niveau (conditionnement) : le stock du produit
+    // (quantite) est exprimé en unité de base, pas dans l'unité du niveau
+    // vendu — il faut utiliser le stock cascade propre à ce niveau,
+    // calculé et figé à l'ajout au panier (voir addProduitAvecNiveau).
+    if (produitPanier.niveauId != null && produitPanier.niveauStockMax != null) {
+      return this.showModifierVenteModal
+        ? Math.max(produitPanier.quantite, produitPanier.niveauStockMax)
+        : produitPanier.niveauStockMax;
+    }
 
     const produitComplet = this.produits.find(p => p.id === produitPanier.id);
     const stockDisponible = produitComplet?.quantite ?? produitPanier.quantiteDisponible ?? 0;
