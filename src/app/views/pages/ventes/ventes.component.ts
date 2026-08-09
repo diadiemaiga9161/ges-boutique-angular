@@ -255,6 +255,7 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
   produitEnAttente: Produit | null = null;
   niveauxDisponibles: ProduitNiveau[] = [];
   loadingNiveaux: boolean = false;
+  quantitePrincipale: number = 0; // stock du produit principal pas encore décomposé (cartons fermés)
 
   searchProduit: string = '';
 
@@ -1348,11 +1349,12 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     this.loadingNiveaux = true;
-    this.niveauService.getNiveaux(produit.id).subscribe({
-      next: niveaux => {
+    this.niveauService.getNiveauxEtPrincipal(produit.id).subscribe({
+      next: ({ niveaux, quantitePrincipale }) => {
         this.loadingNiveaux = false;
         if (niveaux.length > 0) {
           this.niveauxDisponibles = niveaux;
+          this.quantitePrincipale = quantitePrincipale;
           this.produitEnAttente = produit;
           this.showNiveauModal = true;
           this.cdr.detectChanges();
@@ -1422,10 +1424,14 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
     const map = new Map<number, ProduitNiveau>(niveaux.filter(n => n.id != null).map(n => [n.id!, n]));
     const calc = (n: ProduitNiveau): number => {
       const direct = n.stock ?? 0;
-      if (n.parentId == null) return direct;
+      const facteur = n.facteur > 0 ? n.facteur : 1;
+      if (n.parentId == null) {
+        // Niveau racine : son parent implicite est le produit principal
+        // (quantitePrincipale = stock pas encore décomposé, ex: cartons fermés).
+        return direct + this.quantitePrincipale * facteur;
+      }
       const parent = map.get(n.parentId);
       if (!parent) return direct;
-      const facteur = n.facteur > 0 ? n.facteur : 1;
       return direct + calc(parent) * facteur;
     };
     const target = map.get(niveauId);
