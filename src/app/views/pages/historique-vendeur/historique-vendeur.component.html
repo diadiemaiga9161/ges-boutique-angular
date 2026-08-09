@@ -1,0 +1,95 @@
+<div class="container-fluid py-4 app-page">
+
+  <!-- En-tête -->
+  <div class="app-page-header mb-4">
+    <div class="app-page-header-left">
+      <div class="app-page-icon"><i class="i-Bar-Chart"></i></div>
+      <div>
+        <h1 class="app-page-title">Historique des ventes par vendeur</h1>
+        <p class="app-page-subtitle">Ventes comptant et à crédit (montant réellement versé) par jour</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="hv-filters">
+    <label>
+      Du
+      <input type="date" [(ngModel)]="dateDebut" (change)="charger()" />
+    </label>
+    <label>
+      Au
+      <input type="date" [(ngModel)]="dateFin" (change)="charger()" />
+    </label>
+  </div>
+
+  <div class="hv-loading" *ngIf="isLoading">Chargement...</div>
+  <div class="hv-error" *ngIf="errorMessage && !isLoading">{{ errorMessage }}</div>
+
+  <div class="hv-body" *ngIf="!isLoading && !errorMessage">
+
+    <div class="hv-empty" *ngIf="!vendeurs.length">
+      Aucune vente trouvée sur cette période.
+    </div>
+
+    <div class="hv-layout" *ngIf="vendeurs.length">
+
+      <!-- Liste des vendeurs -->
+      <div class="hv-vendeurs">
+        <button
+          type="button"
+          class="hv-vendeur-card"
+          *ngFor="let v of vendeurs"
+          [class.active]="vendeurSelectionne?.vendeurId === v.vendeurId"
+          (click)="selectionnerVendeur(v)">
+          <div class="hv-vendeur-nom">{{ v.vendeurNom }}</div>
+          <div class="hv-vendeur-ca">{{ formatPrice(v.caTotal) }}</div>
+          <div class="hv-vendeur-meta">{{ v.nbVentesTotal }} vente(s)</div>
+        </button>
+      </div>
+
+      <!-- Détail du vendeur sélectionné -->
+      <div class="hv-detail" *ngIf="vendeurSelectionne as v">
+        <div class="hv-summary">
+          <div class="hv-summary-card">
+            <span class="hv-summary-label">Ventes comptant</span>
+            <span class="hv-summary-value">{{ v.nbVentesComptant }}</span>
+            <span class="hv-summary-sub">{{ formatPrice(v.caComptant) }}</span>
+          </div>
+          <div class="hv-summary-card">
+            <span class="hv-summary-label">Ventes crédit</span>
+            <span class="hv-summary-value">{{ v.nbVentesCredit }}</span>
+            <span class="hv-summary-sub">{{ formatPrice(v.caCredit) }}</span>
+          </div>
+          <div class="hv-summary-card hv-summary-card--total">
+            <span class="hv-summary-label">Total période</span>
+            <span class="hv-summary-value">{{ v.nbVentesTotal }}</span>
+            <span class="hv-summary-sub">{{ formatPrice(v.caTotal) }}</span>
+          </div>
+        </div>
+
+        <table class="hv-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Comptant</th>
+              <th>CA comptant</th>
+              <th>Crédit</th>
+              <th>Montant crédit</th>
+              <th>Total jour</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let j of v.jours">
+              <td>{{ formatDate(j.date) }}</td>
+              <td>{{ j.nbVentesComptant }}</td>
+              <td>{{ formatPrice(j.caComptant) }}</td>
+              <td>{{ j.nbVentesCredit }}</td>
+              <td>{{ formatPrice(j.caCredit) }}</td>
+              <td class="hv-table-total">{{ formatPrice(j.caTotal) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

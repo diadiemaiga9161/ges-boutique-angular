@@ -1,13 +1,18 @@
-<div class="main-content-wrap d-flex flex-column">
+<div class="container-fluid py-4 app-page">
 
-  <!-- HEADER -->
-  <div class="breadcrumb d-flex align-items-center mb-3">
-    <h1 class="page-title m-0"><i class="i-Arrow-Right text-primary me-2"></i>{{ 'TRANSFERS.TITLE' | translate }}</h1>
-    <div class="ms-auto d-flex gap-2">
-      <button class="btn btn-outline-secondary btn-sm" (click)="afficherFormPartenaire ? afficherFormPartenaire=false : nouveauPartenaire()">
+  <!-- En-tête -->
+  <div class="app-page-header mb-4">
+    <div class="app-page-header-left">
+      <div class="app-page-icon"><i class="i-Arrow-Right"></i></div>
+      <div>
+        <h1 class="app-page-title">{{ 'TRANSFERS.TITLE' | translate }}</h1>
+      </div>
+    </div>
+    <div class="app-page-header-actions">
+      <button class="btn btn-outline-secondary" (click)="afficherFormPartenaire ? afficherFormPartenaire=false : nouveauPartenaire()">
         <i class="i-Shop-2 me-1"></i> Boutiques partenaires
       </button>
-      <button class="btn btn-primary btn-sm" (click)="nouveauTransfert()">
+      <button class="btn btn-primary" (click)="nouveauTransfert()">
         <i class="i-Add me-1"></i> {{ 'TRANSFERS.NEW' | translate }}
       </button>
     </div>
@@ -240,9 +245,9 @@
     </div>
   </div>
 
-  <!-- MODAL DÉTAIL -->
-  <div class="modal-backdrop-custom" *ngIf="transfertDetail" (click)="transfertDetail=null"></div>
-  <div class="modal-panel" *ngIf="transfertDetail">
+  <!-- MODALE DÉTAIL -->
+  <div class="modal-overlay" *ngIf="transfertDetail" (click)="transfertDetail=null">
+    <div class="modal-panel" (click)="$event.stopPropagation()">
     <div class="modal-panel-header">
       <strong>{{ transfertDetail.numeroTransfert }}</strong>
       <span class="badge bg-{{ STATUT_COLORS[transfertDetail.statut] }} ms-2">{{ STATUT_LABELS[transfertDetail.statut] }}</span>
@@ -349,6 +354,7 @@
         </table>
         <p *ngIf="paiementsTransfert.length === 0" class="text-muted small text-center py-2">Aucun paiement enregistré</p>
       </div>
+    </div>
     </div>
   </div>
 

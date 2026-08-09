@@ -1,13 +1,16 @@
-<div class="main-content-wrap d-flex flex-column">
+<div class="container-fluid py-4 app-page">
 
-  <!-- HEADER -->
-  <div class="breadcrumb d-flex align-items-center mb-3">
-    <h1 class="page-title m-0">
-      <i class="i-Money-2 text-success me-2"></i> {{ 'BENEFITS.TITLE' | translate }}
-    </h1>
-    <div class="ms-auto d-flex gap-2 align-items-center">
-      <button class="btn btn-outline-danger btn-sm" (click)="exporterPDF()" [disabled]="!data || isLoading">
-        <i class="i-File-PDF"></i> {{ 'COMMON.DOWNLOAD' | translate }} PDF
+  <!-- En-tête -->
+  <div class="app-page-header mb-4">
+    <div class="app-page-header-left">
+      <div class="app-page-icon"><i class="i-Money-2"></i></div>
+      <div>
+        <h1 class="app-page-title">{{ 'BENEFITS.TITLE' | translate }}</h1>
+      </div>
+    </div>
+    <div class="app-page-header-actions">
+      <button class="btn btn-outline-secondary" (click)="exporterPDF()" [disabled]="!data || isLoading">
+        <i class="i-File-PDF me-1"></i> {{ 'COMMON.DOWNLOAD' | translate }} PDF
       </button>
     </div>
   </div>

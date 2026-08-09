@@ -1,20 +1,20 @@
-<div class="main-content-wrap d-flex flex-column">
-  <div class="breadcrumb">
-    <h1>{{ 'INVOICE_DESIGN.TITLE' | translate }}</h1>
-    <ul>
-      <li><a href="#">Tableau de bord</a></li>
-      <li>Design Factures</li>
-    </ul>
+<div class="container-fluid py-4 app-page">
+
+  <!-- En-tête -->
+  <div class="app-page-header mb-4">
+    <div class="app-page-header-left">
+      <div class="app-page-icon"><i class="i-Pen-2"></i></div>
+      <div>
+        <h1 class="app-page-title">{{ 'INVOICE_DESIGN.TITLE' | translate }}</h1>
+        <p class="app-page-subtitle">{{ 'INVOICE_DESIGN.SUBTITLE' | translate }}</p>
+      </div>
+    </div>
   </div>
 
   <div *ngIf="saved" class="alert alert-success d-flex align-items-center gap-2 mb-3">
     <i class="i-Check-2 text-success fs-5"></i>
     {{ 'INVENTORY.SAVED' | translate }}
   </div>
-
-  <p class="text-muted mb-4">
-    {{ 'INVOICE_DESIGN.SUBTITLE' | translate }}
-  </p>
 
   <div class="row">
 
