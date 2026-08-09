@@ -1313,15 +1313,14 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   /**
-   * Retourne le stock à afficher dans la liste de sélection produits.
-   * Si le produit possède des niveaux de conditionnement (chargés par l'API),
-   * on affiche la somme des stocks de ces niveaux.
-   * Sinon on retourne le stock principal (quantite).
+   * Retourne le stock à afficher dans la liste de sélection produits, en
+   * unité de base (ex: pièces). produit.quantite est déjà correctement
+   * calculé côté backend (syncProduitQuantite : somme des stocks de chaque
+   * niveau pondérée par son facteur vers l'unité de base) — on ne doit PAS
+   * re-sommer les stocks bruts des niveaux ici (ancien code : Carton=2 +
+   * Paquet=0 + Pièce=0 affichait "Stock: 2" au lieu de "Stock: 2400").
    */
   getStockAfficheProduit(produit: Produit): number {
-    if (produit.niveaux && produit.niveaux.length > 0) {
-      return produit.niveaux.reduce((sum, n) => sum + (n.stock || 0), 0);
-    }
     return produit.quantite || 0;
   }
 
