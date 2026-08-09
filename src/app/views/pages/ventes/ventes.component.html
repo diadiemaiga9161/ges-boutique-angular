@@ -79,9 +79,13 @@
       <button class="btn btn-primary" (click)="openNewVenteModal()">
         <i class="fa fa-plus me-1"></i><span class="d-none d-sm-inline">Nouvelle </span>Vente
       </button>
+      <!-- Fusionné dans la même modale que "Nouvelle Vente" (interrupteur
+           "Vente à crédit" à l'intérieur, comme sur Ionic). Ancien bouton
+           séparé gardé en commentaire au cas où :
       <button class="btn btn-warning" (click)="openNewVenteCreditModal()">
         <i class="fa fa-credit-card me-1"></i><span class="d-none d-sm-inline">Vente à </span>Crédit
       </button>
+      -->
       <!-- <div class="dropdown d-inline-block" *ngIf="isAdmin">
         <button class="btn btn-secondary" type="button" (click)="toggleOptionsDropdown()">
           <i class="fa fa-cog me-1"></i> Options
@@ -574,8 +578,330 @@
   </div>
 </div>
 
-<!-- ==================== MODALE NOUVELLE VENTE (COMPTANT) ==================== -->
-<div class="modal fade show" [class.d-block]="showNewVenteModal" *ngIf="showNewVenteModal" 
+<!-- ==================== MODALE NOUVELLE VENTE (comptant + crédit unifiés, comme sur Ionic) ==================== -->
+<div class="modal fade show" [class.d-block]="showNewVenteModal" *ngIf="showNewVenteModal"
+     style="background-color: rgba(0,0,0,0.5); z-index: 1050;" tabindex="-1" (click)="closeAllModals()">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" (click)="$event.stopPropagation()">
+    <div class="modal-content">
+      <div class="modal-header py-2 text-white" [class.bg-primary]="!nouvelleVenteEstCredit" [class.bg-warning]="nouvelleVenteEstCredit">
+        <h5 class="modal-title">
+          <i class="fa" [class.fa-plus-circle]="!nouvelleVenteEstCredit" [class.fa-credit-card]="nouvelleVenteEstCredit"></i>
+          {{ nouvelleVenteEstCredit ? ' Vente à Crédit' : ' Nouvelle Vente' }}
+        </h5>
+        <button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button>
+      </div>
+      <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+        <div class="alert alert-info py-2 mb-3">
+          <i class="fa fa-user me-2"></i> Vendeur: <strong>{{ currentUser?.nomComplet || 'N/A' }}</strong>
+        </div>
+
+        <!-- Bascule Comptant / Crédit -->
+        <div class="d-flex align-items-center justify-content-between border rounded p-2 mb-3">
+          <label class="mb-0" for="toggleVenteCredit">
+            <i class="fa fa-credit-card me-1 text-warning"></i> <strong>Vente à crédit</strong>
+            <div class="small text-muted">Le client paiera plus tard</div>
+          </label>
+          <div class="form-check form-switch mb-0">
+            <input class="form-check-input" style="width: 2.5em; height: 1.4em;" type="checkbox" role="switch"
+                   id="toggleVenteCredit" [(ngModel)]="nouvelleVenteEstCredit">
+          </div>
+        </div>
+
+        <!-- Client — mode comptant -->
+        <div class="card mb-3" *ngIf="!nouvelleVenteEstCredit">
+          <div class="card-header bg-secondary text-white py-2">
+            <h6 class="mb-0"><i class="fa fa-user me-2"></i> Client</h6>
+          </div>
+          <div class="card-body py-2">
+            <div class="row g-2">
+              <div class="col-md-4">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="clientType" [(ngModel)]="venteForm.clientDivers" [value]="true" id="clientDivers">
+                  <label class="form-check-label" for="clientDivers">Client divers</label>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="clientType" [(ngModel)]="venteForm.clientDivers" [value]="false" id="clientExistant">
+                  <label class="form-check-label" for="clientExistant">Client existant</label>
+                </div>
+              </div>
+              <div class="col-md-4" *ngIf="!venteForm.clientDivers">
+                <button class="btn btn-outline-primary btn-sm w-100" (click)="openClientSelectorModal()">
+                  <i class="fa fa-search me-1"></i> Sélectionner client
+                </button>
+              </div>
+            </div>
+            <div *ngIf="!venteForm.clientDivers && clientSelectionne" class="mt-2 alert alert-success py-1 mb-0 small">
+              <i class="fa fa-check-circle me-1"></i> {{ clientSelectionne.nom }} {{ clientSelectionne.prenom }} ({{ clientSelectionne.numeroTelephone }})
+            </div>
+          </div>
+        </div>
+
+        <!-- Client — mode crédit -->
+        <div class="card border-warning mb-3" *ngIf="nouvelleVenteEstCredit">
+          <div class="card-header bg-warning text-white py-2">
+            <h6 class="mb-0"><i class="fa fa-user me-2"></i> Client (obligatoire)</h6>
+          </div>
+          <div class="card-body py-2">
+            <div class="row g-2">
+              <div class="col-md-8">
+                <button class="btn btn-outline-primary btn-sm w-100" (click)="openClientSelectorModal()">
+                  <i class="fa fa-search me-1"></i> Sélectionner un client
+                </button>
+              </div>
+            </div>
+            <div *ngIf="clientSelectionne" class="mt-2 alert alert-success py-1 mb-0 small">
+              <i class="fa fa-check-circle me-1"></i> Client sélectionné: <strong>{{ clientSelectionne.nom }} {{ clientSelectionne.prenom }}</strong> ({{ clientSelectionne.numeroTelephone }})
+            </div>
+            <div class="row g-2 mt-2" *ngIf="clientSelectionne">
+              <div class="col-md-6">
+                <label class="form-label small mb-1">Date d'échéance *</label>
+                <input type="date" class="form-control form-control-sm" [(ngModel)]="creditForm.dateEcheance" [min]="today" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small mb-1">Acompte (optionnel)</label>
+                <input type="number" class="form-control form-control-sm" [(ngModel)]="creditForm.montantVerse" min="0">
+              </div>
+
+              <!-- AVANCE CLIENT -->
+              <div class="col-12" *ngIf="soldeAvanceClient > 0 || isLoadingAvance">
+                <div class="alert alert-primary py-2 mb-0 small d-flex align-items-center justify-content-between flex-wrap gap-2">
+                  <div>
+                    <i class="fa fa-money me-1"></i>
+                    <span *ngIf="isLoadingAvance"><i class="fa fa-spinner fa-spin me-1"></i> Chargement avance...</span>
+                    <span *ngIf="!isLoadingAvance && soldeAvanceClient > 0">
+                      Ce client a une avance disponible de <strong>{{ formatPrice(soldeAvanceClient) }}</strong>
+                    </span>
+                  </div>
+                  <div class="form-check form-switch mb-0" *ngIf="!isLoadingAvance && soldeAvanceClient > 0">
+                    <input class="form-check-input" type="checkbox" id="utiliserAvanceSwitch"
+                      [(ngModel)]="utiliserAvance" name="utiliserAvance">
+                    <label class="form-check-label" for="utiliserAvanceSwitch">Utiliser l'avance</label>
+                  </div>
+                </div>
+                <div *ngIf="utiliserAvance && !isLoadingAvance" class="mt-2">
+                  <label class="form-label small mb-1">Montant de l'avance à utiliser</label>
+                  <div class="input-group input-group-sm">
+                    <input type="number" class="form-control" [(ngModel)]="montantAvanceAUtiliser" name="montantAvanceAUtiliser"
+                      [max]="soldeAvanceClient" min="0" placeholder="0">
+                    <span class="input-group-text">FCFA</span>
+                    <button type="button" class="btn btn-outline-primary btn-sm"
+                      (click)="montantAvanceAUtiliser = Math.min(soldeAvanceClient, calculerTotalAvecRemiseGlobale())">
+                      Tout utiliser
+                    </button>
+                  </div>
+                  <small class="text-muted">
+                    Max disponible: {{ formatPrice(soldeAvanceClient) }}
+                    <span *ngIf="montantAvanceAUtiliser > 0">
+                      | Reste à payer: {{ formatPrice(calculerTotalAvecRemiseGlobale() - (creditForm.montantVerse || 0) - montantAvanceAUtiliser) }}
+                    </span>
+                  </small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-7">
+            <h6 class="mb-2">Sélection des produits</h6>
+
+            <!-- Filtre par catégorie -->
+  <div class="input-group mb-2">
+    <span class="input-group-text bg-light"><i class="fa fa-tags"></i></span>
+    <select class="form-select" [(ngModel)]="selectedCategorieId" (change)="onCategorieChange()">
+      <option [ngValue]="null">Toutes les catégories</option>
+      <option *ngFor="let categorie of categories" [ngValue]="categorie.id">
+        {{ categorie.nom }}
+      </option>
+    </select>
+  </div>
+
+  <div class="input-group mb-2">
+    <span class="input-group-text"><i class="fa fa-search"></i></span>
+    <input type="text" class="form-control" placeholder="Rechercher un produit..." [(ngModel)]="searchProduit" id="searchProduitInput" (input)="onSearchProduitChange()">
+  </div>
+
+            <div class="produits-list border rounded" style="max-height: 350px; overflow-y: auto;">
+              <div *ngFor="let produit of filteredProduits" class="d-flex justify-content-between align-items-center p-2 border-bottom">
+                <div>
+                  <strong>{{ produit.nom }}</strong>
+                  <div class="small text-muted">
+                    {{ formatPrice(produit.prixVente) }} | Stock: {{ getStockAfficheProduit(produit) }}
+                    <span class="badge bg-secondary ms-1" *ngIf="produit.categorie?.nom">{{ produit.categorie?.nom }}</span>
+                  </div>
+                </div>
+                <button class="btn btn-sm btn-outline-primary" (click)="addProduitToVente(produit)" [disabled]="isProduitSansStock(produit)">
+                  <i class="fa fa-plus"></i> Ajouter
+                </button>
+              </div>
+              <div *ngIf="filteredProduits.length === 0" class="text-center text-muted p-3">
+                <i class="fa fa-box-open fa-2x mb-2 d-block"></i>
+                Aucun produit disponible
+              </div>
+            </div>
+          </div>
+          <div class="col-md-5">
+            <div class="card border-primary">
+              <div class="card-header bg-primary text-white py-2 d-flex justify-content-between align-items-center">
+                <h6 class="mb-0"><i class="fa fa-shopping-cart me-2"></i> Panier ({{ produitsPanier.length }})</h6>
+                <button class="btn btn-sm btn-light" (click)="resetForms()" title="Vider le panier">
+                  <i class="fa fa-trash"></i> Vider
+                </button>
+              </div>
+              <div class="card-body p-0">
+                <div style="max-height: 400px; overflow-y: auto;">
+                  <div *ngIf="produitsPanier.length === 0" class="text-center text-muted py-4">
+                    <i class="fa fa-shopping-basket fa-3x mb-2 opacity-50 d-block"></i>
+                    Aucun produit dans le panier
+                  </div>
+                  <div *ngFor="let produit of produitsPanier; let i = index" class="p-2 border-bottom">
+                    <div class="d-flex justify-content-between align-items-start">
+                      <div>
+                        <strong>{{ produit.nom }}</strong>
+                        <span *ngIf="produit.niveauNom" class="badge bg-primary ms-2" style="font-size:0.7rem">{{ produit.niveauNom }}</span>
+                        <div class="d-flex gap-2 mt-1">
+                          <div class="input-group input-group-sm" style="width: 150px;">
+                            <span class="input-group-text">Prix</span>
+                            <input type="number" class="form-control"
+                                   [value]="getPrixUnitaireActuel(i)"
+                                   (input)="onPrixChange(i, $event)"
+                                   step="100" min="0">
+                            <button class="btn btn-outline-secondary"
+                                    (click)="toggleModifierPrix(i)"
+                                    [class.btn-warning]="produit.modifierPrix"
+                                    type="button">
+                              <i class="fa fa-pencil"></i>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                      <button class="btn btn-sm btn-outline-danger" (click)="removeProduitFromVente(i)">
+                        <i class="fa fa-trash"></i>
+                      </button>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                      <div class="input-group input-group-sm w-auto">
+                        <button class="btn btn-outline-secondary" (click)="updateQuantite(i, produit.quantite - 1)">-</button>
+                        <input type="number" class="form-control text-center" style="width: 60px;" [value]="produit.quantite" (change)="onQuantiteChange(i, $event)" min="1">
+                        <button class="btn btn-outline-secondary" (click)="updateQuantite(i, produit.quantite + 1)">+</button>
+                      </div>
+                      <strong class="text-primary fs-5">{{ formatPrice(getPrixApresRemise(i) * produit.quantite) }}</strong>
+                    </div>
+                    <div class="small mt-1" [ngClass]="getBeneficeProduitColor(i)">
+                      {{ getBeneficeProduitLabel(i) }}: {{ formatPrice(Math.abs(getBeneficeProduit(i))) }}
+                      <span class="text-muted" *ngIf="produit.prixAchat > 0">
+                        | Prix d'achat: {{ formatPrice(produit.prixAchat) }}
+                      </span>
+                    </div>
+                    <div class="small text-danger mt-1" *ngIf="isProduitPanierEnPerte(i)">
+                      Prix saisi inferieur au prix d'achat.
+                    </div>
+                    <div class="mt-1">
+                      <button class="btn btn-sm btn-outline-warning" (click)="toggleRemiseLigne(i)">
+                        <i class="fa fa-tag"></i> {{ lignesAvecRemise.has(i) ? 'Supprimer remise' : 'Ajouter remise' }}
+                      </button>
+                      <div *ngIf="lignesAvecRemise.has(i)" class="mt-1">
+                        <div class="input-group input-group-sm" style="width: 180px;">
+                          <input type="number" class="form-control" [value]="lignesAvecRemise.get(i)!.valeur"
+                                 (change)="updateRemiseLigne(i, lignesAvecRemise.get(i)!.type, $event.target.value)"
+                                 placeholder="Valeur" min="0">
+                          <select class="form-select" style="width: auto;" [value]="lignesAvecRemise.get(i)!.type"
+                                  (change)="updateRemiseLigne(i, $event.target.value, lignesAvecRemise.get(i)!.valeur)">
+                            <option [value]="RemiseTypeEnum.POURCENTAGE">%</option>
+                            <option [value]="RemiseTypeEnum.MONTANT_FIXE">FCFA</option>
+                          </select>
+                        </div>
+                        <div *ngIf="getMontantRemiseLigne(i) > 0" class="text-danger small mt-1">
+                          Remise: {{ formatPrice(getMontantRemiseLigne(i)) }}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div *ngIf="produitsPanier.length > 0" class="p-2 bg-light border-top">
+                    <div class="d-flex justify-content-between">
+                      <span>Sous-total:</span>
+                      <strong>{{ formatPrice(calculerTotalSansRemiseGlobale()) }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                      <span>Résultat estimé:</span>
+                      <strong [ngClass]="getBeneficeColorClass(getBeneficeTotalPanier())">
+                        {{ getBeneficeLabel(getBeneficeTotalPanier()) }}:
+                        {{ formatPrice(Math.abs(getBeneficeTotalPanier())) }}
+                      </strong>
+                    </div>
+                    <div class="form-check mt-1" *ngIf="!nouvelleVenteEstCredit">
+                      <input class="form-check-input" type="checkbox" [(ngModel)]="showRemiseGlobale" id="remiseGlobale">
+                      <label class="form-check-label" for="remiseGlobale">Remise globale</label>
+                    </div>
+                    <div *ngIf="showRemiseGlobale && !nouvelleVenteEstCredit" class="mt-1">
+                      <div class="input-group input-group-sm">
+                        <input type="number" class="form-control" [(ngModel)]="remiseGlobale" placeholder="Valeur" min="0">
+                        <select class="form-select" style="width: auto;" [(ngModel)]="typeRemiseGlobale">
+                          <option [value]="RemiseTypeEnum.POURCENTAGE">%</option>
+                          <option [value]="RemiseTypeEnum.MONTANT_FIXE">FCFA</option>
+                        </select>
+                      </div>
+                      <div *ngIf="calculerMontantRemiseGlobale() > 0" class="text-danger small mt-1">
+                        Remise globale: {{ formatPrice(calculerMontantRemiseGlobale()) }}
+                      </div>
+                    </div>
+                    <div class="d-flex justify-content-between mt-2 pt-2 border-top">
+                      <strong class="fs-6">{{ nouvelleVenteEstCredit ? 'TOTAL À CRÉDITER:' : 'TOTAL À PAYER:' }}</strong>
+                      <strong class="text-primary fs-4">{{ formatPrice(calculerTotalAvecRemiseGlobale()) }}</strong>
+                    </div>
+                    <div class="text-muted small mt-1" *ngIf="nouvelleVenteEstCredit && creditForm.montantVerse && creditForm.montantVerse > 0">
+                      Acompte: {{ formatPrice(creditForm.montantVerse) }} | Reste: {{ formatPrice(calculerTotalAvecRemiseGlobale() - creditForm.montantVerse) }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Informations de paiement — comptant uniquement (le crédit utilise
+             la date d'échéance / l'acompte ci-dessus, comme avant la fusion) -->
+        <div class="card" *ngIf="!nouvelleVenteEstCredit">
+          <div class="card-header bg-secondary text-white py-2">
+            <h6 class="mb-0"><i class="fa fa-credit-card me-2"></i> Informations de paiement</h6>
+          </div>
+          <div class="card-body py-2">
+            <div class="row g-2">
+              <div class="col-md-6">
+                <label class="form-label small mb-1">Mode de paiement *</label>
+                <select class="form-select form-select-sm" [(ngModel)]="venteForm.modePaiement">
+                  <option *ngFor="let mode of getModePaiementOptions()" [value]="mode">{{ getModePaiementLabel(mode) }}</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small mb-1">Référence <span *ngIf="venteForm.modePaiement !== ModePaiementEnum.ESPECES" class="text-danger">*</span></label>
+                <input type="text" class="form-control form-control-sm" [(ngModel)]="venteForm.referencePaiement">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer py-2">
+        <button class="btn btn-secondary btn-sm" (click)="closeAllModals()"><i class="fa fa-times me-1"></i> Annuler</button>
+        <button class="btn btn-sm text-white" [class.btn-primary]="!nouvelleVenteEstCredit" [class.btn-warning]="nouvelleVenteEstCredit"
+                (click)="nouvelleVenteEstCredit ? createVenteCredit() : createVente()"
+                [disabled]="produitsPanier.length === 0 || isLoading || (nouvelleVenteEstCredit && !clientSelectionne)">
+          <i class="fa fa-save me-1"></i> {{ nouvelleVenteEstCredit ? 'Enregistrer le crédit' : 'Enregistrer la vente' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================================
+     ANCIEN CODE — 2 modales séparées (comptant / crédit), gardées ici en
+     commentaire au cas où, comme demandé. Remplacées ci-dessus par la modale
+     unifiée avec interrupteur (comme sur Ionic cart.page). Ne rien supprimer
+     sans confirmation explicite.
+     ============================================================================
+<div class="modal fade show" [class.d-block]="showNewVenteModal" *ngIf="showNewVenteModal"
      style="background-color: rgba(0,0,0,0.5); z-index: 1050;" tabindex="-1" (click)="closeAllModals()">
   <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" (click)="$event.stopPropagation()">
     <div class="modal-content">
@@ -621,9 +947,8 @@
         <div class="row g-3 mb-3">
           <div class="col-md-7">
             <h6 class="mb-2">Sélection des produits</h6>
-            
-            <!-- Filtre par catégorie -->
-            <!-- ✅ AJOUT: Filtre par catégorie -->
+
+            Filtre par catégorie / AJOUT: Filtre par catégorie (ancien)
   <div class="input-group mb-2">
     <span class="input-group-text bg-light"><i class="fa fa-tags"></i></span>
     <select class="form-select" [(ngModel)]="selectedCategorieId" (change)="onCategorieChange()">
@@ -633,12 +958,12 @@
       </option>
     </select>
   </div>
-  
+
   <div class="input-group mb-2">
     <span class="input-group-text"><i class="fa fa-search"></i></span>
     <input type="text" class="form-control" placeholder="Rechercher un produit..." [(ngModel)]="searchProduit" id="searchProduitInput" (input)="onSearchProduitChange()">
   </div>
-            
+
             <div class="produits-list border rounded" style="max-height: 350px; overflow-y: auto;">
               <div *ngFor="let produit of filteredProduits" class="d-flex justify-content-between align-items-center p-2 border-bottom">
                 <div>
@@ -680,11 +1005,11 @@
                         <div class="d-flex gap-2 mt-1">
                           <div class="input-group input-group-sm" style="width: 150px;">
                             <span class="input-group-text">Prix</span>
-                            <input type="number" class="form-control" 
+                            <input type="number" class="form-control"
                                    [value]="getPrixUnitaireActuel(i)"
                                    (input)="onPrixChange(i, $event)"
                                    step="100" min="0">
-                            <button class="btn btn-outline-secondary" 
+                            <button class="btn btn-outline-secondary"
                                     (click)="toggleModifierPrix(i)"
                                     [class.btn-warning]="produit.modifierPrix"
                                     type="button">
@@ -796,7 +1121,7 @@
       </div>
       <div class="modal-footer py-2">
         <button class="btn btn-secondary btn-sm" (click)="closeAllModals()"><i class="fa fa-times me-1"></i> Annuler</button>
-        <button class="btn btn-primary btn-sm" (click)="createVente()" [disabled]="produitsPanier.length === 0">
+        <button class="btn btn-primary btn-sm" (click)="createVente()" [disabled]="produitsPanier.length === 0 || isLoading">
           <i class="fa fa-save me-1"></i> Enregistrer la vente
         </button>
       </div>
@@ -804,8 +1129,8 @@
   </div>
 </div>
 
-<!-- ==================== MODALE NOUVELLE VENTE À CRÉDIT ==================== -->
-<div class="modal fade show" [class.d-block]="showNewVenteCreditModal" *ngIf="showNewVenteCreditModal" 
+MODALE NOUVELLE VENTE À CRÉDIT (ancienne)
+<div class="modal fade show" [class.d-block]="showNewVenteCreditModal" *ngIf="showNewVenteCreditModal"
      style="background-color: rgba(0,0,0,0.5); z-index: 1050;" tabindex="-1" (click)="closeAllModals()">
   <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" (click)="$event.stopPropagation()">
     <div class="modal-content">
@@ -843,7 +1168,7 @@
                 <input type="number" class="form-control form-control-sm" [(ngModel)]="creditForm.montantVerse" min="0">
               </div>
 
-              <!-- AVANCE CLIENT -->
+              AVANCE CLIENT (ancien)
               <div class="col-12" *ngIf="soldeAvanceClient > 0 || isLoadingAvance">
                 <div class="alert alert-primary py-2 mb-0 small d-flex align-items-center justify-content-between flex-wrap gap-2">
                   <div>
@@ -885,7 +1210,7 @@
         <div class="row g-3">
           <div class="col-md-7">
             <h6 class="mb-2">Sélection des produits</h6>
-            <!-- ✅ AJOUT: Filtre par catégorie -->
+            AJOUT: Filtre par catégorie (ancien)
   <div class="input-group mb-2">
     <span class="input-group-text bg-light"><i class="fa fa-tags"></i></span>
     <select class="form-select" [(ngModel)]="selectedCategorieId" (change)="onCategorieChange()">
@@ -895,7 +1220,7 @@
       </option>
     </select>
   </div>
-  
+
   <div class="input-group mb-2">
     <span class="input-group-text"><i class="fa fa-search"></i></span>
     <input type="text" class="form-control" placeholder="Rechercher un produit..." [(ngModel)]="searchProduit">
@@ -935,11 +1260,11 @@
                         <div class="d-flex gap-2 mt-1">
                           <div class="input-group input-group-sm" style="width: 150px;">
                             <span class="input-group-text">Prix</span>
-                            <input type="number" class="form-control" 
+                            <input type="number" class="form-control"
                                    [value]="getPrixUnitaireActuel(i)"
                                    (input)="onPrixChange(i, $event)"
                                    step="100" min="0">
-                            <button class="btn btn-outline-secondary" 
+                            <button class="btn btn-outline-secondary"
                                     (click)="toggleModifierPrix(i)"
                                     [class.btn-warning]="produit.modifierPrix"
                                     type="button">
@@ -1003,13 +1328,15 @@
       </div>
       <div class="modal-footer py-2">
         <button class="btn btn-secondary btn-sm" (click)="closeAllModals()"><i class="fa fa-times me-1"></i> Annuler</button>
-        <button class="btn btn-warning btn-sm" (click)="createVenteCredit()" [disabled]="produitsPanier.length === 0 || !clientSelectionne">
+        <button class="btn btn-warning btn-sm" (click)="createVenteCredit()" [disabled]="produitsPanier.length === 0 || !clientSelectionne || isLoading">
           <i class="fa fa-save me-1"></i> Enregistrer le crédit
         </button>
       </div>
     </div>
   </div>
 </div>
+-->
+
 
 <!-- ==================== MODALE SÉLECTION CLIENT ==================== -->
 <div class="modal fade show" [class.d-block]="showClientSelectorModal" *ngIf="showClientSelectorModal" 
@@ -1065,6 +1392,50 @@
       <div class="modal-footer py-2">
         <button class="btn btn-secondary btn-sm" (click)="closeAllModals()">Fermer</button>
         <button class="btn btn-info btn-sm" (click)="utiliserClientDivers()" *ngIf="!isModificationCredit"><i class="fa fa-user-circle"></i> Client divers</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== MODALE NOUVEAU CLIENT ==================== -->
+<div class="modal fade show" [class.d-block]="showNewClientForm" *ngIf="showNewClientForm"
+     style="background-color: rgba(0,0,0,0.5); z-index: 1070;" tabindex="-1" (click)="showNewClientForm=false">
+  <div class="modal-dialog modal-dialog-centered" (click)="$event.stopPropagation()">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white py-2">
+        <h5 class="modal-title"><i class="fa fa-user-plus me-2"></i> Nouveau client</h5>
+        <button type="button" class="btn-close btn-close-white" (click)="showNewClientForm=false"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-6">
+            <label class="form-label fw-semibold">Nom <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" [(ngModel)]="nouveauClientForm.nom" placeholder="Nom" [disabled]="isLoading">
+          </div>
+          <div class="col-6">
+            <label class="form-label fw-semibold">Prénom</label>
+            <input type="text" class="form-control" [(ngModel)]="nouveauClientForm.prenom" placeholder="Prénom" [disabled]="isLoading">
+          </div>
+          <div class="col-6">
+            <label class="form-label fw-semibold">Téléphone <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" [(ngModel)]="nouveauClientForm.numeroTelephone" placeholder="Téléphone" [disabled]="isLoading">
+          </div>
+          <div class="col-6">
+            <label class="form-label fw-semibold">Email</label>
+            <input type="email" class="form-control" [(ngModel)]="nouveauClientForm.email" placeholder="Email" [disabled]="isLoading">
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-semibold">Adresse</label>
+            <input type="text" class="form-control" [(ngModel)]="nouveauClientForm.adresse" placeholder="Adresse" [disabled]="isLoading">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer py-2">
+        <button class="btn btn-outline-secondary btn-sm" (click)="showNewClientForm=false" [disabled]="isLoading">Annuler</button>
+        <button class="btn btn-success btn-sm" (click)="creerNouveauClient()" [disabled]="isLoading || !nouveauClientForm.nom || !nouveauClientForm.numeroTelephone">
+          <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-1"></span>
+          <i class="fa fa-check me-1" *ngIf="!isLoading"></i> Créer le client
+        </button>
       </div>
     </div>
   </div>
@@ -1707,6 +2078,10 @@
 
         <!-- Lignes de la vente -->
         <h6 class="fw-semibold mb-2">Sélectionner les produits à retourner</h6>
+        <div class="alert alert-warning py-2 mb-2" *ngIf="totalRetourVente === 0">
+          <i class="fa fa-hand-pointer-o me-2"></i>
+          Aucun produit sélectionné. Cochez les produits que le client retourne.
+        </div>
         <div class="table-responsive mb-3">
           <table class="table table-sm table-bordered align-middle">
             <thead class="table-light">
@@ -1754,11 +2129,16 @@
                  placeholder="Ex: Produit défectueux, erreur de commande...">
         </div>
 
-        <!-- Info remboursement -->
-        <div class="alert alert-info mb-0" *ngIf="totalRetourVente > 0">
+        <!-- Info remboursement / réduction de solde -->
+        <div class="alert alert-info mb-0" *ngIf="totalRetourVente > 0 && !selectedVentePourRetour?.estCredit">
           <i class="fa fa-info-circle me-2"></i>
           Le client sera remboursé de <strong>{{ formatPrice(totalRetourVente) }}</strong>
           en espèces (sortie de caisse) et les produits retourneront en stock.
+        </div>
+        <div class="alert alert-info mb-0" *ngIf="totalRetourVente > 0 && selectedVentePourRetour?.estCredit">
+          <i class="fa fa-info-circle me-2"></i>
+          Le solde restant à payer sera réduit de <strong>{{ formatPrice(totalRetourVente) }}</strong>
+          (aucun encaissement n'ayant encore eu lieu sur ces articles) et les produits retourneront en stock.
         </div>
       </div>
 
@@ -1788,43 +2168,43 @@
     padding: 0.5rem 0;
     margin: 0.125rem 0 0;
     font-size: 0.875rem;
-    color: #212529;
+    color: var(--text, #212529);
     text-align: left;
     list-style: none;
-    background-color: #fff;
+    background-color: var(--surface, #fff);
     background-clip: padding-box;
-    border: 1px solid rgba(0, 0, 0, 0.15);
+    border: 1px solid var(--border, rgba(0, 0, 0, 0.15));
     border-radius: 0.25rem;
     box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.175);
   }
-  
+
   .dropdown-menu-custom.show {
     display: block;
   }
-  
+
   .dropdown-menu-custom .dropdown-header {
     display: block;
     padding: 0.25rem 1rem;
     font-size: 0.75rem;
     font-weight: 600;
-    color: #6c757d;
+    color: var(--text-muted, #6c757d);
     white-space: nowrap;
   }
-  
+
   .dropdown-menu-custom .dropdown-divider {
     height: 0;
     margin: 0.5rem 0;
     overflow: hidden;
-    border-top: 1px solid #e9ecef;
+    border-top: 1px solid var(--border, #e9ecef);
   }
-  
+
   .dropdown-menu-custom .dropdown-item {
     display: block;
     width: 100%;
     padding: 0.25rem 1rem;
     clear: both;
     font-weight: 400;
-    color: #212529;
+    color: var(--text, #212529);
     text-align: inherit;
     text-decoration: none;
     white-space: nowrap;
@@ -1832,9 +2212,9 @@
     border: 0;
     cursor: pointer;
   }
-  
+
   .dropdown-menu-custom .dropdown-item:hover {
-    background-color: #e9ecef;
+    background-color: var(--primary-soft, #e9ecef);
   }
   
   .fa-rotate-180 {

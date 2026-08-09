@@ -167,7 +167,12 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
 
   // ==================== MODALES ====================
   showNewVenteModal: boolean = false;
-  showNewVenteCreditModal: boolean = false;
+  showNewVenteCreditModal: boolean = false; // gardé pour compat, plus déclenché depuis le template (voir openNewVenteModal)
+  // Bascule comptant/crédit à l'intérieur de la modale "Nouvelle vente" unifiée
+  // (comme sur Ionic : un seul formulaire, un interrupteur, même createVente()/
+  // createVenteCredit() derrière selon l'état). N'affecte ni venteForm.estCredit
+  // ni creditForm.estCredit, utilisés tels quels par les fonctions existantes.
+  nouvelleVenteEstCredit: boolean = false;
   showVenteDetailModal: boolean = false;
   showStatsModal: boolean = false;
   showModifierVenteModal: boolean = false;
@@ -853,6 +858,10 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
     this.venteForm.estCredit = false;
     this.venteForm.clientDivers = true;
     this.clientSelectionne = null;
+    this.nouvelleVenteEstCredit = false;
+    // resetForms() ci-dessus réinitialise déjà creditForm avec ses valeurs
+    // par défaut (dateEcheance incluse) — prêt si l'utilisateur bascule
+    // l'interrupteur "Vente à crédit" à l'intérieur de la modale.
     this.showNewVenteModal = true;
     this.cdr.detectChanges();
 
