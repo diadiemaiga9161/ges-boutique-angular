@@ -14,6 +14,18 @@ import { environment } from '../../../environments/environment';
 // INTERFACES
 // =====================================================
 
+export interface VenteParVendeurJour {
+  vendeurId: number;
+  vendeurNom: string;
+  date: string;
+  nbVentesComptant: number;
+  nbVentesCredit: number;
+  caComptant: number;
+  caCredit: number;
+  caTotal: number;
+  nbVentesTotal: number;
+}
+
 export interface RapportJournalier {
   date: string;
   chiffreAffaireTotal: number;
@@ -1129,5 +1141,13 @@ export class RapportService {
 
   getPrevisionStock(): Observable<Array<any>> {
     return this.http.get<Array<any>>(`${this.baseUrl}/previsions/stock`);
+  }
+
+  getVentesParVendeur(dateDebut?: string, dateFin?: string): Observable<Array<VenteParVendeurJour>> {
+    let params = '';
+    if (dateDebut && dateFin) {
+      params = `?dateDebut=${dateDebut}&dateFin=${dateFin}`;
+    }
+    return this.http.get<Array<VenteParVendeurJour>>(`${this.baseUrl}/rapports/ventes-par-vendeur${params}`);
   }
 }

@@ -50,6 +50,18 @@ export class PartenairesComponent implements OnInit {
     return Math.ceil(this.clients.length / this.itemsPerPage);
   }
 
+  get totalAvanceDisponible(): number {
+    return this.clients.reduce((sum, c) => sum + (c.soldeAvance || 0), 0);
+  }
+
+  get nombreClientsAvecAvance(): number {
+    return this.clients.filter(c => (c.soldeAvance || 0) > 0).length;
+  }
+
+  get nombreClientsAvecEmail(): number {
+    return this.clients.filter(c => !!c.email).length;
+  }
+
   get pages(): number[] {
     return Array.from({ length: this.totalPages }, (_, i) => i + 1);
   }

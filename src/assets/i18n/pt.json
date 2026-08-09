@@ -456,6 +456,7 @@
     "CUSTOMIZATION": "Personalização global",
     "DARK_MODE": "Modo escuro",
     "DARK_MODE_DESC": "Ativar tema escuro em toda a aplicação",
+    "THEME_LIGHT": "Claro", "THEME_DARK": "Escuro", "THEME_AUTO": "Automático (sistema)",
     "PACKAGING": "Embalagem multinível",
     "PACKAGING_DESC": "Vender por nível (Caixa → Saco → Unidade) com stock em cascata automático.",
     "ENABLED": "Ativado",

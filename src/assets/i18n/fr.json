@@ -347,6 +347,7 @@
     "NAME": "Nom de la boutique", "ADDRESS": "Adresse", "PHONE": "Téléphone", "LOGO": "Logo",
     "CUSTOMIZATION": "Personnalisation globale",
     "DARK_MODE": "Mode sombre", "DARK_MODE_DESC": "Activer le thème sombre pour toute l'application",
+    "THEME_LIGHT": "Clair", "THEME_DARK": "Sombre", "THEME_AUTO": "Automatique (système)",
     "PACKAGING": "Conditionnement multi-niveaux",
     "PACKAGING_DESC": "Vendre par niveau (Carton → Sachet → Pièce) avec stock cascade automatique.",
     "ENABLED": "Activé", "DISABLED": "Désactivé",

@@ -513,7 +513,7 @@
  <small *ngIf="op.referencePaiement" class="d-block text-muted">Réf: {{ op.referencePaiement }}</small>
  </div>
  </td>
- <td>{{ op.utilisateurNom || 'Système' }}</td>
+ <td>{{ getOperationUtilisateurLabel(op) }}</td>
  <td class="text-center">
    <button class="btn btn-sm btn-outline-info"
            (click)="openDetailsOperationModal(op)"
@@ -781,7 +781,7 @@
  <tr *ngIf="selectedOperation.clientNom"><th>Client:</th><td>{{ selectedOperation.clientNom }} {{ selectedOperation.clientTelephone ? '(' + selectedOperation.clientTelephone + ')' : '' }}</td></tr>
  <tr *ngIf="selectedOperation.numeroVente"><th>Vente:</th><td>{{ selectedOperation.numeroVente }}</td></tr>
  <tr *ngIf="selectedOperation.modePaiement"><th>Paiement:</th><td><span [class]="getModePaiementClass(selectedOperation.modePaiement)">{{ getModePaiementLabel(selectedOperation.modePaiement) }}</span> {{ selectedOperation.referencePaiement ? '- ' + selectedOperation.referencePaiement : '' }}</td></tr>
- <tr *ngIf="selectedOperation.utilisateurNom"><th>Utilisateur:</th><td>{{ selectedOperation.utilisateurNom }}</td></tr>
+ <tr *ngIf="getOperationUtilisateurLabel(selectedOperation)"><th>Utilisateur:</th><td>{{ getOperationUtilisateurLabel(selectedOperation) }}</td></tr>
  </table>
  </div>
  <div class="modal-footer">
@@ -1350,11 +1350,14 @@
 
 <!-- ── Modal Fin de journée 23h59 — design premium ── -->
 <div class="modal fade show" [class.d-block]="showFinJourneeModal" *ngIf="showFinJourneeModal"
-     style="background-color: rgba(0,0,0,0.6); z-index:1055;" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
+     style="background-color: rgba(0,0,0,0.6); z-index:1055;" tabindex="-1"
+     (click)="$event.target === $event.currentTarget && (showFinJourneeModal = false)">
+  <div class="modal-dialog modal-dialog-centered" (click)="$event.stopPropagation()">
     <div class="modal-content fin-journee-modal">
       <!-- Header avec dégradé -->
       <div class="fin-journee-header">
+        <button type="button" class="btn-close btn-close-white fin-journee-close" aria-label="Fermer"
+                (click)="showFinJourneeModal = false"></button>
         <div class="fin-journee-icon">
           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="40" height="40">
             <circle cx="12" cy="12" r="10" stroke="white" stroke-width="1.5"/>

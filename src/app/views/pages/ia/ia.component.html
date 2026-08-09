@@ -52,6 +52,15 @@
         <i class="fas fa-users"></i>
         {{ 'IA.TAB_CLIENTS' | translate }}
       </button>
+      <button class="ia-tab" [class.active]="activeTab === 'chat'" (click)="activeTab = 'chat'">
+        <i class="fas fa-comment-dots"></i>
+        Assistant IA
+      </button>
+    </div>
+
+    <!-- ==================== ONGLET 4 : ASSISTANT IA (CHAT) ==================== -->
+    <div *ngIf="activeTab === 'chat'">
+      <app-assistant-ia></app-assistant-ia>
     </div>
 
     <!-- ==================== ONGLET 1 : TABLEAU DE BORD ==================== -->

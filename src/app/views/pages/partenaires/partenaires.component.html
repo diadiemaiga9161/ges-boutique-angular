@@ -16,6 +16,46 @@
     </div>
   </div>
 
+  <!-- Statistiques -->
+  <div class="row g-3 mb-4" *ngIf="!isLoading">
+    <div class="col-6 col-md-3">
+      <div class="app-stat-card">
+        <div class="app-stat-icon blue"><i class="fa fa-handshake-o"></i></div>
+        <div class="app-stat-body">
+          <div class="app-stat-label">Partenaires</div>
+          <div class="app-stat-value">{{ clients.length }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="app-stat-card">
+        <div class="app-stat-icon green"><i class="fa fa-money"></i></div>
+        <div class="app-stat-body">
+          <div class="app-stat-label">Avances disponibles</div>
+          <div class="app-stat-value">{{ formatPrice(totalAvanceDisponible) }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="app-stat-card">
+        <div class="app-stat-icon orange"><i class="fa fa-star"></i></div>
+        <div class="app-stat-body">
+          <div class="app-stat-label">Avec avance</div>
+          <div class="app-stat-value">{{ nombreClientsAvecAvance }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="app-stat-card">
+        <div class="app-stat-icon purple"><i class="fa fa-envelope"></i></div>
+        <div class="app-stat-body">
+          <div class="app-stat-label">Avec email</div>
+          <div class="app-stat-value">{{ nombreClientsAvecEmail }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Barre de recherche -->
   <div class="app-filter-card mb-4">
     <div class="row g-2 align-items-center">

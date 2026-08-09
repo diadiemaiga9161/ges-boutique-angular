@@ -1,6 +1,6 @@
 // src/app/modules/caisse/caisse-ges/caisse-ges.component.ts
 
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subscription, forkJoin, from } from 'rxjs';
@@ -905,6 +905,17 @@ export class CaisseGesComponent implements OnInit, OnDestroy {
     return reglements.reduce((sum, r) => sum + (r.montant || 0), 0);
   }
 
+  getOperationUtilisateurLabel(op: Partial<OperationCaisse> | null | undefined): string {
+    return op?.utilisateurNom
+      || op?.utilisateur?.nomComplet
+      || op?.utilisateur?.username
+      || (op as any)?.nomUtilisateur
+      || (op as any)?.utilisateurName
+      || (op as any)?.effectuePar
+      || (op as any)?.utilisateurId
+      || 'Système';
+  }
+
   setPeriode(periode: 'jour' | 'semaine' | 'mois' | 'annee' | 'personnalise'): void {
     this.periodeActive = periode;
     switch (periode) {
@@ -1088,6 +1099,14 @@ export class CaisseGesComponent implements OnInit, OnDestroy {
 
   openRevenusPertesModal(): void {
     this.loadRevenusPertesMois();
+  }
+
+  /** Fermeture de la modale fin de journée via la touche Échap (design premium : X / overlay / Échap) */
+  @HostListener('document:keydown.escape')
+  onEscapeCloseFinJournee(): void {
+    if (this.showFinJourneeModal) {
+      this.showFinJourneeModal = false;
+    }
   }
 
   closeAllModals(): void {

@@ -10,18 +10,19 @@ import {
   AnalyseIAResult
 } from '../../../shared/services/ia.service';
 import { HttpErrorResponse } from '@angular/common/http';
+import { AssistantIaComponent } from '../assistant-ia/assistant-ia.component';
 
 @Component({
   selector: 'app-ia',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule],
+  imports: [CommonModule, FormsModule, TranslateModule, AssistantIaComponent],
   templateUrl: './ia.component.html',
   styleUrls: ['./ia.component.scss']
 })
 export class IaComponent implements OnInit {
 
   // ==================== ONGLETS ====================
-  activeTab: 'dashboard' | 'reco' | 'clients' = 'dashboard';
+  activeTab: 'dashboard' | 'reco' | 'clients' | 'chat' = 'dashboard';
 
   // ==================== ÉTAT ====================
   isLoading = false;

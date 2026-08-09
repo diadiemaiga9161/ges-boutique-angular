@@ -456,6 +456,7 @@
     "CUSTOMIZATION": "Réglaj bu dëkk",
     "DARK_MODE": "Mode bu ñuul",
     "DARK_MODE_DESC": "Seetale mode bu ñuul ci app bi",
+    "THEME_LIGHT": "Leer", "THEME_DARK": "Ñuul", "THEME_AUTO": "Ci boppam (sistem bi)",
     "PACKAGING": "Dëkk bu bareep niveaux",
     "PACKAGING_DESC": "Jaay ci niveaux (Kartong → Xeex → Kat) ak stock cascade automatik.",
     "ENABLED": "Defar na",

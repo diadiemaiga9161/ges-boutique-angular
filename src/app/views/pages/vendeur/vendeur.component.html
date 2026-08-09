@@ -8,6 +8,9 @@
           <p class="app-page-subtitle">{{ 'SELLERS.SUBTITLE' | translate }}</p>
         </div>
       </div>
+      <button class="btn btn-outline-primary" (click)="voirHistoriqueVentes()">
+        <i class="fas fa-chart-line me-2"></i>Historique des ventes
+      </button>
     </div>
 
     <!-- Statistiques -->
@@ -97,15 +100,20 @@
       </button>
     </div>
   
-    <!-- Formulaire de création de vendeur -->
-    <div *ngIf="showCreateForm" class="create-form">
+    <!-- Modale de création de vendeur -->
+    <div *ngIf="showCreateForm" class="modal-overlay" (click)="toggleCreateForm()">
+    <div class="create-form" (click)="$event.stopPropagation()">
       <div class="form-header">
-        <h3><i class="fas fa-user-plus"></i> Créer un nouveau vendeur</h3>
+        <div class="form-header-icon"><i class="fas fa-user-plus"></i></div>
+        <div>
+          <h3>Créer un nouveau vendeur</h3>
+          <p>Renseignez les informations du compte</p>
+        </div>
         <button class="btn-close" (click)="toggleCreateForm()">
           <i class="fas fa-times"></i>
         </button>
       </div>
-      
+
       <div class="form-grid">
         <div class="form-group">
           <label for="newUsername">Nom d'utilisateur *</label>
@@ -213,7 +221,8 @@
         </button>
       </div>
     </div>
-  
+    </div>
+
     <!-- Liste des utilisateurs -->
     <div class="users-section">
       <div class="section-header">
@@ -238,7 +247,8 @@
           <!-- Avatar -->
           <div class="uc-avatar-wrap">
             <div class="uc-avatar" [class.uc-avatar--admin]="user.role === 'ADMIN'">
-              <span class="uc-initials">{{ getInitiales(user.nomComplet || user.username || '?') }}</span>
+              <img *ngIf="user.photo" [src]="user.photo" alt="" class="uc-avatar-img" />
+              <span *ngIf="!user.photo" class="uc-initials">{{ getInitiales(user.nomComplet || user.username || '?') }}</span>
             </div>
             <div class="uc-status-dot" [class.uc-status-dot--active]="user.actif"></div>
           </div>

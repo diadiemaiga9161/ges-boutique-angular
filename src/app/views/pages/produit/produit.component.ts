@@ -1343,7 +1343,7 @@ export class ProduitComponent implements OnInit, OnDestroy {
 
   /**
    * Calcule, pour chaque ligne concernant un produit EXISTANT dont le prix d'achat saisi
-   * diffère du prix d'achat actuel du produit, le nouveau prix de vente proposé via le
+   * diffère du prix d'achat actuel du produit, le nouveau prix d'achat proposé via le
    * coût moyen pondéré (CUMP) : (stockActuel × ancienPrixAchat + quantitéEntrée × prixAchatEntrée) / (stockActuel + quantitéEntrée)
    * Si le stock actuel est à 0, le nouveau prix = simplement le prix d'achat de l'entrée.
    */
@@ -1398,7 +1398,7 @@ export class ProduitComponent implements OnInit, OnDestroy {
         Stock actuel: ${p.stockActuel} × ${this.formatPrice(p.ancienPrix)} = <strong>${this.formatPrice(p.stockActuel * p.ancienPrix)}</strong><br>
         Entrée: ${p.quantiteEntree} × ${this.formatPrice(p.prixEntree)} = <strong>${this.formatPrice(p.quantiteEntree * p.prixEntree)}</strong><br>
         <span style="color:#6b7280;font-size:0.85em;">Formule: (${p.stockActuel} × ${this.formatPrice(p.ancienPrix)} + ${p.quantiteEntree} × ${this.formatPrice(p.prixEntree)}) / (${p.stockActuel} + ${p.quantiteEntree})</span><br>
-        <span style="color:#198754;">➜ Nouveau prix de vente proposé: <strong>${this.formatPrice(p.nouveauPrix)}</strong></span>
+        <span style="color:#198754;">➜ Nouveau prix d'achat proposé: <strong>${this.formatPrice(p.nouveauPrix)}</strong></span>
       </div>
     `).join('');
 
@@ -1407,13 +1407,13 @@ export class ProduitComponent implements OnInit, OnDestroy {
       html: `
         <div class="text-start">
           <p>Le prix d'achat saisi diffère du prix actuel pour ${propositions.length > 1 ? 'ces produits' : 'ce produit'}.
-          Voulez-vous recalculer le prix de vente avec le coût moyen pondéré (CUMP) ?</p>
+          Voulez-vous recalculer le prix d'achat (coût) avec le coût moyen pondéré (CUMP) ?</p>
           ${lignesHtml}
         </div>
       `,
       icon: 'question',
       showCancelButton: true,
-      confirmButtonText: '✅ Oui, recalculer le prix de vente',
+      confirmButtonText: '✅ Oui, recalculer le prix d\'achat',
       cancelButtonText: '❌ Non, garder le prix actuel',
       confirmButtonColor: '#198754',
       cancelButtonColor: '#6c757d',
@@ -1431,7 +1431,7 @@ export class ProduitComponent implements OnInit, OnDestroy {
     if (propositionsCUMP.length > 0) {
       this.demanderConfirmationCUMP(propositionsCUMP).then(accepte => {
         propositionsCUMP.forEach(p => {
-          p.ligne.nouveauPrixVente = accepte ? p.nouveauPrix : undefined;
+          p.ligne.nouveauPrixAchat = accepte ? p.nouveauPrix : undefined;
         });
         this.confirmerEtEnregistrerAchat();
       });

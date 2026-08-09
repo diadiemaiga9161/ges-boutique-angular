@@ -212,6 +212,9 @@
                 <td style="white-space:nowrap">{{ formatDate(p.datePaiement) }}</td>
                 <td>
                   <strong>{{ p.fournisseur?.nom || '—' }}</strong>
+                  <div class="small text-muted" *ngIf="getPayerLabel(p)">
+                    Par : {{ getPayerLabel(p) }}
+                  </div>
                 </td>
                 <td class="text-end fw-bold">{{ formatMontant(p.montant) }}</td>
                 <td>

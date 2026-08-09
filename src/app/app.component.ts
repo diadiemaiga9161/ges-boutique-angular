@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { BoutiqueService } from './shared/services/boutique.service';
 import { WebSocketService } from './shared/services/websocket.service';
+import { ThemeService } from './shared/services/theme.service';
 
 @Component({
     selector: 'app-root',
@@ -15,7 +16,10 @@ export class AppComponent implements OnInit {
   constructor(
     private boutiqueService: BoutiqueService,
     private titleService: Title,
-    private ws: WebSocketService
+    private ws: WebSocketService,
+    // Injecté ici pour forcer l'initialisation du thème (clair/sombre/auto)
+    // dès le démarrage de l'application, avant tout affichage de page.
+    private themeService: ThemeService
   ) {}
 
   ngOnInit(): void {

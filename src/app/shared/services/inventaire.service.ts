@@ -26,6 +26,8 @@
     motif: string;
     dateMouvement: string;
     typeSortie?: string;
+    niveauId?: number;
+    niveauNom?: string;
   }
 
   export enum TypeMouvement {

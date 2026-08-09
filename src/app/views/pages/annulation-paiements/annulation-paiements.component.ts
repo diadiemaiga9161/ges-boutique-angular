@@ -88,7 +88,8 @@ export class AnnulationPaiementsComponent implements OnInit {
         !term ||
         (p.fournisseur?.nom || '').toLowerCase().includes(term) ||
         (p.reference || '').toLowerCase().includes(term) ||
-        (p.modePaiement || '').toLowerCase().includes(term)
+        (p.modePaiement || '').toLowerCase().includes(term) ||
+        (this.getPayerLabel(p) || '').toLowerCase().includes(term)
       );
     } else {
       this.reglementsFiltres = this.reglements.filter(r =>
@@ -179,6 +180,18 @@ export class AnnulationPaiementsComponent implements OnInit {
 
   get countActifs(): number {
     return this.listeActive.filter(x => !x.annule).length;
+  }
+
+  getPayerLabel(p: any): string {
+    return p?.utilisateurNom
+      || p?.utilisateur?.nomComplet
+      || p?.utilisateur?.username
+      || p?.nomUtilisateur
+      || p?.utilisateurName
+      || p?.effectuePar
+      || p?.utilisateurId
+      || this.auth.getDisplayName()
+      || 'Utilisateur';
   }
 
   formatMontant(v: number): string {

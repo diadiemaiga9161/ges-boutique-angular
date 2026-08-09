@@ -1,64 +1,105 @@
-<div class="auth-bg">
-  <div class="form-wrapper">
-    <div class="card auth-card">
-      <div class="d-flex justify-content-between align-items-center mb-2">
-        <h3 class="form-title mb-0">Connexion Ges-Boutique</h3>
-        <a class="small" routerLink="/boutique-settings"></a>
-      </div>
+<div class="login-page">
+  <div class="login-frame">
 
-      <div class="registration">
-        Besoin d'un compte ?
-        <button type="button" (click)="goToPage()">Cliquez ici</button>
-      </div>
-
-      <div class="alert-message" [ngClass]="{ success: !isError, error: isError }" *ngIf="message">
-        {{ message }}
-      </div>
-
-      <form (ngSubmit)="login()" #f="ngForm">
-        <div class="input-group-custom mb-3">
-          <div class="icon">👤</div>
-          <input class="form-control"
-                 name="username"
-                 [(ngModel)]="username"
-                 placeholder="Email, téléphone ou identifiant"
-                 required
-                 [disabled]="isLoading" />
-          <small class="form-text text-muted">Email, numéro de téléphone ou nom d'utilisateur</small>
+    <!-- Panneau de connexion -->
+    <div class="login-form-panel">
+      <div class="form-inner">
+        <div class="form-head">
+          <h1 class="form-title">Connexion</h1>
+          <p class="form-hint">Accédez à votre espace de gestion</p>
         </div>
 
-        <div class="input-group-custom mb-3">
-          <div class="icon">🔒</div>
-          <input class="form-control"
-                 name="password"
-                 [(ngModel)]="password"
-                 type="password"
-                 required
-                 minlength="6"
-                 placeholder="Mot de passe"
-                 [disabled]="isLoading" />
-          <small class="form-text text-muted">Minimum 6 caractères</small>
+        <div class="banner" [ngClass]="{ 'banner--ok': !isError, 'banner--err': isError }" *ngIf="message" role="status">
+          <span class="banner-mark">{{ isError ? '!' : '✓' }}</span>
+          <span>{{ message }}</span>
         </div>
 
-        <button type="submit" class="btn btn-primary btn-block mt-3 btn-login"
-                [disabled]="isLoading || !username || !password">
-          <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-2"></span>
-          <span>{{ isLoading ? 'Connexion...' : 'Se connecter' }}</span>
-        </button>
+        <form (ngSubmit)="login()" #f="ngForm" class="login-form" novalidate>
+          <label class="field">
+            <span class="field-icon" aria-hidden="true">👤</span>
+            <input
+                   name="username"
+                   [(ngModel)]="username"
+                   placeholder="Email, téléphone ou identifiant"
+                   autocomplete="username"
+                   required
+                   [disabled]="isLoading" />
+          </label>
 
-        <div class="text-center mt-3">
-          <a routerLink="/forgot" class="text-muted" style="font-size:0.85rem">
-            Mot de passe oublié ?
-          </a>
+          <label class="field">
+            <span class="field-icon" aria-hidden="true">🔒</span>
+            <input
+                   name="password"
+                   [(ngModel)]="password"
+                   [type]="showPassword ? 'text' : 'password'"
+                   required
+                   minlength="6"
+                   autocomplete="current-password"
+                   placeholder="Mot de passe"
+                   [disabled]="isLoading" />
+            <button type="button" class="field-toggle" (click)="showPassword = !showPassword" [attr.aria-label]="showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'">
+              {{ showPassword ? '🙈' : '👁️' }}
+            </button>
+          </label>
+
+          <div class="field-note">Minimum 6 caractères</div>
+
+          <button type="submit" class="btn-submit" [disabled]="isLoading || !username || !password">
+            <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-2"></span>
+            <span>{{ isLoading ? 'Connexion…' : 'Se connecter' }}</span>
+          </button>
+
+          <div class="form-links">
+            <a routerLink="/forgot">Mot de passe oublié ?</a>
+          </div>
+        </form>
+
+        <div class="signup-row">
+          Besoin d'un compte ?
+          <button type="button" class="signup-link" (click)="goToPage()">Créer un compte</button>
         </div>
-      </form>
 
-      <div class="debug-info mt-4" *ngIf="authService.isAuthenticated()">
-        <small class="text-success">
+        <div class="already-in" *ngIf="authService.isAuthenticated()">
           <i class="fa fa-check-circle"></i>
-          Déjà connecté en tant que: {{ authService.getDisplayName() }}
-        </small>
+          Déjà connecté en tant que : {{ authService.getDisplayName() }}
+        </div>
       </div>
     </div>
+
+    <!-- Panneau de marque + slideshow -->
+    <div class="login-brand">
+      <div class="brand-slides" aria-hidden="true">
+        <div
+          class="brand-slide"
+          *ngFor="let slide of slides; let i = index"
+          [class.active]="i === activeSlide"
+          [style.background-image]="'url(' + slide + ')'">
+        </div>
+      </div>
+      <div class="brand-overlay"></div>
+      <div class="ledger-rules" aria-hidden="true"></div>
+
+      <div class="brand-top">
+        <img [src]="boutiqueService.getLogoPath()" alt="" class="brand-logo" />
+        <span class="brand-word">GesLafia</span>
+      </div>
+
+      <div class="brand-mid">
+        <p class="brand-tagline">Le carnet de votre boutique,<br />maintenant numérique.</p>
+        <p class="brand-sub">Ventes, stock et caisse à jour à chaque instant.</p>
+      </div>
+
+      <div class="brand-foot" *ngIf="boutiqueName">
+        <span class="foot-dot"></span>
+        <span class="foot-label">{{ boutiqueName }}</span>
+      </div>
+
+      <div class="brand-dots" *ngIf="slides.length > 1">
+        <span *ngFor="let slide of slides; let i = index" [class.active]="i === activeSlide"></span>
+      </div>
+
+      <div class="perforation" aria-hidden="true"></div>
+    </div>
+
   </div>
 </div>

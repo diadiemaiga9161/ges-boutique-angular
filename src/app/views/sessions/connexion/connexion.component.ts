@@ -1,7 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import Swal from 'sweetalert2';
 import { AuthService, LoginCredentials } from '../../../shared/services/auth.service';
 import { BoutiqueService } from '../../../shared/services/boutique.service';
@@ -10,26 +10,41 @@ import { BoutiqueService } from '../../../shared/services/boutique.service';
   selector: 'app-connexion',
   templateUrl: './connexion.component.html',
   styleUrls: ['./connexion.component.scss'],
-  imports: [FormsModule, CommonModule]
+  imports: [FormsModule, CommonModule, RouterLink]
 })
-export class ConnexionComponent implements OnInit {
+export class ConnexionComponent implements OnInit, OnDestroy {
   username: string = '';
   password: string = '';
-  
+  showPassword: boolean = false;
+
   isLoading: boolean = false;
   message: string = '';
   isError: boolean = false;
 
   boutiqueName: string = '';
 
+  // Slideshow du panneau de marque — ajouter d'autres chemins ici pour enrichir le défilement
+  readonly slides: string[] = ['/assets/images/alim1.jpg'];
+  activeSlide = 0;
+  private slideInterval?: ReturnType<typeof setInterval>;
+
   constructor(
     public authService: AuthService,
     private router: Router,
-    private boutiqueService: BoutiqueService
+    public boutiqueService: BoutiqueService
   ) {}
 
   ngOnInit() {
     this.boutiqueName = this.boutiqueService.getInfo().nom || 'Boutique';
+    if (this.slides.length > 1) {
+      this.slideInterval = setInterval(() => {
+        this.activeSlide = (this.activeSlide + 1) % this.slides.length;
+      }, 5000);
+    }
+  }
+
+  ngOnDestroy() {
+    if (this.slideInterval) clearInterval(this.slideInterval);
   }
 
   private resolveIdentifier(identifier: string): string {

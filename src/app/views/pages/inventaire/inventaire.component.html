@@ -339,6 +339,7 @@
               <tr>
                 <th style="min-width: 150px">{{ 'COMMON.DATE' | translate }}</th>
                 <th style="min-width: 180px">{{ 'INVENTORY.PRODUCT' | translate }}</th>
+                <th style="min-width: 110px">Niveau</th>
                 <th style="min-width: 100px">{{ 'PRODUCTS.CATEGORY' | translate }}</th>
                 <th style="min-width: 100px">{{ 'INVENTORY.MOVEMENT' | translate }}</th>
                 <th style="min-width: 110px">Type sortie</th>
@@ -359,6 +360,12 @@
                 </td>
                 <td>
                   <strong>{{ mouvement.produit?.nom || 'Produit inconnu' }}</strong>
+                </td>
+                <td>
+                  <span *ngIf="mouvement.niveauNom" class="badge bg-info text-white" style="font-size:0.7rem">
+                    <i class="i-Box3 me-1"></i>{{ mouvement.niveauNom }}
+                  </span>
+                  <span *ngIf="!mouvement.niveauNom" class="text-muted">—</span>
                 </td>
                 <td class="text-center">
                   <span class="badge bg-secondary">{{ getProduitCategorie(mouvement) }}</span>
@@ -426,7 +433,7 @@
                 </td>
               </tr>
               <tr *ngIf="mouvementsFiltres.length === 0">
-                <td colspan="11" class="text-center py-5">
+                <td colspan="12" class="text-center py-5">
                   <i class="fa fa-exchange-alt fa-4x text-muted mb-3"></i>
                   <p class="text-muted mb-0">Aucun mouvement trouvé pour cette période</p>
                   <small class="text-muted">Sélectionnez une période et cliquez sur "Rechercher"</small>
@@ -939,6 +946,7 @@
                 <tr>
                   <th>Date</th>
                   <th>Type</th>
+                  <th>Niveau</th>
                   <th class="text-end">Quantité</th>
                   <th class="text-end">Avant</th>
                   <th class="text-end">Après</th>
@@ -956,6 +964,12 @@
                     <span [class]="'badge ' + getTypeMouvementClass(mouvement.typeMouvement)">
                       {{ getTypeMouvementLabel(mouvement.typeMouvement) }}
                     </span>
+                  </td>
+                  <td>
+                    <span *ngIf="mouvement.niveauNom" class="badge bg-info text-white" style="font-size:0.7rem">
+                      <i class="i-Box3 me-1"></i>{{ mouvement.niveauNom }}
+                    </span>
+                    <span *ngIf="!mouvement.niveauNom" class="text-muted">—</span>
                   </td>
                   <td class="text-end fw-bold">{{ mouvement.quantite }}</td>
                   <td class="text-end">{{ mouvement.quantiteAvant }}</td>

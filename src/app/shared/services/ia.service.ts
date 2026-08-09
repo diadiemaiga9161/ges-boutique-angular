@@ -26,6 +26,12 @@ export interface RecommandationIA {
   scoreConfiance: number;
 }
 
+export interface QuestionPredefinie {
+  id: string;
+  label: string;
+  icone: string;
+}
+
 export interface AlerteIA {
   type: string;
   message: string;
@@ -80,5 +86,15 @@ export class IaService {
 
   getScoreSante(): Observable<any> {
     return this.http.get(`${this.apiUrl}/sante`);
+  }
+
+  // ==================== ASSISTANT IA (CHAT) ====================
+
+  getQuestionsPredefinies(): Observable<QuestionPredefinie[]> {
+    return this.http.get<QuestionPredefinie[]>(`${this.apiUrl}/questions-predefinies`);
+  }
+
+  poserQuestion(question: string): Observable<{ reponse: string }> {
+    return this.http.post<{ reponse: string }>(`${this.apiUrl}/chat`, { question });
   }
 }

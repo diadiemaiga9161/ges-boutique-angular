@@ -229,9 +229,9 @@ export interface LigneAchatRequest {
   quantite: number;
   prixAchatUnitaire: number;
   /** Si le prix d'achat de cette ligne diffère du prix d'achat actuel du produit (produit existant uniquement),
-   *  ce champ optionnel contient le nouveau prix de vente proposé (calculé via le coût moyen pondéré - CUMP)
+   *  ce champ optionnel contient le nouveau prix d'achat proposé (calculé via le coût moyen pondéré - CUMP)
    *  et confirmé par l'utilisateur. Absent si l'utilisateur a refusé le recalcul ou si aucune différence de prix. */
-  nouveauPrixVente?: number;
+  nouveauPrixAchat?: number;
 }
 
 export interface FournisseurRequestWithOptionalId {

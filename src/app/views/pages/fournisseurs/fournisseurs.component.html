@@ -429,7 +429,10 @@
               <td class="text-right font-weight-bold text-success">{{ fmt(p.montant) }}</td>
               <td>{{ p.modePaiement }}</td>
               <td>{{ p.reference || '—' }}</td>
-              <td>{{ p.observation || '—' }}</td>
+              <td>
+                <div>{{ p.observation || '—' }}</div>
+                <div class="small text-muted" *ngIf="getPaiementAuteur(p)">Par : {{ getPaiementAuteur(p) }}</div>
+              </td>
               <td>
                 <button class="btn btn-xs btn-outline-primary" (click)="imprimerRecuPaiementFournisseur(p)" title="Imprimer le reçu">
                   <i class="i-File-Download"></i> Reçu

@@ -814,6 +814,77 @@
   }
 }
 
+// ===================== MODE SOMBRE =====================
+// Surcharge des cartes/tableaux à fond blanc codé en dur pour
+// suivre le design system (voir src/styles.css, body.dark-mode).
+:host-context(.dark-mode) {
+  .section-card {
+    background: var(--bg-card, #1f2937);
+    border-color: var(--border-color, #374151);
+
+    h4 { color: var(--text-primary, #f9fafb); }
+  }
+
+  .table thead th {
+    background: var(--bg-secondary, #1f2937);
+    color: var(--text-secondary, #9ca3af);
+    border-bottom-color: var(--border-color, #374151);
+  }
+
+  .table tbody td {
+    color: var(--text-primary, #f9fafb);
+    border-top-color: var(--border-color, #374151);
+  }
+
+  .table tbody tr:hover td {
+    background-color: rgba(255, 255, 255, 0.04);
+  }
+
+  .rapport-detail {
+    background: var(--bg-card, #1f2937);
+  }
+
+  .rapport-resume {
+    background: var(--bg-secondary, #1f2937);
+    border-color: var(--border-color, #374151);
+  }
+
+  .resume-item {
+    background: var(--bg-card, #1f2937);
+    border-color: var(--border-color, #374151);
+
+    p { color: var(--text-secondary, #9ca3af); }
+  }
+
+  .gains-pertes-card {
+    background: var(--bg-card, #1f2937);
+    h4 { color: var(--text-primary, #f9fafb); }
+  }
+
+  .gain-card { background: rgba(40, 167, 69, 0.15); }
+  .perte-card { background: rgba(220, 53, 69, 0.15); }
+
+  .alert-info {
+    background: rgba(26, 86, 219, 0.15);
+    color: #93c5fd;
+    border-color: rgba(26, 86, 219, 0.3);
+  }
+
+  .bilan-simple .bilan-card {
+    &.positive { background: rgba(40, 167, 69, 0.15); color: #6ee7b7; border-color: rgba(40, 167, 69, 0.3); }
+    &.negative { background: rgba(220, 53, 69, 0.15); color: #fca5a5; border-color: rgba(220, 53, 69, 0.3); }
+  }
+
+  .pdf-actions {
+    background: var(--bg-card, #1f2937);
+    border-color: var(--border-color, #374151);
+  }
+
+  .pdf-title {
+    color: var(--text-primary, #f9fafb);
+  }
+}
+
 @media (max-width: 576px) {
   .pdf-buttons {
     flex-direction: column;

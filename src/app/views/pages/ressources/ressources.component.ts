@@ -15,8 +15,8 @@ export class RessourcesComponent {
   readonly developer = 'Maiga Consulting';
   readonly copyright = '2024-2026';
 
-  readonly whatsappUrl = 'https://wa.me/22379999999';
-  readonly email = 'contact@mg-consulting.site';
+  readonly whatsappUrl = 'https://wa.me/22353417919';
+  readonly email = 'doumaiga3@gmail.com';
   readonly website = 'https://diadiemaiga9161.github.io/Portfolio-Maiga-/';
   readonly founder = 'Amadou Maiga';
   readonly vision = 'Digitaliser la gestion des boutiques en Afrique avec des outils simples, puissants et accessibles offline';

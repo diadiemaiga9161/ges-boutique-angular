@@ -1894,30 +1894,11 @@ export class VenteService {
         }
       }
 
-      let venteBenefice = 0;
-      if (vente.produits && vente.produits.length > 0) {
-        for (const produitVente of vente.produits) {
-          const produitComplet = produits.find(p => p.id === produitVente.produitId);
-          if (produitComplet && produitComplet.prixAchat) {
-            venteBenefice += (produitVente.prixUnitaire - produitComplet.prixAchat) * produitVente.quantite;
-          }
-        }
-      }
-      beneficeTotal += venteBenefice;
+      beneficeTotal += vente.beneficeTotal || 0;
 
       if (vente.dateVente?.startsWith(aujourdhui)) {
         caToday += vente.montantTotal;
-        
-        let venteBeneficeToday = 0;
-        if (vente.produits && vente.produits.length > 0) {
-          for (const produitVente of vente.produits) {
-            const produitComplet = produits.find(p => p.id === produitVente.produitId);
-            if (produitComplet && produitComplet.prixAchat) {
-              venteBeneficeToday += (produitVente.prixUnitaire - produitComplet.prixAchat) * produitVente.quantite;
-            }
-          }
-        }
-        beneficeToday += venteBeneficeToday;
+        beneficeToday += vente.beneficeTotal || 0;
       }
     }
 

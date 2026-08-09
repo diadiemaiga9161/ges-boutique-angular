@@ -1090,7 +1090,12 @@ h1.h3, h1.h4 {
 .fd-credit-val   { font-weight: 700; color: #d97706; }
 
 /* ======================================================
-   DARK MODE — variables CSS (media query système)
+   DARK MODE — variables CSS
+   Piloté uniquement par la classe body.dark-mode, posée par
+   ThemeService (voir shared/services/theme.service.ts) qui gère
+   lui-même la combinaison avec prefers-color-scheme en mode "auto".
+   On évite ainsi tout conflit avec un choix explicite "Clair" alors
+   que le système est en sombre.
    ====================================================== */
 
 :root {
@@ -1104,36 +1109,212 @@ h1.h3, h1.h4 {
   --blue-light: #e8f1ff;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg-primary: #111827;
-    --bg-secondary: #1f2937;
-    --bg-card: #1f2937;
-    --text-primary: #f9fafb;
-    --text-secondary: #9ca3af;
-    --border-color: #374151;
-    --shadow: 0 2px 8px rgba(0,0,0,0.4);
-    --blue-light: #1e3a5f;
-  }
+body.dark-mode {
+  --bg-primary: #111827;
+  --bg-secondary: #1f2937;
+  --bg-card: #1f2937;
+  --text-primary: #f9fafb;
+  --text-secondary: #9ca3af;
+  --border-color: #374151;
+  --shadow: 0 2px 8px rgba(0,0,0,0.4);
+  --blue-light: #1e3a5f;
+}
 
-  body:not(.dark-mode) {
-    background-color: var(--bg-secondary);
-    color: var(--text-primary);
-  }
+body.dark-mode {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+}
 
-  body:not(.dark-mode) .card {
-    background-color: var(--bg-card);
-    border-color: var(--border-color);
-  }
+body.dark-mode .table {
+  color: var(--text-primary);
+}
 
-  body:not(.dark-mode) .table {
-    color: var(--text-primary);
-  }
+/* ------------------------------------------------------
+   DARK MODE — composants "premium" à fond codé en dur
+   (.card-header, .app-stat-card, .app-filter-card,
+   .app-table-card, entêtes de tableau, nav mobile, titres…)
+   Ces classes utilisaient des couleurs hexadécimales fixes qui
+   restaient blanches quel que soit le thème : on les fait
+   maintenant basculer sur les variables du design system.
+   ------------------------------------------------------ */
+
+body.dark-mode .card,
+body.dark-mode .auth-card {
+  background-color: var(--bg-card);
+  border-color: var(--border-color);
+}
+
+body.dark-mode .card-header {
+  background: var(--bg-card) !important;
+  color: var(--text-primary);
+  border-bottom-color: var(--border-color) !important;
+}
+
+body.dark-mode .table thead th {
+  background: var(--bg-secondary) !important;
+  color: var(--text-secondary) !important;
+  border-bottom-color: var(--border-color) !important;
+}
+
+body.dark-mode .table tbody tr:hover {
+  background: rgba(255,255,255,0.03);
+}
+
+body.dark-mode .table td,
+body.dark-mode .table th {
+  border-color: var(--border-color) !important;
+}
+
+body.dark-mode h1.h3,
+body.dark-mode h1.h4,
+body.dark-mode .container-fluid.py-4 > .d-flex:first-child h1.h3,
+body.dark-mode .container-fluid.py-4 > .d-flex:first-child h1.h4 {
+  color: var(--text-primary);
+}
+
+body.dark-mode .row .card .card-body .h4,
+body.dark-mode .row .card .card-body .display-6 {
+  color: var(--text-primary);
+}
+
+body.dark-mode .app-stat-card {
+  background: var(--bg-card);
+}
+
+body.dark-mode .app-stat-value {
+  color: var(--text-primary);
+}
+
+body.dark-mode .app-stat-label {
+  color: var(--text-secondary);
+}
+
+body.dark-mode .app-stat-sub {
+  color: var(--text-secondary);
+}
+
+body.dark-mode .app-filter-card {
+  background: var(--bg-card);
+}
+
+body.dark-mode .app-table-card {
+  background: var(--bg-card);
+}
+
+body.dark-mode .app-table-header {
+  border-bottom-color: var(--border-color);
+}
+
+body.dark-mode .app-table-title {
+  color: var(--text-primary);
+}
+
+body.dark-mode .app-table-count {
+  background: var(--bg-secondary);
+  border-color: var(--border-color);
+  color: var(--text-secondary);
+}
+
+body.dark-mode .app-table-card .table thead th {
+  background: var(--bg-secondary) !important;
+  color: var(--text-secondary) !important;
+  border-bottom-color: var(--border-color) !important;
+}
+
+body.dark-mode .app-table-card .table tbody td {
+  color: var(--text-primary);
+  border-bottom-color: var(--border-color) !important;
+}
+
+body.dark-mode .app-table-card .table tbody tr:hover {
+  background: rgba(255,255,255,0.03);
+}
+
+body.dark-mode .app-empty-state {
+  color: var(--text-secondary);
+}
+
+body.dark-mode .mobile-bottom-nav {
+  background: var(--bg-card);
+  border-top-color: var(--border-color);
+}
+
+body.dark-mode .dropdown-menu {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+}
+
+body.dark-mode .dropdown-item {
+  color: var(--text-primary);
+}
+
+body.dark-mode .dropdown-item:hover {
+  background: rgba(26,86,219,0.18);
+  color: #60a5fa !important;
+}
+
+body.dark-mode .dropdown-header {
+  color: var(--text-secondary) !important;
+}
+
+body.dark-mode .input-group-text {
+  background: var(--bg-secondary) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-secondary) !important;
+}
+
+body.dark-mode .pagination .page-link {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+body.dark-mode .nav-tabs {
+  border-bottom-color: var(--border-color) !important;
+}
+
+body.dark-mode .nav-tabs .nav-link.active {
+  background: var(--bg-card) !important;
+}
+
+body.dark-mode .alert-success { background: rgba(5,150,105,0.15) !important; color: #6ee7b7 !important; }
+body.dark-mode .alert-danger  { background: rgba(220,38,38,0.15) !important; color: #fca5a5 !important; }
+body.dark-mode .alert-warning { background: rgba(217,119,6,0.15) !important; color: #fcd34d !important; }
+body.dark-mode .alert-info    { background: rgba(26,86,219,0.15) !important; color: #93c5fd !important; }
+
+body.dark-mode .list-group-item {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+
+body.dark-mode .bg-light {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-primary);
+}
+
+body.dark-mode .table-light,
+body.dark-mode .table-light > th,
+body.dark-mode .table-light > td {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
 }
 
 /* ======================================================
    MODALS — centrage universel
    ====================================================== */
+
+/* ng-scrollbar applique `contain: content` sur son conteneur de contenu
+   (.ng-scroll-content), qui enveloppe le <router-outlet> et donc toutes les
+   pages + leurs modales. `contain: content` crée un nouveau containing block
+   pour les éléments `position: fixed`, ce qui casse le centrage plein écran :
+   les modales se positionnent alors par rapport à la zone de contenu (à côté
+   du menu latéral) et défilent avec le scroll interne, au lieu de couvrir le
+   vrai viewport. On neutralise ce containment (pur effet perf, sans impact
+   sur le scroll lui-même) pour que `position: fixed; inset: 0` redevienne
+   relatif à la fenêtre réelle. */
+.ng-scroll-content {
+  contain: none !important;
+}
 
 .modal-overlay {
   position: fixed !important;
@@ -1144,16 +1325,38 @@ h1.h3, h1.h4 {
   background: rgba(0,0,0,0.5) !important;
   z-index: 1050 !important;
   padding: 16px !important;
+  padding-top: 6vh !important;
 }
 
 .modal-dialog-centered {
   margin: 0 auto !important;
 }
 
-.modal {
+/* Le menu latéral (.sidebar-left, 120px) est en position:fixed et se
+   superpose au-dessus de tout l'écran. Une modale centrée sur `inset:0`
+   (donc sur TOUTE la largeur, y compris sous le menu) se retrouve donc
+   décalée visuellement vers la gauche par rapport à la zone de contenu où
+   se trouve réellement l'utilisateur. On recentre la modale dans la zone
+   de contenu (à droite du menu) quand celui-ci est ouvert. Ne s'applique
+   qu'au-delà du point où le menu passe en overlay mobile plein écran. */
+@media (min-width: 577px) {
+  .main-content-wrap.sidenav-open .modal-overlay,
+  .main-content-wrap.sidenav-open .modal {
+    left: 30px !important;
+  }
+}
+
+/* Scopé à .modal.show (jamais .modal seul) : certaines pages gardent la
+   modale dans le DOM en permanence et pilotent sa visibilité via
+   [style.display]="… ? 'block' : 'none'" plutôt que *ngIf. Un `.modal{
+   display:flex !important}` non scopé forcerait alors la modale à rester
+   visible (et donc à intercepter les clics) même quand elle doit être
+   masquée, puisque !important bat un style inline sans !important. */
+.modal.show {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
+  padding-top: 6vh !important;
 }
 
 .modal-dialog {
@@ -1163,6 +1366,14 @@ h1.h3, h1.h4 {
   flex-direction: column !important;
   width: calc(100% - 32px) !important;
   max-width: 700px !important;
+  /* Le thème admin applique une animation `zoomIn` (transform: scale) sur
+     .modal-dialog qui entre en conflit avec le transform Bootstrap
+     (translate → none) porté par ce même élément — d'où des modales qui
+     apparaissent décalées/à gauche selon la page. On neutralise tout
+     transform/animation ici : .modal-dialog ne sert plus qu'au centrage
+     flex, l'animation d'apparition est portée par .modal-content. */
+  transform: none !important;
+  animation: none !important;
 }
 
 .modal-content {
@@ -1171,11 +1382,103 @@ h1.h3, h1.h4 {
   flex-direction: column !important;
   border-radius: 16px !important;
   overflow: hidden !important;
+  animation: modal-content-in 0.25s ease-out !important;
+}
+
+@keyframes modal-content-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 .modal-body {
   overflow-y: auto !important;
   flex: 1 !important;
+}
+
+/* ======================================================
+   SWEETALERT2 — design premium unifié (icône pastille,
+   boutons Confirmer/Annuler, dark mode) appliqué globalement
+   à toutes les boîtes de confirmation du projet (406 usages
+   de Swal.fire) sans toucher aux appels individuels.
+   ====================================================== */
+
+.swal2-popup.swal2-popup {
+  border-radius: 20px !important;
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3) !important;
+  padding-bottom: 24px !important;
+}
+
+.swal2-popup .swal2-title {
+  color: var(--text) !important;
+  font-weight: 700 !important;
+  font-size: 1.35rem !important;
+}
+
+.swal2-popup .swal2-html-container {
+  color: var(--text-muted) !important;
+}
+
+/* Icône en pastille colorée : cercle plein en arrière-plan de l'icône */
+.swal2-popup .swal2-icon {
+  border-color: transparent !important;
+  background: var(--primary-soft) !important;
+}
+.swal2-popup .swal2-icon.swal2-question { background: var(--primary-soft) !important; color: var(--primary) !important; }
+.swal2-popup .swal2-icon.swal2-question .swal2-icon-content { color: var(--primary) !important; }
+.swal2-popup .swal2-icon.swal2-warning { background: var(--gl-orange-50) !important; border-color: transparent !important; color: var(--warning) !important; }
+.swal2-popup .swal2-icon.swal2-error { background: var(--gl-red-50) !important; color: var(--danger) !important; }
+.swal2-popup .swal2-icon.swal2-error [class^='swal2-x-mark-line'] { background-color: var(--danger) !important; }
+.swal2-popup .swal2-icon.swal2-success { background: var(--gl-green-50) !important; border-color: transparent !important; }
+.swal2-popup .swal2-icon.swal2-success [class^='swal2-success-line'] { background-color: var(--success) !important; }
+.swal2-popup .swal2-icon.swal2-success .swal2-success-ring { border-color: var(--gl-green-50) !important; }
+.swal2-popup .swal2-icon.swal2-info { background: var(--primary-soft) !important; color: var(--primary) !important; }
+
+/* Boutons : Confirmer plein, Annuler en contour */
+.swal2-popup .swal2-styled.swal2-confirm {
+  background: linear-gradient(135deg, var(--primary), #5e8bff) !important;
+  border-radius: 12px !important;
+  padding: 10px 22px !important;
+  box-shadow: none !important;
+  font-weight: 600 !important;
+}
+
+.swal2-popup .swal2-styled.swal2-cancel {
+  background: transparent !important;
+  color: var(--text-muted) !important;
+  border: 1.5px solid var(--border) !important;
+  border-radius: 12px !important;
+  padding: 10px 22px !important;
+  box-shadow: none !important;
+  font-weight: 600 !important;
+}
+
+.swal2-popup .swal2-styled.swal2-deny {
+  background: linear-gradient(135deg, var(--danger), #ef4444) !important;
+  border-radius: 12px !important;
+  box-shadow: none !important;
+}
+
+.swal2-popup .swal2-close {
+  color: var(--text-muted) !important;
+}
+
+.swal2-popup .swal2-close:hover {
+  color: var(--text) !important;
+}
+
+.swal2-container.swal2-backdrop-show {
+  background: rgba(8, 22, 72, 0.45) !important;
+}
+
+/* SweetAlert2 doit TOUJOURS s'afficher devant une modale déjà ouverte (ex:
+   confirmer un retour depuis la modale de retour) : certaines modales du
+   projet utilisent un z-index ad-hoc supérieur au 1060 par défaut de Swal2,
+   ce qui le faisait apparaître caché derrière. On force un z-index toujours
+   plus haut que n'importe quelle modale du site. */
+.swal2-container {
+  z-index: 20000 !important;
 }
 
 /* ======================================================
@@ -1194,6 +1497,18 @@ h1.h3, h1.h4 {
   padding: 32px 24px 24px;
   text-align: center;
   color: white;
+  position: relative;
+}
+
+.fin-journee-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  opacity: 0.85;
+}
+
+.fin-journee-close:hover {
+  opacity: 1;
 }
 
 .fin-journee-icon {
@@ -1274,13 +1589,11 @@ h1.h3, h1.h4 {
   box-shadow: 0 4px 16px rgba(26,86,219,0.4);
 }
 
-@media (prefers-color-scheme: dark) {
-  .fin-journee-header { background: linear-gradient(135deg, #1e40af, #1e3a8a); }
-  .fin-journee-body { background: #1f2937; }
-  .fin-journee-footer { background: #1f2937; border-color: #374151; }
-  .info-item { background: #1e3a5f; }
-  .fin-journee-msg { background: #111827; color: #9ca3af; }
-}
+body.dark-mode .fin-journee-header { background: linear-gradient(135deg, #1e40af, #1e3a8a); }
+body.dark-mode .fin-journee-body { background: #1f2937; }
+body.dark-mode .fin-journee-footer { background: #1f2937; border-color: #374151; }
+body.dark-mode .info-item { background: #1e3a5f; }
+body.dark-mode .fin-journee-msg { background: #111827; color: #9ca3af; }
 
 /* ======================================================
    RESPONSIVE — tableaux en cartes sur mobile

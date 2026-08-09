@@ -167,172 +167,182 @@
     </div>
   </div>
 
-  <!-- VUE NOUVELLE DETTE -->
-  <div *ngIf="vueActuelle === 'nouvelle'">
-    <div class="form-header">
-      <button class="btn-back" (click)="annuler()">
-        <i class="fas fa-arrow-left"></i> Retour
-      </button>
-      <h1><i class="fas" [class.fa-edit]="isEditing" [class.fa-plus-circle]="!isEditing"></i> {{ isEditing ? 'Modifier la Dette' : 'Nouvelle Dette Ancienne' }}</h1>
-      <p><i class="fas fa-info-circle"></i> {{ isEditing ? 'Modifiez les informations de la dette' : 'Enregistrez une dette antérieure d\'un client' }}</p>
-    </div>
-    <div class="form-card">
-      <form (ngSubmit)="isEditing ? modifierDette() : creerDette()">
-        <div class="form-group">
-          <label class="form-label required"><i class="fas fa-user"></i> Client</label>
-          <div class="client-selector">
-            <input type="text" class="form-control" [(ngModel)]="clientSearch" name="clientSearch" 
-                   (input)="onClientSearch()" (focus)="showClientDropdown = true" 
-                   placeholder="Rechercher un client..." [disabled]="isEditing" autocomplete="off">
-            <div class="dropdown" *ngIf="showClientDropdown && filteredClients.length > 0 && !isEditing">
-              <div *ngFor="let client of filteredClients" class="dropdown-item" (click)="selectClient(client)">
-                <strong><i class="fas fa-user"></i> {{ getClientFullName(client) }}</strong>
-                <small><i class="fas fa-phone"></i> {{ client.numeroTelephone }}</small>
+  <!-- MODALE NOUVELLE DETTE / MODIFIER -->
+  <div class="modal-overlay" *ngIf="vueActuelle === 'nouvelle'" (click)="annuler()">
+    <div class="dette-modal" (click)="$event.stopPropagation()">
+      <div class="dette-modal-header">
+        <div class="dette-modal-icon"><i class="fas" [class.fa-edit]="isEditing" [class.fa-plus-circle]="!isEditing"></i></div>
+        <div>
+          <h3>{{ isEditing ? 'Modifier la dette' : 'Nouvelle dette ancienne' }}</h3>
+          <p>{{ isEditing ? 'Modifiez les informations de la dette' : 'Enregistrez une dette antérieure d\'un client' }}</p>
+        </div>
+        <button type="button" class="dette-modal-close" (click)="annuler()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="dette-modal-body">
+        <form (ngSubmit)="isEditing ? modifierDette() : creerDette()">
+          <div class="form-group">
+            <label class="form-label required"><i class="fas fa-user"></i> Client</label>
+            <div class="client-selector">
+              <input type="text" class="form-control" [(ngModel)]="clientSearch" name="clientSearch"
+                     (input)="onClientSearch()" (focus)="showClientDropdown = true"
+                     placeholder="Rechercher un client..." [disabled]="isEditing" autocomplete="off">
+              <div class="dropdown" *ngIf="showClientDropdown && filteredClients.length > 0 && !isEditing">
+                <div *ngFor="let client of filteredClients" class="dropdown-item" (click)="selectClient(client)">
+                  <strong><i class="fas fa-user"></i> {{ getClientFullName(client) }}</strong>
+                  <small><i class="fas fa-phone"></i> {{ client.numeroTelephone }}</small>
+                </div>
               </div>
             </div>
+            <div *ngIf="selectedClient" class="selected-client">
+              <i class="fas fa-check-circle"></i> Client: {{ getClientFullName(selectedClient) }}
+            </div>
           </div>
-          <div *ngIf="selectedClient" class="selected-client">
-            <i class="fas fa-check-circle"></i> Client: {{ getClientFullName(selectedClient) }}
+          <div class="form-group">
+            <label class="form-label required"><i class="fas fa-money-bill-wave"></i> Montant (F CFA)</label>
+            <input type="number" class="form-control" [(ngModel)]="detteForm.montant" name="montant" required>
           </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label required"><i class="fas fa-money-bill-wave"></i> Montant (F CFA)</label>
-          <input type="number" class="form-control" [(ngModel)]="detteForm.montant" name="montant" required>
-        </div>
-        <div class="form-group">
-          <label class="form-label required"><i class="fas fa-calendar"></i> Date du crédit</label>
-          <input type="date" class="form-control" [(ngModel)]="detteForm.dateCredit" name="dateCredit" required>
-        </div>
-        <div class="form-group">
-          <label class="form-label"><i class="fas fa-file-alt"></i> Description</label>
-          <textarea class="form-control" [(ngModel)]="detteForm.description" name="description" rows="3" placeholder="Motif de la dette, observations..."></textarea>
-        </div>
-        <div class="form-actions">
-          <button type="button" class="btn btn-secondary" (click)="annuler()">
-            <i class="fas fa-times"></i> Annuler
-          </button>
-          <button type="submit" class="btn btn-primary" [disabled]="submitting">
-            <i class="fas" [class.fa-spinner]="submitting" [class.fa-spin]="submitting" [class.fa-save]="!submitting"></i>
-            {{ submitting ? 'Enregistrement...' : (isEditing ? 'Modifier' : 'Créer la dette') }}
-          </button>
-        </div>
-      </form>
+          <div class="form-group">
+            <label class="form-label required"><i class="fas fa-calendar"></i> Date du crédit</label>
+            <input type="date" class="form-control" [(ngModel)]="detteForm.dateCredit" name="dateCredit" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label"><i class="fas fa-file-alt"></i> Description</label>
+            <textarea class="form-control" [(ngModel)]="detteForm.description" name="description" rows="3" placeholder="Motif de la dette, observations..."></textarea>
+          </div>
+          <div class="dette-modal-footer">
+            <button type="button" class="btn btn-outline-secondary" (click)="annuler()">
+              <i class="fas fa-times"></i> Annuler
+            </button>
+            <button type="submit" class="btn btn-primary" [disabled]="submitting">
+              <i class="fas" [class.fa-spinner]="submitting" [class.fa-spin]="submitting" [class.fa-save]="!submitting"></i>
+              {{ submitting ? 'Enregistrement...' : (isEditing ? 'Modifier' : 'Créer la dette') }}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   </div>
 
-  <!-- VUE RÈGLEMENT -->
-  <div *ngIf="vueActuelle === 'reglement' && detteSelectionnee">
-    <div class="form-header">
-      <button class="btn-back" (click)="annuler()">
-        <i class="fas fa-arrow-left"></i> Retour
-      </button>
-      <h1><i class="fas fa-hand-holding-usd"></i> Règlement de Dette</h1>
-      <p><i class="fas fa-info-circle"></i> Enregistrez un paiement partiel ou total</p>
-    </div>
-    <div class="form-card">
-      <div class="info-dette">
-        <div class="info-row"><i class="fas fa-user"></i> <strong>Client:</strong> {{ getClientDisplayName(detteSelectionnee) }}</div>
-        <div class="info-row"><i class="fas fa-phone"></i> <strong>Téléphone:</strong> {{ detteSelectionnee.clientTelephone }}</div>
-        <div class="info-row"><i class="fas fa-chart-simple"></i> <strong>Montant initial:</strong> {{ formatDecimal(detteSelectionnee.montantInitial) }} F CFA</div>
-        <div class="info-row"><i class="fas fa-arrow-down"></i> <strong>Montant restant:</strong> <span class="restant">{{ formatDecimal(detteSelectionnee.montantRestant) }} F CFA</span></div>
-        <div class="info-row"><i class="fas fa-calendar"></i> <strong>Date crédit:</strong> {{ formatDate(detteSelectionnee.dateCredit) }}</div>
-        <div class="info-row" *ngIf="detteSelectionnee.description"><i class="fas fa-file-alt"></i> <strong>Description:</strong> {{ detteSelectionnee.description }}</div>
+  <!-- MODALE RÈGLEMENT -->
+  <div class="modal-overlay" *ngIf="vueActuelle === 'reglement' && detteSelectionnee" (click)="annuler()">
+    <div class="dette-modal" (click)="$event.stopPropagation()">
+      <div class="dette-modal-header">
+        <div class="dette-modal-icon dette-modal-icon--success"><i class="fas fa-hand-holding-usd"></i></div>
+        <div>
+          <h3>Règlement de dette</h3>
+          <p>Enregistrez un paiement partiel ou total</p>
+        </div>
+        <button type="button" class="dette-modal-close" (click)="annuler()"><i class="fas fa-times"></i></button>
       </div>
-      <form (ngSubmit)="enregistrerReglement()">
-        <div class="form-group">
-          <label class="form-label required"><i class="fas fa-money-bill-wave"></i> Montant à payer (F CFA)</label>
-          <input type="number" class="form-control" [(ngModel)]="reglementForm.montantPaye" name="montantPaye" required>
-          <small class="help-text"><i class="fas fa-info-circle"></i> Maximum: {{ formatDecimal(detteSelectionnee.montantRestant) }} F CFA</small>
+      <div class="dette-modal-body">
+        <div class="info-dette">
+          <div class="info-row"><i class="fas fa-user"></i> <strong>Client:</strong> {{ getClientDisplayName(detteSelectionnee) }}</div>
+          <div class="info-row"><i class="fas fa-phone"></i> <strong>Téléphone:</strong> {{ detteSelectionnee.clientTelephone }}</div>
+          <div class="info-row"><i class="fas fa-chart-simple"></i> <strong>Montant initial:</strong> {{ formatDecimal(detteSelectionnee.montantInitial) }} F CFA</div>
+          <div class="info-row"><i class="fas fa-arrow-down"></i> <strong>Montant restant:</strong> <span class="restant">{{ formatDecimal(detteSelectionnee.montantRestant) }} F CFA</span></div>
+          <div class="info-row"><i class="fas fa-calendar"></i> <strong>Date crédit:</strong> {{ formatDate(detteSelectionnee.dateCredit) }}</div>
+          <div class="info-row" *ngIf="detteSelectionnee.description"><i class="fas fa-file-alt"></i> <strong>Description:</strong> {{ detteSelectionnee.description }}</div>
         </div>
-        <div class="form-group">
-          <label class="form-label required"><i class="fas fa-credit-card"></i> Mode de paiement</label>
-          <select class="form-control" [(ngModel)]="reglementForm.modePaiement" name="modePaiement">
-            <option *ngFor="let mode of modesPaiement" [value]="mode">
-              <i class="fas" [class.fa-money-bill]="mode === 'ESPECES'" [class.fa-mobile-alt]="mode === 'ORANGE_MONEY'"></i>
-              {{ mode }}
-            </option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label"><i class="fas fa-hashtag"></i> Référence paiement</label>
-          <input type="text" class="form-control" [(ngModel)]="reglementForm.referencePaiement" name="referencePaiement" placeholder="N° transaction, numéro chèque...">
-        </div>
-        <div class="form-group">
-          <label class="form-label"><i class="fas fa-comment"></i> Observations</label>
-          <textarea class="form-control" [(ngModel)]="reglementForm.observations" name="observations" rows="2" placeholder="Commentaires..."></textarea>
-        </div>
-        <div class="form-actions">
-          <button type="button" class="btn btn-secondary" (click)="annuler()">
-            <i class="fas fa-times"></i> Annuler
-          </button>
-          <button type="submit" class="btn btn-success" [disabled]="submitting">
-            <i class="fas" [class.fa-spinner]="submitting" [class.fa-spin]="submitting" [class.fa-save]="!submitting"></i>
-            {{ submitting ? 'Enregistrement...' : 'Enregistrer le règlement' }}
-          </button>
-        </div>
-      </form>
+        <form (ngSubmit)="enregistrerReglement()">
+          <div class="form-group">
+            <label class="form-label required"><i class="fas fa-money-bill-wave"></i> Montant à payer (F CFA)</label>
+            <input type="number" class="form-control" [(ngModel)]="reglementForm.montantPaye" name="montantPaye" required>
+            <small class="help-text"><i class="fas fa-info-circle"></i> Maximum: {{ formatDecimal(detteSelectionnee.montantRestant) }} F CFA</small>
+          </div>
+          <div class="form-group">
+            <label class="form-label required"><i class="fas fa-credit-card"></i> Mode de paiement</label>
+            <select class="form-control" [(ngModel)]="reglementForm.modePaiement" name="modePaiement">
+              <option *ngFor="let mode of modesPaiement" [value]="mode">
+                {{ mode }}
+              </option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label"><i class="fas fa-hashtag"></i> Référence paiement</label>
+            <input type="text" class="form-control" [(ngModel)]="reglementForm.referencePaiement" name="referencePaiement" placeholder="N° transaction, numéro chèque...">
+          </div>
+          <div class="form-group">
+            <label class="form-label"><i class="fas fa-comment"></i> Observations</label>
+            <textarea class="form-control" [(ngModel)]="reglementForm.observations" name="observations" rows="2" placeholder="Commentaires..."></textarea>
+          </div>
+          <div class="dette-modal-footer">
+            <button type="button" class="btn btn-outline-secondary" (click)="annuler()">
+              <i class="fas fa-times"></i> Annuler
+            </button>
+            <button type="submit" class="btn btn-success" [disabled]="submitting">
+              <i class="fas" [class.fa-spinner]="submitting" [class.fa-spin]="submitting" [class.fa-save]="!submitting"></i>
+              {{ submitting ? 'Enregistrement...' : 'Enregistrer le règlement' }}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   </div>
 
-  <!-- VUE HISTORIQUE -->
-  <div *ngIf="vueActuelle === 'historique' && detteSelectionnee">
-    <div class="form-header">
-      <button class="btn-back" (click)="annuler()">
-        <i class="fas fa-arrow-left"></i> Retour
-      </button>
-      <h1><i class="fas fa-history"></i> Historique des Règlements</h1>
-      <p><i class="fas fa-file-invoice"></i> Dette de {{ getClientDisplayName(detteSelectionnee) }}</p>
-    </div>
-    <div class="info-dette historique-info">
-      <div class="info-row"><i class="fas fa-chart-simple"></i> <strong>Montant initial:</strong> {{ formatDecimal(detteSelectionnee.montantInitial) }} F CFA</div>
-      <div class="info-row"><i class="fas fa-arrow-down"></i> <strong>Montant restant:</strong> <span class="restant">{{ formatDecimal(detteSelectionnee.montantRestant) }} F CFA</span></div>
-      <div class="info-row"><i class="fas fa-arrow-up"></i> <strong>Montant déjà payé:</strong> {{ formatDecimal(detteSelectionnee.montantInitial - detteSelectionnee.montantRestant) }} F CFA</div>
-      <div class="info-row"><i class="fas fa-tag"></i> <strong>Statut:</strong> 
-        <span class="status-badge" [class.paid]="detteSelectionnee.estReglee" [class.unpaid]="!detteSelectionnee.estReglee">
-          <i class="fas" [class.fa-check-circle]="detteSelectionnee.estReglee" [class.fa-clock]="!detteSelectionnee.estReglee"></i>
-          {{ detteSelectionnee.estReglee ? 'Réglée' : 'Non réglée' }}
-        </span>
-      </div>
-    </div>
-    <div class="historique-table-container" *ngIf="!loading; else loadingTemplate">
-      <table class="historique-table" *ngIf="historiqueReglements.length > 0; else emptyHistorique">
-        <thead>
-          <tr>
-            <th><i class="fas fa-calendar"></i> Date</th>
-            <th><i class="fas fa-money-bill-wave"></i> Montant payé</th>
-            <th><i class="fas fa-credit-card"></i> Mode de paiement</th>
-            <th><i class="fas fa-hashtag"></i> Référence</th>
-            <th><i class="fas fa-comment"></i> Observations</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let reg of historiqueReglements">
-            <td><i class="fas fa-calendar-day"></i> {{ formatDate(reg.dateReglement) }}</td>
-            <td class="montant paye"><i class="fas fa-arrow-up"></i> {{ formatDecimal(reg.montantPaye) }} F</td>
-            <td><i class="fas" [class.fa-money-bill]="reg.modePaiement === 'ESPECES'" [class.fa-mobile-alt]="reg.modePaiement === 'ORANGE_MONEY'"></i> {{ reg.modePaiement }}</td>
-            <td><i class="fas fa-hashtag"></i> {{ reg.referencePaiement || '-' }}</td>
-            <td><i class="fas fa-comment"></i> {{ reg.observations || '-' }}</td>
-          </tr>
-        </tbody>
-        <tfoot>
-          <tr>
-            <td colspan="2"><strong><i class="fas fa-chart-line"></i> Total payé</strong></td>
-            <td colspan="3"><strong><i class="fas fa-check-circle"></i> {{ formatDecimal(getTotalPayeHistorique()) }} F</strong></td>
-          </tr>
-        </tfoot>
-      </table>
-      <ng-template #emptyHistorique>
-        <div class="empty-state">
-          <i class="fas fa-history fa-3x"></i>
-          <p><i class="fas fa-folder-open"></i> Aucun règlement enregistré pour cette dette</p>
+  <!-- MODALE HISTORIQUE -->
+  <div class="modal-overlay" *ngIf="vueActuelle === 'historique' && detteSelectionnee" (click)="annuler()">
+    <div class="dette-modal dette-modal--large" (click)="$event.stopPropagation()">
+      <div class="dette-modal-header">
+        <div class="dette-modal-icon dette-modal-icon--info"><i class="fas fa-history"></i></div>
+        <div>
+          <h3>Historique des règlements</h3>
+          <p>Dette de {{ getClientDisplayName(detteSelectionnee) }}</p>
         </div>
-      </ng-template>
-    </div>
-    <ng-template #loadingTemplate>
-      <div class="loading-container">
-        <div class="spinner"></div>
-        <p><i class="fas fa-spinner fa-spin"></i> Chargement...</p>
+        <button type="button" class="dette-modal-close" (click)="annuler()"><i class="fas fa-times"></i></button>
       </div>
-    </ng-template>
+      <div class="dette-modal-body">
+        <div class="info-dette historique-info">
+          <div class="info-row"><i class="fas fa-chart-simple"></i> <strong>Montant initial:</strong> {{ formatDecimal(detteSelectionnee.montantInitial) }} F CFA</div>
+          <div class="info-row"><i class="fas fa-arrow-down"></i> <strong>Montant restant:</strong> <span class="restant">{{ formatDecimal(detteSelectionnee.montantRestant) }} F CFA</span></div>
+          <div class="info-row"><i class="fas fa-arrow-up"></i> <strong>Montant déjà payé:</strong> {{ formatDecimal(detteSelectionnee.montantInitial - detteSelectionnee.montantRestant) }} F CFA</div>
+          <div class="info-row"><i class="fas fa-tag"></i> <strong>Statut:</strong>
+            <span class="status-badge" [class.paid]="detteSelectionnee.estReglee" [class.unpaid]="!detteSelectionnee.estReglee">
+              <i class="fas" [class.fa-check-circle]="detteSelectionnee.estReglee" [class.fa-clock]="!detteSelectionnee.estReglee"></i>
+              {{ detteSelectionnee.estReglee ? 'Réglée' : 'Non réglée' }}
+            </span>
+          </div>
+        </div>
+        <div class="historique-table-container" *ngIf="!loading; else loadingTemplate">
+          <table class="historique-table" *ngIf="historiqueReglements.length > 0; else emptyHistorique">
+            <thead>
+              <tr>
+                <th><i class="fas fa-calendar"></i> Date</th>
+                <th><i class="fas fa-money-bill-wave"></i> Montant payé</th>
+                <th><i class="fas fa-credit-card"></i> Mode de paiement</th>
+                <th><i class="fas fa-hashtag"></i> Référence</th>
+                <th><i class="fas fa-comment"></i> Observations</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let reg of historiqueReglements">
+                <td><i class="fas fa-calendar-day"></i> {{ formatDate(reg.dateReglement) }}</td>
+                <td class="montant paye"><i class="fas fa-arrow-up"></i> {{ formatDecimal(reg.montantPaye) }} F</td>
+                <td>{{ reg.modePaiement }}</td>
+                <td><i class="fas fa-hashtag"></i> {{ reg.referencePaiement || '-' }}</td>
+                <td><i class="fas fa-comment"></i> {{ reg.observations || '-' }}</td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="2"><strong><i class="fas fa-chart-line"></i> Total payé</strong></td>
+                <td colspan="3"><strong><i class="fas fa-check-circle"></i> {{ formatDecimal(getTotalPayeHistorique()) }} F</strong></td>
+              </tr>
+            </tfoot>
+          </table>
+          <ng-template #emptyHistorique>
+            <div class="empty-state">
+              <i class="fas fa-history fa-3x"></i>
+              <p><i class="fas fa-folder-open"></i> Aucun règlement enregistré pour cette dette</p>
+            </div>
+          </ng-template>
+        </div>
+        <ng-template #loadingTemplate>
+          <div class="loading-container">
+            <div class="spinner"></div>
+            <p><i class="fas fa-spinner fa-spin"></i> Chargement...</p>
+          </div>
+        </ng-template>
+      </div>
+    </div>
   </div>
 </div>

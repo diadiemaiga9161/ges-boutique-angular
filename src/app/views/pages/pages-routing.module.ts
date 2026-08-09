@@ -31,6 +31,8 @@ import { CommandesComponent } from './commandes/commandes.component';
 import { PartenairesComponent } from './partenaires/partenaires.component';
 import { AnnulationPaiementsComponent } from './annulation-paiements/annulation-paiements.component';
 import { IaComponent } from './ia/ia.component';
+import { AssistantIaComponent } from './assistant-ia/assistant-ia.component';
+import { HistoriqueVendeurComponent } from './historique-vendeur/historique-vendeur.component';
 import { RessourcesComponent } from './ressources/ressources.component';
 import { ParametresComponent } from './parametres/parametres.component';
 
@@ -153,6 +155,14 @@ const routes: Routes = [
     {
         path: 'ia',
         component: IaComponent
+    },
+    {
+        path: 'assistant-ia',
+        component: AssistantIaComponent
+    },
+    {
+        path: 'historique-vendeur',
+        component: HistoriqueVendeurComponent
     },
     {
         path: 'ressources',

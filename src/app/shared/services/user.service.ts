@@ -12,6 +12,7 @@ export interface User {
   telephone: string;
   role: 'ADMIN' | 'VENDEUR';
   actif: boolean;
+  photo?: string;
   dateCreation?: string;
   dateModification?: string;
 }

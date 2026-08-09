@@ -73,6 +73,10 @@ export interface OperationCaisse {
   motif: string;
   utilisateurId?: number;
   utilisateurNom?: string;
+  utilisateur?: {
+    nomComplet?: string;
+    username?: string;
+  };
   venteId?: number;
   numeroVente?: string;
   modePaiement?: ModePaiementCaisse;

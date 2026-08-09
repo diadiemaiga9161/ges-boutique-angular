@@ -203,6 +203,48 @@
   background: #555;
 }
 
+// ===================== MODE SOMBRE =====================
+// Surcharge des couleurs codées en dur de ce composant pour suivre
+// le design system (voir src/styles.css, classe body.dark-mode).
+:host-context(.dark-mode) {
+  .table th {
+    background-color: var(--bg-secondary, #1f2937);
+    color: var(--text-secondary, #9ca3af);
+  }
+
+  .alert.alert-info {
+    background-color: rgba(26, 86, 219, 0.15);
+    color: #93c5fd;
+  }
+
+  .alert.alert-warning {
+    background-color: rgba(217, 119, 6, 0.15);
+    color: #fcd34d;
+  }
+
+  .input-group .input-group-text {
+    background-color: var(--bg-secondary, #1f2937);
+    border-color: var(--border-color, #374151);
+    color: var(--text-secondary, #9ca3af);
+  }
+
+  .pagination .page-item {
+    .page-link {
+      color: var(--text-primary, #f9fafb);
+      background-color: var(--bg-card, #1f2937);
+
+      &:hover {
+        background-color: rgba(255, 255, 255, 0.06);
+      }
+    }
+
+    &.disabled .page-link {
+      color: var(--text-secondary, #9ca3af);
+      background-color: var(--bg-secondary, #1f2937);
+    }
+  }
+}
+
 // Tooltip styles
 [title] {
   position: relative;

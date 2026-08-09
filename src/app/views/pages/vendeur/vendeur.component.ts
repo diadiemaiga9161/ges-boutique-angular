@@ -41,6 +41,7 @@ export const COUNTRY_CODES = [
   { code: '+55',  flag: '🇧🇷', name: 'Brésil' },
 ];
 import { AuthService } from '../../../shared/services/auth.service';
+import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -103,11 +104,16 @@ export class VendeurComponent implements OnInit {
 
   constructor(
     private userService: UserService,
-    private authService: AuthService
+    private authService: AuthService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
     this.loadUsers();
+  }
+
+  voirHistoriqueVentes(): void {
+    this.router.navigate(['/historique-vendeur']);
   }
 
   loadUsers(): void {

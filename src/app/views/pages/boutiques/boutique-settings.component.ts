@@ -6,6 +6,7 @@ import Swal from 'sweetalert2';
 import { BoutiqueService, BoutiqueInfo } from '../../../shared/services/boutique.service';
 import { ProduitNiveauService, ProduitNiveau } from '../../../shared/services/produit-niveau.service';
 import { ProductService } from '../../../shared/services/product.service';
+import { ThemeService, ThemeMode } from '../../../shared/services/theme.service';
 import { TranslateModule } from '@ngx-translate/core';
 
 interface ProduitDropdown {
@@ -43,7 +44,8 @@ export class BoutiqueSettingsComponent implements OnInit {
   selectedLogoFile: File | null = null;
 
   // Nouvelles propriétés pour la personnalisation globale
-  isDarkMode: boolean = false;
+  isDarkMode: boolean = false; // conservé pour compat template existant (reflète themeMode === 'dark')
+  themeMode: ThemeMode = 'auto';
   selectedGlobalColor: string = '#2a63ff'; // Couleur par défaut
 
   // Fonctionnalités optionnelles
@@ -89,7 +91,8 @@ export class BoutiqueSettingsComponent implements OnInit {
     private niveauService: ProduitNiveauService,
     private productService: ProductService,
     private router: Router,
-    private renderer: Renderer2
+    private renderer: Renderer2,
+    private themeService: ThemeService
   ) {
     this.loadPreferences();
   }
@@ -128,15 +131,14 @@ export class BoutiqueSettingsComponent implements OnInit {
   // ── Préférences ──────────────────────────────────────────────────────────
 
   private loadPreferences() {
-    const savedDarkMode = localStorage.getItem('darkMode');
+    this.themeMode = this.themeService.getMode();
+    this.isDarkMode = this.themeMode === 'dark';
     const savedGlobalColor = localStorage.getItem('globalColor');
-    if (savedDarkMode) this.isDarkMode = savedDarkMode === 'true';
     if (savedGlobalColor) this.selectedGlobalColor = savedGlobalColor;
     this.conditionnementActif = localStorage.getItem('feat_conditionnement') === 'true';
   }
 
   private savePreferences() {
-    localStorage.setItem('darkMode', this.isDarkMode.toString());
     localStorage.setItem('globalColor', this.selectedGlobalColor);
   }
 
@@ -148,25 +150,27 @@ export class BoutiqueSettingsComponent implements OnInit {
     }
   }
 
-  toggleDarkMode() {
-    this.isDarkMode = !this.isDarkMode;
-    this.applyTheme();
-    this.savePreferences();
+  /** Sélection explicite du mode : 'light' | 'dark' | 'auto' */
+  setThemeMode(mode: ThemeMode): void {
+    this.themeMode = mode;
+    this.isDarkMode = mode === 'dark';
+    this.themeService.setMode(mode);
   }
 
-  changeGlobalColor(color: string) {
-    this.selectedGlobalColor = color;
-    this.applyGlobalColor();
-    this.savePreferences();
+  /** Conservé pour compat : bascule simplement entre clair et sombre (sans auto) */
+  toggleDarkMode() {
+    this.setThemeMode(this.isDarkMode ? 'dark' : 'light');
   }
 
   private applyTheme() {
-    const body = document.body;
-    if (this.isDarkMode) {
-      this.renderer.addClass(body, 'dark-mode');
-    } else {
-      this.renderer.removeClass(body, 'dark-mode');
-    }
+    // La gestion de la classe body.dark-mode est centralisée dans ThemeService.
+    this.themeService.setMode(this.themeMode);
+  }
+
+  changeGlobalColor(color: string): void {
+    this.selectedGlobalColor = color;
+    this.applyGlobalColor();
+    this.savePreferences();
   }
 
   private applyGlobalColor() {
@@ -240,12 +244,12 @@ export class BoutiqueSettingsComponent implements OnInit {
       this.errorMessage = '';
       this.successMessage = '';
 
-      this.isDarkMode = false;
+      this.setThemeMode('auto');
       this.selectedGlobalColor = '#2a63ff';
-      this.applyTheme();
       this.applyGlobalColor();
 
       localStorage.removeItem('darkMode');
+      localStorage.removeItem('themeMode');
       localStorage.removeItem('globalColor');
 
       this.boutiqueService.resetToDefaults().subscribe({

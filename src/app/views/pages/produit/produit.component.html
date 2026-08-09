@@ -18,16 +18,16 @@
       <button class="btn btn-success" type="button" (click)="openImportModal()" *ngIf="isAdmin">
         <i class="fa fa-upload me-1"></i> Importer Excel
       </button>
-      <div class="dropdown" *ngIf="isAdmin">
-        <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+      <div class="dropdown" *ngIf="isAdmin" (click)="$event.stopPropagation()">
+        <button class="btn btn-secondary dropdown-toggle" type="button" (click)="toggleGestionDropdown()">
           <i class="fa fa-cog me-1"></i> Gestion
         </button>
-        <ul class="dropdown-menu">
-          <li><a class="dropdown-item" (click)="openAddCategoryModal()"><i class="fa fa-tag me-2"></i>Ajouter catégorie</a></li>
-          <li><a class="dropdown-item" (click)="activeTab = 'categories'"><i class="fa fa-list me-2"></i>Gérer catégories</a></li>
+        <ul class="dropdown-menu" [class.show]="showGestionDropdown">
+          <li><a class="dropdown-item" (click)="openAddCategoryModal(); showGestionDropdown=false"><i class="fa fa-tag me-2"></i>Ajouter catégorie</a></li>
+          <li><a class="dropdown-item" (click)="activeTab = 'categories'; showGestionDropdown=false"><i class="fa fa-list me-2"></i>Gérer catégories</a></li>
           <li><hr class="dropdown-divider"></li>
-          <li><a class="dropdown-item" (click)="openAddFournisseurModal()"><i class="fa fa-truck me-2"></i>Ajouter fournisseur</a></li>
-          <li><a class="dropdown-item" (click)="activeTab = 'fournisseurs'"><i class="fa fa-users me-2"></i>Gérer fournisseurs</a></li>
+          <li><a class="dropdown-item" (click)="openAddFournisseurModal(); showGestionDropdown=false"><i class="fa fa-truck me-2"></i>Ajouter fournisseur</a></li>
+          <li><a class="dropdown-item" (click)="activeTab = 'fournisseurs'; showGestionDropdown=false"><i class="fa fa-users me-2"></i>Gérer fournisseurs</a></li>
         </ul>
       </div>
     </div>

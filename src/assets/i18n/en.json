@@ -228,6 +228,7 @@
     "NAME": "Shop name", "ADDRESS": "Address", "PHONE": "Phone", "LOGO": "Logo",
     "CUSTOMIZATION": "Global customization",
     "DARK_MODE": "Dark mode", "DARK_MODE_DESC": "Enable dark theme for the entire application",
+    "THEME_LIGHT": "Light", "THEME_DARK": "Dark", "THEME_AUTO": "Automatic (system)",
     "PACKAGING": "Multi-level packaging",
     "PACKAGING_DESC": "Sell by level (Carton → Bag → Unit) with automatic cascade stock.",
     "ENABLED": "Enabled", "DISABLED": "Disabled",

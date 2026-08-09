@@ -1,0 +1,82 @@
+<div class="ia-chat-page">
+  <div class="ia-chat-header">
+    <div class="ia-chat-header__title">
+      <span class="ia-chat-header__icon">✨</span>
+      <h1>Assistant IA</h1>
+    </div>
+    <button type="button" class="ia-chat-header__btn" (click)="nouvelleConversation()" title="Nouvelle conversation">
+      <i class="i-Repeat-2"></i>
+    </button>
+  </div>
+
+  <div class="ia-chat-body">
+    <div class="ia-chat-messages" #messagesContainer>
+      <div *ngFor="let msg of messages" class="ia-msg-row" [class.ia-msg-row--user]="msg.role === 'user'">
+        <div class="ia-msg-bubble" [class.ia-msg-bubble--user]="msg.role === 'user'">
+          {{ msg.texte }}
+        </div>
+        <div class="ia-msg-heure">{{ msg.heure }}</div>
+      </div>
+
+      <div *ngIf="loading" class="ia-msg-row">
+        <div class="ia-msg-bubble ia-msg-bubble--typing">
+          <span class="ia-dot"></span><span class="ia-dot"></span><span class="ia-dot"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Suggestions contextuelles (déclenchées par mot-clé tapé, ex: "vente") -->
+    <div class="ia-suggestions" *ngIf="suggestionsContextuelles && !loading && !modePeriode">
+      <div class="ia-suggestions__label">Suggestions liées à ta recherche</div>
+      <div class="ia-suggestions__chips">
+        <button
+          type="button"
+          class="ia-chip"
+          *ngFor="let s of suggestionsContextuelles"
+          (click)="poserSuggestionContextuelle(s)">
+          <span>{{ s.icone }}</span> {{ s.label }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Sélecteur de période personnalisée -->
+    <div class="ia-periode" *ngIf="modePeriode">
+      <div class="ia-suggestions__label">Choisis une période</div>
+      <div class="ia-periode__row">
+        <input type="date" [(ngModel)]="periodeDebut" class="ia-periode__input" />
+        <span>au</span>
+        <input type="date" [(ngModel)]="periodeFin" class="ia-periode__input" />
+        <button type="button" class="ia-periode__btn" [disabled]="!periodeDebut || !periodeFin" (click)="validerPeriodePersonnalisee()">
+          Valider
+        </button>
+      </div>
+    </div>
+
+    <!-- Suggestions par défaut (questions prédéfinies) -->
+    <div class="ia-suggestions" *ngIf="afficherQuestions && !loading && !suggestionsContextuelles && !modePeriode && questions.length">
+      <div class="ia-suggestions__label">Suggestions</div>
+      <div class="ia-suggestions__chips">
+        <button
+          type="button"
+          class="ia-chip"
+          *ngFor="let q of questions"
+          (click)="poserQuestionPredefinie(q)">
+          <span>{{ icone(q.id) }}</span> {{ q.label }}
+        </button>
+      </div>
+    </div>
+
+    <div class="ia-input-bar">
+      <input
+        type="text"
+        [(ngModel)]="texteLibre"
+        (ngModelChange)="onTexteLibreChange()"
+        placeholder="Posez votre question... (essaie 'vente', 'stock', 'crédit'...)"
+        (keyup.enter)="envoyerTexteLibre()"
+        class="ia-input" />
+      <button type="button" class="ia-send-btn" [disabled]="!texteLibre.trim() || loading" (click)="envoyerTexteLibre()">
+        ➤
+      </button>
+    </div>
+  </div>
+</div>
