@@ -214,10 +214,10 @@
                   </div>
                 </td>
                 <td class="text-center" *ngIf="isAdmin">
-                  <div class="btn-group btn-group-sm">
-                    <button class="btn btn-outline-primary" type="button" (click)="openEditModal(produit)" title="Modifier"><i class="fa fa-edit me-1"></i> Modifier</button>
-                    <button class="btn btn-outline-info" type="button" (click)="openDetailsModal(produit)" title="Détails"><i class="fa fa-info-circle me-1"></i> Détails</button>
-                    <button class="btn btn-outline-danger" type="button" (click)="openDeleteModal(produit)" title="Supprimer"><i class="fa fa-trash me-1"></i> Supprimer</button>
+                  <div class="btn-group btn-group-sm btn-group-icons">
+                    <button class="btn btn-outline-primary" type="button" (click)="openEditModal(produit)" title="Modifier"><i class="fa fa-edit"></i></button>
+                    <button class="btn btn-outline-info" type="button" (click)="openDetailsModal(produit)" title="Détails"><i class="fa fa-info-circle"></i></button>
+                    <button class="btn btn-outline-danger" type="button" (click)="openDeleteModal(produit)" title="Supprimer"><i class="fa fa-trash"></i></button>
                   </div>
                 </td>
               </tr>
@@ -287,14 +287,14 @@
                 <td class="text-center"><span class="badge bg-info">{{ f.nombreProduits || 0 }}</span></td>
                 <td class="text-center"><span [class]="'badge ' + (f.actif ? 'bg-success' : 'bg-danger')">{{ f.actif ? "Actif" : "Inactif" }}</span></td>
                 <td class="text-center" *ngIf="isAdmin">
-                  <div class="btn-group btn-group-sm">
-                    <button class="btn btn-outline-primary" type="button" (click)="openEditFournisseurModal(f)" title="Modifier"><i class="fa fa-edit me-1"></i> Modifier</button>
-                    <button class="btn btn-outline-info" type="button" (click)="openSituationModal(f)" title="Situation comptable"><i class="fa fa-chart-line me-1"></i> Situation</button>
-                    <button class="btn btn-outline-success" type="button" (click)="openAchatModal(f)" title="Enregistrer un achat"><i class="fa fa-shopping-cart me-1"></i> Achat</button>
-                    <button class="btn btn-outline-warning" type="button" (click)="openPaiementModal(f)" title="Effectuer un paiement"><i class="fa fa-money me-1"></i> Paiement</button>
-                    <button class="btn btn-outline-primary" type="button" (click)="openAvanceFournisseurModal(f)" title="Enregistrer une avance fournisseur"><i class="fa fa-hand-holding-usd me-1"></i> Avance</button>
-                    <button class="btn btn-outline-info" type="button" (click)="openHistoriqueAvancesModal(f)" title="Voir l'historique des avances"><i class="fa fa-history me-1"></i> Hist. avance</button>
-                    <button class="btn btn-outline-danger" type="button" (click)="openDeleteFournisseurModal(f)" [disabled]="f.nombreProduits > 0" title="Supprimer"><i class="fa fa-trash me-1"></i> Supprimer</button>
+                  <div class="btn-group btn-group-sm btn-group-icons">
+                    <button class="btn btn-outline-primary" type="button" (click)="openEditFournisseurModal(f)" title="Modifier"><i class="fa fa-edit"></i></button>
+                    <button class="btn btn-outline-info" type="button" (click)="openSituationModal(f)" title="Situation comptable"><i class="fa fa-chart-line"></i></button>
+                    <button class="btn btn-outline-success" type="button" (click)="openAchatModal(f)" title="Enregistrer un achat"><i class="fa fa-shopping-cart"></i></button>
+                    <button class="btn btn-outline-warning" type="button" (click)="openPaiementModal(f)" title="Effectuer un paiement"><i class="fa fa-money"></i></button>
+                    <button class="btn btn-outline-primary" type="button" (click)="openAvanceFournisseurModal(f)" title="Enregistrer une avance fournisseur"><i class="fa fa-hand-holding-usd"></i></button>
+                    <button class="btn btn-outline-info" type="button" (click)="openHistoriqueAvancesModal(f)" title="Voir l'historique des avances"><i class="fa fa-history"></i></button>
+                    <button class="btn btn-outline-danger" type="button" (click)="openDeleteFournisseurModal(f)" [disabled]="f.nombreProduits > 0" title="Supprimer"><i class="fa fa-trash"></i></button>
                   </div>
                 </td>
               </tr>

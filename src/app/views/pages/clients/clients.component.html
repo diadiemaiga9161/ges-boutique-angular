@@ -111,27 +111,27 @@
               <td>{{ client.adresse || '-' }}</td>
               <td>{{ client.email || '-' }}</td>
               <td class="text-center">
-                <div class="btn-group btn-group-sm">
+                <div class="btn-group btn-group-sm btn-group-icons">
                   <button  type="button" class="btn btn-info text-white" (click)="showClientVentes(client)" title="Ventes">
-                    <i class="fa fa-shopping-cart me-1"></i>Ventes
+                    <i class="fa fa-shopping-cart"></i>
                   </button>
                   <button type="button" class="btn btn-success" (click)="loadHistoriquePaiements(client)" title="Historique paiements">
-                    <i class="fa fa-history me-1"></i>Paiements
+                    <i class="fa fa-history"></i>
                   </button>
                   <button type="button" class="btn btn-dark" (click)="loadSituationClient(client)" title="Situation client">
-                    <i class="fa fa-book me-1"></i>Situation
+                    <i class="fa fa-book"></i>
                   </button>
                   <button type="button" class="btn btn-warning" (click)="editClient(client)" title="Modifier">
-                    <i class="fa fa-edit me-1"></i>Modifier
+                    <i class="fa fa-edit"></i>
                   </button>
                   <button type="button" class="btn btn-danger" (click)="deleteClient(client)" title="Supprimer">
-                    <i class="fa fa-trash me-1"></i>Supprimer
+                    <i class="fa fa-trash"></i>
                   </button>
                   <button type="button" class="btn btn-primary" (click)="openAvanceModal(client)" title="Déposer une avance">
-                    <i class="fa fa-money me-1"></i>Avance
+                    <i class="fa fa-money"></i>
                   </button>
                   <button type="button" class="btn btn-secondary" (click)="openHistoriqueAvancesModal(client)" title="Historique avances">
-                    <i class="fa fa-list me-1"></i>Avances
+                    <i class="fa fa-list"></i>
                   </button>
                 </div>
               </td>

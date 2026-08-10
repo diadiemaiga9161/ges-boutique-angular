@@ -723,6 +723,10 @@ h1.h3, h1.h4 {
 
 .app-page {
   padding: 0;
+  /* Réserve la place du bouton flottant "Aide" (chatbot-assistant, fixed
+     bottom-right sur TOUTES les pages) pour qu'il ne recouvre jamais le
+     dernier bouton d'action d'un tableau (ex: Détails/Supprimer). */
+  padding-bottom: 96px;
   min-height: 100%;
 }
 
@@ -946,6 +950,23 @@ h1.h3, h1.h4 {
   border: 1px solid #e2e8f0;
   border-radius: 20px;
   padding: 3px 10px;
+}
+
+/* Colonnes d'actions dans les tableaux : icônes seules (tooltip au survol
+   via l'attribut title) au lieu de boutons pleine largeur avec texte — sinon
+   une ligne de 5-7 actions (Ventes/Paiements/Modifier/Supprimer/…) déborde
+   du tableau et le bouton le plus à droite est coupé, même sur un écran
+   large. Purement visuel : les (click) restent identiques. */
+.btn-group-icons .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  padding: 0;
+}
+.btn-group-icons .btn i {
+  margin: 0 !important;
+  font-size: 0.85rem;
 }
 
 /* Table inside app-table-card */

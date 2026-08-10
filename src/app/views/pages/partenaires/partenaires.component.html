@@ -117,18 +117,18 @@
             <td>{{ client.email || '-' }}</td>
             <td>{{ client.adresse || '-' }}</td>
             <td class="text-center">
-              <div class="btn-group btn-group-sm">
+              <div class="btn-group btn-group-sm btn-group-icons">
                 <button type="button" class="btn btn-info text-white" (click)="showClientVentes(client)" title="Historique ventes">
-                  <i class="fa fa-shopping-cart me-1"></i>Ventes
+                  <i class="fa fa-shopping-cart"></i>
                 </button>
                 <button type="button" class="btn btn-success" (click)="loadHistoriquePaiements(client)" title="Historique paiements">
-                  <i class="fa fa-history me-1"></i>Paiements
+                  <i class="fa fa-history"></i>
                 </button>
                 <button type="button" class="btn btn-warning" (click)="editClient(client)" title="Modifier">
-                  <i class="fa fa-edit me-1"></i>Modifier
+                  <i class="fa fa-edit"></i>
                 </button>
                 <button type="button" class="btn btn-danger" (click)="deleteClient(client)" title="Supprimer">
-                  <i class="fa fa-trash me-1"></i>Supprimer
+                  <i class="fa fa-trash"></i>
                 </button>
               </div>
             </td>

@@ -305,22 +305,22 @@
  <span [class]="getCreditStatusClass(credit)">{{ getCreditStatusText(credit) }}</span>
  </td>
  <td class="text-center">
-   <div class="d-flex gap-1 justify-content-center flex-wrap">
+   <div class="d-flex gap-1 justify-content-center flex-wrap btn-group-icons">
      <button class="btn btn-sm btn-outline-info"
              (click)="openDetailsCreditModal(credit)"
              title="Voir les détails de ce crédit">
-       <i class="bi bi-eye me-1"></i> Détails
+       <i class="bi bi-eye"></i>
      </button>
      <button class="btn btn-sm btn-outline-primary"
              (click)="loadHistoriqueReglementsCredit(credit)"
              title="Voir l'historique des règlements">
-       <i class="bi bi-clock-history me-1"></i> Historique
+       <i class="bi bi-clock-history"></i>
      </button>
      <button class="btn btn-sm btn-outline-success"
              (click)="openReglementCreditModal(credit)"
              title="Enregistrer un règlement"
              [disabled]="credit.montantRestant <= 0">
-       <i class="bi bi-check-lg me-1"></i> Régler
+       <i class="bi bi-check-lg"></i>
      </button>
    </div>
  </td>

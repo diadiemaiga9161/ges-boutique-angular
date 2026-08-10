@@ -2169,6 +2169,15 @@ input[type="number"] {
   cursor: not-allowed;
 }
 
+// Modale "Nouvelle Vente" (comptant + crédit unifiés) : plus large que le
+// modal-xl standard de Bootstrap (1140px) pour que le panier (produits,
+// prix, remises) et les infos de paiement respirent sur desktop, sans
+// jamais dépasser la largeur de l'écran (calc(100vw - 32px)).
+.nouvelle-vente-dialog {
+  width: min(1400px, calc(100vw - 32px));
+  max-width: min(1400px, calc(100vw - 32px));
+}
+
 .vente-modifier-modal {
   z-index: 1065;
   color: #1f2937;
