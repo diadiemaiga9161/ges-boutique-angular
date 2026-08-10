@@ -186,21 +186,21 @@
                       </span>
                     </td>
                     <td class="text-center">
-                      <div class="d-flex gap-1 justify-content-center flex-wrap">
+                      <div class="d-flex gap-1 justify-content-center flex-wrap btn-group-icons">
                         <button class="btn btn-sm btn-outline-success" *ngIf="isAdmin"
                                 [title]="'INVENTORY.IN' | translate"
                                 (click)="openEntreeModal(produit)">
-                          <i class="fa fa-plus me-1"></i> {{ 'INVENTORY.IN' | translate }}
+                          <i class="fa fa-plus"></i>
                         </button>
                         <button class="btn btn-sm btn-outline-info"
                                 [title]="'INVENTORY.HISTORY' | translate"
                                 (click)="openHistoriqueModal(produit)">
-                          <i class="fa fa-history me-1"></i> {{ 'INVENTORY.HISTORY' | translate }}
+                          <i class="fa fa-history"></i>
                         </button>
                         <button class="btn btn-sm btn-outline-warning" *ngIf="isAdmin"
                                 [title]="'INVENTORY.CORRECTION' | translate"
                                 (click)="openAjustementModal(produit)">
-                          <i class="fa fa-adjust me-1"></i> {{ 'INVENTORY.CORRECTION' | translate }}
+                          <i class="fa fa-adjust"></i>
                         </button>
                       </div>
                     </td>

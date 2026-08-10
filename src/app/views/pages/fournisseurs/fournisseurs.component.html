@@ -330,21 +330,20 @@
               <td class="text-center">
                 <span class="badge" [class]="statutClass(achat.statut)">{{ statutLabel(achat.statut) }}</span>
               </td>
-              <td>
+              <td class="btn-group-icons">
                 <button class="btn btn-xs btn-success mr-1" (click)="ouvrirPaiementModal(achat)"
                         *ngIf="achat.statut !== 'PAYE' && achat.statut !== 'ANNULE'"
                         title="Payer">
-                  <i class="i-Money-Bag"></i> Payer
+                  <i class="i-Money-Bag"></i>
                 </button>
                 <button class="btn btn-xs btn-outline-danger mr-1" (click)="confirmerAnnulerAchat(achat)"
                         *ngIf="achat.statut !== 'ANNULE'"
                         [disabled]="isAnnulationEnCours"
                         title="Annuler cet achat">
-                  <i class="fa fa-ban mr-1"></i> Annuler
+                  <i class="fa fa-ban"></i>
                 </button>
-                <button class="btn btn-xs btn-outline-info ml-1" (click)="toggleDetailAchat(achat)" title="Voir les produits de cet achat">
-                  <i class="fa mr-1" [class.fa-chevron-down]="achatDetail?.id !== achat.id" [class.fa-chevron-up]="achatDetail?.id === achat.id"></i>
-                  {{ achatDetail?.id === achat.id ? 'Masquer' : 'Produits' }}
+                <button class="btn btn-xs btn-outline-info ml-1" (click)="toggleDetailAchat(achat)" [title]="achatDetail?.id === achat.id ? 'Masquer les produits' : 'Voir les produits de cet achat'">
+                  <i class="fa" [class.fa-chevron-down]="achatDetail?.id !== achat.id" [class.fa-chevron-up]="achatDetail?.id === achat.id"></i>
                 </button>
               </td>
             </tr>
