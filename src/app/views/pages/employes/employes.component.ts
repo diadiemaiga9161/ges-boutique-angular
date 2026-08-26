@@ -5,6 +5,7 @@ import { EmployeService, Employe, EmployeRequest } from '../../../shared/service
 import { AuthService } from '../../../shared/services/auth.service';
 import Swal from 'sweetalert2';
 import { TranslateModule } from '@ngx-translate/core';
+import { COUNTRY_CODES, validatePhoneForCountry, construireNumeroComplet, separerIndicatif } from '../../../shared/utils/telephone.util';
 
 @Component({
   selector: 'app-employes',
@@ -31,6 +32,12 @@ export class EmployesComponent implements OnInit {
     nom: '', prenom: '', poste: '', salaireMensuel: 0,
     telephone: '', observation: '', statut: 'ACTIF', dateEmbauche: ''
   };
+
+  // Indicatif pays pour le téléphone (WhatsApp reçu de paiement)
+  countryCodes = COUNTRY_CODES;
+  selectedCountryCode = '+223';
+  telephoneLocal = '';
+  private telephoneLocalOriginal = '';
 
   searchQuery = '';
 
@@ -75,6 +82,9 @@ export class EmployesComponent implements OnInit {
     this.isEditing = false;
     this.selectedEmploye = null;
     this.form = { nom: '', prenom: '', poste: '', salaireMensuel: 0, telephone: '', observation: '', statut: 'ACTIF', dateEmbauche: '' };
+    this.selectedCountryCode = '+223';
+    this.telephoneLocal = '';
+    this.telephoneLocalOriginal = '';
     this.showFormModal = true;
   }
 
@@ -91,16 +101,34 @@ export class EmployesComponent implements OnInit {
       statut: employe.statut,
       dateEmbauche: employe.dateEmbauche || ''
     };
+    const sep = separerIndicatif(employe.telephone);
+    this.selectedCountryCode = sep.code;
+    this.telephoneLocal = sep.local;
+    this.telephoneLocalOriginal = sep.local;
     this.showFormModal = true;
   }
 
   fermerModal(): void { this.showFormModal = false; }
+
+  telephoneValide(): boolean {
+    return !this.telephoneLocal || validatePhoneForCountry(this.telephoneLocal, this.selectedCountryCode);
+  }
 
   sauvegarder(): void {
     if (!this.form.nom || !this.form.poste || !this.form.salaireMensuel) {
       Swal.fire({ icon: 'warning', title: 'Champs requis', text: 'Nom, poste et salaire sont obligatoires.', confirmButtonColor: '#3085d6' });
       return;
     }
+
+    // Comme pour les vendeurs : la règle stricte par indicatif ne bloque que sur un numéro
+    // modifié, pour ne pas empêcher de sauvegarder une fiche existante à cause d'un ancien
+    // numéro saisi avant l'ajout de cette validation.
+    const telephoneModifie = this.telephoneLocal !== this.telephoneLocalOriginal;
+    if (this.telephoneLocal && telephoneModifie && !validatePhoneForCountry(this.telephoneLocal, this.selectedCountryCode)) {
+      Swal.fire({ icon: 'warning', title: 'Téléphone invalide', text: `Numéro invalide pour l'indicatif ${this.selectedCountryCode}.`, confirmButtonColor: '#3085d6' });
+      return;
+    }
+    this.form.telephone = this.telephoneLocal ? construireNumeroComplet(this.selectedCountryCode, this.telephoneLocal) : '';
 
     const action = this.isEditing
       ? this.employeService.modifier(this.selectedEmploye!.id, this.form)
@@ -191,6 +219,6 @@ export class EmployesComponent implements OnInit {
   }
 
   formatMontant(m: number): string {
-    return new Intl.NumberFormat('fr-FR').format(m) + ' FCFA';
+    return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(m) + ' FCFA';
   }
 }

@@ -5,44 +5,10 @@ import { FormsModule } from '@angular/forms';
 import { UserService, User, UserUpdate } from '../../../shared/services/user.service';
 import { TranslateModule } from '@ngx-translate/core';
 
-export const COUNTRY_CODES = [
-  { code: '+223', flag: '🇲🇱', name: 'Mali' },
-  { code: '+225', flag: '🇨🇮', name: "Côte d'Ivoire" },
-  { code: '+226', flag: '🇧🇫', name: 'Burkina Faso' },
-  { code: '+221', flag: '🇸🇳', name: 'Sénégal' },
-  { code: '+227', flag: '🇳🇪', name: 'Niger' },
-  { code: '+228', flag: '🇹🇬', name: 'Togo' },
-  { code: '+229', flag: '🇧🇯', name: 'Bénin' },
-  { code: '+224', flag: '🇬🇳', name: 'Guinée' },
-  { code: '+245', flag: '🇬🇼', name: 'Guinée-Bissau' },
-  { code: '+222', flag: '🇲🇷', name: 'Mauritanie' },
-  { code: '+220', flag: '🇬🇲', name: 'Gambie' },
-  { code: '+232', flag: '🇸🇱', name: 'Sierra Leone' },
-  { code: '+231', flag: '🇱🇷', name: 'Libéria' },
-  { code: '+233', flag: '🇬🇭', name: 'Ghana' },
-  { code: '+234', flag: '🇳🇬', name: 'Nigeria' },
-  { code: '+237', flag: '🇨🇲', name: 'Cameroun' },
-  { code: '+243', flag: '🇨🇩', name: 'RD Congo' },
-  { code: '+242', flag: '🇨🇬', name: 'Congo' },
-  { code: '+241', flag: '🇬🇦', name: 'Gabon' },
-  { code: '+236', flag: '🇨🇫', name: 'Centrafrique' },
-  { code: '+235', flag: '🇹🇩', name: 'Tchad' },
-  { code: '+212', flag: '🇲🇦', name: 'Maroc' },
-  { code: '+213', flag: '🇩🇿', name: 'Algérie' },
-  { code: '+216', flag: '🇹🇳', name: 'Tunisie' },
-  { code: '+20',  flag: '🇪🇬', name: 'Égypte' },
-  { code: '+33',  flag: '🇫🇷', name: 'France' },
-  { code: '+32',  flag: '🇧🇪', name: 'Belgique' },
-  { code: '+41',  flag: '🇨🇭', name: 'Suisse' },
-  { code: '+1',   flag: '🇺🇸', name: 'USA' },
-  { code: '+44',  flag: '🇬🇧', name: 'Royaume-Uni' },
-  { code: '+351', flag: '🇵🇹', name: 'Portugal' },
-  { code: '+34',  flag: '🇪🇸', name: 'Espagne' },
-  { code: '+55',  flag: '🇧🇷', name: 'Brésil' },
-];
 import { AuthService } from '../../../shared/services/auth.service';
 import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
+import { COUNTRY_CODES, validatePhoneForCountry, construireNumeroComplet, separerIndicatif } from '../../../shared/utils/telephone.util';
 
 @Component({
   selector: 'app-vendeur',
@@ -82,10 +48,26 @@ export class VendeurComponent implements OnInit {
   };
   showCreateForm: boolean = false;
 
-  // Indicatif pays
+  // Case "Ce vendeur est aussi employé" (paie) — création
+  newVendeurEstEmploye: boolean = false;
+  newVendeurPoste: string = 'Vendeur';
+  newVendeurSalaire: number = 0;
+
+  // Idem, édition
+  editEstEmploye: boolean = false;
+  editEstEmployeOriginal: boolean = false;
+  editPosteEmploye: string = 'Vendeur';
+  editSalaireEmploye: number = 0;
+
+  // Indicatif pays (création d'un nouveau vendeur)
   countryCodes = COUNTRY_CODES;
   selectedCountryCode = '+223';
   newVendeurPhoneNumber = '';
+
+  // Indicatif pays (édition d'un vendeur existant)
+  editSelectedCountryCode = '+223';
+  editTelephoneLocal = '';
+  private editTelephoneLocalOriginal = '';
 
   // Force de mot de passe
   passwordStrength: number = 0;
@@ -227,11 +209,20 @@ export class VendeurComponent implements OnInit {
   openEditModal(user: User): void {
     this.modalUser = user;
     this.editedUser = {
+      username: user.username,
       nomComplet: user.nomComplet,
       email: user.email,
       telephone: user.telephone,
       role: user.role
     };
+    const sep = separerIndicatif(user.telephone);
+    this.editSelectedCountryCode = sep.code;
+    this.editTelephoneLocal = sep.local;
+    this.editTelephoneLocalOriginal = sep.local;
+    this.editEstEmploye = !!user.employeId;
+    this.editEstEmployeOriginal = this.editEstEmploye;
+    this.editPosteEmploye = 'Vendeur';
+    this.editSalaireEmploye = 0;
     this.showEditModal = true;
     this.showEditPassword = false;
   }
@@ -240,6 +231,11 @@ export class VendeurComponent implements OnInit {
     this.showEditModal = false;
     this.modalUser = null;
     this.editedUser = {};
+    this.editTelephoneLocal = '';
+    this.editTelephoneLocalOriginal = '';
+    this.editSelectedCountryCode = '+223';
+    this.editEstEmploye = false;
+    this.editEstEmployeOriginal = false;
   }
 
   openDeleteModal(user: User): void {
@@ -257,6 +253,11 @@ export class VendeurComponent implements OnInit {
     if (!this.modalUser) return;
 
     // Validation
+    if (!this.editedUser.username?.trim()) {
+      Swal.fire('Erreur', 'Le nom d\'utilisateur est obligatoire', 'error');
+      return;
+    }
+
     if (!this.editedUser.nomComplet?.trim()) {
       Swal.fire('Erreur', 'Le nom complet est obligatoire', 'error');
       return;
@@ -267,10 +268,15 @@ export class VendeurComponent implements OnInit {
       return;
     }
 
-    if (!this.editedUser.telephone?.trim() || !this.validatePhone(this.editedUser.telephone)) {
-      Swal.fire('Erreur', 'Veuillez saisir un numéro de téléphone valide (10 chiffres)', 'error');
+    // La règle stricte par indicatif (ex: Mali = 8 chiffres) ne bloque que si le numéro a
+    // été modifié — un numéro déjà enregistré avant ce correctif (ancien format) reste
+    // modifiable sans forcer l'admin à d'abord corriger un champ qu'il ne voulait pas toucher.
+    const telephoneModifie = this.editTelephoneLocal !== this.editTelephoneLocalOriginal;
+    if (!this.editTelephoneLocal?.trim() || (telephoneModifie && !this.validatePhone(this.editTelephoneLocal))) {
+      Swal.fire('Erreur', 'Veuillez saisir un numéro de téléphone valide pour l\'indicatif sélectionné', 'error');
       return;
     }
+    this.editedUser.telephone = construireNumeroComplet(this.editSelectedCountryCode, this.editTelephoneLocal);
 
     // Si un nouveau mot de passe est fourni, vérifier sa longueur
     if (this.editedUser.password && this.editedUser.password.length < 6) {
@@ -302,20 +308,37 @@ export class VendeurComponent implements OnInit {
 
           this.userService.updateUser(this.modalUser!.id, updateData, token).subscribe({
             next: (updatedUser) => {
-              // Mettre à jour la liste
-              const index = this.users.findIndex(u => u.id === updatedUser.id);
-              if (index !== -1) {
-                this.users[index] = updatedUser;
+              const applyUpdate = (finalUser: User) => {
+                const index = this.users.findIndex(u => u.id === finalUser.id);
+                if (index !== -1) {
+                  this.users[index] = finalUser;
+                }
+                this.applyFilters();
+                this.isLoading = false;
+                this.closeEditModal();
+                Swal.fire({
+                  icon: 'success',
+                  title: 'Utilisateur mis à jour',
+                  timer: 1500,
+                  showConfirmButton: false
+                });
+              };
+
+              // La case "Ce vendeur est aussi employé" n'a été touchée que si son état a changé
+              // depuis l'ouverture du formulaire — sinon on ne touche jamais à la fiche employé liée.
+              if (this.editEstEmploye !== this.editEstEmployeOriginal) {
+                this.userService.gererLienEmploye(
+                  updatedUser.id, this.editEstEmploye, this.editPosteEmploye, this.editSalaireEmploye, token
+                ).subscribe({
+                  next: (userAvecLien) => applyUpdate(userAvecLien),
+                  error: (error) => {
+                    this.isLoading = false;
+                    Swal.fire('Erreur', `Utilisateur modifié mais erreur sur le lien employé: ${error.message}`, 'error');
+                  }
+                });
+              } else {
+                applyUpdate(updatedUser);
               }
-              this.applyFilters();
-              this.isLoading = false;
-              this.closeEditModal();
-              Swal.fire({
-                icon: 'success',
-                title: 'Utilisateur mis à jour',
-                timer: 1500,
-                showConfirmButton: false
-              });
             },
             error: (error) => {
               this.isLoading = false;
@@ -331,20 +354,45 @@ export class VendeurComponent implements OnInit {
   }
 
   toggleUserStatus(user: User): void {
+    const nouveauStatut = !user.actif;
     Swal.fire({
       title: 'Confirmation',
-      text: `Voulez-vous ${user.actif ? 'désactiver' : 'activer'} l'utilisateur "${user.nomComplet}" ?`,
+      text: nouveauStatut
+        ? `Voulez-vous réactiver le compte de "${user.nomComplet}" ? Il pourra de nouveau se connecter.`
+        : `Voulez-vous geler le compte de "${user.nomComplet}" ? Il ne pourra plus se connecter tant qu'il ne sera pas réactivé.`,
       icon: 'question',
       showCancelButton: true,
-      confirmButtonText: `Oui, ${user.actif ? 'désactiver' : 'activer'}`,
+      confirmButtonText: nouveauStatut ? 'Oui, réactiver' : 'Oui, geler le compte',
       cancelButtonText: 'Annuler',
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33'
+      confirmButtonColor: nouveauStatut ? '#198754' : '#d33',
+      cancelButtonColor: '#6c757d'
     }).then((result) => {
-      if (result.isConfirmed) {
-        // Note: Cette fonctionnalité nécessitera un endpoint API spécifique
-        Swal.fire('Info', 'Fonctionnalité à implémenter avec l\'API', 'info');
+      if (!result.isConfirmed) return;
+      const token = this.authService.getToken();
+      if (!token) {
+        Swal.fire('Erreur', 'Token d\'authentification manquant', 'error');
+        return;
       }
+      this.isLoading = true;
+      this.userService.changerStatut(user.id, nouveauStatut, token).subscribe({
+        next: (updatedUser) => {
+          const index = this.users.findIndex(u => u.id === updatedUser.id);
+          if (index !== -1) { this.users[index] = updatedUser; }
+          if (this.modalUser && this.modalUser.id === updatedUser.id) { this.modalUser = updatedUser; }
+          this.applyFilters();
+          this.isLoading = false;
+          Swal.fire({
+            icon: 'success',
+            title: nouveauStatut ? 'Compte réactivé' : 'Compte gelé',
+            timer: 1500,
+            showConfirmButton: false
+          });
+        },
+        error: (error) => {
+          this.isLoading = false;
+          Swal.fire('Erreur', error.message || 'Changement de statut impossible', 'error');
+        }
+      });
     });
   }
 
@@ -433,17 +481,33 @@ export class VendeurComponent implements OnInit {
 
           this.userService.createUser(userData, token).subscribe({
             next: (newUser) => {
-              this.users.push(newUser);
-              this.applyFilters();
-              this.isLoading = false;
-              this.showCreateForm = false;
-              this.resetNewVendeurForm();
-              Swal.fire({
-                icon: 'success',
-                title: 'Vendeur créé avec succès',
-                timer: 1500,
-                showConfirmButton: false
-              });
+              const finaliser = (u: User) => {
+                this.users.push(u);
+                this.applyFilters();
+                this.isLoading = false;
+                this.showCreateForm = false;
+                this.resetNewVendeurForm();
+                Swal.fire({
+                  icon: 'success',
+                  title: 'Vendeur créé avec succès',
+                  timer: 1500,
+                  showConfirmButton: false
+                });
+              };
+
+              if (this.newVendeurEstEmploye) {
+                this.userService.gererLienEmploye(
+                  newUser.id, true, this.newVendeurPoste, this.newVendeurSalaire, token
+                ).subscribe({
+                  next: (userAvecLien) => finaliser(userAvecLien),
+                  error: (error) => {
+                    this.isLoading = false;
+                    Swal.fire('Erreur', `Vendeur créé mais erreur sur le lien employé: ${error.message}`, 'error');
+                  }
+                });
+              } else {
+                finaliser(newUser);
+              }
             },
             error: (error) => {
               this.isLoading = false;
@@ -486,8 +550,8 @@ export class VendeurComponent implements OnInit {
       return false;
     }
 
-    if (!this.newVendeurPhoneNumber.trim()) {
-      Swal.fire('Erreur', 'Veuillez saisir un numéro de téléphone', 'error');
+    if (!this.newVendeurPhoneNumber.trim() || !validatePhoneForCountry(this.newVendeurPhoneNumber, this.selectedCountryCode)) {
+      Swal.fire('Erreur', 'Veuillez saisir un numéro de téléphone valide pour l\'indicatif sélectionné', 'error');
       return false;
     }
 
@@ -548,6 +612,9 @@ export class VendeurComponent implements OnInit {
     this.passwordStrength = 0;
     this.passwordStrengthText = '';
     this.showPassword = false;
+    this.newVendeurEstEmploye = false;
+    this.newVendeurPoste = 'Vendeur';
+    this.newVendeurSalaire = 0;
   }
 
   // Utilitaires
@@ -560,9 +627,8 @@ export class VendeurComponent implements OnInit {
     return re.test(email);
   }
 
-  validatePhone(phone: string): boolean {
-    const re = /^[0-9]{10}$/;
-    return re.test(phone);
+  validatePhone(phoneLocal: string): boolean {
+    return validatePhoneForCountry(phoneLocal, this.editSelectedCountryCode);
   }
 
   private showMessage(message: string, isError: boolean = false): void {

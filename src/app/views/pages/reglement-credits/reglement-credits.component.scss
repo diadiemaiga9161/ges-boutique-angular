@@ -1,3 +1,51 @@
+// Cartes stats devenues cliquables (filtres de statut) — simplification demandée :
+// avant, les mêmes chiffres apparaissaient à la fois dans ces cartes ET dans une
+// rangée de boutons juste en dessous. Un anneau + légère élévation indique la carte
+// active, pour remplacer visuellement l'ancien bouton actif.
+.credit-filter-card {
+  position: relative;
+  transition: transform .15s ease, box-shadow .15s ease, outline-color .15s ease;
+  outline: 3px solid transparent;
+  outline-offset: 3px;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(8, 22, 72, .18);
+  }
+
+  &.active {
+    outline-color: #0f172a;
+    box-shadow: 0 8px 20px rgba(8, 22, 72, .28);
+  }
+
+  &.active::after {
+    content: '\F272'; // bi-check-circle-fill (Bootstrap Icons)
+    font-family: 'bootstrap-icons' !important;
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #0f172a;
+    color: #fff;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, .3);
+  }
+}
+
+body.dark-mode .credit-filter-card.active {
+  outline-color: #e2e8f0;
+}
+
+body.dark-mode .credit-filter-card.active::after {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
 .stat-card {
   display: flex;
   align-items: center;

@@ -3,6 +3,7 @@ import { Title } from '@angular/platform-browser';
 import { BoutiqueService } from './shared/services/boutique.service';
 import { WebSocketService } from './shared/services/websocket.service';
 import { ThemeService } from './shared/services/theme.service';
+import { AppUpdateService } from './shared/services/app-update.service';
 
 @Component({
     selector: 'app-root',
@@ -19,7 +20,8 @@ export class AppComponent implements OnInit {
     private ws: WebSocketService,
     // Injecté ici pour forcer l'initialisation du thème (clair/sombre/auto)
     // dès le démarrage de l'application, avant tout affichage de page.
-    private themeService: ThemeService
+    private themeService: ThemeService,
+    private appUpdateService: AppUpdateService
   ) {}
 
   ngOnInit(): void {
@@ -32,6 +34,8 @@ export class AppComponent implements OnInit {
     });
     // Connexion WebSocket globale dès le démarrage de l'app
     this.ws.connect();
+    // Détecte les nouvelles versions déployées et propose de recharger
+    this.appUpdateService.init();
   }
 
   private updateFavicon(logoUrl: string): void {

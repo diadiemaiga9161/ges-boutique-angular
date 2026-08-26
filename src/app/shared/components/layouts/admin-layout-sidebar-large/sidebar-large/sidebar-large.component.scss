@@ -1,0 +1,145 @@
+// Sidebar fixe façon edumanager : dégradé marine, liens à plat groupés par
+// titres de section. Toutes les règles sont scopées à ce composant, donc
+// sans effet sur le reste de l'app (aucune classe globale réutilisée).
+
+.edu-sidebar {
+  background: linear-gradient(180deg, #0f3f8a 0%, #0b2454 100%);
+  border-right: 1px solid rgba(255, 255, 255, .08);
+  color: #eaf2ff;
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+  height: 100vh;
+  left: 0;
+  padding: 1.1rem;
+  position: fixed;
+  top: 0;
+  width: 282px;
+  z-index: 1020;
+  overflow: hidden;
+}
+
+.brand {
+  align-items: center;
+  display: flex;
+  gap: .8rem;
+  padding: .4rem .35rem 1.1rem;
+  flex-shrink: 0;
+}
+
+.brand-mark {
+  align-items: center;
+  background: #fff;
+  border-radius: 16px;
+  display: grid;
+  height: 48px;
+  overflow: hidden;
+  place-items: center;
+  width: 48px;
+  flex-shrink: 0;
+}
+
+.brand-mark img {
+  height: 100%;
+  width: 100%;
+  object-fit: contain;
+}
+
+.brand strong,
+.brand span {
+  display: block;
+}
+
+.brand strong {
+  color: #fff;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.brand span {
+  color: #bfdbfe;
+  font-size: .78rem;
+  font-weight: 700;
+}
+
+.edu-sidebar-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.nav-block {
+  margin-bottom: .3rem;
+}
+
+.nav-title {
+  color: #93c5fd;
+  display: block;
+  font-size: .7rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  padding: .7rem .85rem .25rem;
+  text-transform: uppercase;
+}
+
+.nav-link {
+  align-items: center;
+  border-radius: 14px;
+  color: #dbeafe;
+  display: flex;
+  font-size: .88rem;
+  font-weight: 700;
+  gap: .72rem;
+  margin: 0 0 .15rem;
+  min-height: 42px;
+  padding: .6rem .85rem;
+  text-decoration: none;
+  transition: background-color .18s ease, color .18s ease, transform .18s ease;
+}
+
+.nav-link i {
+  font-size: 1.15rem;
+  width: 20px;
+  text-align: center;
+}
+
+.nav-link:hover,
+.nav-link.active {
+  background: rgba(255, 255, 255, .13);
+  color: #fff;
+  transform: translateX(3px);
+}
+
+.sidebar-backdrop {
+  background: rgba(15, 23, 42, .42);
+  border: none;
+  bottom: 0;
+  display: none;
+  left: 0;
+  padding: 0;
+  position: fixed;
+  right: 0;
+  top: 0;
+  z-index: 1015;
+}
+
+// Seuil aligné sur Utils.isMobile() (767px) — voir le commentaire dans
+// admin-layout-sidebar-large.component.scss.
+@media (max-width: 767.98px) {
+  .edu-sidebar {
+    box-shadow: 0 26px 60px rgba(15, 23, 42, .32);
+    transform: translateX(-104%);
+    transition: transform .24s ease;
+  }
+  .edu-sidebar.is-open {
+    transform: translateX(0);
+  }
+  .sidebar-backdrop {
+    display: block;
+  }
+}
+
+@media (min-width: 768px) {
+  .edu-sidebar {
+    transform: translateX(0) !important;
+  }
+}

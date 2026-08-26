@@ -145,6 +145,10 @@
                   title="Télécharger le reçu" (click)="telechargerRecuPaiement(p)">
                   <i class="bi bi-file-earmark-pdf"></i> Reçu
                 </button>
+                <button *ngIf="p.statut === 'PAYE'" class="btn btn-xs" style="background:#25D366;color:#fff;border-color:#25D366;"
+                  title="Envoyer le reçu par WhatsApp" (click)="envoyerRecuWhatsApp(p)">
+                  <i class="fab fa-whatsapp"></i> WhatsApp
+                </button>
                 <button *ngIf="p.statut === 'PAYE'" class="btn btn-xs btn-outline-danger"
                   title="Annuler le paiement" (click)="confirmerAnnulation(p)">
                   <i class="i-Close-Window"></i> Annuler

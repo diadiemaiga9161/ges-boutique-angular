@@ -1,0 +1,225 @@
+<div class="container-fluid py-4 app-page">
+  <!-- En-tête -->
+  <div class="app-page-header mb-4">
+    <div class="app-page-header-left">
+      <div class="app-page-icon"><i class="fa fa-gift"></i></div>
+      <div>
+        <h1 class="app-page-title">{{ 'NAV.SELLER_BONUS' | translate }}</h1>
+        <p class="app-page-subtitle">Primes hebdomadaires selon l'objectif de ventes atteint par chaque vendeur</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-4">
+      <div class="app-stat-card">
+        <div class="app-stat-icon blue"><i class="fa fa-tag"></i></div>
+        <div class="app-stat-body">
+          <div class="app-stat-label">Total primes</div>
+          <div class="app-stat-value">{{ totalObjectifs }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-4">
+      <div class="app-stat-card">
+        <div class="app-stat-icon green"><i class="fa fa-trophy"></i></div>
+        <div class="app-stat-body">
+          <div class="app-stat-label">Objectifs atteints</div>
+          <div class="app-stat-value">{{ totalAtteints }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-4">
+      <div class="app-stat-card">
+        <div class="app-stat-icon orange"><i class="fa fa-gift"></i></div>
+        <div class="app-stat-body">
+          <div class="app-stat-label">Total bonus (atteints)</div>
+          <div class="app-stat-value">{{ fmt(totalBonusFiltres) }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FILTRES & ACTIONS -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <div class="row align-items-end">
+        <div class="col-md-2">
+          <label class="small text-muted">Mode</label>
+          <select class="form-control form-control-sm" [(ngModel)]="modeFiltre" (change)="chargerObjectifs()">
+            <option value="semaine">Par semaine</option>
+            <option value="annee">Par année</option>
+            <option value="vendeur">Par vendeur</option>
+            <option value="tous">Tous</option>
+          </select>
+        </div>
+        <div class="col-md-2" *ngIf="modeFiltre === 'semaine'">
+          <label class="small text-muted">Semaine</label>
+          <select class="form-control form-control-sm" [(ngModel)]="filtreSemaine" (change)="chargerObjectifs()">
+            <option *ngFor="let s of semaines" [value]="s">{{ s }}</option>
+          </select>
+        </div>
+        <div class="col-md-2" *ngIf="modeFiltre === 'semaine' || modeFiltre === 'annee'">
+          <label class="small text-muted">Année</label>
+          <select class="form-control form-control-sm" [(ngModel)]="filtreAnnee" (change)="chargerObjectifs()">
+            <option *ngFor="let a of annees" [value]="a">{{ a }}</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="small text-muted">Vendeur</label>
+          <select class="form-control form-control-sm" [(ngModel)]="filtreVendeurId" (change)="chargerObjectifs()">
+            <option [value]="0">Tous</option>
+            <option *ngFor="let v of vendeurs" [value]="v.id">{{ v.nomComplet }}</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="small text-muted">Statut</label>
+          <select class="form-control form-control-sm" [(ngModel)]="filtreStatut">
+            <option value="">Tous</option>
+            <option value="ATTEINT">Atteint</option>
+            <option value="NON_ATTEINT">Non atteint</option>
+          </select>
+        </div>
+        <div class="col-md-2 text-right">
+          <button class="btn btn-primary btn-sm" (click)="ouvrirFormulaire()">
+            <i class="i-Add mr-1"></i> Nouvelle prime
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLEAU -->
+  <div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <span>Primes <span class="badge badge-primary ml-2">{{ objectifsFiltres.length }}</span></span>
+      <span *ngIf="objectifsFiltres.length" class="text-success font-weight-bold">
+        Bonus total atteints : {{ fmt(totalBonusFiltres) }}
+      </span>
+    </div>
+    <div class="card-body p-0">
+      <div class="text-center py-5" *ngIf="isLoading">
+        <div class="spinner-border text-primary"></div>
+      </div>
+      <div class="text-center py-5 text-muted" *ngIf="!isLoading && !objectifsFiltres.length">
+        <i class="i-Medal-2" style="font-size:3rem;opacity:.3"></i>
+        <p class="mt-2">Aucune prime définie pour le moment.</p>
+        <button class="btn btn-primary btn-sm" (click)="ouvrirFormulaire()">Créer la première prime</button>
+      </div>
+      <div class="table-responsive" *ngIf="!isLoading && objectifsFiltres.length">
+        <table class="table table-hover mb-0">
+          <thead class="thead-light">
+            <tr>
+              <th>Vendeur</th>
+              <th>Semaine</th>
+              <th>Objectif</th>
+              <th>Progression</th>
+              <th>Bonus</th>
+              <th>Statut</th>
+              <th>Validation</th>
+              <th class="text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let o of objectifsFiltres">
+              <td><strong>{{ o.vendeurNom }}</strong></td>
+              <td class="text-nowrap">Semaine {{ o.semaine }}/{{ o.annee }}</td>
+              <td>{{ o.objectifNombreVentes | number:'1.0-0' }} ventes</td>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <div class="progress flex-grow-1" style="height:6px;min-width:60px">
+                    <div class="progress-bar"
+                      [ngClass]="o.statut === 'ATTEINT' ? 'bg-success' : 'bg-warning'"
+                      [style.width.%]="getPourcentage(o)">
+                    </div>
+                  </div>
+                  <small>{{ getPourcentage(o) }}%</small>
+                </div>
+                <small class="text-muted">{{ o.nombreVentesAtteint | number:'1.0-0' }} ventes</small>
+              </td>
+              <td class="font-weight-bold" [ngClass]="o.statut === 'ATTEINT' ? 'text-success' : 'text-muted'">
+                {{ fmt(o.bonusMontant) }}
+              </td>
+              <td>
+                <span class="badge" [ngClass]="o.statut === 'ATTEINT' ? 'badge-success' : 'badge-warning'">
+                  {{ o.statut === 'ATTEINT' ? 'Atteint' : 'Non atteint' }}
+                </span>
+              </td>
+              <td>
+                <span class="badge" [ngClass]="o.bonusValide ? 'badge-info' : 'badge-light'">
+                  {{ o.bonusValide ? 'Validée' : 'En attente' }}
+                </span>
+              </td>
+              <td class="text-center text-nowrap">
+                <button class="btn btn-sm btn-outline-primary mr-1" (click)="ouvrirFormulaire(o)"
+                  [disabled]="o.bonusValide" title="Modifier">
+                  <i class="i-Pen-2"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-success mr-1"
+                  *ngIf="o.statut === 'ATTEINT' && !o.bonusValide"
+                  (click)="confirmerValider(o)" title="Valider la prime">
+                  <i class="i-Check"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger"
+                  (click)="confirmerSupprimer(o)" [disabled]="o.bonusValide" title="Supprimer">
+                  <i class="i-Trash1"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======= MODAL FORMULAIRE ======= -->
+<div class="modal fade show d-block" tabindex="-1" *ngIf="showFormModal" style="background:rgba(0,0,0,.5)">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title">{{ isEditing ? 'Modifier la prime' : 'Nouvelle prime vendeur' }}</h5>
+        <button class="close text-white" (click)="fermerFormulaire()"><span>&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-md-6 form-group">
+            <label>Vendeur <span class="text-danger">*</span></label>
+            <select class="form-control" [(ngModel)]="form.vendeurId">
+              <option [value]="0">— Sélectionner —</option>
+              <option *ngFor="let v of vendeurs" [value]="v.id">{{ v.nomComplet }}</option>
+            </select>
+          </div>
+          <div class="col-md-3 form-group">
+            <label>Semaine (1-53) <span class="text-danger">*</span></label>
+            <input type="number" min="1" max="53" class="form-control" [(ngModel)]="form.semaine" placeholder="ex: 34">
+          </div>
+          <div class="col-md-3 form-group">
+            <label>Année <span class="text-danger">*</span></label>
+            <input type="number" class="form-control" [(ngModel)]="form.annee" placeholder="ex: 2026">
+          </div>
+          <div class="col-md-6 form-group">
+            <label>Objectif nombre de ventes <span class="text-danger">*</span></label>
+            <input type="number" class="form-control" [(ngModel)]="form.objectifNombreVentes" placeholder="ex: 1000">
+          </div>
+          <div class="col-md-6 form-group">
+            <label>Bonus (FCFA) <span class="text-danger">*</span></label>
+            <input type="number" class="form-control" [(ngModel)]="form.bonusMontant" placeholder="ex: 10000">
+          </div>
+          <div class="col-12 form-group">
+            <label>Observation</label>
+            <textarea class="form-control" [(ngModel)]="form.observation" rows="2"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="fermerFormulaire()">Annuler</button>
+        <button class="btn btn-primary" (click)="enregistrer()" [disabled]="isSaving">
+          <span *ngIf="isSaving" class="spinner-border spinner-border-sm mr-1"></span>
+          {{ isEditing ? 'Enregistrer les modifications' : 'Créer la prime' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

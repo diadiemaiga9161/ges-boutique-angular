@@ -117,18 +117,17 @@
             <td>{{ client.email || '-' }}</td>
             <td>{{ client.adresse || '-' }}</td>
             <td class="text-center">
+              <!-- Historique paiements fusionné en onglet dans la même modale que
+                   Historique ventes, pour réduire le nombre de boutons. -->
               <div class="btn-group btn-group-sm btn-group-icons">
-                <button type="button" class="btn btn-info text-white" (click)="showClientVentes(client)" title="Historique ventes">
-                  <i class="fa fa-shopping-cart"></i>
-                </button>
-                <button type="button" class="btn btn-success" (click)="loadHistoriquePaiements(client)" title="Historique paiements">
-                  <i class="fa fa-history"></i>
+                <button type="button" class="btn btn-info text-white" (click)="showClientVentes(client)" title="Historique ventes et paiements">
+                  <i class="fa fa-shopping-cart"></i> Ventes
                 </button>
                 <button type="button" class="btn btn-warning" (click)="editClient(client)" title="Modifier">
-                  <i class="fa fa-edit"></i>
+                  <i class="fa fa-edit"></i> Modifier
                 </button>
                 <button type="button" class="btn btn-danger" (click)="deleteClient(client)" title="Supprimer">
-                  <i class="fa fa-trash"></i>
+                  <i class="fa fa-trash"></i> Supprimer
                 </button>
               </div>
             </td>
@@ -154,11 +153,9 @@
             <div class="text-muted small" *ngIf="client.email"><i class="fa fa-envelope me-1"></i>{{ client.email }}</div>
           </div>
           <div class="d-flex gap-1 flex-wrap justify-content-end">
-            <button type="button" class="btn btn-sm btn-info text-white" (click)="showClientVentes(client)" title="Ventes">
+            <!-- Historique paiements fusionné en onglet dans la même modale. -->
+            <button type="button" class="btn btn-sm btn-info text-white" (click)="showClientVentes(client)" title="Ventes et paiements">
               <i class="fa fa-shopping-cart me-1"></i>Ventes
-            </button>
-            <button type="button" class="btn btn-sm btn-success" (click)="loadHistoriquePaiements(client)" title="Paiements">
-              <i class="fa fa-history me-1"></i>Paiements
             </button>
             <button type="button" class="btn btn-sm btn-warning" (click)="editClient(client)" title="Modifier">
               <i class="fa fa-edit me-1"></i>Modifier
@@ -271,13 +268,24 @@
   <div class="modal-container modal-large" style="z-index: 1050;">
     <div class="modal-header">
       <h3>
-        <i class="fa fa-shopping-cart me-2"></i>
-        Ventes — {{ selectedClientForVentes?.nom }} {{ selectedClientForVentes?.prenom }}
+        <i class="fa" [class.fa-shopping-cart]="clientDetailTab==='historique'" [class.fa-history]="clientDetailTab==='paiements'" style="margin-right:.5rem"></i>
+        {{ clientDetailTitle }} — {{ selectedClientForVentes?.nom }} {{ selectedClientForVentes?.prenom }}
       </h3>
       <button type="button" class="close-btn" (click)="closeVentesModal()">&times;</button>
     </div>
 
-    <div class="modal-body">
+    <!-- Onglets : Ventes fusionné avec Paiements, pour ne pas multiplier les fenêtres
+         séparées (même principe que sur la page Clients). -->
+    <div class="client-detail-tabs">
+      <button type="button" class="client-detail-tab" [class.active]="clientDetailTab==='historique'" (click)="switchClientDetailTab('historique')">
+        <i class="fa fa-shopping-cart me-2"></i>Ventes
+      </button>
+      <button type="button" class="client-detail-tab" [class.active]="clientDetailTab==='paiements'" (click)="switchClientDetailTab('paiements')">
+        <i class="fa fa-history me-2"></i>Paiements
+      </button>
+    </div>
+
+    <div class="modal-body" *ngIf="clientDetailTab === 'historique'">
 
       <!-- Loading -->
       <div *ngIf="isLoadingVentes" class="text-center py-5">
@@ -739,182 +747,8 @@
       </div>
     </div>
 
-    <div class="modal-footer">
-      <button type="button" class="btn-secondary" (click)="closeVentesModal()">Fermer</button>
-    </div>
-  </div>
-</div>
-
-
-<!-- =========================================================== -->
-<!-- MODAL: Détail d'une vente                                   -->
-<!-- =========================================================== -->
-<div class="modal" [class.show]="showDetailModal" *ngIf="showDetailModal && selectedVenteDetail" style="z-index: 1100;">
-  <div class="modal-backdrop" (click)="closeDetailModal()" style="z-index: 1101;"></div>
-  <div class="modal-container modal-medium" style="z-index: 1102;" [style.background]="design === 2 ? '#0f172a' : '#fff'">
-    <div class="modal-header"
-         [style.background]="design === 2 ? '#0f172a' : (design === 3 ? '#fff' : '#1e40af')"
-         [style.border-bottom]="design === 3 ? '2px solid #18181b' : 'none'"
-         [style.color]="design === 2 ? '#f59e0b' : (design === 3 ? '#18181b' : '#fff')">
-      <h3>
-        <i class="fa fa-receipt me-2"></i>
-        Reçu · {{ selectedVenteDetail.numeroVente }}
-      </h3>
-      <button type="button" class="close-btn" (click)="closeDetailModal()"
-              [style.color]="design === 3 ? '#18181b' : '#fff'">&times;</button>
-    </div>
-    <div class="modal-body p-0">
-
-      <!-- DESIGN 1 — CLASSIQUE -->
-      <ng-container *ngIf="design === 1">
-        <div class="facture-doc facture-doc--classic" style="max-width:100%;margin:0;border-radius:0;box-shadow:none">
-          <div class="fd-meta--blue">
-            <div class="fd-meta-row">
-              <span class="fd-meta-label">Date</span>
-              <span class="fd-meta-val">{{ formatDateTime(selectedVenteDetail.dateVente) }}</span>
-            </div>
-            <div class="fd-meta-row">
-              <span class="fd-meta-label">Vendeur</span>
-              <span class="fd-meta-val">{{ selectedVenteDetail.vendeurNom }}</span>
-            </div>
-            <div class="fd-meta-row">
-              <span class="fd-meta-label">Paiement</span>
-              <span class="fd-meta-val">{{ getModePaiementLabel(selectedVenteDetail.modePaiement) }}</span>
-            </div>
-            <div class="fd-meta-row">
-              <span class="fd-meta-label">Type</span>
-              <span class="fd-meta-val">{{ getVenteTypeLabel(selectedVenteDetail) }}</span>
-            </div>
-          </div>
-          <table class="fd-table">
-            <thead>
-              <tr class="fd-thead--blue">
-                <th>Article</th><th class="fd-center">Qté</th><th class="fd-right">PU</th><th class="fd-right">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let p of selectedVenteDetail.produits; let i = index" [class.fd-row-even]="i % 2 === 0">
-                <td>{{ p.produitNom }}</td>
-                <td class="fd-center">{{ p.quantite }}</td>
-                <td class="fd-right">{{ formatPrice(p.prixUnitaire) }}</td>
-                <td class="fd-right fd-bold">{{ formatPrice(p.sousTotal) }}</td>
-              </tr>
-            </tbody>
-          </table>
-          <div class="fd-total--blue">
-            <span *ngIf="selectedVenteDetail.montantRemiseTotal > 0">Remise: -{{ formatPrice(selectedVenteDetail.montantRemiseTotal) }}</span>
-            <span *ngIf="!(selectedVenteDetail.montantRemiseTotal > 0)">Total</span>
-            <span class="fd-total-val">{{ formatPrice(selectedVenteDetail.montantTotal) }}</span>
-          </div>
-        </div>
-      </ng-container>
-
-      <!-- DESIGN 2 — MODERNE -->
-      <ng-container *ngIf="design === 2">
-        <div class="facture-doc facture-doc--modern" style="max-width:100%;margin:0;border-radius:0;box-shadow:none">
-          <div class="fd-gold-stripe"></div>
-          <div class="fd-meta--modern">
-            <div class="fd-meta-block">
-              <div class="fd-meta-block-title">DATE</div>
-              <div class="fd-meta-block-val" style="color:#e2e8f0">{{ formatDateTime(selectedVenteDetail.dateVente) }}</div>
-              <div class="fd-meta-block-sub">{{ getVenteTypeLabel(selectedVenteDetail) }}</div>
-            </div>
-            <div class="fd-meta-block fd-meta-block--right">
-              <div class="fd-meta-block-title">VENDEUR</div>
-              <div class="fd-meta-block-val" style="color:#e2e8f0">{{ selectedVenteDetail.vendeurNom }}</div>
-              <div class="fd-meta-block-sub">{{ getModePaiementLabel(selectedVenteDetail.modePaiement) }}</div>
-            </div>
-          </div>
-          <table class="fd-table">
-            <thead>
-              <tr class="fd-thead--dark">
-                <th>Article</th><th class="fd-center">Qté</th><th class="fd-right fd-gold-text">PU</th><th class="fd-right fd-gold-text">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let p of selectedVenteDetail.produits; let i = index" [class.fd-row-even]="i % 2 === 0">
-                <td style="color:#e2e8f0">{{ p.produitNom }}</td>
-                <td class="fd-center" style="color:#94a3b8">{{ p.quantite }}</td>
-                <td class="fd-right" style="color:#94a3b8">{{ formatPrice(p.prixUnitaire) }}</td>
-                <td class="fd-right fd-bold" style="color:#f59e0b">{{ formatPrice(p.sousTotal) }}</td>
-              </tr>
-            </tbody>
-          </table>
-          <div class="fd-total--dark" style="color:#f59e0b">
-            <span *ngIf="!(selectedVenteDetail.montantRemiseTotal > 0)" style="color:#94a3b8">TOTAL</span>
-            <span class="fd-total-val">{{ formatPrice(selectedVenteDetail.montantTotal) }}</span>
-          </div>
-        </div>
-      </ng-container>
-
-      <!-- DESIGN 3 — MINIMALISTE -->
-      <ng-container *ngIf="design === 3">
-        <div class="facture-doc facture-doc--minimal" style="max-width:100%;margin:0;border-radius:0;box-shadow:none">
-          <div class="fd-meta--minimal">
-            <div class="fd-meta-row">
-              <span class="fd-meta-label">Date</span>
-              <span class="fd-meta-val">{{ formatDateTime(selectedVenteDetail.dateVente) }}</span>
-            </div>
-            <div class="fd-meta-row">
-              <span class="fd-meta-label">Vendeur</span>
-              <span class="fd-meta-val">{{ selectedVenteDetail.vendeurNom }}</span>
-            </div>
-            <div class="fd-meta-row">
-              <span class="fd-meta-label">Paiement</span>
-              <span class="fd-meta-val">{{ getModePaiementLabel(selectedVenteDetail.modePaiement) }}</span>
-            </div>
-          </div>
-          <div class="fd-divider--black" style="margin:0"></div>
-          <table class="fd-table fd-table--minimal">
-            <thead>
-              <tr>
-                <th>Article</th><th class="fd-center">Qté</th><th class="fd-right">PU</th><th class="fd-right">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let p of selectedVenteDetail.produits">
-                <td>{{ p.produitNom }}</td>
-                <td class="fd-center">{{ p.quantite }}</td>
-                <td class="fd-right">{{ formatPrice(p.prixUnitaire) }}</td>
-                <td class="fd-right fd-bold">{{ formatPrice(p.sousTotal) }}</td>
-              </tr>
-            </tbody>
-          </table>
-          <div class="fd-divider--black" style="margin:0"></div>
-          <div class="fd-total--minimal">
-            <span *ngIf="!(selectedVenteDetail.montantRemiseTotal > 0)">Total</span>
-            <span class="fd-total-val">{{ formatPrice(selectedVenteDetail.montantTotal) }}</span>
-          </div>
-        </div>
-      </ng-container>
-
-    </div>
-    <div class="modal-footer" [style.background]="design === 2 ? '#0f172a' : '#fff'"
-         [style.border-top]="design === 2 ? '1px solid #334155' : ''">
-      <button type="button" class="btn-secondary" (click)="closeDetailModal()">Fermer</button>
-      <button type="button" class="btn-primary" (click)="telechargerFacture(selectedVenteDetail.id)">
-        <i class="fa fa-file-pdf-o"></i> Télécharger facture
-      </button>
-    </div>
-  </div>
-</div>
-
-
-<!-- =========================================================== -->
-<!-- MODAL: Historique des paiements                             -->
-<!-- =========================================================== -->
-<div class="modal" [class.show]="showHistoriquePaiementsModal" *ngIf="showHistoriquePaiementsModal">
-  <div class="modal-backdrop" (click)="closeHistoriquePaiementsModal()"></div>
-  <div class="modal-container modal-large" style="z-index: 1050;">
-    <div class="modal-header">
-      <h3>
-        <i class="fa fa-history me-2"></i>
-        Paiements — {{ clientPourHistorique?.nom }} {{ clientPourHistorique?.prenom }}
-      </h3>
-      <button type="button" class="close-btn" (click)="closeHistoriquePaiementsModal()">&times;</button>
-    </div>
-
-    <div class="modal-body">
+    <!-- Onglet Paiements (fusionné depuis l'ancienne modale séparée "Historique paiements") -->
+    <div class="modal-body" *ngIf="clientDetailTab === 'paiements'">
 
       <!-- Loading -->
       <div *ngIf="isLoadingHistorique" class="text-center py-5">
@@ -1107,7 +941,161 @@
     </div>
 
     <div class="modal-footer">
-      <button type="button" class="btn-secondary" (click)="closeHistoriquePaiementsModal()">Fermer</button>
+      <button type="button" class="btn-secondary" (click)="closeVentesModal()">Fermer</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- =========================================================== -->
+<!-- MODAL: Détail d'une vente                                   -->
+<!-- =========================================================== -->
+<div class="modal" [class.show]="showDetailModal" *ngIf="showDetailModal && selectedVenteDetail" style="z-index: 1100;">
+  <div class="modal-backdrop" (click)="closeDetailModal()" style="z-index: 1101;"></div>
+  <div class="modal-container modal-medium" style="z-index: 1102;" [style.background]="design === 2 ? '#0f172a' : '#fff'">
+    <div class="modal-header"
+         [style.background]="design === 2 ? '#0f172a' : (design === 3 ? '#fff' : '#1e40af')"
+         [style.border-bottom]="design === 3 ? '2px solid #18181b' : 'none'"
+         [style.color]="design === 2 ? '#f59e0b' : (design === 3 ? '#18181b' : '#fff')">
+      <h3>
+        <i class="fa fa-receipt me-2"></i>
+        Reçu · {{ selectedVenteDetail.numeroVente }}
+      </h3>
+      <button type="button" class="close-btn" (click)="closeDetailModal()"
+              [style.color]="design === 3 ? '#18181b' : '#fff'">&times;</button>
+    </div>
+    <div class="modal-body p-0">
+
+      <!-- DESIGN 1 — CLASSIQUE -->
+      <ng-container *ngIf="design === 1">
+        <div class="facture-doc facture-doc--classic" style="max-width:100%;margin:0;border-radius:0;box-shadow:none">
+          <div class="fd-meta--blue">
+            <div class="fd-meta-row">
+              <span class="fd-meta-label">Date</span>
+              <span class="fd-meta-val">{{ formatDateTime(selectedVenteDetail.dateVente) }}</span>
+            </div>
+            <div class="fd-meta-row">
+              <span class="fd-meta-label">Vendeur</span>
+              <span class="fd-meta-val">{{ selectedVenteDetail.vendeurNom }}</span>
+            </div>
+            <div class="fd-meta-row">
+              <span class="fd-meta-label">Paiement</span>
+              <span class="fd-meta-val">{{ getModePaiementLabel(selectedVenteDetail.modePaiement) }}</span>
+            </div>
+            <div class="fd-meta-row">
+              <span class="fd-meta-label">Type</span>
+              <span class="fd-meta-val">{{ getVenteTypeLabel(selectedVenteDetail) }}</span>
+            </div>
+          </div>
+          <table class="fd-table">
+            <thead>
+              <tr class="fd-thead--blue">
+                <th>Article</th><th class="fd-center">Qté</th><th class="fd-right">PU</th><th class="fd-right">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let p of selectedVenteDetail.produits; let i = index" [class.fd-row-even]="i % 2 === 0">
+                <td>{{ p.produitNom }}</td>
+                <td class="fd-center">{{ p.quantite }}</td>
+                <td class="fd-right">{{ formatPrice(p.prixUnitaire) }}</td>
+                <td class="fd-right fd-bold">{{ formatPrice(p.sousTotal) }}</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="fd-total--blue">
+            <span *ngIf="selectedVenteDetail.montantRemiseTotal > 0">Remise: -{{ formatPrice(selectedVenteDetail.montantRemiseTotal) }}</span>
+            <span *ngIf="!(selectedVenteDetail.montantRemiseTotal > 0)">Total</span>
+            <span class="fd-total-val">{{ formatPrice(selectedVenteDetail.montantTotal) }}</span>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- DESIGN 2 — MODERNE -->
+      <ng-container *ngIf="design === 2">
+        <div class="facture-doc facture-doc--modern" style="max-width:100%;margin:0;border-radius:0;box-shadow:none">
+          <div class="fd-gold-stripe"></div>
+          <div class="fd-meta--modern">
+            <div class="fd-meta-block">
+              <div class="fd-meta-block-title">DATE</div>
+              <div class="fd-meta-block-val" style="color:#e2e8f0">{{ formatDateTime(selectedVenteDetail.dateVente) }}</div>
+              <div class="fd-meta-block-sub">{{ getVenteTypeLabel(selectedVenteDetail) }}</div>
+            </div>
+            <div class="fd-meta-block fd-meta-block--right">
+              <div class="fd-meta-block-title">VENDEUR</div>
+              <div class="fd-meta-block-val" style="color:#e2e8f0">{{ selectedVenteDetail.vendeurNom }}</div>
+              <div class="fd-meta-block-sub">{{ getModePaiementLabel(selectedVenteDetail.modePaiement) }}</div>
+            </div>
+          </div>
+          <table class="fd-table">
+            <thead>
+              <tr class="fd-thead--dark">
+                <th>Article</th><th class="fd-center">Qté</th><th class="fd-right fd-gold-text">PU</th><th class="fd-right fd-gold-text">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let p of selectedVenteDetail.produits; let i = index" [class.fd-row-even]="i % 2 === 0">
+                <td style="color:#e2e8f0">{{ p.produitNom }}</td>
+                <td class="fd-center" style="color:#94a3b8">{{ p.quantite }}</td>
+                <td class="fd-right" style="color:#94a3b8">{{ formatPrice(p.prixUnitaire) }}</td>
+                <td class="fd-right fd-bold" style="color:#f59e0b">{{ formatPrice(p.sousTotal) }}</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="fd-total--dark" style="color:#f59e0b">
+            <span *ngIf="!(selectedVenteDetail.montantRemiseTotal > 0)" style="color:#94a3b8">TOTAL</span>
+            <span class="fd-total-val">{{ formatPrice(selectedVenteDetail.montantTotal) }}</span>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- DESIGN 3 — MINIMALISTE -->
+      <ng-container *ngIf="design === 3">
+        <div class="facture-doc facture-doc--minimal" style="max-width:100%;margin:0;border-radius:0;box-shadow:none">
+          <div class="fd-meta--minimal">
+            <div class="fd-meta-row">
+              <span class="fd-meta-label">Date</span>
+              <span class="fd-meta-val">{{ formatDateTime(selectedVenteDetail.dateVente) }}</span>
+            </div>
+            <div class="fd-meta-row">
+              <span class="fd-meta-label">Vendeur</span>
+              <span class="fd-meta-val">{{ selectedVenteDetail.vendeurNom }}</span>
+            </div>
+            <div class="fd-meta-row">
+              <span class="fd-meta-label">Paiement</span>
+              <span class="fd-meta-val">{{ getModePaiementLabel(selectedVenteDetail.modePaiement) }}</span>
+            </div>
+          </div>
+          <div class="fd-divider--black" style="margin:0"></div>
+          <table class="fd-table fd-table--minimal">
+            <thead>
+              <tr>
+                <th>Article</th><th class="fd-center">Qté</th><th class="fd-right">PU</th><th class="fd-right">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let p of selectedVenteDetail.produits">
+                <td>{{ p.produitNom }}</td>
+                <td class="fd-center">{{ p.quantite }}</td>
+                <td class="fd-right">{{ formatPrice(p.prixUnitaire) }}</td>
+                <td class="fd-right fd-bold">{{ formatPrice(p.sousTotal) }}</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="fd-divider--black" style="margin:0"></div>
+          <div class="fd-total--minimal">
+            <span *ngIf="!(selectedVenteDetail.montantRemiseTotal > 0)">Total</span>
+            <span class="fd-total-val">{{ formatPrice(selectedVenteDetail.montantTotal) }}</span>
+          </div>
+        </div>
+      </ng-container>
+
+    </div>
+    <div class="modal-footer" [style.background]="design === 2 ? '#0f172a' : '#fff'"
+         [style.border-top]="design === 2 ? '1px solid #334155' : ''">
+      <button type="button" class="btn-secondary" (click)="closeDetailModal()">Fermer</button>
+      <button type="button" class="btn-primary" (click)="telechargerFacture(selectedVenteDetail.id)">
+        <i class="fa fa-file-pdf-o"></i> Télécharger facture
+      </button>
     </div>
   </div>
 </div>

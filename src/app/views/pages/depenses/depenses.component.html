@@ -150,14 +150,19 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let d of depensesPaginees" [style.background]="d['sourceExterne'] ? '#fffbeb' : ''">
+            <tr *ngFor="let d of depensesPaginees"
+                [style.background]="d['annulee'] ? '#fef2f2' : (d['sourceExterne'] ? '#fffbeb' : '')"
+                [style.opacity]="d['annulee'] ? 0.7 : 1">
               <td class="ps-3">
                 <small class="text-muted">{{ d.date }}</small>
               </td>
               <td>
-                <strong>{{ d.nom }}</strong>
+                <strong [style.text-decoration]="d['annulee'] ? 'line-through' : 'none'">{{ d.nom }}</strong>
                 <div *ngIf="d['periodeDebut']" style="font-size:0.75rem;color:#64748b">
                   {{ d['periodeDebut'] }}<span *ngIf="d['periodeFin'] && d['periodeFin'] !== d['periodeDebut']"> → {{ d['periodeFin'] }}</span>
+                </div>
+                <div *ngIf="d['annulee']" style="font-size:0.72rem;color:#dc2626">
+                  <i class="fa fa-ban me-1"></i>Annulée{{ d['motifAnnulation'] ? ' — ' + d['motifAnnulation'] : '' }}
                 </div>
               </td>
               <td>
@@ -169,6 +174,13 @@
                 </span>
                 <span *ngIf="d['sourceExterne']" class="badge ms-1" style="background:#dcfce7;color:#166534;font-size:0.7rem;border-radius:6px;padding:2px 6px">Salaire</span>
                 <span *ngIf="!(d)['typeDepense']" class="text-muted">—</span>
+                <br *ngIf="!d['sourceExterne'] && (d['validee'] || d['annulee'])">
+                <span *ngIf="d['annulee']" class="badge mt-1" style="background:#fee2e2;color:#991b1b;font-size:0.7rem;border-radius:6px;padding:2px 6px">
+                  <i class="fa fa-ban me-1"></i>Annulée
+                </span>
+                <span *ngIf="d['validee'] && !d['annulee']" class="badge mt-1" style="background:#dcfce7;color:#166534;font-size:0.7rem;border-radius:6px;padding:2px 6px">
+                  <i class="fa fa-check me-1"></i>Validée
+                </span>
               </td>
               <td><span class="text-muted">{{ d.motif || '—' }}</span></td>
               <td class="text-end">
@@ -178,18 +190,26 @@
                 </span>
               </td>
               <td class="text-center">
-                <ng-container *ngIf="!d['sourceExterne']">
-                  <button class="btn btn-sm btn-outline-primary me-1" (click)="startEdit(d)"
+                <ng-container *ngIf="!d['sourceExterne'] && !d['annulee']">
+                  <button *ngIf="!d['validee']" class="btn btn-sm btn-outline-primary me-1" (click)="startEdit(d)"
                           title="{{ 'COMMON.EDIT' | translate }}">
                     <i class="fa fa-edit me-1"></i> Modifier
                   </button>
+                  <button *ngIf="!d['validee']" class="btn btn-sm btn-outline-success me-1" (click)="valider(d)"
+                          title="Valider (verrouille la dépense dans les comptes)">
+                    <i class="fa fa-check me-1"></i> Valider
+                  </button>
                   <button class="btn btn-sm btn-outline-danger" (click)="supprimer(d)"
-                          title="{{ 'COMMON.DELETE' | translate }}">
-                    <i class="fa fa-trash me-1"></i> Supprimer
+                          [title]="d['validee'] ? 'Annuler (dépense validée — motif requis)' : ('COMMON.DELETE' | translate)">
+                    <i class="fa" [ngClass]="d['validee'] ? 'fa-ban' : 'fa-trash'"></i>
+                    {{ d['validee'] ? ' Annuler' : ' Supprimer' }}
                   </button>
                 </ng-container>
                 <span *ngIf="d['sourceExterne']" class="text-muted" style="font-size:0.75rem">
                   <i class="fa fa-lock me-1"></i>Via Employés
+                </span>
+                <span *ngIf="d['annulee']" class="text-muted" style="font-size:0.75rem">
+                  <i class="fa fa-lock me-1"></i>Verrouillée
                 </span>
               </td>
             </tr>

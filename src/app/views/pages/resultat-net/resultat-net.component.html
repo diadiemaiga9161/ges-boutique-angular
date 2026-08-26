@@ -77,6 +77,12 @@
     <!-- Résultats -->
     <ng-container *ngIf="data && !isLoading">
 
+      <div class="d-flex justify-content-end mb-2">
+        <button class="btn btn-outline-dark btn-sm" (click)="imprimerResultatNet()">
+          <i class="fa fa-print me-1"></i>Imprimer
+        </button>
+      </div>
+
       <!-- Carte principale GAIN / PERTE -->
       <div class="card mb-4" [class.card-gain]="data.etat === 'GAIN'" [class.card-perte]="data.etat === 'PERTE'">
         <div class="card-body text-center py-4">

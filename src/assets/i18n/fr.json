@@ -75,6 +75,7 @@
     "SAFE": "Dépôts Garde",
     "SUPPLIER_OBJ": "Objectifs Fournisseurs",
     "SUPPLIER_BONUS": "Bonus Fournisseurs",
+    "SELLER_BONUS": "Primes Vendeurs",
     "EXPENSES": "Dépenses",
     "NET_RESULT": "Résultat Net",
     "SUPPLIERS": "Fournisseurs",
@@ -104,6 +105,7 @@
   },
   "PRODUCTS": {
     "TITLE": "Produits",
+    "SUBTITLE": "Gérez votre catalogue produits",
     "ADD": "Nouveau produit",
     "NAME": "Nom du produit",
     "PRICE_SELL": "Prix de vente",

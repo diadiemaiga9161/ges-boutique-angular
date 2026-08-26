@@ -6,6 +6,160 @@
   border-radius: 16px;
 }
 
+/* ── Disposition façon page Profil : carte identité + carte formulaire ───── */
+.boutique-layout {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .boutique-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.boutique-card {
+  background: var(--surface);
+  border-radius: 20px;
+  padding: 28px 24px;
+  box-shadow: 0 4px 20px rgba(8, 22, 72, 0.06);
+  border: 1px solid var(--border);
+}
+
+.boutique-card-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 20px;
+
+  i { color: var(--primary); }
+}
+
+.boutique-card--identity {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.logo-circle {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, var(--primary-soft), var(--surface));
+  border: 3px solid var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+
+  &--has-logo { border-color: var(--primary); }
+}
+
+.logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 6px;
+}
+
+.logo-icon-default {
+  font-size: 44px;
+  color: var(--primary);
+}
+
+.identity-name {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text);
+  margin: 14px 0 6px;
+}
+
+.identity-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--primary-soft);
+  color: var(--primary);
+  margin-bottom: 16px;
+}
+
+.logo-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.btn-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border-radius: 30px;
+  padding: 8px 16px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.25s;
+
+  i { font-size: 12.5px; }
+
+  &--upload {
+    background: linear-gradient(135deg, var(--primary), var(--primary));
+    color: #fff;
+    box-shadow: 0 3px 10px rgba(37, 99, 235, 0.3);
+    &:hover { box-shadow: 0 6px 18px rgba(37, 99, 235, 0.4); transform: translateY(-1px); }
+  }
+
+  &--save {
+    background: var(--success, #10b981);
+    color: #fff;
+    &:disabled { opacity: 0.6; cursor: not-allowed; }
+  }
+}
+
+label.btn-logo { cursor: pointer; }
+
+.identity-meta {
+  width: 100%;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+}
+
+.im-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-muted);
+
+  i { color: var(--primary); width: 14px; flex-shrink: 0; }
+}
+
+.boutique-card--form .row {
+  margin-right: -10px;
+  margin-left: -10px;
+}
+
+.dark-mode .boutique-card {
+  background: var(--surface);
+  border-color: var(--border);
+}
+
 .section {
   padding: 24px;
   border: 1px solid var(--border);

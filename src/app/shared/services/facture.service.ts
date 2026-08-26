@@ -8,6 +8,7 @@ import { FactureDesignService, DesignFacture } from './facture-design.service';
 import { environment } from '../../../environments/environment';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { creerBoutonWhatsApp, formaterMessageWhatsApp } from '../utils/whatsapp.util';
 
 export enum FactureStatut {
   BROUILLON = 'BROUILLON',
@@ -39,6 +40,7 @@ export interface FactureRequest {
   clientAdresse?: string;
   creerClient?: boolean;
   notes?: string;
+  chauffeur?: string;
   utilisateurId?: number;
   remiseGlobale?: number;
   typeRemiseGlobale?: string;
@@ -87,6 +89,7 @@ export interface Facture {
   utilisateurNom?: string;
   boutique?: BoutiqueInfo;
   notes?: string;
+  chauffeur?: string;
 }
 
 export interface StatistiquesFactures {
@@ -146,6 +149,7 @@ export class FactureService {
       clientTelephone: data.clientTelephone ?? data.client?.numeroTelephone,
       clientAdresse: data.clientAdresse ?? data.client?.adresse,
       clientDivers: data.clientDivers,
+      chauffeur: data.chauffeur,
       lignes: (data.lignes || []).map((l: any) => ({
         id: l.id,
         produitId: l.produitId ?? l.produit?.id,
@@ -255,11 +259,40 @@ export class FactureService {
 
   // Impression et PDF avec logo
   imprimerFacture(facture: Facture): void {
-    this.openHtmlBlob(this.genererHTMLFacture(facture), true);
+    this.openHtmlBlob(this.genererHTMLFacture(facture), true, this.construireWhatsAppFacture(facture));
   }
 
   ouvrirFacture(facture: Facture): void {
-    this.openHtmlBlob(this.genererHTMLFacture(facture), false);
+    this.openHtmlBlob(this.genererHTMLFacture(facture), false, this.construireWhatsAppFacture(facture));
+  }
+
+  /** Message WhatsApp complet pour une facture de vente : boutique, client, détail des lignes, totaux. */
+  private construireWhatsAppFacture(facture: Facture): { telephone?: string; message: string } {
+    const boutique = this.boutiqueService.getInfo();
+    const nomClient = [facture.clientPrenom, facture.clientNom].filter(Boolean).join(' ') || facture.clientNom || 'Client';
+    const totaux: { label: string; valeur: string }[] = [
+      { label: 'Montant total', valeur: `${this.formatPlainNumber(facture.montantTotal)} FCFA` }
+    ];
+    if (facture.montantRemiseTotal > 0) {
+      totaux.push({ label: 'Remise', valeur: `-${this.formatPlainNumber(facture.montantRemiseTotal)} FCFA` });
+    }
+    totaux.push({ label: 'Net à payer', valeur: `${this.formatPlainNumber(facture.montantApresRemise ?? facture.montantTotal)} FCFA` });
+
+    return {
+      telephone: facture.clientTelephone,
+      message: formaterMessageWhatsApp({
+        boutiqueNom: boutique.nom || this.BOUTIQUE_NOM,
+        boutiqueTelephone: boutique.telephone || this.BOUTIQUE_TELEPHONE,
+        titreDocument: `Facture de vente N°${facture.numeroFacture}`,
+        personneLabel: 'Client',
+        personneNom: nomClient,
+        date: new Date(facture.dateCreation).toLocaleDateString('fr-FR'),
+        lignes: (facture.lignes || []).map(l =>
+          `${l.designation || l.produitNom || 'Produit'} ×${l.quantite} — ${this.formatPlainNumber(l.sousTotal || l.quantite * l.prixUnitaire)} FCFA`
+        ),
+        totaux
+      })
+    };
   }
 
   ouvrirRecuPaiementFournisseur(paiement: any, fournisseur: any): void {
@@ -292,7 +325,19 @@ export class FactureService {
       montantLabel: 'MONTANT PAYÉ',
       boutique: nom, tel, adr, qrData
     });
-    this.openHtmlBlob(html, false);
+    const message = formaterMessageWhatsApp({
+      boutiqueNom: nom,
+      boutiqueTelephone: tel,
+      titreDocument: `Reçu de paiement N°${paiement.id ? 'PAI-' + paiement.id : 'PAI-XXX'}`,
+      personneLabel: 'Fournisseur',
+      personneNom: fournisseur.nom + (fournisseur.code ? ` (${fournisseur.code})` : ''),
+      date: datePai,
+      totaux: [
+        { label: 'Montant payé', valeur: `${this.formatPlainNumber(paiement.montant)} FCFA` }
+      ],
+      notePied: `Mode : ${paiement.modePaiement || 'ESPECES'}${paiement.reference ? ' — Réf : ' + paiement.reference : ''}`
+    });
+    this.openHtmlBlob(html, false, { telephone: fournisseur.telephone, message });
   }
 
   ouvrirRecuReglementCredit(reglement: any, client: any): void {
@@ -325,7 +370,20 @@ export class FactureService {
       montantLabel: 'MONTANT RÉGLÉ',
       boutique: nom, tel, adr, qrData
     });
-    this.openHtmlBlob(html, false);
+    const message = formaterMessageWhatsApp({
+      boutiqueNom: nom,
+      boutiqueTelephone: tel,
+      titreDocument: `Reçu de règlement crédit N°${reglement.id ? 'REG-' + reglement.id : 'REG-XXX'}`,
+      personneLabel: 'Client',
+      personneNom: clientNom,
+      date: dateReg,
+      totaux: [
+        { label: 'Montant réglé', valeur: `${this.formatPlainNumber(reglement.montant)} FCFA` },
+        ...(reglement.montantRestant != null ? [{ label: 'Reste dû', valeur: `${this.formatPlainNumber(reglement.montantRestant)} FCFA` }] : [])
+      ],
+      notePied: `Mode : ${reglement.modePaiement || 'ESPECES'}`
+    });
+    this.openHtmlBlob(html, false, { telephone: client.telephone, message });
   }
 
   private buildHtmlRecu(c: {
@@ -357,9 +415,9 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;padding:24px;fon
 .section-title{font-size:10px;letter-spacing:2px;color:#94a3b8;text-transform:uppercase;margin-bottom:8px}
 .entity{font-size:17px;font-weight:700;color:#1e293b}
 .entity-sub{font-size:12px;color:#64748b;margin-top:2px}
-.r{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #f1f5f9}
-.rl{color:#64748b;font-size:12px}
-.rv{font-weight:600;color:#1e293b;font-size:12px}
+.r{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid #f1f5f9}
+.rl{color:#64748b;font-size:12px;flex-shrink:0}
+.rv{font-weight:600;color:#1e293b;font-size:12px;text-align:right;word-break:break-word;overflow-wrap:anywhere}
 .total-box{background:#eff6ff;border:2px solid ${acc};border-radius:10px;padding:18px;text-align:center;margin:18px 0}
 .total-lbl{font-size:11px;letter-spacing:2px;color:${acc};text-transform:uppercase;margin-bottom:6px}
 .total-val{font-size:32px;font-weight:900;color:${acc}}
@@ -420,7 +478,7 @@ function dl(){
 </body></html>`;
   }
 
-  protected openHtmlBlob(html: string, autoprint: boolean): void {
+  protected openHtmlBlob(html: string, autoprint: boolean, whatsapp?: { telephone?: string; message: string }): void {
     document.getElementById('ang-inv-overlay')?.remove();
     const overlay = document.createElement('div');
     overlay.id = 'ang-inv-overlay';
@@ -446,6 +504,7 @@ function dl(){
 
     bar.appendChild(btnClose);
     bar.appendChild(btnPrint);
+    if (whatsapp) bar.appendChild(creerBoutonWhatsApp(whatsapp.telephone, whatsapp.message));
     overlay.appendChild(bar);
     overlay.appendChild(frame);
     document.body.appendChild(overlay);
@@ -582,9 +641,15 @@ function dl(){
 
     // Notes + pied de page communs
     const lastY = (doc as any).lastAutoTable?.finalY || 150;
-    if (facture.notes && lastY + 20 < H - 25) {
+    let notesY = lastY + 18;
+    if (facture.chauffeur && notesY < H - 25) {
       doc.setFontSize(8); doc.setTextColor(100); doc.setFont(undefined, 'normal');
-      doc.text(`Notes : ${facture.notes}`, 15, lastY + 18);
+      doc.text(`Chauffeur : ${facture.chauffeur}`, 15, notesY);
+      notesY += 5;
+    }
+    if (facture.notes && notesY < H - 25) {
+      doc.setFontSize(8); doc.setTextColor(100); doc.setFont(undefined, 'normal');
+      doc.text(`Notes : ${facture.notes}`, 15, notesY);
     }
     doc.setFontSize(7); doc.setTextColor(150); doc.setFont(undefined, 'normal');
     doc.text('Merci de votre confiance !', W / 2, H - 8, { align: 'center' });
@@ -629,7 +694,7 @@ function dl(){
   isFactureSupprimable(facture: Facture): boolean { return facture.statut === 'BROUILLON'; }
 
   protected formatPlainNumber(price: number): string {
-    return (price === undefined || price === null) ? '0' : Math.round(price).toLocaleString('fr-FR');
+    return (price === undefined || price === null) ? '0' : Math.round(price).toLocaleString('fr-FR', { maximumFractionDigits: 0 });
   }
   private formatDateTimeForExport(dateString: string): string {
     try { const d = new Date(dateString); return d.toLocaleDateString('fr-FR') + ' ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }); } catch { return dateString; }
@@ -652,6 +717,7 @@ function dl(){
     lignes: any[][];
     totaux?: { label: string; valeur: string }[];
     pied?: string;
+    paysage?: boolean;
   }): string {
     const design = this.designService.getDesign();
     const boutique = this.boutiqueService.getInfo();
@@ -701,7 +767,7 @@ function dl(){
 <style>
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   body{font-family:'Segoe UI',Arial,sans-serif;color:#1e293b;background:#f8fafc;padding:32px 24px;font-size:13px;line-height:1.5}
-  .doc-sheet{background:#fff;border-radius:16px;box-shadow:0 4px 32px rgba(8,22,72,.10);max-width:900px;margin:0 auto;overflow:hidden}
+  .doc-sheet{background:#fff;border-radius:16px;box-shadow:0 4px 32px rgba(8,22,72,.10);max-width:${config.paysage ? '1400px' : '900px'};margin:0 auto;overflow:hidden}
   .doc-header{background:${headerBg};padding:24px 32px;display:flex;align-items:center;justify-content:space-between;gap:16px}
   .doc-header-brand{color:${headerTextColor}}
   .doc-header-brand h1{font-size:20px;font-weight:900;margin-bottom:4px}
@@ -711,16 +777,28 @@ function dl(){
   .doc-header-right .doc-subtitle{font-size:13px;margin-top:4px;opacity:0.75}
   .doc-header-right .doc-date{font-size:11px;margin-top:6px;opacity:0.6}
   .doc-body{padding:24px 32px}
-  table{width:100%;border-collapse:collapse;margin-top:8px}
-  thead tr th{background:${tblHeadBg};color:#fff;padding:10px 14px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;text-align:left}
+  table{width:100%;border-collapse:collapse;margin-top:8px;table-layout:fixed}
+  thead tr th{background:${tblHeadBg};color:#fff;padding:10px 14px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;text-align:left;word-break:break-word;overflow-wrap:anywhere}
   tbody tr.even td{background:#f8fafc}
-  tbody tr td{padding:9px 14px;font-size:12.5px;border-bottom:1px solid #f1f5f9;color:#334155}
+  tbody tr td{padding:9px 14px;font-size:12.5px;border-bottom:1px solid #f1f5f9;color:#334155;word-break:break-word;overflow-wrap:anywhere;vertical-align:top}
   tfoot tr.total-row td{padding:12px 14px;background:${design === 2 ? '#fef3c7' : design === 3 ? '#f4f4f5' : '#eff6ff'};border-top:2px solid ${primaryColor};font-size:13px}
   .doc-footer{background:${footerBg};padding:14px 32px;display:flex;align-items:center;justify-content:space-between}
   .doc-footer span{color:rgba(255,255,255,.75);font-size:12px}
   .doc-footer-right{color:rgba(255,255,255,.55);font-size:11px;font-style:italic}
   .doc-pied{padding:12px 32px 20px;font-size:11px;color:#94a3b8;text-align:center}
-  @media print{@page{size:A4;margin:10mm}body{background:white;padding:0}.doc-sheet{box-shadow:none;border-radius:0;max-width:100%;margin:0}}
+  /* BUG FIX (débordement PDF fournisseur) : sans word-break/overflow-wrap, une cellule au
+     contenu long et sans espaces (ex: liste de produits d'un achat, commentaire) pousse le
+     tableau plus large que la page au lieu de passer à la ligne — le texte est alors coupé/
+     invisible à l'impression. table-layout:fixed force les colonnes à se partager 100% de la
+     largeur dispo (au lieu de s'étirer selon le contenu le plus long), et thead qui se répète +
+     tr qui ne se coupe pas évitent qu'une ligne soit tranchée en deux entre deux pages A4. */
+  @media print{
+    @page{size:A4 ${config.paysage ? 'landscape' : 'portrait'};margin:10mm}
+    body{background:white;padding:0}
+    .doc-sheet{box-shadow:none;border-radius:0;max-width:100%;margin:0}
+    thead{display:table-header-group}
+    tr{page-break-inside:avoid;break-inside:avoid}
+  }
 </style></head><body>
 <div class="doc-sheet">
   <div class="doc-header">
@@ -750,8 +828,8 @@ function dl(){
 </body></html>`;
   }
 
-  ouvrirHtmlPersonnalise(html: string): void {
-    this.openHtmlBlob(html, false);
+  ouvrirHtmlPersonnalise(html: string, whatsapp?: { telephone?: string; message: string }): void {
+    this.openHtmlBlob(html, false, whatsapp);
   }
 
   ouvrirDocumentPDF(config: {
@@ -761,9 +839,11 @@ function dl(){
     lignes: any[][];
     totaux?: { label: string; valeur: string }[];
     pied?: string;
+    paysage?: boolean;
+    whatsapp?: { telephone?: string; message: string };
   }): void {
     const html = this.genererHTMLDocument(config);
-    this.openHtmlBlob(html, false);
+    this.openHtmlBlob(html, false, config.whatsapp);
   }
 
   private genererHTMLFacture(facture: Facture): string {
@@ -940,6 +1020,7 @@ function dl(){
         <strong>N° :</strong> ${facture.numeroFacture}<br>
         <strong>Date :</strong> ${this.formatDate(facture.dateCreation)}<br>
         <strong>Statut :</strong> ${statutBadge}<br>
+        ${facture.chauffeur ? `<strong>Chauffeur :</strong> ${facture.chauffeur}<br>` : ''}
         ${facture.notes ? `<strong>Notes :</strong> ${facture.notes}` : ''}
       </div>
     </div>

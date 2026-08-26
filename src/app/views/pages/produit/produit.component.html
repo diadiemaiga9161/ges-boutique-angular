@@ -25,9 +25,12 @@
         <ul class="dropdown-menu" [class.show]="showGestionDropdown">
           <li><a class="dropdown-item" (click)="openAddCategoryModal(); showGestionDropdown=false"><i class="fa fa-tag me-2"></i>Ajouter catégorie</a></li>
           <li><a class="dropdown-item" (click)="activeTab = 'categories'; showGestionDropdown=false"><i class="fa fa-list me-2"></i>Gérer catégories</a></li>
+          <!-- Gestion fournisseur retirée de la page Produit : tout se fait désormais depuis la
+               vraie page Fournisseurs (menu latéral), pour éviter une double implémentation.
           <li><hr class="dropdown-divider"></li>
           <li><a class="dropdown-item" (click)="openAddFournisseurModal(); showGestionDropdown=false"><i class="fa fa-truck me-2"></i>Ajouter fournisseur</a></li>
           <li><a class="dropdown-item" (click)="activeTab = 'fournisseurs'; showGestionDropdown=false"><i class="fa fa-users me-2"></i>Gérer fournisseurs</a></li>
+          -->
         </ul>
       </div>
     </div>
@@ -151,11 +154,14 @@
           <i class="fa fa-box me-1"></i> Produits <span class="badge bg-secondary ms-1">{{ filteredProducts.length }}</span>
         </a>
       </li>
+      <!-- Onglet Fournisseurs retiré de la page Produit : gestion fournisseur centralisée sur
+           la vraie page Fournisseurs (menu latéral).
       <li class="nav-item">
         <a class="nav-link" style="cursor:pointer" [class.active]="activeTab === 'fournisseurs'" (click)="activeTab = 'fournisseurs'; loadFournisseurs()">
           <i class="fa fa-truck me-1"></i> Fournisseurs <span class="badge bg-secondary ms-1">{{ fournisseurs.length }}</span>
         </a>
       </li>
+      -->
       <li class="nav-item">
         <a class="nav-link" style="cursor:pointer" [class.active]="activeTab === 'categories'" (click)="activeTab = 'categories'">
           <i class="fa fa-tags me-1"></i> Catégories <span class="badge bg-secondary ms-1">{{ categories.length }}</span>
@@ -215,9 +221,9 @@
                 </td>
                 <td class="text-center" *ngIf="isAdmin">
                   <div class="btn-group btn-group-sm btn-group-icons">
-                    <button class="btn btn-outline-primary" type="button" (click)="openEditModal(produit)" title="Modifier"><i class="fa fa-edit"></i></button>
-                    <button class="btn btn-outline-info" type="button" (click)="openDetailsModal(produit)" title="Détails"><i class="fa fa-info-circle"></i></button>
-                    <button class="btn btn-outline-danger" type="button" (click)="openDeleteModal(produit)" title="Supprimer"><i class="fa fa-trash"></i></button>
+                    <button class="btn btn-outline-primary" type="button" (click)="openEditModal(produit)" title="Modifier"><i class="fa fa-edit"></i> Modifier</button>
+                    <button class="btn btn-outline-info" type="button" (click)="openDetailsModal(produit)" title="Détails"><i class="fa fa-info-circle"></i> Détails</button>
+                    <button class="btn btn-outline-danger" type="button" (click)="openDeleteModal(produit)" title="Supprimer"><i class="fa fa-trash"></i> Supprimer</button>
                   </div>
                 </td>
               </tr>
@@ -244,7 +250,12 @@
     </div>
 
     <!-- ==================== TABLEAU DES FOURNISSEURS ==================== -->
-    <div class="card mb-4" *ngIf="activeTab === 'fournisseurs'">
+    <!-- Désactivé : gestion fournisseur retirée de la page Produit (doublon avec la vraie page
+         Fournisseurs). *ngIf="false" plutôt qu'un bloc commenté car ce bloc contient tous les
+         boutons qui ouvraient les modales Situation/Achat/Paiement/Avance/Édition/Suppression
+         ci-dessous — les rendre inatteignables suffit à désactiver toute la fonctionnalité,
+         sans risquer de casser le HTML en commentant un gros bloc avec du contenu imbriqué. -->
+    <div class="card mb-4" *ngIf="false">
       <div class="card-header bg-white d-flex justify-content-between align-items-center flex-wrap gap-2">
         <h5 class="mb-0">Liste des fournisseurs</h5>
         <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
@@ -288,13 +299,13 @@
                 <td class="text-center"><span [class]="'badge ' + (f.actif ? 'bg-success' : 'bg-danger')">{{ f.actif ? "Actif" : "Inactif" }}</span></td>
                 <td class="text-center" *ngIf="isAdmin">
                   <div class="btn-group btn-group-sm btn-group-icons">
-                    <button class="btn btn-outline-primary" type="button" (click)="openEditFournisseurModal(f)" title="Modifier"><i class="fa fa-edit"></i></button>
-                    <button class="btn btn-outline-info" type="button" (click)="openSituationModal(f)" title="Situation comptable"><i class="fa fa-chart-line"></i></button>
-                    <button class="btn btn-outline-success" type="button" (click)="openAchatModal(f)" title="Enregistrer un achat"><i class="fa fa-shopping-cart"></i></button>
-                    <button class="btn btn-outline-warning" type="button" (click)="openPaiementModal(f)" title="Effectuer un paiement"><i class="fa fa-money"></i></button>
-                    <button class="btn btn-outline-primary" type="button" (click)="openAvanceFournisseurModal(f)" title="Enregistrer une avance fournisseur"><i class="fa fa-hand-holding-usd"></i></button>
-                    <button class="btn btn-outline-info" type="button" (click)="openHistoriqueAvancesModal(f)" title="Voir l'historique des avances"><i class="fa fa-history"></i></button>
-                    <button class="btn btn-outline-danger" type="button" (click)="openDeleteFournisseurModal(f)" [disabled]="f.nombreProduits > 0" title="Supprimer"><i class="fa fa-trash"></i></button>
+                    <button class="btn btn-outline-primary" type="button" (click)="openEditFournisseurModal(f)" title="Modifier"><i class="fa fa-edit"></i> Modifier</button>
+                    <button class="btn btn-outline-info" type="button" (click)="openSituationModal(f)" title="Situation comptable"><i class="fa fa-chart-line"></i> Situation</button>
+                    <button class="btn btn-outline-success" type="button" (click)="openAchatModal(f)" title="Enregistrer un achat"><i class="fa fa-shopping-cart"></i> Achat</button>
+                    <button class="btn btn-outline-warning" type="button" (click)="openPaiementModal(f)" title="Effectuer un paiement"><i class="fa fa-money"></i> Paiement</button>
+                    <button class="btn btn-outline-primary" type="button" (click)="openAvanceFournisseurModal(f)" title="Enregistrer une avance fournisseur"><i class="fa fa-hand-holding-usd"></i> Avance</button>
+                    <button class="btn btn-outline-info" type="button" (click)="openHistoriqueAvancesModal(f)" title="Voir l'historique des avances"><i class="fa fa-history"></i> Historique</button>
+                    <button class="btn btn-outline-danger" type="button" (click)="openDeleteFournisseurModal(f)" [disabled]="f.nombreProduits > 0" title="Supprimer"><i class="fa fa-trash"></i> Supprimer</button>
                   </div>
                 </td>
               </tr>
@@ -521,7 +532,8 @@
 </div>
 
 <!-- ==================== MODAL SITUATION COMPTABLE FOURNISSEUR ==================== -->
-<div class="modal fade show" [class.d-block]="showSituationModal" *ngIf="showSituationModal" style="background-color: rgba(0, 0, 0, 0.5); z-index: 1060" tabindex="-1">
+<!-- Désactivé : doublon de la vraie page Fournisseurs (bug corrigé là-bas ; ici, retiré). -->
+<div class="modal fade show" [class.d-block]="showSituationModal" *ngIf="false" style="background-color: rgba(0, 0, 0, 0.5); z-index: 1060" tabindex="-1">
   <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-header bg-info text-white">
@@ -546,8 +558,8 @@
                   <td class="text-end">{{ formatPrice(achat.montantTotal) }}</td>
                   <td class="text-end text-info">{{ formatPrice(achat.montantAvanceUtilise || 0) }}</td>
                   <td class="text-end">{{ formatPrice(achat.montantPaye || 0) }}</td>
-                  <td class="text-end fw-bold" [class.text-success]="(achat.montantTotal - achat.montantPaye) <= 0.01" [class.text-danger]="(achat.montantTotal - achat.montantPaye) > 0.01">{{ formatPrice(achat.montantTotal - achat.montantPaye) }}</td>
-                  <td class="text-center"><span class="badge" [class.bg-success]="(achat.montantTotal - achat.montantPaye) <= 0.01" [class.bg-info]="(achat.montantPaye > 0 && (achat.montantTotal - achat.montantPaye) > 0.01)" [class.bg-warning]="(achat.montantPaye === 0 || achat.montantPaye === undefined)">{{ getAchatStatusText(achat) }}</span></td>
+                  <td class="text-end fw-bold" [class.text-success]="achat.montantRestant <= 0.01" [class.text-danger]="achat.montantRestant > 0.01">{{ formatPrice(achat.montantRestant) }}</td>
+                  <td class="text-center"><span class="badge" [ngClass]="getAchatStatusClass(achat)">{{ getAchatStatusText(achat) }}</span></td>
                   <td class="text-center"><div class="d-flex gap-1 justify-content-center"><button class="btn btn-sm btn-outline-warning py-0" title="Retour marchandise" [disabled]="achat.statut === 'ANNULE'" (click)="openRetourAchatModal(achat); showSituationModal=false"><i class="fa fa-undo me-1"></i>Retour</button><button class="btn btn-sm btn-outline-danger py-0" title="Annuler cet achat" [disabled]="achat.statut === 'ANNULE'" (click)="annulerAchat(achat)"><i class="fa fa-ban me-1"></i>Annuler</button></div></td>
                 </tr>
                 <tr *ngIf="fournisseurSituation.achatsRecents.length === 0"><td colspan="7" class="text-center">Aucun achat récent</td></tr>
@@ -582,7 +594,8 @@
 </div>
 
 <!-- ==================== MODAL AJOUT FOURNISSEUR ==================== -->
-<div class="modal fade show" [class.d-block]="showAddFournisseurModal" *ngIf="showAddFournisseurModal" style="background-color: rgba(0, 0, 0, 0.5); z-index: 1050" tabindex="-1">
+<!-- Désactivé : doublon de la vraie page Fournisseurs. -->
+<div class="modal fade show" [class.d-block]="showAddFournisseurModal" *ngIf="false" style="background-color: rgba(0, 0, 0, 0.5); z-index: 1050" tabindex="-1">
   <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-header bg-primary text-white"><h5 class="modal-title"><i class="fa fa-truck me-2"></i>Ajouter un fournisseur</h5><button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button></div>
@@ -614,7 +627,8 @@
 </div>
 
 <!-- ==================== MODAL MODIFICATION FOURNISSEUR ==================== -->
-<div class="modal fade show" [class.d-block]="showEditFournisseurModal" *ngIf="showEditFournisseurModal" style="background-color: rgba(0, 0, 0, 0.5); z-index: 1050" tabindex="-1">
+<!-- Désactivé : doublon de la vraie page Fournisseurs. -->
+<div class="modal fade show" [class.d-block]="showEditFournisseurModal" *ngIf="false" style="background-color: rgba(0, 0, 0, 0.5); z-index: 1050" tabindex="-1">
   <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-header bg-warning text-white"><h5 class="modal-title"><i class="fa fa-edit me-2"></i>Modifier le fournisseur</h5><button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button></div>
@@ -646,7 +660,8 @@
 </div>
 
 <!-- ==================== MODAL SUPPRESSION FOURNISSEUR ==================== -->
-<div class="modal fade show" [class.d-block]="showDeleteFournisseurModal" *ngIf="showDeleteFournisseurModal" style="background-color: rgba(0, 0, 0, 0.5); z-index: 1050" tabindex="-1">
+<!-- Désactivé : doublon de la vraie page Fournisseurs. -->
+<div class="modal fade show" [class.d-block]="showDeleteFournisseurModal" *ngIf="false" style="background-color: rgba(0, 0, 0, 0.5); z-index: 1050" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header bg-danger text-white"><h5 class="modal-title"><i class="fa fa-exclamation-triangle me-2"></i>Confirmer la suppression</h5><button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button></div>
@@ -724,7 +739,8 @@
 
 <!-- ==================== MODAL AJOUT ACHAT FOURNISSEUR ==================== -->
 <!-- ==================== MODAL AJOUT ACHAT FOURNISSEUR (MODIFIÉ AVEC BANQUE) ==================== -->
-<div class="modal fade show" [class.d-block]="showAchatModal" *ngIf="showAchatModal" style="background-color: rgba(0, 0, 0, 0.5); z-index: 1060" tabindex="-1">
+<!-- Désactivé : doublon de la vraie page Fournisseurs. -->
+<div class="modal fade show" [class.d-block]="showAchatModal" *ngIf="false" style="background-color: rgba(0, 0, 0, 0.5); z-index: 1060" tabindex="-1">
   <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-header bg-primary text-white">
@@ -835,7 +851,8 @@
   </div>
 </div>
 <!-- ==================== MODAL PAIEMENT FOURNISSEUR (AVEC SÉLECTEUR D'ACHAT) - MODE PAYSAGE ==================== -->
-<div class="modal fade show" [class.d-block]="showPaiementModal" *ngIf="showPaiementModal" style="background-color: rgba(0, 0, 0, 0.5); z-index: 1060" tabindex="-1">
+<!-- Désactivé : doublon de la vraie page Fournisseurs. -->
+<div class="modal fade show" [class.d-block]="showPaiementModal" *ngIf="false" style="background-color: rgba(0, 0, 0, 0.5); z-index: 1060" tabindex="-1">
   <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content shadow-lg">
       <div class="modal-header bg-gradient-success text-white py-3">
@@ -1049,7 +1066,8 @@
   </div>
 </div>
 <!-- ==================== MODAL HISTORIQUE AVANCES FOURNISSEUR ==================== -->
-<div class="modal fade show d-block" tabindex="-1" *ngIf="showHistoriqueAvancesModal" style="background-color: rgba(0,0,0,.5); z-index: 1060">
+<!-- Désactivé : doublon de la vraie page Fournisseurs. -->
+<div class="modal fade show d-block" tabindex="-1" *ngIf="false" style="background-color: rgba(0,0,0,.5); z-index: 1060">
   <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content shadow-lg">
       <div class="modal-header bg-info text-white"><div class="d-flex align-items-center"><i class="fa fa-history fa-lg me-3"></i><div><h5 class="modal-title fw-bold mb-0">Historique des avances</h5><small class="opacity-75">{{ selectedFournisseurForHistorique?.nom }}</small></div></div><button type="button" class="btn-close btn-close-white" (click)="showHistoriqueAvancesModal=false"></button></div>
@@ -1065,7 +1083,8 @@
 </div>
 
 <!-- ==================== MODAL AVANCE FOURNISSEUR ==================== -->
-<div class="modal fade show d-block" tabindex="-1" *ngIf="showAvanceFournisseurModal" style="background-color: rgba(0,0,0,.5); z-index: 1060">
+<!-- Désactivé : doublon de la vraie page Fournisseurs. -->
+<div class="modal fade show d-block" tabindex="-1" *ngIf="false" style="background-color: rgba(0,0,0,.5); z-index: 1060">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content shadow-lg">
       <div class="modal-header bg-primary text-white"><div class="d-flex align-items-center"><i class="fa fa-hand-holding-usd fa-lg me-3"></i><div><h5 class="modal-title fw-bold mb-0">Avance fournisseur</h5><small class="opacity-75">{{ selectedFournisseurForAvance?.nom }}</small></div></div><button type="button" class="btn-close btn-close-white" (click)="showAvanceFournisseurModal=false"></button></div>
@@ -1076,7 +1095,8 @@
 </div>
 
 <!-- ==================== MODAL RETOUR ACHAT FOURNISSEUR ==================== -->
-<div class="modal fade show d-block" tabindex="-1" *ngIf="showRetourAchatModal" style="background-color: rgba(0,0,0,.5); z-index: 1065">
+<!-- Désactivé : doublon de la vraie page Fournisseurs. -->
+<div class="modal fade show d-block" tabindex="-1" *ngIf="false" style="background-color: rgba(0,0,0,.5); z-index: 1065">
   <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content shadow-lg">
       <div class="modal-header bg-warning text-white"><div class="d-flex align-items-center"><i class="fa fa-undo fa-lg me-3"></i><div><h5 class="modal-title fw-bold mb-0">Retour marchandise fournisseur</h5><small class="opacity-75">Achat du {{ formatDate(selectedAchatPourRetour?.dateAchat) }}</small></div></div><button type="button" class="btn-close btn-close-white" (click)="showRetourAchatModal=false"></button></div>

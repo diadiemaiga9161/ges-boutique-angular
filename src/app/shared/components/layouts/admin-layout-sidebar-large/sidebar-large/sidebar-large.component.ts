@@ -1,8 +1,7 @@
-import { Component, OnInit, HostListener, ViewChildren, QueryList } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import {
   NavigationService,
-  IMenuItem,
-  IChildItem
+  IMenuItem
 } from '../../../../services/navigation.service';
 import { Router, NavigationEnd } from '@angular/router';
 
@@ -10,6 +9,10 @@ import { filter } from 'rxjs/operators';
 import { Utils } from '../../../../utils';
 import { BoutiqueService } from '../../../../services/boutique.service';
 
+// Sidebar fixe (style edumanager) : liste à plat groupée par titres de
+// section, plus de fly-out à deux niveaux. L'état actif de chaque lien est
+// délégué à routerLinkActive (Router) au lieu d'un recalcul manuel — d'où
+// la disparition de setActiveFlag/selectedItem/closeChildNav présents avant.
 @Component({
     selector: 'app-sidebar-large',
     templateUrl: './sidebar-large.component.html',
@@ -17,9 +20,9 @@ import { BoutiqueService } from '../../../../services/boutique.service';
     standalone: false
 })
 export class SidebarLargeComponent implements OnInit {
-  selectedItem: IMenuItem;
-  nav: IMenuItem[];
+  nav: IMenuItem[] = [];
   logoPath: string = 'assets/images/logo.png';
+  boutiqueName: string = 'Ges Lafia';
 
   constructor(public router: Router, public navService: NavigationService, private boutiqueService: BoutiqueService) {
 
@@ -29,13 +32,14 @@ export class SidebarLargeComponent implements OnInit {
     this.logoPath = this.boutiqueService.getLogoPath();
     this.boutiqueService.info$.subscribe(info => {
       this.logoPath = info.logo || info.logoPath || 'assets/images/logo.png';
+      this.boutiqueName = info.nom || 'Ges Lafia';
     });
     this.updateSidebar();
-    // CLOSE SIDENAV ON ROUTE CHANGE
+    // Ferme la sidebar sur mobile après chaque navigation (comportement
+    // identique à avant, juste sans la gestion du sous-menu fly-out).
     this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
-      .subscribe(routeChange => {
-        this.closeChildNav();
+      .subscribe(() => {
         if (Utils.isMobile()) {
           this.navService.sidebarState.sidenavOpen = false;
         }
@@ -43,71 +47,22 @@ export class SidebarLargeComponent implements OnInit {
 
     this.navService.menuItems$.subscribe(items => {
       this.nav = items;
-      this.setActiveFlag();
     });
   }
 
-  selectItem(item) {
-    this.navService.sidebarState.childnavOpen = true;
-    this.navService.selectedItem = item;
-    this.setActiveMainItem(item);
-
-    // Scroll to top secondary sidebar
-    setTimeout(() => {            
-      // this.psContainerSecSidebar.update();
-      // this.psContainerSecSidebar.scrollToTop(0, 400);
-    });
-  }
-  closeChildNav() {
-    this.navService.sidebarState.childnavOpen = false;
-    this.setActiveFlag();
-  }
-
-  onClickChangeActiveFlag(item) {
-    this.setActiveMainItem(item);
-  }
-  setActiveMainItem(item) {
-    this.nav.forEach(i => {
-      i.active = false;
-    });
-    item.active = true;
-  }
-
-  setActiveFlag() {
-    if (window && window.location) {
-      const activeRoute = window.location.hash || window.location.pathname;
-      this.nav.forEach(item => {
-        item.active = false;
-        if (activeRoute.indexOf(item.state) !== -1) {
-          this.navService.selectedItem = item;
-          item.active = true;
-        }
-        if (item.sub) {
-          item.sub.forEach(subItem => {
-            subItem.active = false;
-            if (activeRoute.indexOf(subItem.state) !== -1) {
-              this.navService.selectedItem = item;
-              item.active = true;
-            }
-            if (subItem.sub) {
-              subItem.sub.forEach(subChildItem => {
-                if (activeRoute.indexOf(subChildItem.state) !== -1) {
-                  this.navService.selectedItem = item;
-                  item.active = true;
-                  subItem.active = true;
-                }
-              });
-            }
-          });
-        }
-      });
+  onNavigate() {
+    if (Utils.isMobile()) {
+      this.navService.sidebarState.sidenavOpen = false;
     }
+  }
+
+  closeMobile() {
+    this.navService.sidebarState.sidenavOpen = false;
   }
 
   updateSidebar() {
     if (Utils.isMobile()) {
       this.navService.sidebarState.sidenavOpen = false;
-      this.navService.sidebarState.childnavOpen = false;
     } else {
       this.navService.sidebarState.sidenavOpen = true;
     }

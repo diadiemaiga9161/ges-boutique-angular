@@ -73,6 +73,7 @@
     "SAFE": "Sɔrɔdigaw",
     "SUPPLIER_OBJ": "Jɔsɔrɔ ɲɛta",
     "SUPPLIER_BONUS": "Jɔsɔrɔ diyaw",
+    "SELLER_BONUS": "Jɔsɔrɔ feerenkɛlaw",
     "EXPENSES": "Musakaw",
     "NET_RESULT": "Sɔrɔɲuman",
     "SUPPLIERS": "Fɛnyɛlɛmaliw",
@@ -102,6 +103,7 @@
   },
   "PRODUCTS": {
     "TITLE": "Fɛnw",
+    "SUBTITLE": "I ka fɛn kalanw kunbɛn",
     "ADD": "Fɛn kura fara",
     "NAME": "Fɛn tɔgɔ",
     "PRICE_SELL": "Feere dama",

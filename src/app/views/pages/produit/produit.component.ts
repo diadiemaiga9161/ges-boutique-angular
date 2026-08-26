@@ -1207,20 +1207,22 @@ export class ProduitComponent implements OnInit, OnDestroy {
   }
 
   getAchatStatusText(achat: any): string {
-    const montantTotal = achat.montantTotal || 0;
+    // Le statut ANNULE renvoyé par le backend est prioritaire et ne doit
+    // jamais être retransformé en "Payé" ou "Partiel" par un recalcul local.
+    if (achat.statut === 'ANNULE') return 'Annulé';
     const montantPaye = achat.montantPaye || 0;
-    const montantRestant = montantTotal - montantPaye;
-    
+    const montantRestant = achat.montantRestant ?? ((achat.montantTotal || 0) - montantPaye);
+
     if (montantRestant <= 0.01) return 'Payé';
     if (montantPaye > 0 && montantRestant > 0.01) return 'Partiel';
     return 'En cours';
   }
 
   getAchatStatusClass(achat: any): string {
-    const montantTotal = achat.montantTotal || 0;
+    if (achat.statut === 'ANNULE') return 'bg-danger';
     const montantPaye = achat.montantPaye || 0;
-    const montantRestant = montantTotal - montantPaye;
-    
+    const montantRestant = achat.montantRestant ?? ((achat.montantTotal || 0) - montantPaye);
+
     if (montantRestant <= 0.01) return 'bg-success';
     if (montantPaye > 0 && montantRestant > 0.01) return 'bg-info';
     return 'bg-warning';
@@ -1738,16 +1740,7 @@ export class ProduitComponent implements OnInit, OnDestroy {
             setTimeout(() => {
               this.productService.getSituationFournisseur(this.selectedFournisseurForSituation!.id).subscribe({
                 next: (data) => {
-                  if (data && data.achatsRecents) {
-                    data.achatsRecents = data.achatsRecents.map(achat => {
-                      const restant = (achat.montantTotal || 0) - (achat.montantPaye || 0);
-                      return {
-                        ...achat,
-                        montantRestant: restant,
-                        statut: restant <= 0.01 ? 'PAYE' : achat.statut
-                      };
-                    });
-                  }
+                  // On fait confiance aux montantRestant/statut renvoyés par le backend.
                   this.fournisseurSituation = data;
                 },
                 error: (err) => console.error('Erreur rafraîchissement situation:', err)
@@ -1780,16 +1773,8 @@ export class ProduitComponent implements OnInit, OnDestroy {
     this.productService.getSituationFournisseur(fournisseur.id).subscribe({
       next: (data) => {
         console.log('Situation reçue:', data);
-        if (data && data.achatsRecents) {
-          data.achatsRecents = data.achatsRecents.map(achat => {
-            const restant = (achat.montantTotal || 0) - (achat.montantPaye || 0);
-            return {
-              ...achat,
-              montantRestant: restant,
-              statut: restant <= 0.01 ? 'PAYE' : achat.statut
-            };
-          });
-        }
+        // On fait confiance aux montantRestant/statut renvoyés par le backend,
+        // pas de recalcul local (qui écraserait par ex. un statut ANNULE).
         this.fournisseurSituation = data;
         this.isLoadingSituation = false;
         this.showSituationModal = true;
@@ -1877,8 +1862,8 @@ export class ProduitComponent implements OnInit, OnDestroy {
               icon: 'error',
               title: '❌ Solde caisse insuffisant !',
               html: `<strong>Vérifiez bien la caisse</strong><br><br>
-                     📊 Solde actuel de la caisse : <strong>${soldeCaisse.toLocaleString('fr-FR')} F</strong><br>
-                     💸 Montant demandé : <strong>${montantAvance.toLocaleString('fr-FR')} F</strong><br><br>
+                     📊 Solde actuel de la caisse : <strong>${soldeCaisse.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} F</strong><br>
+                     💸 Montant demandé : <strong>${montantAvance.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} F</strong><br><br>
                      <span class="text-danger">Le solde de la caisse est insuffisant pour effectuer cette avance.</span><br>
                      Veuillez vérifier les entrées/sorties de caisse avant de réessayer.`,
               confirmButtonText: 'OK',
@@ -1929,8 +1914,8 @@ export class ProduitComponent implements OnInit, OnDestroy {
               title: '❌ Solde bancaire insuffisant !',
               html: `<strong>Vérifiez le compte bancaire</strong><br><br>
                      🏦 Compte : <strong>${compte.nomBanque}</strong><br>
-                     📊 Solde actuel : <strong>${soldeCompte.toLocaleString('fr-FR')} F</strong><br>
-                     💸 Montant demandé : <strong>${montantAvance.toLocaleString('fr-FR')} F</strong><br><br>
+                     📊 Solde actuel : <strong>${soldeCompte.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} F</strong><br>
+                     💸 Montant demandé : <strong>${montantAvance.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} F</strong><br><br>
                      <span class="text-danger">Le solde du compte bancaire est insuffisant pour effectuer cette avance.</span><br>
                      Veuillez vérifier le compte avant de réessayer.`,
               confirmButtonText: 'OK',
@@ -1966,15 +1951,15 @@ export class ProduitComponent implements OnInit, OnDestroy {
           <p class="fw-bold mb-2">📝 Détails de l'opération :</p>
           <table style="width:100%; margin:10px 0">
             <tr><td style="width:50%"><strong>Fournisseur :</strong></td><td>${fournisseurNom}</td></tr>
-            <tr><td><strong>Montant :</strong></td><td class="text-primary fw-bold">${montantAvance.toLocaleString('fr-FR')} F</td></tr>
+            <tr><td><strong>Montant :</strong></td><td class="text-primary fw-bold">${montantAvance.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} F</td></tr>
             <tr><td><strong>Source :</strong></td><td>🏦 ${source}</td></tr>
             <tr><td><strong>Motif :</strong></td><td>${this.avanceFournisseurForm.motif || 'Avance fournisseur'}</td></tr>
           </table>
           <hr class="my-2">
           <p class="text-muted small mb-2">💰 Après cette opération :</p>
           <ul class="small">
-            <li>Caisse : <strong class="${nouveauSoldeCaisse >= 0 ? 'text-success' : 'text-danger'}">${nouveauSoldeCaisse.toLocaleString('fr-FR')} F</strong></li>
-            <li>Avance disponible pour ce fournisseur : <strong class="text-info">${montantAvance.toLocaleString('fr-FR')} F</strong></li>
+            <li>Caisse : <strong class="${nouveauSoldeCaisse >= 0 ? 'text-success' : 'text-danger'}">${nouveauSoldeCaisse.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} F</strong></li>
+            <li>Avance disponible pour ce fournisseur : <strong class="text-info">${montantAvance.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} F</strong></li>
           </ul>
           <div class="alert alert-warning py-2 mb-0 mt-2">
             <i class="fa fa-exclamation-triangle me-1"></i>
@@ -2004,7 +1989,7 @@ export class ProduitComponent implements OnInit, OnDestroy {
           <p class="fw-bold mb-2">📝 Détails de l'opération :</p>
           <table style="width:100%; margin:10px 0">
             <tr><td style="width:50%"><strong>Fournisseur :</strong></td><td>${fournisseurNom}</td></tr>
-            <tr><td><strong>Montant :</strong></td><td class="text-primary fw-bold">${montantAvance.toLocaleString('fr-FR')} F</td></tr>
+            <tr><td><strong>Montant :</strong></td><td class="text-primary fw-bold">${montantAvance.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} F</td></tr>
             <tr><td><strong>Source :</strong></td><td>🏦 ${source}</td></tr>
             <tr><td><strong>Compte bancaire :</strong></td><td>${compte.nomBanque} (${compte.numeroCompte || 'N°' + compte.id})</td></tr>
             <tr><td><strong>Motif :</strong></td><td>${this.avanceFournisseurForm.motif || 'Avance fournisseur'}</td></tr>
@@ -2012,8 +1997,8 @@ export class ProduitComponent implements OnInit, OnDestroy {
           <hr class="my-2">
           <p class="text-muted small mb-2">💰 Après cette opération :</p>
           <ul class="small">
-            <li>Compte ${compte.nomBanque} : <strong class="${nouveauSoldeCompte >= 0 ? 'text-success' : 'text-danger'}">${nouveauSoldeCompte.toLocaleString('fr-FR')} F</strong></li>
-            <li>Avance disponible pour ce fournisseur : <strong class="text-info">${montantAvance.toLocaleString('fr-FR')} F</strong></li>
+            <li>Compte ${compte.nomBanque} : <strong class="${nouveauSoldeCompte >= 0 ? 'text-success' : 'text-danger'}">${nouveauSoldeCompte.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} F</strong></li>
+            <li>Avance disponible pour ce fournisseur : <strong class="text-info">${montantAvance.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} F</strong></li>
           </ul>
           <div class="alert alert-warning py-2 mb-0 mt-2">
             <i class="fa fa-exclamation-triangle me-1"></i>
@@ -2277,23 +2262,15 @@ export class ProduitComponent implements OnInit, OnDestroy {
             setTimeout(() => {
               this.productService.getSituationFournisseur(this.selectedFournisseurForSituation!.id).subscribe({
                 next: (data) => {
-                  if (data && data.achatsRecents) {
-                    data.achatsRecents = data.achatsRecents.map(a => {
-                      const restant = (a.montantTotal || 0) - (a.montantPaye || 0);
-                      return {
-                        ...a,
-                        montantRestant: restant,
-                        statut: restant <= 0.01 ? 'PAYE' : a.statut
-                      };
-                    });
-                  }
+                  // On fait confiance aux montantRestant/statut renvoyés par le backend
+                  // (l'achat annulé doit apparaître avec statut ANNULE et montantRestant = 0).
                   this.fournisseurSituation = data;
                 },
                 error: (err) => console.error('Erreur rafraîchissement situation:', err)
               });
             }, 500);
           }
-          
+
           let remboursementMsg = '';
           if (montantAvance > 0 && montantImmediat > 0) {
             remboursementMsg = `Avance restituée: ${this.formatPrice(montantAvance)} - Paiement remboursé: ${this.formatPrice(montantImmediat)}`;

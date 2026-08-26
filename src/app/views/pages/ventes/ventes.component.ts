@@ -214,6 +214,7 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
   // ==================== MODAL FACTURE DATE ====================
   showFactureDateModal: boolean = false;
   factureDateCustom: string = '';
+  factureChauffeur: string = '';
   venteForFacture: VenteMap | null = null;
 
   design: DesignFacture = 1;
@@ -2475,11 +2476,19 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
     });
   }
 
+  envoyerFactureWhatsApp(vente: VenteMap): void {
+    const ok = this.venteService.envoyerFactureWhatsApp(vente);
+    if (!ok) {
+      Swal.fire({ icon: 'info', title: 'Aucun numéro enregistré', text: 'Ajoutez un numéro de téléphone à ce client pour activer l\'envoi WhatsApp.', timer: 3000, showConfirmButton: false });
+    }
+  }
+
   openFactureDateModal(venteId: number): void {
     this.venteService.getVenteById(venteId).subscribe({
       next: (vente) => {
         this.venteForFacture = vente;
         this.factureDateCustom = vente.dateVente ? vente.dateVente.split('T')[0] : this.today;
+        this.factureChauffeur = '';
         this.showFactureDateModal = true;
         this.cdr.detectChanges();
       },
@@ -2493,7 +2502,7 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
 
   confirmerGenerationFacture(): void {
     if (!this.venteForFacture) return;
-    const venteAvecDate = { ...this.venteForFacture, dateVente: this.factureDateCustom };
+    const venteAvecDate = { ...this.venteForFacture, dateVente: this.factureDateCustom, chauffeur: this.factureChauffeur || undefined };
     this.venteService.imprimerFacture(venteAvecDate);
     this.showFactureDateModal = false;
     this.venteForFacture = null;

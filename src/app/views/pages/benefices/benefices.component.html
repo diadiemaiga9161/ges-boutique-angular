@@ -10,7 +10,7 @@
     </div>
     <div class="app-page-header-actions">
       <button class="btn btn-outline-secondary" (click)="exporterPDF()" [disabled]="!data || isLoading">
-        <i class="i-File-PDF me-1"></i> {{ 'COMMON.DOWNLOAD' | translate }} PDF
+        <i class="i-File-Download me-1"></i> {{ 'COMMON.DOWNLOAD' | translate }} PDF
       </button>
     </div>
   </div>
@@ -194,6 +194,44 @@
     <div *ngIf="data.lignes.length === 0 && data.beneficeTotal === 0" class="text-center py-5">
       <i class="i-Money-2 fs-1 text-muted"></i>
       <p class="text-muted mt-2">{{ 'PROMO.EMPTY' | translate }}</p>
+    </div>
+
+    <!-- TRAÇABILITÉ : VENTES ANNULÉES DE LA PÉRIODE -->
+    <div class="card shadow-sm mt-4" *ngIf="data.ventesAnnulees && data.ventesAnnulees.length > 0">
+      <div class="card-header bg-white d-flex align-items-center justify-content-between">
+        <strong class="text-danger"><i class="i-Close-Window me-2"></i>Ventes annulées durant la période (traçabilité)</strong>
+        <span class="badge bg-danger">- {{ fmt(data.beneficePerduAnnulations || 0) }}</span>
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>N° Vente</th>
+              <th>Vendue le</th>
+              <th>Annulée le</th>
+              <th>Par</th>
+              <th>Motif</th>
+              <th class="text-end">Bénéfice perdu</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let v of data.ventesAnnulees">
+              <td class="fw-semibold">{{ v.numeroVente }}</td>
+              <td>{{ v.dateVente | date:'dd/MM/yyyy HH:mm' }}</td>
+              <td>{{ v.dateAnnulation | date:'dd/MM/yyyy HH:mm' }}</td>
+              <td>{{ v.annulePar || '—' }}</td>
+              <td class="text-muted">{{ v.motifAnnulation || '—' }}</td>
+              <td class="text-end fw-semibold text-danger">- {{ fmt(v.beneficePerdu) }}</td>
+            </tr>
+          </tbody>
+          <tfoot class="table-light fw-bold">
+            <tr>
+              <td colspan="5">Total bénéfice perdu (annulations)</td>
+              <td class="text-end text-danger">- {{ fmt(data.beneficePerduAnnulations || 0) }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
     </div>
 
   </ng-container>

@@ -116,6 +116,11 @@ export class BoutiqueSettingsComponent implements OnInit {
       next: (boutique) => {
         this.model = { ...boutique, id: boutique.id || 1 };
         this.previewLogo = this.model.logoPath || '';
+        // La couleur enregistrée côté serveur fait foi (appliquée à toute l'appli par BoutiqueService).
+        if (boutique.couleurPrimaire) {
+          this.selectedGlobalColor = boutique.couleurPrimaire;
+          this.savePreferences();
+        }
         this.isLoading = false;
       },
       error: (error) => {
@@ -211,6 +216,7 @@ export class BoutiqueSettingsComponent implements OnInit {
     this.errorMessage = '';
     this.successMessage = '';
     this.model.id = 1;
+    this.model.couleurPrimaire = this.selectedGlobalColor;
     this.boutiqueService.updateBoutique({ ...this.model }).subscribe({
       next: (boutique) => {
         this.model = { ...boutique, id: 1 };

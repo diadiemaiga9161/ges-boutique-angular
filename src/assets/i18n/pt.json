@@ -75,6 +75,7 @@
     "SAFE": "Depósitos Custódia",
     "SUPPLIER_OBJ": "Objetivos Fornecedores",
     "SUPPLIER_BONUS": "Bônus Fornecedores",
+    "SELLER_BONUS": "Bônus Vendedores",
     "EXPENSES": "Despesas",
     "NET_RESULT": "Resultado Líquido",
     "SUPPLIERS": "Fornecedores",
@@ -104,6 +105,7 @@
   },
   "PRODUCTS": {
     "TITLE": "Produtos",
+    "SUBTITLE": "Gerencie seu catálogo de produtos",
     "ADD": "Novo produto",
     "NAME": "Nome do produto",
     "PRICE_SELL": "Preço de venda",

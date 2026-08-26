@@ -51,6 +51,7 @@ export class FacturesComponent implements OnInit, OnDestroy {
     clientTelephone: '',
     clientAdresse: '',
     notes: '',
+    chauffeur: '',
     lignes: []
   };
 
@@ -370,6 +371,7 @@ export class FacturesComponent implements OnInit, OnDestroy {
       clientAdresse: this.factureForm.clientAdresse,
       clientId: this.selectedClient?.id,
       notes: this.factureForm.notes,
+      chauffeur: this.factureForm.chauffeur,
       utilisateurId: this.currentUser?.id,
       lignes: this.factureForm.lignes.map(l => ({
         produitId: l.produitId,
@@ -409,6 +411,7 @@ export class FacturesComponent implements OnInit, OnDestroy {
       clientTelephone: facture.clientTelephone || '',
       clientAdresse: facture.clientAdresse || '',
       notes: facture.notes || '',
+      chauffeur: facture.chauffeur || '',
       clientId: facture.clientId,
       lignes: facture.lignes.map(l => ({
         produitId: l.produitId || 0,
@@ -480,6 +483,7 @@ export class FacturesComponent implements OnInit, OnDestroy {
       clientAdresse: this.factureForm.clientAdresse,
       clientId: this.selectedClient?.id,
       notes: this.factureForm.notes,
+      chauffeur: this.factureForm.chauffeur,
       utilisateurId: this.currentUser?.id,
       lignes: this.factureForm.lignes.map(l => ({
         produitId: l.produitId,
@@ -648,7 +652,7 @@ export class FacturesComponent implements OnInit, OnDestroy {
     this.selectedFacture = null;
     this.selectedClient = null;
     this.selectedProduit = null;
-    this.factureForm = { clientNom: '', clientPrenom: '', clientTelephone: '', clientAdresse: '', notes: '', lignes: [] };
+    this.factureForm = { clientNom: '', clientPrenom: '', clientTelephone: '', clientAdresse: '', notes: '', chauffeur: '', lignes: [] };
     this.newLine = { produitId: 0, designation: '', quantite: 1, prixUnitaire: 0, remisePourcentage: 0, remiseMontant: 0 };
     this.ligneLibre = { produitId: 0, designation: '', quantite: 1, prixUnitaire: 0, remisePourcentage: 0, remiseMontant: 0 };
     this.modeLibre = false;

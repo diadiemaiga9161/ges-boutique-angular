@@ -309,6 +309,6 @@ export class ObjectifFournisseurComponent implements OnInit {
   }
 
   private formatQte(n: number): string {
-    return new Intl.NumberFormat('fr-FR').format(n || 0);
+    return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(n || 0);
   }
 }

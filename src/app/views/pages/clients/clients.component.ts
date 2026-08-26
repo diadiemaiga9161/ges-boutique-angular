@@ -10,7 +10,9 @@ import { CaisseService } from '../../../shared/services/caisse.service';
 import { DesignFacture, FactureDesignService } from '../../../shared/services/facture-design.service';
 import { FactureService } from '../../../shared/services/facture.service';
 import { ProductService } from '../../../shared/services/product.service';
-import { forkJoin } from 'rxjs';
+import { BoutiqueService } from '../../../shared/services/boutique.service';
+import { formaterMessageWhatsApp, envoyerWhatsAppDirect } from '../../../shared/utils/whatsapp.util';
+import { forkJoin, firstValueFrom } from 'rxjs';
 import Swal from 'sweetalert2';
 import { TranslateModule } from '@ngx-translate/core';
 
@@ -26,6 +28,12 @@ interface HistoriquePaiementEntry {
 }
 
 type SituationTypeFilter = '' | 'VENTE' | 'VERSEMENT';
+
+/** Ligne de situation client, éventuellement le résultat du regroupement de plusieurs
+ *  opérations de même type sur une même date (nbOperations > 1 dans ce cas). */
+interface LigneSituationAffichee extends ReleveClientLigne {
+  nbOperations?: number;
+}
 
 @Component({
   selector: 'app-clients',
@@ -84,6 +92,21 @@ export class ClientsComponent implements OnInit {
   showVentesModal = false;
   showVentesDiversModal = false;
   selectedClientForVentes: Client | null = null;
+  // Onglets de la modale unique Ventes/Situation/Paiements/Avances (fusionnées pour
+  // réduire le nombre de boutons/fenêtres séparées côté client — demande explicite :
+  // "mettre situation dans la partie historique de vente ... comme des fonctions tabs
+  // pour ne pas mettre trop d'infos", puis "tu mets paiement avance et historique dedans
+  // pour ne pas avoir beaucoup de bouton").
+  clientDetailTab: 'historique' | 'situation' | 'paiements' | 'avances' = 'historique';
+
+  get clientDetailTitle(): string {
+    switch (this.clientDetailTab) {
+      case 'situation': return 'Situation client';
+      case 'paiements': return 'Paiements';
+      case 'avances': return 'Avances';
+      default: return 'Historique des ventes';
+    }
+  }
 
   // Filtres pour les ventes client
   filterVenteNumero: string = '';
@@ -117,7 +140,7 @@ export class ClientsComponent implements OnInit {
   isLoadingSituation: boolean = false;
   clientPourSituation: Client | null = null;
   releveClient: ReleveClientResponse | null = null;
-  situationLignes: ReleveClientLigne[] = [];
+  situationLignes: LigneSituationAffichee[] = [];
   situationPreset: 'jour' | 'hier' | 'semaine' | 'mois' | 'annee' | 'personnalise' | 'tout' = 'tout';
   situationDateDebut: string = '';
   situationDateFin: string = '';
@@ -154,7 +177,8 @@ export class ClientsComponent implements OnInit {
     private caisseService: CaisseService,
     private designService: FactureDesignService,
     private factureService: FactureService,
-    private productService: ProductService
+    private productService: ProductService,
+    private boutiqueService: BoutiqueService
   ) {}
 
   ngOnInit(): void {
@@ -305,10 +329,11 @@ export class ClientsComponent implements OnInit {
 
   showClientVentes(client: Client): void {
     this.selectedClientForVentes = client;
+    this.clientDetailTab = 'historique';
     this.isLoadingVentes = true;
     this.showVentesModal = true;
     this.errorMessage = '';
-    
+
     this.filterVenteNumero = '';
     this.filterVenteType = '';
     this.filterVenteMois = '';
@@ -460,6 +485,14 @@ export class ClientsComponent implements OnInit {
     this.ventesClient = [];
     this.ventesClientFiltered = [];
     this.selectedClientForVentes = null;
+    // Réinitialise aussi les onglets Situation/Paiements/Avances (fusionnés dans cette
+    // même modale).
+    this.clientDetailTab = 'historique';
+    this.clientPourSituation = null;
+    this.releveClient = null;
+    this.situationLignes = [];
+    this.historiqueAvances = null;
+    this.clientPourAvance = null;
   }
 
   closeVentesDiversModal(): void {
@@ -903,71 +936,27 @@ export class ClientsComponent implements OnInit {
 
   // ==================== HISTORIQUE PAIEMENTS ====================
 
+  // Fusionné dans la modale unique (onglet "Paiements") au lieu d'une fenêtre séparée —
+  // réutilise loadPaiementsForVentesModal (même logique qu'avant, plus de duplication).
   loadHistoriquePaiements(client: Client): void {
-    this.clientPourHistorique = client;
-    this.isLoadingHistorique = true;
-    this.historiquePaiements = [];
-    this.showHistoriquePaiementsModal = true;
-
+    this.selectedClientForVentes = client;
+    this.clientDetailTab = 'paiements';
+    this.showVentesModal = true;
+    this.ventesClient = [];
+    this.ventesClientFiltered = [];
+    this.isLoadingVentes = true;
     this.venteService.getAllVentes().subscribe({
       next: (ventes) => {
-        const ventesClient = ventes.filter(v => this.isVenteForClient(v, client) && !v.annulee);
-        const entries: HistoriquePaiementEntry[] = [];
-
-        // Ventes comptant → une ligne par vente
-        const comptant = ventesClient.filter(v => !v.estCredit);
-        comptant.forEach(v => {
-          entries.push({
-            date: v.dateVente,
-            montant: v.montantTotal,
-            typeLabel: 'Comptant',
-            modePaiement: v.modePaiement || '',
-            reference: v.referencePaiement || '',
-            numeroVente: v.numeroVente,
-            venteId: v.id,
-            vente: v
-          });
-        });
-
-        // Ventes crédit → une ligne par règlement
-        const credits = ventesClient.filter(v => v.estCredit);
-        if (credits.length === 0) {
-          this.historiquePaiements = entries.sort((a, b) =>
-            new Date(b.date).getTime() - new Date(a.date).getTime()
-          );
-          this.historiquePaiementsFiltres = [...this.historiquePaiements];
-          this.isLoadingHistorique = false;
-          return;
-        }
-
-        const calls = credits.map(v => this.caisseService.getHistoriqueReglementsCredit(v.id));
-        forkJoin(calls).subscribe({
-          next: (results) => {
-            results.forEach((reglements, i) => {
-              const vente = credits[i];
-              reglements.forEach(r => {
-                entries.push({
-                  date: r.dateOperation,
-                  montant: r.montant,
-                  typeLabel: 'Crédit',
-                  modePaiement: (r.modePaiement as string) || '',
-                  reference: r.referencePaiement || '',
-                  numeroVente: vente.numeroVente,
-                  venteId: vente.id,
-                  vente: vente
-                });
-              });
-            });
-            this.historiquePaiements = entries.sort((a, b) =>
-              new Date(b.date).getTime() - new Date(a.date).getTime()
-            );
-            this.historiquePaiementsFiltres = [...this.historiquePaiements];
-            this.isLoadingHistorique = false;
-          },
-          error: () => { this.isLoadingHistorique = false; }
-        });
+        this.ventesClient = ventes.filter(vente => this.isVenteForClient(vente, client));
+        this.ventesClient.sort((a, b) => new Date(b.dateVente).getTime() - new Date(a.dateVente).getTime());
+        this.ventesClientFiltered = [...this.ventesClient];
+        this.isLoadingVentes = false;
+        this.loadPaiementsForVentesModal(client);
       },
-      error: () => { this.isLoadingHistorique = false; }
+      error: (error) => {
+        this.errorMessage = error.message || 'Impossible de charger les ventes du client';
+        this.isLoadingVentes = false;
+      }
     });
   }
 
@@ -1021,6 +1010,29 @@ export class ClientsComponent implements OnInit {
     this.showDetailModal = true;
   }
 
+  imprimerListeClients(): void {
+    if (!this.clients.length) {
+      Swal.fire({ icon: 'info', title: 'Aucun client', text: 'La liste de clients est vide.' });
+      return;
+    }
+    const lignes = this.clients.map(c => [
+      `${c.nom} ${c.prenom || ''}`.trim(),
+      c.numeroTelephone || c.telephone || '—',
+      c.adresse || '—',
+      c.email || '—',
+      c.soldeAvance ? this.formatPrice(c.soldeAvance) : '—'
+    ]);
+
+    this.factureService.ouvrirDocumentPDF({
+      titre: 'Liste des clients',
+      sousTitre: `${this.clients.length} client(s)`,
+      colonnes: ['Nom', 'Téléphone', 'Adresse', 'Email', 'Avance'],
+      lignes,
+      pied: `Généré depuis la liste des clients — ${this.clients.length} client(s)`,
+      paysage: true
+    });
+  }
+
   imprimerFactureHistorique(entry: HistoriquePaiementEntry): void {
     this.venteService.imprimerFacture(entry.vente);
   }
@@ -1032,8 +1044,12 @@ export class ClientsComponent implements OnInit {
       Swal.fire({ icon: 'warning', title: 'Client sans identifiant', text: 'Impossible de charger la situation de ce client.' });
       return;
     }
+    // Fusionnée dans la modale Historique des ventes (onglet "Situation") au lieu d'une
+    // fenêtre séparée — on ouvre/réutilise donc showVentesModal, pas showSituationClientModal.
+    this.selectedClientForVentes = client;
     this.clientPourSituation = client;
-    this.showSituationClientModal = true;
+    this.clientDetailTab = 'situation';
+    this.showVentesModal = true;
     this.releveClient = null;
     this.situationLignes = [];
     this.situationPreset = 'tout';
@@ -1042,6 +1058,54 @@ export class ClientsComponent implements OnInit {
     this.situationTypeFilter = '';
     this.situationPage = 0;
     this.fetchReleveClient();
+
+    // Charge aussi l'onglet Historique en arrière-plan pour que le basculement d'onglet
+    // soit instantané (pas d'attente au clic sur "Historique des ventes").
+    if (this.ventesClient.length === 0 || this.selectedClientForVentes !== client) {
+      this.isLoadingVentes = true;
+      this.venteService.getAllVentes().subscribe({
+        next: (ventes) => {
+          this.ventesClient = ventes.filter(vente => this.isVenteForClient(vente, client));
+          this.ventesClient.sort((a, b) => new Date(b.dateVente).getTime() - new Date(a.dateVente).getTime());
+          this.ventesClientFiltered = [...this.ventesClient];
+          this.isLoadingVentes = false;
+          this.loadPaiementsForVentesModal(client);
+        },
+        error: () => { this.isLoadingVentes = false; }
+      });
+    }
+  }
+
+  /** Bascule entre les 4 onglets de la modale unique (Historique des ventes / Situation
+   *  du compte / Paiements / Avances), en chargeant les données à la demande si pas
+   *  encore fait — les onglets Historique et Paiements partagent déjà les mêmes données
+   *  (chargées ensemble par loadPaiementsForVentesModal). */
+  switchClientDetailTab(tab: 'historique' | 'situation' | 'paiements' | 'avances'): void {
+    this.clientDetailTab = tab;
+    if (tab === 'situation' && !this.releveClient && this.selectedClientForVentes) {
+      this.clientPourSituation = this.selectedClientForVentes;
+      this.fetchReleveClient();
+    }
+    if (tab === 'avances' && !this.historiqueAvances && !this.isLoadingAvance && this.selectedClientForVentes) {
+      this.chargerHistoriqueAvancesPourOnglet(this.selectedClientForVentes);
+    }
+  }
+
+  private chargerHistoriqueAvancesPourOnglet(client: Client): void {
+    this.clientPourAvance = client;
+    const nom = client.nom;
+    const tel = client.telephone || client.numeroTelephone || '';
+    this.isLoadingAvance = true;
+    this.clientService.getHistoriqueAvances(nom, tel).subscribe({
+      next: (res) => {
+        this.historiqueAvances = res;
+        this.isLoadingAvance = false;
+      },
+      error: (err) => {
+        this.isLoadingAvance = false;
+        Swal.fire({ icon: 'error', title: 'Erreur', text: err.message, confirmButtonColor: '#d33' });
+      }
+    });
   }
 
   private fetchReleveClient(): void {
@@ -1057,7 +1121,7 @@ export class ClientsComponent implements OnInit {
     ).subscribe({
       next: (res) => {
         this.releveClient = res;
-        this.situationLignes = res.lignes || [];
+        this.situationLignes = this.grouperLignesParDate(res.lignes || []);
         this.isLoadingSituation = false;
       },
       error: () => {
@@ -1159,17 +1223,108 @@ export class ClientsComponent implements OnInit {
     return 'Versement';
   }
 
-  getSituationLigneReference(ligne: ReleveClientLigne): string {
+  getSituationLigneReference(ligne: LigneSituationAffichee): string {
+    if (ligne.nbOperations && ligne.nbOperations > 1) return `${ligne.nbOperations} opérations`;
     return ligne.referenceVente || ligne.referenceReglement || '—';
   }
 
-  imprimerSituationClient(): void {
+  /** Regroupe les ventes et les versements d'une même date en une seule ligne (montants
+   *  additionnés), pour un tableau plus lisible — les retours restent affichés individuellement. */
+  private grouperLignesParDate(lignes: ReleveClientLigne[]): LigneSituationAffichee[] {
+    const groupes = new Map<string, LigneSituationAffichee>();
+    const resultat: LigneSituationAffichee[] = [];
+
+    for (const ligne of lignes) {
+      if (ligne.type !== 'VENTE' && ligne.type !== 'VERSEMENT') {
+        resultat.push(ligne);
+        continue;
+      }
+      const jour = (ligne.date || '').slice(0, 10);
+      const cle = `${jour}_${ligne.type}`;
+      const existant = groupes.get(cle);
+      if (!existant) {
+        const copie: LigneSituationAffichee = { ...ligne, nbOperations: 1 };
+        groupes.set(cle, copie);
+        resultat.push(copie);
+      } else {
+        existant.nbOperations = (existant.nbOperations || 1) + 1;
+        existant.montantVente = (existant.montantVente || 0) + (ligne.montantVente || 0);
+        existant.montantVersement = (existant.montantVersement || 0) + (ligne.montantVersement || 0);
+        existant.resteAPayerApres = ligne.resteAPayerApres;
+        existant.produitNom = null;
+        existant.quantite = null;
+        existant.prixUnitaire = null;
+        existant.referenceVente = null;
+        existant.referenceReglement = null;
+        if (existant.utilisateurNom && ligne.utilisateurNom && existant.utilisateurNom !== ligne.utilisateurNom) {
+          existant.utilisateurNom = 'Plusieurs';
+        }
+      }
+    }
+    return resultat;
+  }
+
+  /** Message WhatsApp complet pour la situation d'un client : boutique, client, période, totaux. */
+  private whatsAppSituationClient(): { telephone?: string; message: string } | null {
+    if (!this.clientPourSituation) return null;
+    const client = this.clientPourSituation;
+    const boutique = this.boutiqueService.getInfo();
+    return {
+      telephone: client.numeroTelephone || client.telephone,
+      message: formaterMessageWhatsApp({
+        boutiqueNom: boutique.nom || 'Ges Boutique',
+        boutiqueTelephone: boutique.telephone,
+        titreDocument: 'Situation client',
+        personneLabel: 'Client',
+        personneNom: `${client.nom} ${client.prenom || ''}`.trim(),
+        date: new Date().toLocaleDateString('fr-FR'),
+        totaux: [
+          { label: 'Total des ventes', valeur: this.formatPrice(this.totalVentesSituation) },
+          { label: 'Total des versements', valeur: this.formatPrice(this.totalVersementsSituation) },
+          { label: 'Solde actuel', valeur: this.formatPrice(this.resteAPayerSituation) }
+        ],
+        notePied: this.situationPeriodeLabel
+      })
+    };
+  }
+
+  /** Envoi direct par WhatsApp de la situation actuellement affichée (sans passer par l'aperçu PDF). */
+  envoyerSituationClientWhatsApp(): void {
+    const wa = this.whatsAppSituationClient();
+    if (!wa || !envoyerWhatsAppDirect(wa.telephone, wa.message)) {
+      Swal.fire({ icon: 'info', title: 'Aucun numéro enregistré', text: 'Ajoutez un numéro de téléphone à ce client pour activer l\'envoi WhatsApp.', timer: 3000, showConfirmButton: false });
+    }
+  }
+
+  async imprimerSituationClient(): Promise<void> {
     if (!this.clientPourSituation || !this.releveClient) return;
     const client = this.clientPourSituation;
 
-    const lignes = this.situationLignes.map(e => [
+    // L'impression doit couvrir TOUTES les opérations de la période, pas seulement
+    // la page actuellement affichée à l'écran (situationLignes est paginé par 20).
+    const totalElements = this.releveClient.totalElements || this.situationLignes.length;
+    let lignesCompletes = this.situationLignes;
+    if (totalElements > this.situationLignes.length && client.id) {
+      try {
+        const releveComplet = await firstValueFrom(this.venteService.getReleveClient(
+          client.id,
+          0,
+          totalElements,
+          this.situationDateDebut || undefined,
+          this.situationDateFin || undefined,
+          this.situationTypeFilter || undefined
+        ));
+        lignesCompletes = releveComplet.lignes || lignesCompletes;
+      } catch {
+        // En cas d'échec, on imprime au moins la page actuellement chargée plutôt que rien.
+      }
+    }
+
+    // Ventes et versements d'une même date regroupés en une seule ligne (montants additionnés).
+    const lignesGroupees = this.grouperLignesParDate(lignesCompletes);
+
+    const lignes = lignesGroupees.map(e => [
       this.formatDate(e.date),
-      this.formatHeure(e.date),
       this.getSituationLigneTypeLabel(e),
       this.getSituationLigneReference(e),
       e.produitNom || '—',
@@ -1184,14 +1339,16 @@ export class ClientsComponent implements OnInit {
     this.factureService.ouvrirDocumentPDF({
       titre: 'Situation Client',
       sousTitre: `${client.nom} ${client.prenom || ''} — ${client.numeroTelephone || client.telephone || '—'}`.trim(),
-      colonnes: ['Date', 'Heure', 'Type', 'Référence', 'Désignation', 'Qté', 'P.U.', 'Vente', 'Versement', 'Reste à payer', 'Utilisateur'],
+      colonnes: ['Date', 'Type', 'Référence', 'Désignation', 'Qté', 'P.U.', 'Vente', 'Versement', 'Reste à payer', 'Utilisateur'],
       lignes,
       totaux: [
         { label: 'Total des ventes', valeur: this.formatPrice(this.totalVentesSituation) },
         { label: 'Total des versements', valeur: this.formatPrice(this.totalVersementsSituation) },
         { label: 'Solde actuel', valeur: this.formatPrice(this.resteAPayerSituation) }
       ],
-      pied: `Période : ${this.situationPeriodeLabel} — Page ${this.situationPage + 1}/${this.releveClient.totalPages || 1}`
+      pied: `Période : ${this.situationPeriodeLabel} — ${lignesCompletes.length} opération(s), ${lignes.length} ligne(s)`,
+      paysage: true,
+      whatsapp: this.whatsAppSituationClient() || undefined
     });
   }
 
@@ -1310,22 +1467,28 @@ export class ClientsComponent implements OnInit {
     });
   }
 
+  // Fusionné dans la modale unique (onglet "Avances") au lieu d'une fenêtre séparée.
   openHistoriqueAvancesModal(client: Client): void {
-    this.clientPourAvance = client;
-    const nom = client.nom;
-    const tel = client.telephone || client.numeroTelephone || '';
-    this.isLoadingAvance = true;
-    this.showHistoriqueAvancesModal = true;
-    this.clientService.getHistoriqueAvances(nom, tel).subscribe({
-      next: (res) => {
-        this.historiqueAvances = res;
-        this.isLoadingAvance = false;
-      },
-      error: (err) => {
-        this.isLoadingAvance = false;
-        Swal.fire({ icon: 'error', title: 'Erreur', text: err.message, confirmButtonColor: '#d33' });
-      }
-    });
+    this.selectedClientForVentes = client;
+    this.clientDetailTab = 'avances';
+    this.showVentesModal = true;
+    this.historiqueAvances = null;
+    this.chargerHistoriqueAvancesPourOnglet(client);
+
+    // Charge aussi l'onglet Historique en arrière-plan (même logique que loadSituationClient).
+    if (this.ventesClient.length === 0) {
+      this.isLoadingVentes = true;
+      this.venteService.getAllVentes().subscribe({
+        next: (ventes) => {
+          this.ventesClient = ventes.filter(vente => this.isVenteForClient(vente, client));
+          this.ventesClient.sort((a, b) => new Date(b.dateVente).getTime() - new Date(a.dateVente).getTime());
+          this.ventesClientFiltered = [...this.ventesClient];
+          this.isLoadingVentes = false;
+          this.loadPaiementsForVentesModal(client);
+        },
+        error: () => { this.isLoadingVentes = false; }
+      });
+    }
   }
 
   closeHistoriqueAvancesModal(): void {

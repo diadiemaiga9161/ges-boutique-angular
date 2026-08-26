@@ -108,7 +108,7 @@ export class HistoriqueVendeurComponent implements OnInit {
   }
 
   formatPrice(n: number): string {
-    return (n || 0).toLocaleString('fr-FR') + ' F CFA';
+    return (n || 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + ' F CFA';
   }
 
   formatDate(iso: string): string {

@@ -302,9 +302,9 @@ export class ComptesComponent implements OnInit {
       this.getTypeLabel(op.type),
       op.motif || '',
       op.reference || '',
-      `${this.isDebit(op.type) ? '-' : '+'}${op.montant.toLocaleString('fr-FR')} F`,
-      `${op.soldeAvant.toLocaleString('fr-FR')} F`,
-      `${op.soldeApres.toLocaleString('fr-FR')} F`
+      `${this.isDebit(op.type) ? '-' : '+'}${op.montant.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} F`,
+      `${op.soldeAvant.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} F`,
+      `${op.soldeApres.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} F`
     ]);
 
     const contenuCSV = [entetes, ...lignes]
@@ -362,20 +362,20 @@ export class ComptesComponent implements OnInit {
       this.getTypeLabel(op.type),
       op.motif || '—',
       op.reference || '—',
-      `${this.isDebit(op.type) ? '-' : '+'}${op.montant.toLocaleString('fr-FR')} F`,
-      `${op.soldeAvant.toLocaleString('fr-FR')} F`,
-      `${op.soldeApres.toLocaleString('fr-FR')} F`
+      `${this.isDebit(op.type) ? '-' : '+'}${op.montant.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} F`,
+      `${op.soldeAvant.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} F`,
+      `${op.soldeApres.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} F`
     ]);
 
     this.factureService.ouvrirDocumentPDF({
       titre: `Historique — ${this.selectedCompte.nomBanque}`,
-      sousTitre: `Période : ${filtreInfo} | Titulaire : ${this.selectedCompte.titulaire || 'N/A'} | Solde actuel : ${this.selectedCompte.soldeActuel.toLocaleString('fr-FR')} F`,
+      sousTitre: `Période : ${filtreInfo} | Titulaire : ${this.selectedCompte.titulaire || 'N/A'} | Solde actuel : ${this.selectedCompte.soldeActuel.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} F`,
       colonnes: ['Date', 'Type', 'Motif', 'Référence', 'Montant', 'Solde avant', 'Solde après'],
       lignes,
       totaux: [
-        { label: 'Total versements', valeur: `${totalVersements.toLocaleString('fr-FR')} F` },
-        { label: 'Total débits', valeur: `${totalDebits.toLocaleString('fr-FR')} F` },
-        { label: 'Solde final', valeur: `${this.selectedCompte.soldeActuel.toLocaleString('fr-FR')} F` }
+        { label: 'Total versements', valeur: `${totalVersements.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} F` },
+        { label: 'Total débits', valeur: `${totalDebits.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} F` },
+        { label: 'Solde final', valeur: `${this.selectedCompte.soldeActuel.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} F` }
       ]
     });
   }
@@ -451,7 +451,7 @@ export class ComptesComponent implements OnInit {
     }
 
     const typeLabel = this.getTypeLabel(this.operationForm.type);
-    const montantStr = this.operationForm.montant.toLocaleString('fr-FR');
+    const montantStr = this.operationForm.montant.toLocaleString('fr-FR', { maximumFractionDigits: 0 });
 
     // ========== CAS VERSEMENT (Caisse → Banque) ==========
     if (this.operationForm.type === 'VERSEMENT') {
@@ -469,8 +469,8 @@ export class ComptesComponent implements OnInit {
               icon: 'error',
               title: '❌ Solde caisse insuffisant !',
               html: `<strong>Vérifiez bien la caisse</strong><br><br>
-                     📊 Solde actuel de la caisse : <strong>${soldeCaisse.toLocaleString('fr-FR')} F</strong><br>
-                     💸 Montant demandé : <strong>${this.operationForm.montant.toLocaleString('fr-FR')} F</strong><br><br>
+                     📊 Solde actuel de la caisse : <strong>${soldeCaisse.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} F</strong><br>
+                     💸 Montant demandé : <strong>${this.operationForm.montant.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} F</strong><br><br>
                      <span class="text-danger">Le solde de la caisse est insuffisant pour effectuer ce versement.</span><br>
                      Veuillez vérifier les entrées/sorties de caisse avant de réessayer.`,
               confirmButtonText: 'OK',
@@ -499,7 +499,7 @@ export class ComptesComponent implements OnInit {
               Swal.fire({
                 icon: 'success',
                 title: '✅ Versement effectué !',
-                text: `${this.operationForm.montant.toLocaleString('fr-FR')} F transférés de la caisse vers ${this.selectedCompte?.nomBanque}`,
+                text: `${this.operationForm.montant.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} F transférés de la caisse vers ${this.selectedCompte?.nomBanque}`,
                 timer: 2500,
                 showConfirmButton: false
               });
@@ -538,8 +538,8 @@ export class ComptesComponent implements OnInit {
              <strong>Type :</strong> ${typeLabel}<br>
              <strong>Montant :</strong> ${montantStr} F<br>
              <strong>Compte :</strong> ${this.selectedCompte?.nomBanque}<br>
-             <strong>Solde actuel :</strong> ${this.selectedCompte?.soldeActuel?.toLocaleString('fr-FR')} F<br>
-             <strong>Après opération :</strong> ${nouveauSolde.toLocaleString('fr-FR')} F`,
+             <strong>Solde actuel :</strong> ${this.selectedCompte?.soldeActuel?.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} F<br>
+             <strong>Après opération :</strong> ${nouveauSolde.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} F`,
       icon: 'question',
       showCancelButton: true,
       confirmButtonText: 'Oui, enregistrer',
@@ -557,7 +557,7 @@ export class ComptesComponent implements OnInit {
             Swal.fire({
               icon: 'success',
               title: 'Opération enregistrée',
-              text: `Nouveau solde : ${res.soldeActuel?.toLocaleString('fr-FR')} F`,
+              text: `Nouveau solde : ${res.soldeActuel?.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} F`,
               timer: 2000,
               showConfirmButton: false
             });

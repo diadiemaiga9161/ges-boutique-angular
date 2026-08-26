@@ -19,6 +19,7 @@ export interface BoutiqueInfo {
   pays?: string;
   logoPath?: string;
   logo?: string;
+  couleurPrimaire?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -62,8 +63,39 @@ export class BoutiqueService {
       email: 'ndjim@yahoo.fr',
       ville: 'Bamako',
       pays: 'Mali',
-      logoPath: 'assets/images/logo.png'
+      logoPath: 'assets/images/logo.png',
+      couleurPrimaire: '#2a63ff'
     };
+  }
+
+  /** Éclaircit une couleur hex d'un certain pourcentage (pour --primary-soft). */
+  private lightenColor(color: string, percent: number): string {
+    const num = parseInt((color || '#2a63ff').replace('#', ''), 16);
+    const amt = Math.round(2.55 * percent * 100);
+    const R = (num >> 16) + amt;
+    const G = ((num >> 8) & 0x00ff) + amt;
+    const B = (num & 0x0000ff) + amt;
+    return (
+      '#' +
+      (
+        0x1000000 +
+        (R < 255 ? (R < 1 ? 0 : R) : 255) * 0x10000 +
+        (G < 255 ? (G < 1 ? 0 : G) : 255) * 0x100 +
+        (B < 255 ? (B < 1 ? 0 : B) : 255)
+      )
+        .toString(16)
+        .slice(1)
+    );
+  }
+
+  /** Applique la couleur principale de la boutique à toute l'application (variables CSS globales),
+   *  quelle que soit la page affichée — pas seulement Paramètres Boutique. */
+  private appliquerCouleurGlobale(couleur?: string): void {
+    if (typeof document === 'undefined') return;
+    const c = couleur || '#2a63ff';
+    const root = document.documentElement;
+    root.style.setProperty('--primary', c);
+    root.style.setProperty('--primary-soft', this.lightenColor(c, 0.85));
   }
 
   private unwrapBoutiqueResponse(response: any): any {
@@ -97,6 +129,7 @@ export class BoutiqueService {
       pays: data.pays ?? data.country ?? fallback.pays,
       logoPath: data.logoPath ?? fallback.logoPath,
       logo: data.logo ?? undefined,
+      couleurPrimaire: data.couleurPrimaire ?? fallback.couleurPrimaire,
       createdAt: data.createdAt,
       updatedAt: data.updatedAt
     };
@@ -105,6 +138,7 @@ export class BoutiqueService {
   private setCurrentInfo(info: BoutiqueInfo): void {
     this.info = { ...info, id: info.id || 1 };
     this.infoSubject.next({ ...this.info });
+    this.appliquerCouleurGlobale(this.info.couleurPrimaire);
     try {
       if (typeof localStorage !== 'undefined') {
         const logoToStore = this.info.logo || this.info.logoPath || '';

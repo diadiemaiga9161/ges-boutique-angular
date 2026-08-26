@@ -53,6 +53,6 @@ export class ResultatNetService {
   }
 
   formatPrice(amount: number): string {
-    return new Intl.NumberFormat('fr-FR').format(amount) + ' FCFA';
+    return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(amount) + ' FCFA';
   }
 }

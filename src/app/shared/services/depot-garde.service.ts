@@ -160,6 +160,6 @@ export class DepotGardeService {
   }
 
   formatMontant(m: number): string {
-    return new Intl.NumberFormat('fr-FR').format(m) + ' FCFA';
+    return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(m) + ' FCFA';
   }
 }

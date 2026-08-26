@@ -32,9 +32,11 @@
   --background:   #f0f4f8;
   --surface:      #ffffff;
   --surface-strong: #f8fafc;
-  --primary:      #1a56db;
+  --primary:      #2563eb;
   --primary-dark: #081648;
   --primary-soft: #eff6ff;
+  --edu-radius:   20px;
+  --edu-shadow:   0 18px 45px rgba(15, 23, 42, .08);
   --accent:       #0e9f6e;
   --success:      #0e9f6e;
   --warning:      #f59e0b;
@@ -47,6 +49,83 @@
 
 * {
   box-sizing: border-box;
+}
+
+/* Bug racine trouvé derrière "les boutons d'action n'affichent que des
+   couleurs" sur ~30 pages : assets/styles/iconsmind/iconsmind.css force
+   `i { font-family: 'iconsmind' !important }` sur TOUTE balise <i> de
+   l'app — y compris les icônes Font Awesome (<i class="fa fa-…">,
+   777+ usages) qui utilisent aussi la balise <i>. Bootstrap Icons
+   s'en sortait car il refixe lui-même sa police en !important
+   directement sur son ::before ; Font Awesome non — d'où des icônes
+   jamais affichées malgré la police bien chargée. On restaure la bonne
+   police uniquement sur les éléments réellement Font Awesome (sélecteur
+   de classe, donc plus spécifique que le `i` d'iconsmind, qui l'emporte
+   même à !important égal).*/
+.fa, .fas, .far, .fa-solid, .fa-regular,
+i.fa, i.fas, i.far, i.fa-solid, i.fa-regular {
+  font-family: var(--fa-family-classic, "Font Awesome 6 Free") !important;
+}
+
+.fab, .fa-brands,
+i.fab, i.fa-brands {
+  font-family: var(--fa-family-brands, "Font Awesome 6 Brands") !important;
+}
+
+/* Bug trouvé sur mobile : certaines pages (Caisse, Dépenses, Produits…)
+   ont un tableau ou une rangée de filtres plus large que l'écran, sans
+   wrapper .table-responsive actif en dessous de 768px. Sans containment,
+   ça n'affecte pas qu'un tableau : ça étire TOUTE la zone de contenu
+   (.ng-scroll-content, généré par ng-scrollbar dans le shell) — sidebar,
+   footer et topbar se retrouvent poussés/déformés avec elle. On confine
+   le débordement à sa propre zone de défilement horizontal, en laissant
+   le shell (sidebar fixe, topbar, footer) intact quelle que soit la
+   largeur du contenu d'une page donnée. */
+.edu-content-scroll .ng-scroll-content {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.edu-content {
+  max-width: 100%;
+}
+
+/* Tableaux larges (Inventaire — 13 colonnes, Caisse, Produits, Clients…) :
+   la colonne Actions, toujours en dernière position, n'était visible
+   qu'après avoir défilé horizontalement jusqu'au bout du tableau —
+   pénible sur un tableau à 10+ colonnes. On l'épingle sur le bord droit
+   de la zone de défilement (.table-responsive), pour toutes les pages du
+   projet qui suivent cette convention (dernière colonne = Actions),
+   avec un léger liseré pour marquer la séparation avec le contenu qui
+   continue de défiler derrière. */
+.table-responsive table thead th:last-child,
+.table-responsive table tbody td:last-child {
+  position: sticky;
+  right: 0;
+  z-index: 2;
+  background: var(--surface, #fff);
+  box-shadow: -6px 0 8px -6px rgba(15, 23, 42, .18);
+}
+
+.table-responsive table thead.table-light th:last-child {
+  background: #f8fafc;
+}
+
+.table-responsive table tbody tr:hover td:last-child {
+  background: #f8fafc;
+}
+
+body.dark-mode .table-responsive table thead th:last-child,
+body.dark-mode .table-responsive table tbody td:last-child {
+  background: var(--bg-card) !important;
+}
+
+body.dark-mode .table-responsive table thead.table-light th:last-child {
+  background: var(--bg-secondary) !important;
+}
+
+body.dark-mode .table-responsive table tbody tr:hover td:last-child {
+  background: var(--bg-secondary) !important;
 }
 
 html {
@@ -730,18 +809,19 @@ h1.h3, h1.h4 {
   min-height: 100%;
 }
 
-/* Page header bar */
+/* Page header bar — façon edumanager : carte claire (eyebrow + titre +
+   sous-titre + actions), plus la bannière dégradée bleu nuit d'avant. */
 .app-page-header {
-  background: linear-gradient(135deg, #081648 0%, #0d2b85 50%, #1a56db 100%);
-  border-radius: 18px;
-  padding: 20px 24px;
+  background: var(--surface);
+  border-radius: var(--edu-radius);
+  padding: 24px 28px;
   margin-bottom: 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 16px;
-  box-shadow: 0 4px 20px rgba(8,22,72,0.20);
+  box-shadow: var(--edu-shadow);
   position: relative;
   overflow: visible;
 }
@@ -752,7 +832,7 @@ h1.h3, h1.h4 {
   width: 220px;
   height: 220px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.04);
+  background: radial-gradient(circle, rgba(37,99,235,.06), transparent 70%);
   top: -80px;
   right: -60px;
   pointer-events: none;
@@ -769,32 +849,31 @@ h1.h3, h1.h4 {
 .app-page-icon {
   width: 52px;
   height: 52px;
-  border-radius: 14px;
-  background: rgba(255,255,255,0.12);
-  border: 1.5px solid rgba(255,255,255,0.20);
+  border-radius: 16px;
+  background: linear-gradient(135deg, #2563eb, #38bdf8);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.20);
+  box-shadow: 0 10px 22px rgba(37,99,235,.28);
 }
 
 .app-page-icon i {
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   color: #ffffff;
 }
 
 .app-page-title {
-  font-size: 1.3rem;
+  font-size: clamp(1.25rem, 1.6vw, 1.55rem);
   font-weight: 800;
-  color: #ffffff;
+  color: var(--text);
   margin: 0 0 3px;
   letter-spacing: -0.2px;
 }
 
 .app-page-subtitle {
-  font-size: 0.75rem;
-  color: rgba(255,255,255,0.60);
+  font-size: 0.8rem;
+  color: var(--text-muted);
   margin: 0;
   font-weight: 500;
 }
@@ -809,55 +888,71 @@ h1.h3, h1.h4 {
 
 /* Buttons inside page header */
 .app-page-header .btn {
-  background: rgba(255,255,255,0.12) !important;
-  border: 1.5px solid rgba(255,255,255,0.22) !important;
-  color: #ffffff !important;
+  background: var(--surface-strong) !important;
+  border: 1.5px solid var(--border) !important;
+  color: var(--text) !important;
   font-weight: 700;
-  border-radius: 10px !important;
+  border-radius: 12px !important;
   transition: background 0.15s;
 }
 
 .app-page-header .btn:hover {
-  background: rgba(255,255,255,0.22) !important;
+  background: var(--primary-soft) !important;
+  border-color: var(--primary) !important;
+  color: var(--primary) !important;
 }
 
 .app-page-header .btn-primary-action {
-  background: rgba(255,255,255,0.22) !important;
-  border-color: rgba(255,255,255,0.40) !important;
+  background: linear-gradient(135deg, #2563eb, #38bdf8) !important;
+  border-color: transparent !important;
+  color: #fff !important;
+  box-shadow: 0 14px 28px rgba(37,99,235,.22);
+}
+
+.app-page-header .btn-primary-action:hover {
+  color: #fff !important;
+  filter: brightness(1.05);
 }
 
 /* ======================================================
-   APP STATS CARDS — KPI row
+   APP STATS CARDS — KPI row (façon metric-card edumanager)
    ====================================================== */
 
 .app-stat-card {
   background: #ffffff;
-  border-radius: 16px;
+  border-radius: var(--edu-radius);
   padding: 18px 20px;
-  box-shadow: 0 2px 12px rgba(15,30,80,0.07);
+  box-shadow: var(--edu-shadow);
   display: flex;
   align-items: center;
   gap: 16px;
   height: 100%;
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+
+.app-stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 22px 50px rgba(15,23,42,.12);
 }
 
 .app-stat-icon {
-  width: 50px;
-  height: 50px;
-  border-radius: 14px;
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   font-size: 1.3rem;
+  color: #fff;
 }
 
-.app-stat-icon.blue   { background: #eff6ff; color: #1a56db; }
-.app-stat-icon.green  { background: #f0fdf4; color: #059669; }
-.app-stat-icon.orange { background: #fff7ed; color: #d97706; }
-.app-stat-icon.red    { background: #fef2f2; color: #dc2626; }
-.app-stat-icon.purple { background: #f5f3ff; color: #7c3aed; }
-.app-stat-icon.teal   { background: #f0fdfa; color: #0d9488; }
+.app-stat-icon.blue   { background: linear-gradient(135deg,#2563eb,#38bdf8); }
+.app-stat-icon.green  { background: linear-gradient(135deg,#059669,#34d399); }
+.app-stat-icon.orange { background: linear-gradient(135deg,#f59e0b,#f97316); }
+.app-stat-icon.red    { background: linear-gradient(135deg,#dc2626,#fb7185); }
+.app-stat-icon.purple { background: linear-gradient(135deg,#7c3aed,#c084fc); }
+.app-stat-icon.teal   { background: linear-gradient(135deg,#0891b2,#22d3ee); }
 
 .app-stat-body { flex: 1; min-width: 0; }
 
@@ -871,13 +966,15 @@ h1.h3, h1.h4 {
 }
 
 .app-stat-value {
+  /* BUG FIX (vérifié par capture d'écran) : white-space:nowrap + ellipsis tronquait les
+     valeurs un peu longues ("169 000 FC...") sur les cartes KPI un peu étroites (ex: page
+     Fournisseurs) — une info chiffrée coupée est pire qu'une carte légèrement plus haute.
+     On laisse le texte revenir à la ligne au lieu de le cacher. */
   font-size: 1.4rem;
   font-weight: 800;
   color: #0f1e46;
   line-height: 1.2;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: break-word;
 }
 
 .app-stat-sub {
@@ -892,14 +989,14 @@ h1.h3, h1.h4 {
 
 .app-filter-card {
   background: #ffffff;
-  border-radius: 14px;
+  border-radius: 18px;
   padding: 16px 20px;
-  box-shadow: 0 2px 12px rgba(15,30,80,0.06);
+  box-shadow: var(--edu-shadow);
   margin-bottom: 20px;
 }
 
 .app-filter-card .btn-period {
-  border-radius: 8px !important;
+  border-radius: 10px !important;
   font-size: 0.8rem;
   font-weight: 600;
   padding: 6px 12px;
@@ -910,8 +1007,8 @@ h1.h3, h1.h4 {
 .app-filter-card .btn-period.active,
 .app-filter-card .btn-period:hover {
   background: #eff6ff !important;
-  border-color: #1a56db !important;
-  color: #1a56db !important;
+  border-color: var(--primary) !important;
+  color: var(--primary) !important;
 }
 
 /* ======================================================
@@ -920,8 +1017,8 @@ h1.h3, h1.h4 {
 
 .app-table-card {
   background: #ffffff;
-  border-radius: 16px;
-  box-shadow: 0 2px 12px rgba(15,30,80,0.07);
+  border-radius: var(--edu-radius);
+  box-shadow: var(--edu-shadow);
   overflow: hidden;
 }
 
@@ -952,17 +1049,31 @@ h1.h3, h1.h4 {
   padding: 3px 10px;
 }
 
-/* Colonnes d'actions dans les tableaux : icônes seules (tooltip au survol
-   via l'attribut title) au lieu de boutons pleine largeur avec texte — sinon
-   une ligne de 5-7 actions (Ventes/Paiements/Modifier/Supprimer/…) déborde
-   du tableau et le bouton le plus à droite est coupé, même sur un écran
-   large. Purement visuel : les (click) restent identiques. */
+/* Colonnes d'actions dans les tableaux : icône + nom du bouton (demande explicite —
+   les icônes seules sans texte n'étaient pas assez claires). Pour ne pas retomber
+   dans le bug d'origine (une ligne de 5-7 actions qui déborde et coupe le texte
+   au milieu d'un mot, ex: "Dé/tai/ls"), le groupe de boutons peut désormais
+   passer à la ligne (flex-wrap) : chaque bouton garde son texte entier sur une
+   seule ligne, et si la colonne est trop étroite ce sont des boutons ENTIERS qui
+   descendent à la ligne suivante, jamais un mot coupé. Un peu d'air entre les
+   icônes aussi : par défaut .btn-group les colle les unes aux autres (bordures
+   fusionnées). */
+.btn-group-icons {
+  gap: 5px;
+  flex-wrap: wrap;
+  row-gap: 5px;
+}
 .btn-group-icons .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  padding: 0;
+  gap: 4px;
+  width: auto;
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  margin-left: 0 !important;
+  border-radius: 6px !important;
 }
 .btn-group-icons .btn i {
   margin: 0 !important;
@@ -1021,13 +1132,13 @@ h1.h3, h1.h4 {
 
 @media (max-width: 767.98px) {
   .app-page-header {
-    border-radius: 14px;
+    border-radius: 16px;
     padding: 16px;
   }
-  .app-page-icon { width: 42px; height: 42px; }
+  .app-page-icon { width: 42px; height: 42px; border-radius: 12px; }
   .app-page-title { font-size: 1.1rem; }
   .app-stat-value { font-size: 1.1rem; }
-  .app-stat-card { padding: 14px; }
+  .app-stat-card { padding: 14px; border-radius: 16px; }
 }
 
 /* ═══════════════════════════════════════════════
@@ -1126,7 +1237,7 @@ h1.h3, h1.h4 {
   --text-primary: #212529;
   --text-secondary: #6c757d;
   --border-color: #dee2e6;
-  --blue-primary: #1a56db;
+  --blue-primary: #2563eb;
   --blue-light: #e8f1ff;
 }
 
@@ -1146,7 +1257,21 @@ body.dark-mode {
   color: var(--text-primary);
 }
 
+/* Bug trouvé par capture d'écran : Bootstrap 5 fixe --bs-table-bg à #fff
+   (blanc) sur .table et l'applique à chaque cellule via
+   ".table > :not(caption) > * > *". Cette variable n'était jamais
+   réinitialisée en mode sombre : le texte passait bien en clair
+   (color: var(--text-primary) ci-dessous) mais restait sur un fond resté
+   blanc -> texte quasi invisible (blanc sur blanc) sur toute page utilisant
+   un <table class="table"> Bootstrap "nu" (ex: Clients), contrairement aux
+   pages qui utilisent des grilles de <div> maison (ex: Produits), qui n'y
+   étaient pas exposées. */
 body.dark-mode .table {
+  --bs-table-bg: transparent;
+  --bs-table-striped-bg: rgba(255, 255, 255, 0.03);
+  --bs-table-hover-bg: rgba(255, 255, 255, 0.05);
+  --bs-table-accent-bg: transparent;
+  --bs-table-color: var(--text-primary);
   color: var(--text-primary);
 }
 
@@ -1163,6 +1288,35 @@ body.dark-mode .card,
 body.dark-mode .auth-card {
   background-color: var(--bg-card);
   border-color: var(--border-color);
+}
+
+/* Même famille de bug que .table ci-dessus : les modales "maison"
+   (.modal-content Bootstrap standard, utilisées par toutes les fenêtres
+   modales de création/édition de l'app) restaient sur le --bs-modal-bg /
+   --bs-body-color blancs de Bootstrap, jamais réinitialisés en sombre —
+   fenêtre modale au fond figé blanc, alors que les champs à l'intérieur
+   (.form-control) étaient eux déjà bien réglés en sombre par ailleurs. */
+body.dark-mode .modal-content {
+  --bs-modal-bg: var(--bg-card);
+  --bs-modal-color: var(--text-primary);
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+}
+
+body.dark-mode .modal-header,
+body.dark-mode .modal-footer {
+  border-color: var(--border-color);
+}
+
+body.dark-mode .modal-body label,
+body.dark-mode .modal-body .form-label {
+  color: var(--text-primary);
+}
+
+body.dark-mode .form-select {
+  background-color: var(--surface-strong);
+  border-color: var(--border);
+  color: var(--text);
 }
 
 body.dark-mode .card-header {
@@ -1196,6 +1350,28 @@ body.dark-mode .container-fluid.py-4 > .d-flex:first-child h1.h4 {
 body.dark-mode .row .card .card-body .h4,
 body.dark-mode .row .card .card-body .display-6 {
   color: var(--text-primary);
+}
+
+/* .app-page-header est passé d'une bannière toujours-sombre (dégradé bleu
+   nuit, lisible quel que soit le thème) à une carte claire façon
+   edumanager — elle a donc désormais besoin d'un vrai contrepartie sombre,
+   ce qu'elle n'avait jamais eu à faire avant. */
+body.dark-mode .app-page-header {
+  background: var(--bg-card);
+}
+
+body.dark-mode .app-page-title {
+  color: var(--text-primary);
+}
+
+body.dark-mode .app-page-subtitle {
+  color: var(--text-secondary);
+}
+
+body.dark-mode .app-page-header .btn {
+  background: var(--bg-secondary) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
 }
 
 body.dark-mode .app-stat-card {
@@ -1253,6 +1429,58 @@ body.dark-mode .app-table-card .table tbody tr:hover {
 
 body.dark-mode .app-empty-state {
   color: var(--text-secondary);
+}
+
+/* ------------------------------------------------------
+   DARK MODE — shell edumanager (sidebar/topbar/footer)
+   :host-context(body.dark-mode) dans les .scss des composants ne
+   matchait pas de façon fiable avec l'encapsulation de vues émulée
+   d'Angular sur ce build — mêmes classes, réglées ici globalement à la
+   place, sur le même principe que .app-stat-card etc. ci-dessus.
+   ------------------------------------------------------ */
+
+/* !important nécessaire : ces classes (.icon-btn, .edu-topbar...) sont
+   définies dans des feuilles de style scopées aux composants (encapsulation
+   Angular), injectées après cette feuille globale — à spécificité égale
+   elles gagneraient sinon la cascade même sous body.dark-mode. Même
+   pratique que .card-header/.table thead th plus haut dans ce fichier. */
+body.dark-mode .edu-main {
+  background: var(--background) !important;
+}
+
+body.dark-mode .edu-topbar {
+  background: rgba(31, 41, 55, .86) !important;
+  border-bottom-color: var(--border-color) !important;
+}
+
+body.dark-mode .topbar-left strong { color: var(--text-primary) !important; }
+body.dark-mode .topbar-left span { color: var(--text-secondary) !important; }
+
+body.dark-mode .topbar-search {
+  background: var(--bg-card) !important;
+  border-color: var(--border-color) !important;
+}
+
+body.dark-mode .topbar-search input { color: var(--text-primary) !important; }
+
+body.dark-mode .icon-btn,
+body.dark-mode .user-chip {
+  background: var(--bg-card) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+body.dark-mode .lang-menu {
+  background: var(--bg-card) !important;
+  border-color: var(--border-color) !important;
+}
+
+body.dark-mode .lang-item:hover {
+  background: var(--bg-secondary) !important;
+}
+
+body.dark-mode .edu-footer {
+  color: var(--text-secondary) !important;
 }
 
 body.dark-mode .mobile-bottom-nav {
@@ -1353,17 +1581,22 @@ body.dark-mode .table-light > td {
   margin: 0 auto !important;
 }
 
-/* Le menu latéral (.sidebar-left, 120px) est en position:fixed et se
-   superpose au-dessus de tout l'écran. Une modale centrée sur `inset:0`
-   (donc sur TOUTE la largeur, y compris sous le menu) se retrouve donc
-   décalée visuellement vers la gauche par rapport à la zone de contenu où
-   se trouve réellement l'utilisateur. On recentre la modale dans la zone
-   de contenu (à droite du menu) quand celui-ci est ouvert. Ne s'applique
-   qu'au-delà du point où le menu passe en overlay mobile plein écran. */
-@media (min-width: 577px) {
-  .main-content-wrap.sidenav-open .modal-overlay,
-  .main-content-wrap.sidenav-open .modal {
-    left: 30px !important;
+/* La sidebar (.edu-sidebar, 282px) est en position:fixed et se superpose
+   au-dessus de tout l'écran. Une modale centrée sur `inset:0` (donc sur
+   TOUTE la largeur, y compris sous la sidebar) se centre par rapport à la
+   largeur totale de l'écran au lieu de la zone de contenu réellement
+   visible à droite de la sidebar — une partie de la modale se retrouve
+   donc masquée sous la sidebar (bug trouvé sur "Situation client" :
+   titre tronqué, contenu coupé à gauche). On réserve la largeur de la
+   sidebar dans le calcul du centrage, uniquement à partir du point où
+   elle est fixe et permanente (768px, cf. sidebar-large.component.scss).
+   (Remplace une ancienne règle ciblant .main-content-wrap.sidenav-open,
+   la classe de l'ancien système de sidebar retiré depuis — elle ne
+   correspondait plus à rien dans le DOM actuel.) */
+@media (min-width: 768px) {
+  .modal-overlay,
+  .modal.show {
+    padding-left: 282px !important;
   }
 }
 
@@ -1406,6 +1639,17 @@ body.dark-mode .table-light > td {
   animation: modal-content-in 0.25s ease-out !important;
 }
 
+/* La modale "Nouvelle Vente" (ventes.component.html) avait sa propre règle
+   .nouvelle-vente-dialog { max-width: min(1400px, ...) } pour être plus
+   large, entièrement écrasée par le plafond global .modal-dialog {
+   max-width: 700px !important} ci-dessus — elle restait donc coincée à
+   700px malgré tout. Élargie ici modérément (900px, pas les 1400px
+   d'origine, jugés excessifs) pour laisser respirer le panier/la
+   recherche produit sans occuper tout l'écran. */
+.modal-dialog.nouvelle-vente-dialog {
+  max-width: min(900px, calc(100% - 32px)) !important;
+}
+
 @keyframes modal-content-in {
   from { opacity: 0; transform: scale(0.95); }
   to { opacity: 1; transform: scale(1); }
@@ -1414,6 +1658,156 @@ body.dark-mode .table-light > td {
 .modal-body {
   overflow-y: auto !important;
   flex: 1 !important;
+}
+
+/* Bug trouvé (titre de modale "rentré", peu lisible) : la règle globale
+   `h1..h6 { color: theme.$heading }` (assets/styles/app/globals/_typography.scss)
+   cible directement le <h5> du titre, donc une couleur héritée d'un
+   en-tête coloré (color:#fff sur .modal-header / .modal-card-header) perd
+   toujours face à elle — une valeur héritée n'entre jamais en concurrence
+   de spécificité avec une règle explicite, aussi large soit-elle. Le
+   titre redevenait gris-bleu terne sur fond bleu/orange au lieu de rester
+   blanc. Corrigé pour les deux styles de modale du projet (.modal-header
+   Bootstrap standard sur 15 pages, .modal-card-header maison sur 6 pages :
+   clients, dettes-anciennes, fournisseurs, partenaires, transferts,
+   vendeur) — même correctif, même style partout. */
+/* .modal-card-header a toujours un fond dégradé coloré codé en dur (voir
+   plus haut) donc le blanc y est sûr sans condition. .modal-header en
+   revanche sert aussi à des en-têtes SANS fond coloré (ex: modale
+   "Situation client" — fond blanc, titre normalement sombre) : n'y forcer
+   le blanc que quand un utilitaire bg-* est présent, sinon on rendrait au
+   contraire le titre invisible (blanc sur blanc). */
+.modal-header[class*="bg-"] h1, .modal-header[class*="bg-"] h2, .modal-header[class*="bg-"] h3,
+.modal-header[class*="bg-"] h4, .modal-header[class*="bg-"] h5, .modal-header[class*="bg-"] h6,
+.modal-header[class*="bg-"] .modal-title,
+.modal-card-header h1, .modal-card-header h2, .modal-card-header h3, .modal-card-header h4, .modal-card-header h5, .modal-card-header h6,
+.modal-card-header .modal-title {
+  color: #fff !important;
+}
+
+/* Unification des deux familles de modales du projet : même rayon
+   d'arrondi, même ombre, même largeur de base que .modal-content/.modal-dialog
+   ci-dessus, pour que .modal-card (pattern "maison" des 6 pages listées
+   au-dessus) ait exactement le même style que le pattern Bootstrap
+   standard utilisé ailleurs. */
+.modal-card {
+  border-radius: 16px !important;
+  max-height: 85vh !important;
+  animation: modal-content-in 0.25s ease-out !important;
+}
+
+.modal-card-header,
+.modal-card-footer {
+  border-radius: 0 !important;
+}
+
+.modal-card-body {
+  overflow-y: auto !important;
+}
+
+body.dark-mode .modal-card-header,
+body.dark-mode .modal-card-footer {
+  border-color: var(--border-color) !important;
+}
+
+/* 4ᵉ variante de modale trouvée (fournisseurs.component.html, "Modifier le
+   fournisseur") : .modal-overlay + .modal-panel + .modal-header tout plat,
+   fond blanc, titre <h4> en texte noir brut, sans le dégradé bleu des
+   autres modales du projet — nettement moins soigné, repéré en vérifiant
+   "tous les modals doivent avoir le même style". On applique le même
+   traitement dégradé + titre blanc que .modal-card-header à TOUT
+   .modal-header sans classe bg-* vivant dans un .modal-overlay, quel que
+   soit le nom de la classe du panneau qui l'entoure (.modal-panel ici,
+   possiblement d'autres noms locaux sur dettes-anciennes/partenaires/
+   transferts) — un seul correctif couvre toutes ces variantes maison. */
+.modal-overlay .modal-header:not([class*="bg-"]) {
+  background: linear-gradient(135deg, #1a56db, #3b72f6) !important;
+  border-bottom: none !important;
+  border-radius: 16px 16px 0 0 !important;
+}
+
+.modal-overlay .modal-header:not([class*="bg-"]) h1,
+.modal-overlay .modal-header:not([class*="bg-"]) h2,
+.modal-overlay .modal-header:not([class*="bg-"]) h3,
+.modal-overlay .modal-header:not([class*="bg-"]) h4,
+.modal-overlay .modal-header:not([class*="bg-"]) h5,
+.modal-overlay .modal-header:not([class*="bg-"]) h6,
+.modal-overlay .modal-header:not([class*="bg-"]) .modal-title {
+  color: #fff !important;
+}
+
+.modal-overlay .modal-header:not([class*="bg-"]) .btn-close {
+  color: #fff !important;
+  opacity: .85 !important;
+}
+
+.modal-overlay .modal-header:not([class*="bg-"]) .btn-close:hover {
+  opacity: 1 !important;
+}
+
+.modal-panel {
+  border-radius: 16px !important;
+  max-height: 85vh !important;
+  animation: modal-content-in 0.25s ease-out !important;
+}
+
+/* .modal-panel a un fond blanc codé en dur (background:#fff, sans passer
+   par var(--surface) comme .modal-card) — jamais réinitialisé en sombre,
+   contrairement au reste des modales. Les libellés y redevenaient
+   quasi invisibles : texte clair (déjà forcé par la règle .modal-body
+   label ci-dessous) sur un fond resté blanc. */
+body.dark-mode .modal-panel {
+  background: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+}
+
+body.dark-mode .modal-panel .modal-body label,
+body.dark-mode .modal-panel label {
+  color: var(--text-secondary) !important;
+}
+
+/* Onglets de modale (ex: Ventes/Situation/Paiements/Avances fusionnées sur Clients et
+   Partenaires, pour éviter la multiplication de boutons/fenêtres séparées). Global
+   plutôt que dans un SCSS de composant : les pages clients/partenaires n'ont pas de
+   styles de modale locaux, tout vient déjà de ce fichier (voir .modal-panel ci-dessus). */
+.client-detail-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 10px 24px 0;
+  background: var(--surface, #fff);
+  border-bottom: 1px solid var(--border, #e0e0e0);
+  flex: 0 0 auto;
+}
+
+.client-detail-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted, #64748b);
+  font-weight: 600;
+  font-size: 0.9rem;
+  border-radius: 10px 10px 0 0;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.client-detail-tab:hover {
+  background: var(--bg-hover, rgba(37, 99, 235, 0.08));
+  color: var(--text, #0f172a);
+}
+
+.client-detail-tab.active {
+  background: var(--bg-hover, rgba(37, 99, 235, 0.12));
+  color: #1a56db;
+  box-shadow: inset 0 -3px 0 #1a56db;
+}
+
+body.dark-mode .client-detail-tab.active {
+  color: #6ea8ff;
+  box-shadow: inset 0 -3px 0 #6ea8ff;
 }
 
 /* ======================================================

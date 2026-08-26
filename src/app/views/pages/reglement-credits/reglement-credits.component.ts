@@ -22,6 +22,8 @@ import {
 import { VenteService, LigneVenteDto, VenteMap } from '../../../shared/services/vente.service';
 import { AuthService } from '../../../shared/services/auth.service';
 import { FactureService } from '../../../shared/services/facture.service';
+import { BoutiqueService } from '../../../shared/services/boutique.service';
+import { formaterMessageWhatsApp } from '../../../shared/utils/whatsapp.util';
 import Swal from 'sweetalert2';
 
 interface GroupeClient {
@@ -135,7 +137,8 @@ export class ReglementCreditsComponent implements OnInit {
     private caisseService: CaisseService,
     private venteService: VenteService,
     private authService: AuthService,
-    private factureService: FactureService
+    private factureService: FactureService,
+    private boutiqueService: BoutiqueService
   ) {}
 
   ngOnInit() {
@@ -1005,7 +1008,23 @@ td{padding:5px 8px;border-bottom:1px solid #f1f5f9;color:#374151}
   <div class="ftr">Ges Boutique &middot; Reçu généré le ${new Date().toLocaleDateString('fr-FR')}</div>
 </div></body></html>`;
 
-        this.factureService.ouvrirHtmlPersonnalise(html);
+        const boutique = this.boutiqueService.getInfo();
+        const nomClient = [credit.clientNom, credit.clientPrenom].filter(Boolean).join(' ') || 'Client';
+        const message = formaterMessageWhatsApp({
+          boutiqueNom: boutique.nom || 'Ges Boutique',
+          boutiqueTelephone: boutique.telephone,
+          titreDocument: `Reçu de crédit N°${credit.numeroVente || 'VT-' + credit.venteId}`,
+          personneLabel: 'Client',
+          personneNom: nomClient,
+          date: this.formatDateShort(credit.dateOperation),
+          lignes: vers.map(v => `Versement du ${this.formatDateShort(v.dateOperation)} — ${this.formatPrice(v.montant)} (${(v.modePaiement || '').replace(/_/g, ' ') || '—'})`),
+          totaux: [
+            { label: 'Montant crédit', valeur: this.formatPrice(credit.montantTotal) },
+            { label: 'Total versé', valeur: this.formatPrice(totalVerse) },
+            { label: 'Reste à payer', valeur: this.formatPrice(credit.montantRestant) }
+          ]
+        });
+        this.factureService.ouvrirHtmlPersonnalise(html, { telephone: credit.clientTelephone, message });
       },
       error: () => Swal.fire({ icon: 'error', title: 'Erreur', text: 'Impossible de charger les versements.', timer: 2000, showConfirmButton: false })
     });
@@ -1063,7 +1082,7 @@ td{padding:5px 8px;border-bottom:1px solid #f1f5f9;color:#374151}
   // ── Helpers ────────────────────────────────────────────────────
 
   formatPrice(val: number): string {
-    return new Intl.NumberFormat('fr-FR').format(val || 0) + ' FCFA';
+    return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(val || 0) + ' FCFA';
   }
 
   formatDateShort(d: string): string {

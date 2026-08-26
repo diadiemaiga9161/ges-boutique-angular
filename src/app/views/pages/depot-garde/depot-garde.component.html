@@ -210,18 +210,18 @@
             <td>
               <div class="btn-group btn-group-sm btn-group-icons">
                 <button class="btn btn-outline-info btn-xs" title="Voir les retraits" (click)="voirDetail(d)">
-                  <i class="i-Eye"></i>
+                  <i class="i-Eye"></i> Voir
                 </button>
                 <button *ngIf="d.statut === 'ACTIF'" class="btn btn-outline-warning btn-xs"
                   title="Effectuer un retrait" (click)="ouvrirRetrait(d)">
-                  <i class="i-Arrow-Down-2"></i>
+                  <i class="i-Arrow-Down-2"></i> Retrait
                 </button>
                 <button class="btn btn-outline-secondary btn-xs" title="Modifier" (click)="ouvrirFormEdition(d)">
-                  <i class="i-Edit"></i>
+                  <i class="i-Edit"></i> Modifier
                 </button>
                 <button *ngIf="d.statut === 'ACTIF'" class="btn btn-outline-danger btn-xs"
                   title="Clôturer" (click)="confirmerCloture(d)">
-                  <i class="i-Close-Window"></i>
+                  <i class="i-Close-Window"></i> Clôturer
                 </button>
               </div>
             </td>

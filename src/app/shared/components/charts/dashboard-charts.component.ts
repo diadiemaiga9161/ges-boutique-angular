@@ -151,11 +151,11 @@ export class DashboardChartsComponent implements OnInit {
       stroke: { curve: 'smooth', width: 2 },
       fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.5, opacityTo: 0.1 } },
       xaxis: { categories: labels, labels: { style: { fontSize: '10px' } }, tickAmount: 7 },
-      yaxis: { labels: { formatter: (v: number) => v.toLocaleString('fr-FR') + ' F', style: { fontSize: '10px' } } },
+      yaxis: { labels: { formatter: (v: number) => v.toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + ' F', style: { fontSize: '10px' } } },
       dataLabels: { enabled: false },
       grid: { strokeDashArray: 4, borderColor: '#e2e8f0' },
       colors: ['#1a56db'],
-      tooltip: { y: { formatter: (v: number) => v.toLocaleString('fr-FR') + ' FCFA' } }
+      tooltip: { y: { formatter: (v: number) => v.toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + ' FCFA' } }
     };
   }
 

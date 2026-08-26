@@ -18,6 +18,7 @@ import { PaiementEmployeComponent } from './paiement-employe/paiement-employe.co
 import { DepensesComponent } from './depenses/depenses.component';
 import { DepotGardeComponent } from './depot-garde/depot-garde.component';
 import { ObjectifFournisseurComponent } from './objectif-fournisseur/objectif-fournisseur.component';
+import { ObjectifVendeurComponent } from './objectif-vendeur/objectif-vendeur.component';
 import { FournisseursComponent } from './fournisseurs/fournisseurs.component';
 import { BeneficesComponent } from './benefices/benefices.component';
 import { TransfertsComponent } from './transferts/transferts.component';
@@ -106,6 +107,10 @@ const routes: Routes = [
     {
         path: 'objectif-fournisseur',
         component: ObjectifFournisseurComponent
+    },
+    {
+        path: 'objectifs-vendeur',
+        component: ObjectifVendeurComponent
     },
     {
         path: 'fournisseurs',

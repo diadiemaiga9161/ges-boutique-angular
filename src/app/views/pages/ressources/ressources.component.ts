@@ -30,7 +30,7 @@ export class RessourcesComponent {
       color: '#1a56db'
     },
     {
-      icon: 'i-Box2',
+      icon: 'i-Box1',
       titleKey: 'RESSOURCES.FEAT_STOCK_TITLE',
       descKey: 'RESSOURCES.FEAT_STOCK_DESC',
       color: '#0ea5e9'
@@ -48,7 +48,7 @@ export class RessourcesComponent {
       color: '#16a34a'
     },
     {
-      icon: 'i-Idea-5',
+      icon: 'i-Idea-2',
       titleKey: 'RESSOURCES.FEAT_AI_TITLE',
       descKey: 'RESSOURCES.FEAT_AI_DESC',
       color: '#d97706'

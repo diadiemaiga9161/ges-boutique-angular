@@ -8,6 +8,7 @@ import { BoutiqueService } from './boutique.service';
 import { environment } from '../../../environments/environment';
 import { AuthService } from './auth.service';
 import { FactureService } from './facture.service';
+import { creerBoutonWhatsApp, formaterMessageWhatsApp, envoyerWhatsAppDirect } from '../utils/whatsapp.util';
 
 // =====================================================
 // ENUMS
@@ -1080,9 +1081,46 @@ export class VenteService {
 
     bar.appendChild(btnClose);
     bar.appendChild(btnPrint);
+    bar.appendChild(creerBoutonWhatsApp(vente.clientTelephone, this.construireMessageWhatsAppVente(vente, this.formatDate(vente.dateVente))));
     overlay.appendChild(bar);
     overlay.appendChild(frame);
     document.body.appendChild(overlay);
+    });
+  }
+
+  /** Envoi direct par WhatsApp depuis la liste des ventes, sans ouvrir l'aperçu de facture.
+   *  Retourne false si aucun numéro n'est enregistré pour ce client (le composant peut alors prévenir l'utilisateur). */
+  envoyerFactureWhatsApp(vente: VenteMap): boolean {
+    const message = this.construireMessageWhatsAppVente(vente, this.formatDate(vente.dateVente));
+    return envoyerWhatsAppDirect(vente.clientTelephone, message);
+  }
+
+  /** Message WhatsApp complet pour une facture de vente : boutique, client, détail des lignes, totaux. */
+  private construireMessageWhatsAppVente(vente: VenteMap, date: string): string {
+    const boutique = this.boutiqueService.getInfo();
+    const nomClient = [vente.clientPrenom, vente.clientNom].filter(Boolean).join(' ') || vente.clientNom || 'Client';
+    const lignesVente = vente.lignes || vente.produits || [];
+    const totaux: { label: string; valeur: string }[] = [
+      { label: 'Montant total', valeur: `${this.formatPlainNumber(vente.montantTotal)} FCFA` }
+    ];
+    if (vente.montantRemiseTotal > 0) {
+      totaux.push({ label: 'Remise', valeur: `-${this.formatPlainNumber(vente.montantRemiseTotal)} FCFA` });
+    }
+    totaux.push({ label: 'Net à payer', valeur: `${this.formatPlainNumber(vente.montantApresRemise ?? vente.montantTotal)} FCFA` });
+    if (vente.estCredit) {
+      totaux.push({ label: 'Versé', valeur: `${this.formatPlainNumber(vente.montantVerse || 0)} FCFA` });
+      totaux.push({ label: 'Reste à payer', valeur: `${this.formatPlainNumber(vente.montantRestant || 0)} FCFA` });
+    }
+
+    return formaterMessageWhatsApp({
+      boutiqueNom: boutique.nom || 'Ges Boutique',
+      boutiqueTelephone: boutique.telephone,
+      titreDocument: `Facture de vente N°${vente.numeroVente}`,
+      personneLabel: 'Client',
+      personneNom: nomClient,
+      date,
+      lignes: lignesVente.map(l => `${l.produitNom} ×${l.quantite} — ${this.formatPlainNumber(l.sousTotal || l.quantite * l.prixUnitaire)} FCFA`),
+      totaux
     });
   }
 
@@ -1330,6 +1368,11 @@ export class VenteService {
               <p><strong>Nom:</strong> ${this.escapeHtml(vente.clientNom || 'Client divers')} ${this.escapeHtml(vente.clientPrenom || '')}</p>
               ${vente.clientTelephone ? `<p><strong>Tél:</strong> ${this.escapeHtml(vente.clientTelephone)}</p>` : ''}
             </div>
+            ${(vente as any).chauffeur ? `
+            <div class="info-card">
+              <h4>🚚 CHAUFFEUR</h4>
+              <p><strong>Nom:</strong> ${this.escapeHtml((vente as any).chauffeur)}</p>
+            </div>` : ''}
           </div>
           
           ${creditInfo}
@@ -1416,7 +1459,7 @@ export class VenteService {
 
   private formatPlainNumber(price: number): string {
     if (price === undefined || price === null) return '0';
-    return Math.round(price).toLocaleString('fr-FR');
+    return Math.round(price).toLocaleString('fr-FR', { maximumFractionDigits: 0 });
   }
 
   formatDate(dateString: string): string {

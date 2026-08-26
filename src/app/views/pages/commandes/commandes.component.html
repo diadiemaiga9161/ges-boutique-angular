@@ -213,28 +213,28 @@
             <td class="small text-muted">{{ formatDate(c.dateCommande) }}</td>
             <td class="text-end">
               <div class="d-flex gap-1 justify-content-end flex-wrap btn-group-icons">
-                <button class="btn btn-sm btn-outline-secondary" (click)="imprimerFacture(c)" title="Imprimer">
-                  <i class="bi bi-printer"></i>
+                <button class="btn btn-sm btn-outline-secondary" (click)="imprimerFacture(c)" title="Générer la facture">
+                  <i class="bi bi-printer"></i> Imprimer
                 </button>
                 <button class="btn btn-sm btn-outline-primary" (click)="ouvrirModifier(c)"
                   *ngIf="c.statut === StatutCommande.BROUILLON" title="Modifier">
-                  <i class="bi bi-pencil"></i>
+                  <i class="bi bi-pencil"></i> Modifier
                 </button>
                 <button class="btn btn-sm btn-success" (click)="valider(c)"
                   *ngIf="c.statut === StatutCommande.BROUILLON" title="Valider">
-                  <i class="bi bi-check-lg"></i>
+                  <i class="bi bi-check-lg"></i> Valider
                 </button>
                 <button class="btn btn-sm btn-warning" (click)="ouvrirReglementIndividuel(c)"
                   *ngIf="c.estCredit && c.montantRestant > 0" title="Régler">
-                  <i class="bi bi-cash-coin"></i>
+                  <i class="bi bi-cash-coin"></i> Régler
                 </button>
                 <button class="btn btn-sm btn-outline-danger" (click)="annuler(c)"
                   *ngIf="c.statut !== StatutCommande.ANNULEE" title="Annuler">
-                  <i class="bi bi-x-circle"></i>
+                  <i class="bi bi-x-circle"></i> Annuler
                 </button>
                 <button class="btn btn-sm btn-outline-secondary" (click)="supprimer(c)"
                   *ngIf="c.statut === StatutCommande.BROUILLON" title="Supprimer">
-                  <i class="bi bi-trash"></i>
+                  <i class="bi bi-trash"></i> Supprimer
                 </button>
               </div>
             </td>
@@ -459,6 +459,37 @@
         <button type="button" class="btn btn-secondary" (click)="fermerReglementModal()">Annuler</button>
         <button type="button" class="btn btn-warning" (click)="confirmerReglementIndividuel()" [disabled]="!montantReglement || montantReglement <= 0">
           <i class="bi bi-check-lg me-1"></i>Confirmer le paiement
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL GÉNÉRER LA FACTURE (chauffeur optionnel)
+============================================================= -->
+<div class="modal fade show d-block" tabindex="-1" *ngIf="showFactureCommandeModal" style="background:rgba(0,0,0,.5)">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-printer me-2 text-primary"></i>Générer la facture
+        </h5>
+        <button type="button" class="btn-close" (click)="showFactureCommandeModal = false; commandeForFacture = null"></button>
+      </div>
+      <div class="modal-body" *ngIf="commandeForFacture">
+        <p class="text-muted mb-3">
+          Commande <strong>{{ commandeForFacture.numeroCommande }}</strong> — {{ getClientNom(commandeForFacture) }}
+        </p>
+        <div class="mb-3">
+          <label class="form-label">Chauffeur <span class="text-muted">(optionnel)</span></label>
+          <input type="text" class="form-control" [(ngModel)]="factureCommandeChauffeur" placeholder="Nom du chauffeur (livraison)..." />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="showFactureCommandeModal = false; commandeForFacture = null">Annuler</button>
+        <button type="button" class="btn btn-primary" (click)="confirmerGenerationFactureCommande()">
+          <i class="bi bi-printer me-1"></i>Générer
         </button>
       </div>
     </div>

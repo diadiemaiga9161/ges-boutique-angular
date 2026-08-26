@@ -348,8 +348,22 @@ export class CommandesComponent implements OnInit {
 
   // ─── Facture ───────────────────────────────────────────────────────────────
 
+  showFactureCommandeModal = false;
+  commandeForFacture: Commande | null = null;
+  factureCommandeChauffeur = '';
+
   imprimerFacture(commande: Commande): void {
-    this.commandeService.imprimerFactureCommande(commande);
+    this.commandeForFacture = commande;
+    this.factureCommandeChauffeur = '';
+    this.showFactureCommandeModal = true;
+  }
+
+  confirmerGenerationFactureCommande(): void {
+    if (!this.commandeForFacture) return;
+    const commandeAvecChauffeur = { ...this.commandeForFacture, chauffeur: this.factureCommandeChauffeur || undefined };
+    this.commandeService.imprimerFactureCommande(commandeAvecChauffeur);
+    this.showFactureCommandeModal = false;
+    this.commandeForFacture = null;
   }
 
   // ─── Annuler ──────────────────────────────────────────────────────────────

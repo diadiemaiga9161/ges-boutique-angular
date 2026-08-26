@@ -6,6 +6,7 @@ import { environment } from '../../../environments/environment';
 import { AuthService } from './auth.service';
 import { BoutiqueService } from './boutique.service';
 import { FactureService } from './facture.service';
+import { formaterMessageWhatsApp } from '../utils/whatsapp.util';
 
 export enum StatutCommande {
   BROUILLON = 'BROUILLON',
@@ -116,7 +117,7 @@ export class CommandeService {
   // ─── Utilitaires ──────────────────────────────────────────────────────────
 
   formatMontant(v: number): string {
-    return new Intl.NumberFormat('fr-FR').format(v || 0) + ' FCFA';
+    return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(v || 0) + ' FCFA';
   }
 
   formatDate(d: string): string {
@@ -150,13 +151,34 @@ export class CommandeService {
       }
     }
 
+    const lignesDetailWa = commande.lignes.map(l =>
+      `${l.produit?.nom || l.produitNom || 'Produit'} ×${l.quantite} — ${this.formatMontant(l.sousTotal ?? l.prixUnitaire * l.quantite)}`
+    );
+    const telephone = commande.clientTelephone || commande.client?.numeroTelephone;
+
     this.factureService.ouvrirDocumentPDF({
       titre: 'BON DE COMMANDE',
       sousTitre: `${boutique?.nom || ''} · N° ${commande.numeroCommande} · Client : ${clientNom} · ${statut} · Date : ${this.formatDate(commande.dateCommande)}`,
       colonnes: ['#', 'Produit', 'Qté', 'Prix unitaire', 'Sous-total'],
       lignes,
       totaux,
-      pied: commande.notes || undefined
+      pied: [
+        (commande as any).chauffeur ? `Chauffeur : ${(commande as any).chauffeur}` : null,
+        commande.notes || null
+      ].filter(Boolean).join(' | ') || undefined,
+      whatsapp: {
+        telephone,
+        message: formaterMessageWhatsApp({
+          boutiqueNom: boutique?.nom || 'Ges Boutique',
+          boutiqueTelephone: boutique?.telephone,
+          titreDocument: `Bon de commande N°${commande.numeroCommande}`,
+          personneLabel: 'Client',
+          personneNom: clientNom,
+          date: this.formatDate(commande.dateCommande),
+          lignes: lignesDetailWa,
+          totaux
+        })
+      }
     });
   }
 }

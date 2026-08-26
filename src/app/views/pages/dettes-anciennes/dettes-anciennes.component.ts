@@ -6,6 +6,7 @@ import { FormsModule } from '@angular/forms';
 import Swal from 'sweetalert2';
 import { DetteAncienneService, DetteAncienne, ReglementDette, DetteAncienneRequest, ReglementDetteRequest } from '../../../shared/services/dette-ancienne.service';
 import { ClientService, Client } from '../../../shared/services/client.service';
+import { FactureService } from '../../../shared/services/facture.service';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
@@ -29,6 +30,8 @@ export class DettesAnciennesComponent implements OnInit {
   // Filtres
   searchQuery: string = '';
   filtreActif: string = 'nonReglees';
+  dateDebut: string = '';
+  dateFin: string = '';
 
   // Pagination
   currentPage: number = 1;
@@ -90,7 +93,8 @@ export class DettesAnciennesComponent implements OnInit {
 
   constructor(
     public detteService: DetteAncienneService,
-    private clientService: ClientService
+    private clientService: ClientService,
+    private factureService: FactureService
   ) {}
 
   ngOnInit(): void {
@@ -226,6 +230,12 @@ export class DettesAnciennesComponent implements OnInit {
         resultats = resultats.filter(d => d.estReglee);
         break;
     }
+    if (this.dateDebut) {
+      resultats = resultats.filter(d => d.dateCredit && d.dateCredit >= this.dateDebut);
+    }
+    if (this.dateFin) {
+      resultats = resultats.filter(d => d.dateCredit && d.dateCredit <= this.dateFin);
+    }
     this.dettesFiltrees = resultats;
     this.currentPage = 1;
   }
@@ -233,6 +243,16 @@ export class DettesAnciennesComponent implements OnInit {
   changerFiltre(filtre: string): void {
     this.filtreActif = filtre;
     this.loadDettesParFiltre(filtre);
+  }
+
+  onDateFilterChange(): void {
+    this.filtrerDettes();
+  }
+
+  resetDateFilter(): void {
+    this.dateDebut = '';
+    this.dateFin = '';
+    this.filtrerDettes();
   }
 
   // ==================== CLIENT DISPLAY ====================
@@ -512,6 +532,39 @@ export class DettesAnciennesComponent implements OnInit {
     if (total === 0) return 0;
     const paye = total - this.getTotalRestant();
     return (paye / total) * 100;
+  }
+
+  imprimerListeDettes(): void {
+    if (!this.dettesFiltrees.length) {
+      Swal.fire({ icon: 'info', title: 'Aucune dette', text: 'Aucune dette à imprimer avec ce filtre.' });
+      return;
+    }
+    const filtreLabels: { [k: string]: string } = { nonReglees: 'Non réglées', reglees: 'Réglées', toutes: 'Toutes' };
+    const periodeLabel = (this.dateDebut || this.dateFin)
+      ? `Du ${this.dateDebut ? this.formatDate(this.dateDebut) : '…'} au ${this.dateFin ? this.formatDate(this.dateFin) : '…'}`
+      : 'Toute la période';
+
+    const lignes = this.dettesFiltrees.map(d => [
+      this.getClientDisplayName(d),
+      this.formatDate(d.dateCredit),
+      this.formatNumber(d.montantInitial) + ' F',
+      this.formatNumber(d.montantRestant) + ' F',
+      d.estReglee ? 'Réglée' : 'Non réglée',
+      d.description || '—'
+    ]);
+
+    this.factureService.ouvrirDocumentPDF({
+      titre: 'Dettes anciennes',
+      sousTitre: `${filtreLabels[this.filtreActif] || 'Toutes'} — ${periodeLabel} — ${this.dettesFiltrees.length} dette(s)`,
+      colonnes: ['Client', 'Date', 'Montant initial', 'Reste dû', 'Statut', 'Description'],
+      lignes,
+      totaux: [
+        { label: 'Total initial', valeur: this.formatNumber(this.getTotalInitial()) + ' F' },
+        { label: 'Total restant', valeur: this.formatNumber(this.getTotalRestant()) + ' F' }
+      ],
+      pied: `${filtreLabels[this.filtreActif] || 'Toutes'} — ${periodeLabel}`,
+      paysage: true
+    });
   }
 
   annuler(): void {

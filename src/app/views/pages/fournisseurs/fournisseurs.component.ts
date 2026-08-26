@@ -15,14 +15,17 @@ import {
   FournisseurCompteDto,
   AchatFournisseurRequest,
   LigneAchatRequest,
-  ProduitSimple
+  ProduitSimple,
+  Categorie
 } from '../../../shared/services/product.service';
 import { AuthService } from '../../../shared/services/auth.service';
 import { FactureService } from '../../../shared/services/facture.service';
 import { CompteService, Compte } from '../../../shared/services/compte.service';
+import { BoutiqueService } from '../../../shared/services/boutique.service';
 import { environment } from '../../../../environments/environment';
 import Swal from 'sweetalert2';
 import { TranslateModule } from '@ngx-translate/core';
+import { formaterMessageWhatsApp, envoyerWhatsAppDirect } from '../../../shared/utils/whatsapp.util';
 
 @Component({
   selector: 'app-fournisseurs',
@@ -79,6 +82,13 @@ export class FournisseursComponent implements OnInit {
   selectedFournisseur: Fournisseur | null = null;
   selectedAchat: AchatFournisseur | null = null;
 
+  // ─── Avance fournisseur (utilisable lors d'un nouvel achat) ─────────
+  // Fonctionnalité qui existait déjà côté backend (montantAvanceUtilise) et sur la page
+  // Produit, mais jamais construite ici sur la vraie page Fournisseurs — ajoutée à la
+  // demande du patron après vérification qu'elle manquait.
+  avanceFournisseurDisponible = 0;
+  avanceFournisseurUtilisee = 0;
+
   // ─── Formulaires ───────────────────────────────────
   fournisseurForm: FournisseurRequest = {
     nom: '', code: '', adresse: '', telephone: '', email: '',
@@ -89,10 +99,30 @@ export class FournisseursComponent implements OnInit {
 
   achatForm: AchatFournisseurRequest = {
     fournisseurId: 0,
-    lignes: [{ produitId: 0, quantite: 1, prixAchatUnitaire: 0, prixVente: 0 }],
+    lignes: [],
     montantPaye: 0,
     commentaire: ''
   };
+
+  /** Formulaire de saisie d'une ligne (produit existant ou nouveau) avant ajout à achatForm.lignes —
+   *  même principe que la page Produit, pour pouvoir créer un produit directement depuis un achat. */
+  tempLigneAchat: {
+    produitId?: number;
+    produitNom?: string;
+    nouveauProduitNom?: string;
+    nouvelleCategorieId?: number;
+    prixVente?: number;
+    description?: string;
+    codeBarre?: string;
+    seuilAlerte?: number;
+    uniteMesure?: string;
+    bio?: boolean;
+    origine?: string;
+    quantite: number;
+    prixAchatUnitaire: number;
+  } = { quantite: 1, prixAchatUnitaire: 0 };
+
+  categoriesPourNouveauProduit: Categorie[] = [];
 
   paiementForm: PaiementFournisseurRequest = {
     fournisseurId: 0, montant: 0, modePaiement: 'ESPECES',
@@ -130,7 +160,11 @@ export class FournisseursComponent implements OnInit {
   }
 
   get totalRestantFiltres(): number {
-    return this.achatsFiltres.reduce((s, a) => s + (a.montantRestant || 0), 0);
+    // BUG FIX (audit comptable) : cohérence avec totalPayeFiltres ci-dessus — un achat annulé
+    // n'a plus de dette réelle. Le backend remet déjà montantRestant à 0 à l'annulation, mais on
+    // filtre aussi ici par sécurité (ex: données historiques créées avant ce correctif backend,
+    // pas encore corrigées rétroactivement en base).
+    return this.achatsFiltres.filter(a => a.statut !== 'ANNULE').reduce((s, a) => s + (a.montantRestant || 0), 0);
   }
 
   get totalDetteFournisseurs(): number {
@@ -163,7 +197,8 @@ export class FournisseursComponent implements OnInit {
     private authService: AuthService,
     private http: HttpClient,
     private factureService: FactureService,
-    private compteService: CompteService
+    private compteService: CompteService,
+    private boutiqueService: BoutiqueService
   ) {}
 
   ngOnInit(): void {
@@ -402,18 +437,94 @@ export class FournisseursComponent implements OnInit {
     const fId = fournisseur?.id || this.filtreFournisseurId;
     this.achatForm = {
       fournisseurId: fId,
-      lignes: [{ produitId: 0, quantite: 1, prixAchatUnitaire: 0, prixVente: 0 }],
+      lignes: [],
       montantPaye: 0, commentaire: ''
     };
+    this.tempLigneAchat = { quantite: 1, prixAchatUnitaire: 0 };
+    this.loadCategoriesForNewProduct();
+    this.avanceFournisseurUtilisee = 0;
+    this.avanceFournisseurDisponible = 0;
+    this.rafraichirAvanceDisponible();
     this.showAchatModal = true;
   }
 
-  ajouterLigne(): void {
-    this.achatForm.lignes.push({ produitId: 0, quantite: 1, prixAchatUnitaire: 0, prixVente: 0 });
+  /** Recharge le solde d'avance disponible pour le fournisseur actuellement choisi dans le
+   *  formulaire d'achat (appelé à l'ouverture de la modale et si l'utilisateur change de
+   *  fournisseur dans le select). Remet aussi le montant déduit à 0 pour éviter de déduire
+   *  un montant qui dépasserait l'avance du nouveau fournisseur sélectionné. */
+  rafraichirAvanceDisponible(): void {
+    this.avanceFournisseurUtilisee = 0;
+    if (!this.achatForm.fournisseurId) { this.avanceFournisseurDisponible = 0; return; }
+    this.productService.getSoldeAvanceFournisseur(this.achatForm.fournisseurId).subscribe({
+      next: solde => this.avanceFournisseurDisponible = solde || 0,
+      error: () => this.avanceFournisseurDisponible = 0
+    });
   }
 
-  retirerLigne(i: number): void {
-    if (this.achatForm.lignes.length > 1) this.achatForm.lignes.splice(i, 1);
+  /** Plafond de l'avance utilisable : jamais plus que l'avance dispo, ni plus que le total de l'achat. */
+  get maxAvanceUtilisable(): number {
+    return Math.min(this.avanceFournisseurDisponible, this.montantTotalAchat);
+  }
+
+  private loadCategoriesForNewProduct(): void {
+    this.productService.getAllCategories().subscribe({
+      next: categories => this.categoriesPourNouveauProduit = categories,
+      error: () => this.categoriesPourNouveauProduit = []
+    });
+  }
+
+  /** Pré-remplit le prix d'achat avec le prix catalogue actuel quand on choisit un produit existant. */
+  onProduitSelectionne(): void {
+    const produit = this.produits.find(p => p.id === this.tempLigneAchat.produitId);
+    if (produit) {
+      this.tempLigneAchat.produitNom = produit.nom;
+      this.tempLigneAchat.prixAchatUnitaire = produit.prixAchat;
+    }
+  }
+
+  /** Ajoute la ligne en cours de saisie (produit existant ou nouveau produit) à l'achat. */
+  ajouterLigneAchat(): void {
+    if (!this.tempLigneAchat.quantite || this.tempLigneAchat.quantite <= 0) {
+      Swal.fire({ icon: 'error', title: 'Quantité invalide' }); return;
+    }
+    if (!this.tempLigneAchat.prixAchatUnitaire || this.tempLigneAchat.prixAchatUnitaire <= 0) {
+      Swal.fire({ icon: 'error', title: 'Prix d\'achat unitaire invalide' }); return;
+    }
+    if (!this.tempLigneAchat.produitId && !this.tempLigneAchat.nouveauProduitNom?.trim()) {
+      Swal.fire({ icon: 'error', title: 'Choisissez un produit', text: 'Sélectionnez un produit existant ou renseignez le nom du nouveau produit.' }); return;
+    }
+
+    const nouvelleLigne: LigneAchatRequest = {
+      quantite: this.tempLigneAchat.quantite,
+      prixAchatUnitaire: this.tempLigneAchat.prixAchatUnitaire
+    };
+    if (this.tempLigneAchat.produitId) {
+      nouvelleLigne.produitId = this.tempLigneAchat.produitId;
+    }
+    if (this.tempLigneAchat.nouveauProduitNom?.trim()) {
+      nouvelleLigne.nouveauProduitNom = this.tempLigneAchat.nouveauProduitNom.trim();
+      nouvelleLigne.nouvelleCategorieId = this.tempLigneAchat.nouvelleCategorieId;
+      nouvelleLigne.prixVente = this.tempLigneAchat.prixVente;
+      nouvelleLigne.description = this.tempLigneAchat.description;
+      nouvelleLigne.codeBarre = this.tempLigneAchat.codeBarre;
+      nouvelleLigne.seuilAlerte = this.tempLigneAchat.seuilAlerte;
+      nouvelleLigne.uniteMesure = this.tempLigneAchat.uniteMesure;
+      nouvelleLigne.bio = this.tempLigneAchat.bio || false;
+      nouvelleLigne.origine = this.tempLigneAchat.origine;
+    }
+    this.achatForm.lignes.push(nouvelleLigne);
+    this.tempLigneAchat = { quantite: 1, prixAchatUnitaire: 0 };
+  }
+
+  supprimerLigneAchat(index: number): void {
+    this.achatForm.lignes.splice(index, 1);
+  }
+
+  /** Nom à afficher pour une ligne d'achat déjà ajoutée (produit existant retrouvé dans le catalogue, ou nouveau produit). */
+  nomProduitLigne(ligne: LigneAchatRequest): string {
+    if (ligne.nouveauProduitNom) return ligne.nouveauProduitNom;
+    const produit = this.produits.find(p => p.id === ligne.produitId);
+    return produit?.nom || 'Produit';
   }
 
   get montantTotalAchat(): number {
@@ -425,7 +536,7 @@ export class FournisseursComponent implements OnInit {
    * le nouveau prix d'achat proposé via le coût moyen pondéré (CUMP) :
    * (stockActuel × ancienPrixAchat + quantitéEntrée × prixAchatEntrée) / (stockActuel + quantitéEntrée)
    * Si le stock actuel est à 0, le nouveau prix = simplement le prix d'achat de l'entrée.
-   * (Ce formulaire ne gère que des produits existants du catalogue.)
+   * Les lignes "nouveau produit" (sans produitId) n'ont pas d'ancien prix à comparer et sont ignorées ici.
    */
   private calculerPropositionsCUMP(): {
     ligne: LigneAchatRequest;
@@ -503,7 +614,11 @@ export class FournisseursComponent implements OnInit {
     if (!this.achatForm.fournisseurId) {
       Swal.fire({ icon: 'warning', title: 'Fournisseur requis', text: 'Sélectionnez un fournisseur.' }); return;
     }
-    if (this.achatForm.lignes.some(l => !l.produitId || !l.quantite || !l.prixAchatUnitaire)) {
+    if (!this.achatForm.lignes.length) {
+      Swal.fire({ icon: 'warning', title: 'Aucun produit', text: 'Ajoutez au moins un produit à l\'achat.' }); return;
+    }
+    // Une ligne est valide si elle référence un produit existant OU un nouveau produit (nom renseigné).
+    if (this.achatForm.lignes.some(l => (!l.produitId && !l.nouveauProduitNom) || !l.quantite || !l.prixAchatUnitaire)) {
       Swal.fire({ icon: 'warning', title: 'Lignes incomplètes', text: 'Renseignez produit, quantité et prix pour chaque ligne.' }); return;
     }
 
@@ -522,7 +637,12 @@ export class FournisseursComponent implements OnInit {
 
   private soumettreAchat(): void {
     this.isSaving = true;
-    this.productService.creerAchat({ ...this.achatForm, utilisateurId: this.authService.getUserId() || undefined }).subscribe({
+    const payload: AchatFournisseurRequest = {
+      ...this.achatForm,
+      utilisateurId: this.authService.getUserId() || undefined,
+      montantAvanceUtilise: this.avanceFournisseurUtilisee || 0
+    };
+    this.productService.creerAchat(payload).subscribe({
       next: () => {
         this.isSaving = false;
         this.showAchatModal = false;
@@ -728,6 +848,59 @@ export class FournisseursComponent implements OnInit {
     return Array.from(map.entries()).map(([nom, data]) => ({ nom, ...data }));
   }
 
+  /** Message WhatsApp complet (boutique, fournisseur, période, détail, totaux) pour un document PDF fournisseur. */
+  private whatsAppFournisseur(fournisseur: any, titreDocument: string, totaux: { label: string; valeur: string }[], lignesDetail?: string[]): { telephone?: string; message: string } {
+    const boutique = this.boutiqueService.getInfo();
+    return {
+      telephone: fournisseur?.telephone,
+      message: formaterMessageWhatsApp({
+        boutiqueNom: boutique.nom || 'Ges Boutique',
+        boutiqueTelephone: boutique.telephone,
+        titreDocument,
+        personneLabel: 'Fournisseur',
+        personneNom: `${fournisseur?.nom || ''}${fournisseur?.code ? ' (' + fournisseur.code + ')' : ''}`,
+        date: new Date().toLocaleDateString('fr-FR'),
+        lignes: lignesDetail,
+        totaux,
+        notePied: this.libellePeriodePdf()
+      })
+    };
+  }
+
+  /** Envoi direct par WhatsApp d'un achat précis (bouton dans la liste, sans passer par l'aperçu PDF). */
+  envoyerAchatWhatsApp(achat: any): void {
+    const fournisseur = this.fournisseurs.find(f => f.id === this.filtreFournisseurId);
+    if (!fournisseur) return;
+    const lignesDetail = (achat.lignes || []).map((l: any) => `${l.produit?.nom || '?'} ×${l.quantite}`);
+    const { telephone, message } = this.whatsAppFournisseur(
+      fournisseur,
+      `Achat N°${achat.id}`,
+      [
+        { label: 'Total', valeur: this.fmt(achat.montantTotal) },
+        { label: 'Payé', valeur: this.fmt(achat.montantPaye) },
+        { label: 'Restant', valeur: this.fmt(achat.montantRestant) }
+      ],
+      lignesDetail
+    );
+    if (!envoyerWhatsAppDirect(telephone, message)) {
+      Swal.fire({ icon: 'info', title: 'Aucun numéro enregistré', text: 'Ajoutez un numéro de téléphone à ce fournisseur pour activer l\'envoi WhatsApp.', timer: 3000, showConfirmButton: false });
+    }
+  }
+
+  /** Envoi direct par WhatsApp de la situation du fournisseur actuellement affichée. */
+  envoyerSituationWhatsApp(): void {
+    if (!this.situation) return;
+    const f = this.situation.fournisseur;
+    const { telephone, message } = this.whatsAppFournisseur(f, 'Situation fournisseur', [
+      { label: 'Total achats', valeur: this.fmt(this.situation.totalAchats) },
+      { label: 'Total payé', valeur: this.fmt(this.situation.totalPaye) },
+      { label: 'Solde dû', valeur: this.fmt(this.situation.solde) }
+    ]);
+    if (!envoyerWhatsAppDirect(telephone, message)) {
+      Swal.fire({ icon: 'info', title: 'Aucun numéro enregistré', text: 'Ajoutez un numéro de téléphone à ce fournisseur pour activer l\'envoi WhatsApp.', timer: 3000, showConfirmButton: false });
+    }
+  }
+
   // ══════════════════════════════════════════
   // PDF — ACHATS FOURNISSEUR
   // ══════════════════════════════════════════
@@ -749,17 +922,58 @@ export class FournisseursComponent implements OnInit {
       a.commentaire || '—'
     ]);
 
+    const totauxAchats = [
+      { label: 'Total achats', valeur: this.fmt(this.totalAchatsFiltres) },
+      { label: 'Total payé', valeur: this.fmt(this.totalPayeFiltres) },
+      { label: 'Reste à payer', valeur: this.fmt(this.totalRestantFiltres) }
+    ];
+    const lignesDetailWa = this.achatsFiltres.map(a =>
+      `Achat #${a.id} du ${this.formatDate(a.dateAchat || a.dateCreation)} — ${this.fmt(a.montantTotal)} (payé ${this.fmt(a.montantPaye)}, restant ${this.fmt(a.montantRestant)})`
+    );
+
     this.factureService.ouvrirDocumentPDF({
       titre: 'Achats fournisseur',
-      sousTitre: `${fournisseur.nom} (${fournisseur.code || '—'})`,
+      sousTitre: `${fournisseur.nom} (${fournisseur.code || '—'}) — ${this.libellePeriodePdf()}`,
       colonnes: ['N°', 'Date', 'Produits', 'Total', 'Payé', 'Restant', 'Statut', 'Commentaire'],
       lignes,
-      totaux: [
-        { label: 'Total achats', valeur: this.fmt(this.totalAchatsFiltres) },
-        { label: 'Total payé', valeur: this.fmt(this.totalPayeFiltres) },
-        { label: 'Reste à payer', valeur: this.fmt(this.totalRestantFiltres) }
-      ],
-      pied: `${this.achatsFiltres.length} achat(s) — Document confidentiel`
+      totaux: totauxAchats,
+      pied: `${this.achatsFiltres.length} achat(s) — ${this.libellePeriodePdf()} — Document confidentiel`,
+      whatsapp: this.whatsAppFournisseur(fournisseur, 'Achats fournisseur', totauxAchats, lignesDetailWa)
+    });
+  }
+
+  // ══════════════════════════════════════════
+  // PDF — PAIEMENTS FOURNISSEUR
+  // ══════════════════════════════════════════
+
+  telechargerPdfPaiements(): void {
+    const fournisseur = this.fournisseurs.find(f => f.id === this.filtreFournisseurId);
+    if (!fournisseur || !this.paiements.length) {
+      Swal.fire({ icon: 'info', title: 'Aucune donnée', text: 'Sélectionnez un fournisseur et chargez ses paiements.' }); return;
+    }
+
+    const lignes = this.paiements.map(p => [
+      this.formatDate(p.datePaiement),
+      this.fmt(p.montant),
+      p.modePaiement || '—',
+      p.reference || '—',
+      p.observation || '—'
+    ]);
+
+    const totalPaiements = this.paiements.reduce((s, p) => s + (p.montant || 0), 0);
+    const totauxPaiements = [{ label: 'Total payé', valeur: this.fmt(totalPaiements) }];
+    const lignesDetailWa = this.paiements.map(p =>
+      `${this.formatDate(p.datePaiement)} — ${this.fmt(p.montant)} (${p.modePaiement || '—'}${p.reference ? ', réf. ' + p.reference : ''})`
+    );
+
+    this.factureService.ouvrirDocumentPDF({
+      titre: 'Paiements fournisseur',
+      sousTitre: `${fournisseur.nom} (${fournisseur.code || '—'}) — ${this.libellePeriodePdf()}`,
+      colonnes: ['Date', 'Montant', 'Mode', 'Référence', 'Observation'],
+      lignes,
+      totaux: totauxPaiements,
+      pied: `${this.paiements.length} paiement(s) — ${this.libellePeriodePdf()} — Document confidentiel`,
+      whatsapp: this.whatsAppFournisseur(fournisseur, 'Paiements fournisseur', totauxPaiements, lignesDetailWa)
     });
   }
 
@@ -773,26 +987,73 @@ export class FournisseursComponent implements OnInit {
     }
     const f = this.situation.fournisseur;
 
-    // Résumé financier
-    const lignesResume: any[][] = [
-      ['Total achats', this.fmt(this.situation.totalAchats)],
-      ['Total payé', this.fmt(this.situation.totalPaye)],
-      ['Solde dû (reste à payer)', this.fmt(this.situation.solde)]
-    ];
+    // Détail chronologique des achats + paiements (pas seulement le résumé),
+    // pour obtenir un vrai relevé exploitable comme pour la situation client.
+    type OperationSituation = { date: string; type: 'Achat' | 'Paiement'; detail: string; montant: number; info: string };
+    const statutLabels: { [k: string]: string } = { EN_COURS: 'En cours', PAYE: 'Payé', ANNULE: 'Annulé' };
 
-    // On utilise le résumé financier comme document principal
+    const operations: OperationSituation[] = [
+      ...(this.situation.achatsRecents || []).map(a => ({
+        date: a.dateAchat,
+        type: 'Achat' as const,
+        detail: a.commentaire || `Achat #${a.id}`,
+        montant: a.montantTotal,
+        info: `${statutLabels[a.statut] || a.statut} — payé ${this.fmt(a.montantPaye)} / restant ${this.fmt(a.montantRestant)}`
+      })),
+      ...(this.situation.paiementsRecents || []).map(p => ({
+        date: p.datePaiement,
+        type: 'Paiement' as const,
+        detail: p.reference || p.observation || `Paiement #${p.id}`,
+        montant: p.montant,
+        info: p.modePaiement || '—'
+      }))
+    ].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    const lignesDetail: any[][] = operations.map(o => [
+      this.formatDate(o.date),
+      o.type,
+      o.detail,
+      this.fmt(o.montant),
+      o.info
+    ]);
+
     const piedParts: string[] = [
       `${f.telephone ? 'Tél : ' + f.telephone + ' — ' : ''}${f.email ? 'Email : ' + f.email : ''}`,
       `Adresse : ${f.adresse || '—'} | Type produits : ${f.typeProduits || '—'} | Statut : ${f.actif ? 'Actif' : 'Inactif'}`
     ];
 
+    // Les totaux renvoyés par le serveur (totalAchats/totalPaye/solde) sont toujours
+    // calculés sur toute la durée, même quand une période est filtrée (seule la liste
+    // achatsRecents/paiementsRecents respecte le filtre côté serveur). Pour que les totaux
+    // affichés correspondent réellement à la période choisie, on les recalcule ici à partir
+    // des opérations déjà filtrées dès qu'une période précise est active.
+    const { dateDebut, dateFin } = this.periodeActive;
+    const periodeFiltreeActive = !!(dateDebut && dateFin);
+    const totalAchatsAffiche = periodeFiltreeActive
+      ? operations.filter(o => o.type === 'Achat').reduce((s, o) => s + (o.montant || 0), 0)
+      : this.situation.totalAchats;
+    const totalPayeAffiche = periodeFiltreeActive
+      ? operations.filter(o => o.type === 'Paiement').reduce((s, o) => s + (o.montant || 0), 0)
+      : this.situation.totalPaye;
+    const soldeAffiche = periodeFiltreeActive
+      ? totalAchatsAffiche - totalPayeAffiche
+      : this.situation.solde;
+
+    const totauxSituation = [
+      { label: 'Total achats', valeur: this.fmt(totalAchatsAffiche) },
+      { label: 'Total payé', valeur: this.fmt(totalPayeAffiche) },
+      { label: 'Solde dû', valeur: this.fmt(soldeAffiche) }
+    ];
+
     this.factureService.ouvrirDocumentPDF({
       titre: 'Situation fournisseur',
-      sousTitre: `${f.nom} (${f.code || '—'})`,
-      colonnes: ['Indicateur', 'Montant'],
-      lignes: lignesResume,
-      totaux: [],
-      pied: piedParts.filter(p => p.trim()).join(' | ')
+      sousTitre: `${f.nom} (${f.code || '—'}) — ${this.libellePeriodePdf()}`,
+      colonnes: ['Date', 'Type', 'Détail', 'Montant', 'Info'],
+      lignes: lignesDetail,
+      totaux: totauxSituation,
+      pied: [`${this.libellePeriodePdf()}`, ...piedParts.filter(p => p.trim())].join(' | '),
+      paysage: true,
+      whatsapp: this.whatsAppFournisseur(f, 'Situation fournisseur', totauxSituation)
     });
   }
 
@@ -914,9 +1175,9 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;padding:24px;fon
 .kpi-val{font-size:1.1rem;font-weight:900;color:#1a56db}
 .kpi.red .kpi-val{color:#dc2626}
 .kpi-lbl{font-size:0.7rem;color:#64748b;margin-top:3px}
-table{width:100%;border-collapse:collapse;font-size:0.8rem;margin-bottom:4px}
-th{background:#f8fafc;padding:8px 10px;text-align:left;font-weight:700;color:#475569;border-bottom:1px solid #e2e8f0}
-td{padding:7px 10px;border-bottom:1px solid #f1f5f9;color:#374151}
+table{width:100%;border-collapse:collapse;font-size:0.8rem;margin-bottom:4px;table-layout:fixed}
+th{background:#f8fafc;padding:8px 10px;text-align:left;font-weight:700;color:#475569;border-bottom:1px solid #e2e8f0;word-break:break-word;overflow-wrap:anywhere}
+td{padding:7px 10px;border-bottom:1px solid #f1f5f9;color:#374151;word-break:break-word;overflow-wrap:anywhere;vertical-align:top}
 tr:last-child td{border-bottom:none}
 .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.85rem}
 .info-row{display:flex;gap:6px;align-items:baseline}
@@ -927,7 +1188,19 @@ tr:last-child td{border-bottom:none}
 .btn-p{background:#1a56db;color:#fff}
 .btn-c{background:#ef4444;color:#fff}
 .ftr{background:linear-gradient(135deg,#081648,#1a56db);color:rgba(255,255,255,.6);text-align:center;padding:14px;font-size:11px}
-@media print{.btn-bar{display:none}body{background:#fff;padding:0}.sheet{box-shadow:none;border-radius:0;max-width:100%}}
+/* BUG FIX (débordement PDF fiche fournisseur) : table-layout:fixed + word-break empêchent une
+   cellule au contenu long (liste de produits d'un achat, observation) de pousser le tableau
+   plus large que la page au lieu de passer à la ligne. thead qui se répète + tr/.section qui ne
+   se coupent pas évitent qu'une ligne ou une section soit tranchée en deux entre deux pages A4
+   (la fiche peut être longue : infos + résumé + top produits + historique achats + paiements). */
+@media print{
+  .btn-bar{display:none}
+  body{background:#fff;padding:0}
+  .sheet{box-shadow:none;border-radius:0;max-width:100%}
+  thead{display:table-header-group}
+  tr{page-break-inside:avoid;break-inside:avoid}
+  .section{page-break-inside:avoid;break-inside:avoid}
+}
 </style></head><body>
 <div class="sheet">
   <div class="hdr">
@@ -1012,12 +1285,28 @@ tr:last-child td{border-bottom:none}
   // ══════════════════════════════════════════
 
   fmt(m: number): string {
-    return new Intl.NumberFormat('fr-FR').format(m || 0) + ' FCFA';
+    return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(m || 0) + ' FCFA';
   }
 
   formatDate(d?: string): string {
     if (!d) return '—';
     return new Date(d).toLocaleDateString('fr-FR');
+  }
+
+  /** Libellé lisible de la période actuellement filtrée (Achats/Paiements/Situation), affiché sur les PDF téléchargés
+   *  pour ne jamais laisser un document sans indication de la période qu'il couvre (ex: "achats du mois"). */
+  private libellePeriodePdf(): string {
+    switch (this.periodePreset) {
+      case 'jour': return `Le ${this.formatDate(this.filtreDateDebut)}`;
+      case 'semaine': return `Du ${this.formatDate(this.filtreDateDebut)} au ${this.formatDate(this.filtreDateFin)}`;
+      case 'mois': {
+        const base = this.filtreDateDebut ? new Date(this.filtreDateDebut) : new Date();
+        const nomMois = base.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+        return `Mois de ${nomMois.charAt(0).toUpperCase()}${nomMois.slice(1)}`;
+      }
+      case 'personnalise': return `Du ${this.formatDate(this.filtreDateDebut)} au ${this.formatDate(this.filtreDateFin)}`;
+      default: return `Tout l'historique`;
+    }
   }
 
   statutLabel(s: string): string {

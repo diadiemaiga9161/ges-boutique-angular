@@ -88,7 +88,7 @@ export class PromotionService {
   }
 
   formatPrice(amount: number): string {
-    return new Intl.NumberFormat('fr-FR').format(amount) + ' FCFA';
+    return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(amount) + ' FCFA';
   }
 
   isExpired(promo: Promotion): boolean {

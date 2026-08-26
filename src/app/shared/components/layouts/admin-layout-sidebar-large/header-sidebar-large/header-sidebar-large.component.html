@@ -1,38 +1,33 @@
-<div class="main-header">
-  <!-- Hamburger + Logo MC -->
-  <div class="d-flex align-items-center">
-    <div class="menu-toggle" (click)="toggelSidebar()">
-      <div></div><div></div><div></div>
-    </div>
-    <div class="header-brand d-none d-sm-flex align-items-center gap-2 ms-1">
-      <div class="header-mc-logo">
-        <span class="mc-m">M</span><span class="mc-c">C</span>
-      </div>
-      <div>
-        <p class="header-app-name">Ges Lafia</p>
-        <p class="header-app-sub">Maïga Consulting</p>
-      </div>
+<header class="edu-topbar">
+  <div class="topbar-left">
+    <button class="icon-btn d-md-none" type="button" aria-label="Ouvrir le menu" (click)="toggelSidebar()">
+      <i class="i-Align-Justify-All"></i>
+    </button>
+    <img class="school-logo d-none d-sm-block" [src]="logoPath" alt="logo" />
+    <div>
+      <span>Bienvenue</span>
+      <strong>{{ boutiqueName }}</strong>
     </div>
   </div>
 
-  <!-- Right: langue + user + logout -->
-  <div class="header-part-right d-flex align-items-center gap-3 pe-3">
+  <div class="topbar-search" (click)="searchService.searchOpen = true">
+    <i class="i-Magnifi-Glass1"></i>
+    <input type="search" placeholder="Rechercher..." readonly />
+  </div>
+
+  <div class="topbar-actions">
     <app-notification-bell></app-notification-bell>
 
     <!-- Badge transferts en attente -->
-    <a routerLink="/transferts" class="header-transfert-btn" title="Transferts en attente">
+    <a routerLink="/transferts" class="icon-btn" title="Transferts en attente">
       <i class="i-Arrow-Right"></i>
-      <span class="header-transfert-badge" *ngIf="transfertCount > 0">
-        {{ transfertCount > 99 ? '99+' : transfertCount }}
-      </span>
+      <b class="badge-count" *ngIf="transfertCount > 0">{{ transfertCount > 99 ? '99+' : transfertCount }}</b>
     </a>
 
     <!-- Sélecteur de langue (Angular pur, sans Bootstrap JS) -->
-    <div class="lang-dropdown" style="position:relative">
-      <button class="lang-btn" type="button" (click)="toggleLangMenu($event)" title="{{ 'LANG.SELECT' | translate }}">
+    <div class="lang-dropdown">
+      <button class="icon-btn" type="button" (click)="toggleLangMenu($event)" title="{{ 'LANG.SELECT' | translate }}">
         <span class="lang-flag">{{ langService.getCurrentLanguage().flag }}</span>
-        <span class="lang-code d-none d-md-inline">{{ langService.getCurrentCode().toUpperCase() }}</span>
-        <i class="i-Arrow-Down-2" style="font-size:0.65rem;opacity:0.7"></i>
       </button>
       <ul *ngIf="showLangMenu" class="lang-menu" (click)="$event.stopPropagation()">
         <li *ngFor="let lang of langService.languages">
@@ -47,112 +42,17 @@
       </ul>
     </div>
 
-    <div class="header-user d-none d-md-flex align-items-center gap-2">
-      <div class="header-avatar" [class.header-avatar--photo]="userPhoto">
-        <img *ngIf="userPhoto" [src]="userPhoto" alt="photo" class="header-avatar-img">
-        <i *ngIf="!userPhoto" class="i-Administrator header-avatar-icon"></i>
-      </div>
-      <div>
-        <p class="header-username">{{ currentUserName }}</p>
-        <p class="header-role">{{ currentUserRole }}</p>
-      </div>
-    </div>
     <app-offline-badge></app-offline-badge>
-    <button class="header-logout-btn" (click)="logout()" title="{{ 'PROFILE.LOGOUT' | translate }}">
+
+    <a class="user-chip" routerLink="/profile">
+      <img *ngIf="userPhoto" [src]="userPhoto" alt="photo" />
+      <i *ngIf="!userPhoto" class="i-Administrator user-chip-icon"></i>
+      <span class="d-none d-md-inline">{{ currentUserName }}</span>
+      <em class="d-none d-md-inline">{{ currentUserRole }}</em>
+    </a>
+
+    <button class="icon-btn" type="button" (click)="logout()" title="{{ 'PROFILE.LOGOUT' | translate }}">
       <i class="i-Lock-User"></i>
-      <span class="d-none d-sm-inline ms-1">{{ 'PROFILE.LOGOUT' | translate }}</span>
     </button>
   </div>
-</div>
-
-<style>
-  /* Badge transferts */
-  .header-transfert-btn {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.15);
-    color: inherit;
-    text-decoration: none;
-    font-size: 1.1rem;
-    transition: background 0.15s;
-    cursor: pointer;
-  }
-  .header-transfert-btn:hover {
-    background: rgba(255,255,255,0.18);
-    color: inherit;
-  }
-  .header-transfert-badge {
-    position: absolute;
-    top: -4px;
-    right: -4px;
-    background: #ef4444;
-    color: #fff;
-    border-radius: 10px;
-    font-size: 0.65rem;
-    font-weight: 700;
-    min-width: 18px;
-    height: 18px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0 4px;
-    line-height: 1;
-    border: 2px solid transparent;
-  }
-
-  .lang-dropdown { position: relative; }
-  .lang-btn {
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 8px;
-    padding: 5px 10px;
-    color: inherit;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 0.85rem;
-    transition: background 0.15s;
-  }
-  .lang-btn:hover { background: rgba(255,255,255,0.15); }
-  .lang-flag { font-size: 1.1rem; line-height: 1; }
-  .lang-code { font-weight: 600; font-size: 0.78rem; letter-spacing: 0.5px; }
-  .lang-menu {
-    position: absolute;
-    top: calc(100% + 6px);
-    right: 0;
-    z-index: 9999;
-    min-width: 170px;
-    background: #fff;
-    border-radius: 10px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.18);
-    border: 1px solid #e2e8f0;
-    padding: 4px;
-    list-style: none;
-    margin: 0;
-  }
-  .lang-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 7px 10px;
-    border-radius: 6px;
-    font-size: 0.85rem;
-    width: 100%;
-    text-align: left;
-    border: none;
-    background: none;
-    cursor: pointer;
-    transition: background 0.12s;
-  }
-  .lang-item:hover { background: #f1f5f9; }
-  .lang-item.active { background: #eff6ff; color: #1a56db; font-weight: 600; }
-  .lang-item-flag { font-size: 1rem; }
-  .lang-item-name { flex: 1; }
-</style>
+</header>

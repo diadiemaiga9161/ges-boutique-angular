@@ -16,9 +16,18 @@ export interface Depense {
   motif?: string;
   date: string;
   montant: number;
+  typeDepense?: string;
   operationCaisseId?: number;
   createdAt?: string;
   updatedAt?: string;
+  // Traçabilité comptable
+  validee?: boolean;
+  valideParId?: number;
+  valideLe?: string;
+  annulee?: boolean;
+  motifAnnulation?: string;
+  annuleParId?: number;
+  dateAnnulation?: string;
 }
 
 export interface DepenseRequest {
@@ -78,10 +87,19 @@ export class DepenseService {
     );
   }
 
-  supprimer(id: number): Observable<void> {
-    return this.http.delete<any>(`${this.apiUrl}/${id}`, { headers: this.getHeaders() }).pipe(
+  supprimer(id: number, motif?: string): Observable<void> {
+    let params = new HttpParams();
+    if (motif) params = params.set('motif', motif);
+    return this.http.delete<any>(`${this.apiUrl}/${id}`, { headers: this.getHeaders(), params }).pipe(
       map(() => void 0),
       catchError(e => throwError(() => new Error(e?.error?.message || 'Erreur suppression dépense')))
+    );
+  }
+
+  valider(id: number): Observable<Depense> {
+    return this.http.patch<any>(`${this.apiUrl}/${id}/valider`, {}, { headers: this.getHeaders() }).pipe(
+      map(r => r.depense || r),
+      catchError(e => throwError(() => new Error(e?.error?.message || 'Erreur validation dépense')))
     );
   }
 
@@ -114,6 +132,6 @@ export class DepenseService {
   }
 
   formatPrice(amount: number): string {
-    return new Intl.NumberFormat('fr-FR').format(amount) + ' FCFA';
+    return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(amount) + ' FCFA';
   }
 }

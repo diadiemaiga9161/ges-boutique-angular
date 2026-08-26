@@ -194,6 +194,7 @@ export class DepensesComponent implements OnInit {
   calculerTotauxParType(): void {
     const map = new Map<string, number>();
     for (const d of this.toutesDepenses) {
+      if ((d as any).annulee) continue;
       const type = (d as any).typeDepense || 'Sans type';
       if (type) map.set(type, (map.get(type) || 0) + d.montant);
     }
@@ -231,7 +232,60 @@ export class DepensesComponent implements OnInit {
     });
   }
 
+  valider(d: Depense): void {
+    Swal.fire({
+      icon: 'question',
+      title: 'Valider cette dépense ?',
+      html: `<b>${d.nom}</b> — ${this.formatPrice(d.montant)}<br><small class="text-muted">Une fois validée, elle ne pourra plus être supprimée directement — seulement annulée avec un motif tracé.</small>`,
+      showCancelButton: true,
+      cancelButtonText: 'Annuler',
+      confirmButtonText: 'Valider',
+      confirmButtonColor: '#198754'
+    }).then(result => {
+      if (!result.isConfirmed) return;
+      this.depenseService.valider(d.id!).subscribe({
+        next: () => {
+          this.load();
+          Swal.fire({ icon: 'success', title: 'Dépense validée', timer: 2000, showConfirmButton: false });
+        },
+        error: e => this.showError(e.message)
+      });
+    });
+  }
+
   supprimer(d: Depense): void {
+    // Dépense validée = verrouillée dans les comptes : suppression tracée (motif obligatoire)
+    // au lieu d'une suppression silencieuse (comme l'annulation d'une vente).
+    if (d.validee) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Annuler cette dépense validée ?',
+        html: `<b>${d.nom}</b> — ${this.formatPrice(d.montant)}<br><small class="text-muted">Le montant sera remis en caisse. Cette dépense reste visible dans l'historique, marquée "Annulée".</small>`,
+        input: 'text',
+        inputPlaceholder: "Motif d'annulation (obligatoire)",
+        showCancelButton: true,
+        cancelButtonText: 'Annuler',
+        confirmButtonText: 'Confirmer l\'annulation',
+        confirmButtonColor: '#dc2626',
+        preConfirm: (motif) => {
+          if (!motif || motif.trim() === '') {
+            Swal.showValidationMessage('Le motif est obligatoire pour une dépense déjà validée');
+          }
+          return motif;
+        }
+      }).then(result => {
+        if (!result.isConfirmed || !result.value) return;
+        this.depenseService.supprimer(d.id!, result.value).subscribe({
+          next: () => {
+            this.load();
+            Swal.fire({ icon: 'success', title: 'Dépense annulée', text: 'Le montant a été remis en caisse.', timer: 2500, showConfirmButton: false });
+          },
+          error: e => this.showError(e.message)
+        });
+      });
+      return;
+    }
+
     Swal.fire({
       icon: 'warning',
       title: 'Supprimer cette dépense ?',
@@ -296,7 +350,7 @@ export class DepensesComponent implements OnInit {
   }
 
   get totalDepensesFiltrees(): number {
-    return this.depensesFiltrees.reduce((s, d) => s + d.montant, 0);
+    return this.depensesFiltrees.filter(d => !(d as any).annulee).reduce((s, d) => s + d.montant, 0);
   }
 
   get totalToutesFiltrees(): number {
@@ -306,6 +360,7 @@ export class DepensesComponent implements OnInit {
   get resumeParTypeFiltrees(): { type: string; total: number }[] {
     const map = new Map<string, number>();
     for (const d of this.depensesFiltrees) {
+      if ((d as any).annulee) continue;
       const type = (d as any).typeDepense || 'Sans type';
       map.set(type, (map.get(type) || 0) + d.montant);
     }

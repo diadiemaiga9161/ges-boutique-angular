@@ -61,7 +61,7 @@
     "TRANSFERS": "التحويلات", "INVOICES": "الفواتير", "SELLERS": "البائعون",
     "DEBTS": "الديون", "BANK": "البنك", "SHOP": "المتجر", "EMPLOYEES": "الموظفون",
     "EMPLOYEE_PAY": "رواتب الموظفين", "SAFE": "الودائع",
-    "SUPPLIER_OBJ": "أهداف الموردين", "SUPPLIER_BONUS": "مكافآت الموردين",
+    "SUPPLIER_OBJ": "أهداف الموردين", "SUPPLIER_BONUS": "مكافآت الموردين", "SELLER_BONUS": "مكافآت البائعين",
     "EXPENSES": "المصروفات", "NET_RESULT": "الصافي", "SUPPLIERS": "الموردون",
     "MOBILE_MONEY": "موبايل موني", "INVOICE_DESIGN": "تصميم الفواتير",
     "REPORT": "تقرير", "PROMO": "العروض", "CREDIT_PAYMENT": "تسوية الائتمان",
@@ -84,6 +84,7 @@
   },
   "PRODUCTS": {
     "TITLE": "المنتجات",
+    "SUBTITLE": "إدارة كتالوج منتجاتك",
     "ADD": "منتج جديد",
     "NAME": "اسم المنتج",
     "PRICE_SELL": "سعر البيع",

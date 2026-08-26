@@ -202,6 +202,7 @@
             <div class="col-6"><small class="text-muted">Date</small><div class="fw-semibold">{{ formatDateShort(selectedFacture.dateCreation) }}</div></div>
             <div class="col-6" *ngIf="selectedFacture.clientTelephone"><small class="text-muted">Téléphone</small><div>{{ selectedFacture.clientTelephone }}</div></div>
             <div class="col-6" *ngIf="selectedFacture.clientAdresse"><small class="text-muted">Adresse</small><div>{{ selectedFacture.clientAdresse }}</div></div>
+            <div class="col-6" *ngIf="selectedFacture.chauffeur"><small class="text-muted">Chauffeur</small><div>{{ selectedFacture.chauffeur }}</div></div>
           </div>
         </div>
         <table class="table table-sm table-hover mb-0 px-2" *ngIf="selectedFacture.lignes.length">
@@ -475,6 +476,11 @@
               <div class="form-group"><label>Valeur</label><input type="number" class="form-control" [(ngModel)]="remiseGlobale" step="1" min="0" [ngModelOptions]="{standalone: true}"></div>
             </div>
           </div>
+        </div>
+
+        <div class="form-section">
+          <h4><i class="fa fa-truck"></i> Chauffeur</h4>
+          <input type="text" class="form-control" [(ngModel)]="factureForm.chauffeur" name="chauffeur" placeholder="Nom du chauffeur (livraison)...">
         </div>
 
         <div class="form-section">

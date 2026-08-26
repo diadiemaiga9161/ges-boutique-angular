@@ -190,17 +190,17 @@
                         <button class="btn btn-sm btn-outline-success" *ngIf="isAdmin"
                                 [title]="'INVENTORY.IN' | translate"
                                 (click)="openEntreeModal(produit)">
-                          <i class="fa fa-plus"></i>
+                          <i class="fa fa-plus"></i> {{ 'INVENTORY.IN' | translate }}
                         </button>
                         <button class="btn btn-sm btn-outline-info"
                                 [title]="'INVENTORY.HISTORY' | translate"
                                 (click)="openHistoriqueModal(produit)">
-                          <i class="fa fa-history"></i>
+                          <i class="fa fa-history"></i> {{ 'INVENTORY.HISTORY' | translate }}
                         </button>
                         <button class="btn btn-sm btn-outline-warning" *ngIf="isAdmin"
                                 [title]="'INVENTORY.CORRECTION' | translate"
                                 (click)="openAjustementModal(produit)">
-                          <i class="fa fa-adjust"></i>
+                          <i class="fa fa-adjust"></i> {{ 'INVENTORY.CORRECTION' | translate }}
                         </button>
                       </div>
                     </td>

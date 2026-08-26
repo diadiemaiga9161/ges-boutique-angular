@@ -42,11 +42,17 @@
 
   <ng-container *ngIf="activeMainTab === 'credits'">
 
-  <!-- ══ STATS ════════════════════════════════════════════════════════════ -->
-  <div class="row mb-4">
+  <!-- ══ STATS + FILTRES STATUT FUSIONNÉS ═══════════════════════════════════
+       Avant : les 4 cartes stats et les boutons de filtre affichaient chacun
+       les MÊMES chiffres (ex: "En cours" en carte ET en badge de bouton juste
+       en dessous) — deux endroits pour la même info, source de confusion.
+       Maintenant : les cartes SONT les filtres (cliquables), un seul endroit
+       où lire chaque chiffre. -->
+  <div class="row mb-3">
     <div class="col-xl-3 col-md-6 mb-3">
-      <div class="card border-0 h-100 text-white"
-        style="background: linear-gradient(135deg,#1a56db 0%,#0d47a1 100%); border-radius: 14px;">
+      <div class="card border-0 h-100 text-white credit-filter-card" [class.active]="statutFilter==='EN_COURS'"
+        style="background: linear-gradient(135deg,#1a56db 0%,#0d47a1 100%); border-radius: 14px; cursor:pointer;"
+        (click)="setStatutFilter('EN_COURS')" title="Filtrer : crédits en cours">
         <div class="card-body p-3">
           <div class="d-flex justify-content-between align-items-center">
             <div>
@@ -61,12 +67,13 @@
       </div>
     </div>
     <div class="col-xl-3 col-md-6 mb-3">
-      <div class="card border-0 h-100 text-white"
-        style="background: linear-gradient(135deg,#d97706 0%,#b45309 100%); border-radius: 14px;">
+      <div class="card border-0 h-100 text-white credit-filter-card" [class.active]="statutFilter==='TOUS'"
+        style="background: linear-gradient(135deg,#d97706 0%,#b45309 100%); border-radius: 14px; cursor:pointer;"
+        (click)="setStatutFilter('TOUS')" title="Voir tous les crédits">
         <div class="card-body p-3">
           <div class="d-flex justify-content-between align-items-center">
             <div>
-              <p class="mb-1 small" style="opacity:.75">Total restant dû</p>
+              <p class="mb-1 small" style="opacity:.75">Total restant dû · {{ allCredits.length }} crédit(s)</p>
               <h4 class="mb-0 fw-bold" style="font-size:1.1rem">{{ formatPrice(totalMontantRestant) }}</h4>
             </div>
             <div style="width:48px;height:48px;border-radius:12px;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center">
@@ -77,8 +84,9 @@
       </div>
     </div>
     <div class="col-xl-3 col-md-6 mb-3">
-      <div class="card border-0 h-100 text-white"
-        style="background: linear-gradient(135deg,#e53e3e 0%,#c53030 100%); border-radius: 14px;">
+      <div class="card border-0 h-100 text-white credit-filter-card" [class.active]="statutFilter==='EN_RETARD'"
+        style="background: linear-gradient(135deg,#e53e3e 0%,#c53030 100%); border-radius: 14px; cursor:pointer;"
+        (click)="setStatutFilter('EN_RETARD')" title="Filtrer : crédits en retard">
         <div class="card-body p-3">
           <div class="d-flex justify-content-between align-items-center">
             <div>
@@ -93,8 +101,9 @@
       </div>
     </div>
     <div class="col-xl-3 col-md-6 mb-3">
-      <div class="card border-0 h-100 text-white"
-        style="background: linear-gradient(135deg,#16a34a 0%,#15803d 100%); border-radius: 14px;">
+      <div class="card border-0 h-100 text-white credit-filter-card" [class.active]="statutFilter==='REGLES'"
+        style="background: linear-gradient(135deg,#16a34a 0%,#15803d 100%); border-radius: 14px; cursor:pointer;"
+        (click)="setStatutFilter('REGLES')" title="Filtrer : crédits réglés">
         <div class="card-body p-3">
           <div class="d-flex justify-content-between align-items-center">
             <div>
@@ -110,32 +119,13 @@
     </div>
   </div>
 
-  <!-- ══ ONGLETS STATUT ══════════════════════════════════════════════════════ -->
-  <div class="card mb-3">
-    <div class="card-body py-2 px-3">
-      <div class="d-flex gap-2 flex-wrap align-items-center">
-        <button class="btn btn-sm" [class.btn-primary]="statutFilter==='EN_COURS'" [class.btn-outline-primary]="statutFilter!=='EN_COURS'"
-          (click)="setStatutFilter('EN_COURS')">
-          <i class="bi bi-clock me-1"></i> En cours <span class="badge ms-1" [class.bg-light]="statutFilter==='EN_COURS'" [class.text-dark]="statutFilter==='EN_COURS'" [class.bg-secondary]="statutFilter!=='EN_COURS'">{{ nbCreditsEnCours }}</span>
-        </button>
-        <button class="btn btn-sm" [class.btn-danger]="statutFilter==='EN_RETARD'" [class.btn-outline-danger]="statutFilter!=='EN_RETARD'"
-          (click)="setStatutFilter('EN_RETARD')">
-          <i class="bi bi-exclamation-triangle me-1"></i> En retard <span class="badge ms-1" [class.bg-light]="statutFilter==='EN_RETARD'" [class.text-dark]="statutFilter==='EN_RETARD'" [class.bg-secondary]="statutFilter!=='EN_RETARD'">{{ nbEnRetard }}</span>
-        </button>
-        <button class="btn btn-sm" [class.btn-success]="statutFilter==='REGLES'" [class.btn-outline-success]="statutFilter!=='REGLES'"
-          (click)="setStatutFilter('REGLES')">
-          <i class="bi bi-check-circle me-1"></i> Réglés <span class="badge ms-1" [class.bg-light]="statutFilter==='REGLES'" [class.text-dark]="statutFilter==='REGLES'" [class.bg-secondary]="statutFilter!=='REGLES'">{{ nbCreditsRegles }}</span>
-        </button>
-        <button class="btn btn-sm" [class.btn-secondary]="statutFilter==='TOUS'" [class.btn-outline-secondary]="statutFilter!=='TOUS'"
-          (click)="setStatutFilter('TOUS')">
-          <i class="bi bi-list-ul me-1"></i> Tous <span class="badge ms-1" [class.bg-light]="statutFilter==='TOUS'" [class.text-dark]="statutFilter==='TOUS'" [class.bg-secondary]="statutFilter!=='TOUS'">{{ allCredits.length }}</span>
-        </button>
-        <button class="btn btn-sm" [class.btn-info]="statutFilter==='PAR_CLIENT'" [class.btn-outline-info]="statutFilter!=='PAR_CLIENT'"
-          (click)="setStatutFilter('PAR_CLIENT')">
-          <i class="bi bi-people-fill me-1"></i> Règlements par client
-        </button>
-      </div>
-    </div>
+  <!-- ══ VUE "PAR CLIENT" (bascule simple, distincte des cartes ci-dessus car
+       ce n'est pas un statut mais un mode d'affichage différent) ══ -->
+  <div class="mb-3">
+    <button class="btn btn-sm" [class.btn-info]="statutFilter==='PAR_CLIENT'" [class.btn-outline-info]="statutFilter!=='PAR_CLIENT'"
+      (click)="setStatutFilter('PAR_CLIENT')">
+      <i class="bi bi-people-fill me-1"></i> Règlements par client
+    </button>
   </div>
 
   <!-- ══ RECHERCHE & FILTRES ══════════════════════════════════════════════ -->
@@ -280,18 +270,18 @@
                     <button class="btn btn-sm btn-outline-info"
                       (click)="openDetailsCreditModal(credit)"
                       title="Voir les détails et les produits">
-                      <i class="bi bi-eye"></i>
+                      <i class="bi bi-eye"></i> Détails
                     </button>
                     <button *ngIf="!credit.estReglee" class="btn btn-sm btn-outline-success"
                       (click)="ouvrirModal(credit)"
                       [disabled]="credit.montantRestant <= 0"
                       title="Enregistrer un règlement">
-                      <i class="bi bi-check-lg"></i>
+                      <i class="bi bi-check-lg"></i> Régler
                     </button>
                     <button *ngIf="credit.estReglee" class="btn btn-sm btn-outline-primary"
                       (click)="imprimerRecuCredit(credit)"
                       title="Imprimer le reçu de règlement">
-                      <i class="bi bi-receipt"></i>
+                      <i class="bi bi-receipt"></i> Reçu
                     </button>
                   </div>
                 </td>
@@ -333,13 +323,20 @@
       </div>
     </div>
 
-    <!-- ══ CRÉDITS PAR CLIENT ════════════════════════════════════════════ -->
+    <!-- ══ CRÉDITS PAR CLIENT — PAIEMENT GROUPÉ ═════════════════════════════
+         Ressemble à la table du dessus (mêmes clients/montants) mais sert un
+         but différent et complémentaire : régler en une fois TOUS les crédits
+         d'un client (répartition proportionnelle), via "Voir détails" →
+         "Payer en groupe" — seul endroit de la page où lancer un paiement
+         groupé (l'onglet "Paiements groupés" n'affiche que l'historique des
+         paiements groupés déjà effectués, pas de bouton pour en créer un). -->
     <div class="card mb-4" *ngIf="creditsGroupesParClient.length > 0">
-      <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+      <div class="card-header bg-primary text-white">
         <h5 class="mb-0">
           <i class="bi bi-people-fill me-2"></i>
-          Crédits par client ({{ creditsGroupesParClient.length }} clients)
+          Paiement groupé par client ({{ creditsGroupesParClient.length }} clients)
         </h5>
+        <small class="opacity-75">Pour régler en une fois tous les crédits d'un même client</small>
       </div>
       <div class="card-body p-0">
         <div class="table-responsive">

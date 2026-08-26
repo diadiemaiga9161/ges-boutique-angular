@@ -75,6 +75,7 @@
     "SAFE": "Ajiya",
     "SUPPLIER_OBJ": "Manufofin masu samarwa",
     "SUPPLIER_BONUS": "Ladan masu samarwa",
+    "SELLER_BONUS": "Ladan masu sayarwa",
     "EXPENSES": "Kashe kudi",
     "NET_RESULT": "Sakamakon",
     "SUPPLIERS": "Masu samarwa",
@@ -104,6 +105,7 @@
   },
   "PRODUCTS": {
     "TITLE": "Kayayyaki",
+    "SUBTITLE": "Sarrafa jerin kayayyakinka",
     "ADD": "Sabon kaya",
     "NAME": "Sunan kaya",
     "PRICE_SELL": "Farashin siyarwa",

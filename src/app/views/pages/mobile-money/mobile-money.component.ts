@@ -139,7 +139,7 @@ export class MobileMoneyComponent implements OnInit {
   }
 
   formatMontant(m: number): string {
-    return new Intl.NumberFormat('fr-FR').format(m) + ' F';
+    return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(m) + ' F';
   }
 
   getResume(key: string): ResumeMM {

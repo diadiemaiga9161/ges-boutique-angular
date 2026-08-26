@@ -112,7 +112,7 @@ export class ObjectifFournisseurService {
   }
 
   formatMontant(m: number): string {
-    return new Intl.NumberFormat('fr-FR').format(m || 0) + ' FCFA';
+    return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(m || 0) + ' FCFA';
   }
 
   getMoisLabel(mois: number): string {

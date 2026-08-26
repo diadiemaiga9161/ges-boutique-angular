@@ -82,6 +82,13 @@ export class PartenairesComponent implements OnInit {
   showVentesModal = false;
   showVentesDiversModal = false;
   selectedClientForVentes: Client | null = null;
+  // Onglets de la modale unique Ventes/Paiements (fusionnées pour réduire le nombre de
+  // boutons — même principe que sur la page Clients).
+  clientDetailTab: 'historique' | 'paiements' = 'historique';
+
+  get clientDetailTitle(): string {
+    return this.clientDetailTab === 'paiements' ? 'Paiements' : 'Ventes';
+  }
 
   // Filtres pour les ventes client
   filterVenteNumero: string = '';
@@ -294,6 +301,7 @@ export class PartenairesComponent implements OnInit {
 
   showClientVentes(client: Client): void {
     this.selectedClientForVentes = client;
+    this.clientDetailTab = 'historique';
     this.isLoadingVentes = true;
     this.showVentesModal = true;
     this.errorMessage = '';
@@ -438,6 +446,13 @@ export class PartenairesComponent implements OnInit {
     this.ventesClient = [];
     this.ventesClientFiltered = [];
     this.selectedClientForVentes = null;
+    this.clientDetailTab = 'historique';
+  }
+
+  /** Bascule entre les onglets "Ventes" et "Paiements" de la même modale — les deux
+   *  partagent déjà les mêmes données (chargées ensemble par loadPaiementsForVentesModal). */
+  switchClientDetailTab(tab: 'historique' | 'paiements'): void {
+    this.clientDetailTab = tab;
   }
 
   closeVentesDiversModal(): void {
@@ -718,71 +733,27 @@ export class PartenairesComponent implements OnInit {
 
   // ==================== HISTORIQUE PAIEMENTS ====================
 
+  // Fusionné dans la modale unique (onglet "Paiements") au lieu d'une fenêtre séparée —
+  // réutilise loadPaiementsForVentesModal (même logique qu'avant, plus de duplication).
   loadHistoriquePaiements(client: Client): void {
-    this.clientPourHistorique = client;
-    this.isLoadingHistorique = true;
-    this.historiquePaiements = [];
-    this.showHistoriquePaiementsModal = true;
-
+    this.selectedClientForVentes = client;
+    this.clientDetailTab = 'paiements';
+    this.showVentesModal = true;
+    this.ventesClient = [];
+    this.ventesClientFiltered = [];
+    this.isLoadingVentes = true;
     this.venteService.getAllVentes().subscribe({
       next: (ventes) => {
-        const ventesClient = ventes.filter(v => this.isVenteForClient(v, client) && !v.annulee);
-        const entries: HistoriquePaiementEntry[] = [];
-
-        const comptant = ventesClient.filter(v => !v.estCredit);
-        comptant.forEach(v => {
-          entries.push({
-            date: v.dateVente,
-            montant: v.montantTotal,
-            typeLabel: 'Comptant',
-            modePaiement: v.modePaiement || '',
-            reference: v.referencePaiement || '',
-            numeroVente: v.numeroVente,
-            venteId: v.id,
-            vente: v,
-            vendeur: v.vendeurNom || ''
-          });
-        });
-
-        const credits = ventesClient.filter(v => v.estCredit);
-        if (credits.length === 0) {
-          this.historiquePaiements = entries.sort((a, b) =>
-            new Date(b.date).getTime() - new Date(a.date).getTime()
-          );
-          this.historiquePaiementsFiltres = [...this.historiquePaiements];
-          this.isLoadingHistorique = false;
-          return;
-        }
-
-        const calls = credits.map(v => this.caisseService.getHistoriqueReglementsCredit(v.id));
-        forkJoin(calls).subscribe({
-          next: (results) => {
-            results.forEach((reglements, i) => {
-              const vente = credits[i];
-              reglements.forEach(r => {
-                entries.push({
-                  date: r.dateOperation,
-                  montant: r.montant,
-                  typeLabel: 'Crédit',
-                  modePaiement: (r.modePaiement as string) || '',
-                  reference: r.referencePaiement || '',
-                  numeroVente: vente.numeroVente,
-                  venteId: vente.id,
-                  vente: vente,
-                  vendeur: (r as any).regleParNom || (r as any).utilisateurNom || vente.vendeurNom || ''
-                });
-              });
-            });
-            this.historiquePaiements = entries.sort((a, b) =>
-              new Date(b.date).getTime() - new Date(a.date).getTime()
-            );
-            this.historiquePaiementsFiltres = [...this.historiquePaiements];
-            this.isLoadingHistorique = false;
-          },
-          error: () => { this.isLoadingHistorique = false; }
-        });
+        this.ventesClient = ventes.filter(vente => this.isVenteForClient(vente, client));
+        this.ventesClient.sort((a, b) => new Date(b.dateVente).getTime() - new Date(a.dateVente).getTime());
+        this.ventesClientFiltered = [...this.ventesClient];
+        this.isLoadingVentes = false;
+        this.loadPaiementsForVentesModal(client);
       },
-      error: () => { this.isLoadingHistorique = false; }
+      error: (error) => {
+        this.errorMessage = error.message || 'Impossible de charger les ventes du partenaire';
+        this.isLoadingVentes = false;
+      }
     });
   }
 

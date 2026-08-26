@@ -15,6 +15,7 @@ export interface User {
   photo?: string;
   dateCreation?: string;
   dateModification?: string;
+  employeId?: number | null;
 }
 
 export interface UserCreate {
@@ -27,6 +28,7 @@ export interface UserCreate {
 }
 
 export interface UserUpdate {
+  username?: string;
   nomComplet?: string;
   email?: string;
   telephone?: string;
@@ -133,6 +135,36 @@ export class UserService {
         }
         
         return throwError(() => new Error(errorMessage));
+      })
+    );
+  }
+
+  /** Geler (actif=false) ou réactiver (actif=true) un compte, sans toucher aux autres champs. */
+  changerStatut(id: number, actif: boolean, token: string): Observable<User> {
+    return this.http.patch<User>(`${this.apiUrl}/${id}/statut`, { actif }, {
+      headers: this.getAuthHeaders(token)
+    }).pipe(
+      catchError(error => {
+        console.error(`Erreur lors du changement de statut de l'utilisateur ${id}:`, error);
+        let errorMessage = 'Erreur lors du changement de statut';
+        if (error.status === 403) {
+          errorMessage = 'Accès refusé: Seuls les administrateurs peuvent geler un compte';
+        } else if (error.error?.message) {
+          errorMessage = error.error.message;
+        }
+        return throwError(() => new Error(errorMessage));
+      })
+    );
+  }
+
+  /** Coche/décoche "Ce vendeur est aussi employé" : crée/met à jour ou désactive la fiche Employé liée. */
+  gererLienEmploye(id: number, estEmploye: boolean, poste: string | undefined, salaireMensuel: number | undefined, token: string): Observable<User> {
+    return this.http.patch<User>(`${this.apiUrl}/${id}/employe`, { estEmploye, poste, salaireMensuel }, {
+      headers: this.getAuthHeaders(token)
+    }).pipe(
+      catchError(error => {
+        console.error(`Erreur lors du lien employé de l'utilisateur ${id}:`, error);
+        return throwError(() => new Error(error.error?.message || 'Erreur lors de la mise à jour du lien employé'));
       })
     );
   }

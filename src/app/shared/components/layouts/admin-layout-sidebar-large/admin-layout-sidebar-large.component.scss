@@ -1,0 +1,64 @@
+// Shell d'application façon edumanager : sidebar fixe 282px + colonne
+// principale (topbar sticky + contenu scrollable + footer). Toutes ces
+// règles sont scopées à ce composant — elles ne redéfinissent pas les
+// anciennes classes globales (.sidebar-left, .main-content-wrap...) donc
+// aucun conflit avec les styles legacy encore présents ailleurs.
+
+.edu-shell {
+  min-height: 100vh;
+  position: relative;
+}
+
+.edu-main {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 80% 0%, rgba(59, 130, 246, .10), transparent 30%),
+    linear-gradient(180deg, #f8fbff 0%, #eef4ff 100%);
+}
+
+.edu-content-scroll {
+  flex: 1 1 auto;
+  height: 100vh;
+}
+
+.edu-content {
+  flex: 1 1 auto;
+  padding: 1.5rem 1.5rem 0;
+}
+
+// Seuil aligné sur Utils.isMobile() (max-width: 767px, shared/utils.ts) qui
+// pilote sidebarState.sidenavOpen — un seuil différent ici créait une zone
+// morte (768-991px) où le JS pensait "desktop" (sidebar forcée ouverte)
+// pendant que le CSS pensait encore "mobile" (sidebar en overlay sans
+// margin-left pour lui faire de la place) : la sidebar recouvrait le
+// contenu au lieu de le pousser.
+@media (min-width: 768px) {
+  .edu-main {
+    margin-left: 282px;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .edu-content {
+    padding: 1rem 1rem 0;
+  }
+}
+
+// Espace réservé pour ne pas passer sous la nav mobile (60px de haut).
+@media (max-width: 767.98px) {
+  .edu-content {
+    padding-bottom: 68px;
+  }
+}
+
+// Mode sombre : voir body.dark-mode .edu-main dans src/styles.css
+// (:host-context ne matchait pas de façon fiable, cf. header-sidebar-large.component.scss).
+
+.module-loader {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  padding: 2rem;
+}

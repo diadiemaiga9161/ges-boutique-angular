@@ -1,53 +1,35 @@
-<div class="search-ui" [@animate]="{value:'*',params:{y:'120px',opacity:'0',delay:'100ms', duration: '400ms'}}">
-  <div class="search-header d-flex">
-    <img [src]="logoPath" alt="" class="logo">
-    <div class="m-auto"></div>
-    <button class="btn btn-icon bg-transparent float-right mt-2" (click)="searchService.searchOpen = false">
-      <i class="i-Close-Window text-22 text-muted"></i>
-    </button>
-  </div>
+<div class="search-overlay" (click)="searchService.searchOpen = false">
+  <div class="gl-search-panel" [@animate]="{value:'*',params:{y:'40px',opacity:'0',delay:'50ms', duration: '250ms'}}" (click)="$event.stopPropagation()">
+    <div class="gl-search-header">
+      <i class="i-Magnifi-Glass1 search-icon"></i>
+      <input
+        type="text"
+        placeholder="Rechercher un produit, un client..."
+        class="gl-search-input"
+        [formControl]="searchCtrl"
+        autofocus>
+      <button class="close-btn" type="button" (click)="searchService.searchOpen = false" aria-label="Fermer">
+        <i class="i-Close-Window"></i>
+      </button>
+    </div>
 
-  <input type="text" placeholder="Type here" class="search-input" [formControl]="searchCtrl" autofocus>
-
-  <div class="search-title">
-    <span class="text-muted">Search results</span>
-  </div>
-  <ng-scrollbar style="height: calc(100vh - 350px);">
-    <div class="search-results list-horizontal">
-      @for (item of results$ | async | paginate: { itemsPerPage: pageSize, currentPage: page }; track item; let i = $index) {
-        <div
-          class="list-item col-md-12 p-0 m-2" [@animate]="{value:'*',params:{delay: (i*100)+'ms', y:'50px'}}">
-          <div class="card o-hidden flex-row mb-4 d-flex">
-            <div class="list-thumb d-flex">
-              <!-- TUMBNAIL -->
-              <img [src]="item.photo" alt="">
-            </div>
-            <div class="flex-grow-1 pl-2 d-flex">
-              <div
-                class="card-body align-self-center d-flex flex-column justify-content-between align-items-lg-center flex-lg-row">
-                <!-- OTHER DATA -->
-                <a href="" class="w-40 w-sm-100">
-                  <div class="item-title">{{item.name}}</div>
-                </a>
-                <p class="m-0 text-muted text-small w-15 w-sm-100">Gadget</p>
-                <p class="m-0 text-muted text-small w-15 w-sm-100">
-                  {{item?.price?.sale | currency}}
-                  <del class="text-secondary">{{item?.price?.previous | currency}}</del>
-                </p>
-                <p class="m-0 text-muted text-small w-15 w-sm-100 d-none d-lg-block item-badges">
-                  <span class="badge badge-outline-{{item?.badge?.color}}">{{item?.badge?.text}}</span>
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
+    <div class="search-results">
+      @if (searchCtrl.value?.trim()) {
+        @for (item of results$ | async; track item) {
+          <button class="result-item" type="button" (click)="ouvrirResultat(item)">
+            <span class="result-icon" [class.client]="item.type === 'client'"><i [class]="item.icon"></i></span>
+            <span class="result-text">
+              <strong>{{ item.titre }}</strong>
+              <small>{{ item.sousTitre }}</small>
+            </span>
+            <span class="result-type">{{ item.type === 'produit' ? 'Produit' : 'Client' }}</span>
+          </button>
+        } @empty {
+          <div class="empty-state">Aucun résultat pour "{{ searchCtrl.value }}"</div>
+        }
+      } @else {
+        <div class="empty-state">Tapez pour rechercher un produit ou un client.</div>
       }
     </div>
-  </ng-scrollbar>
-  <!-- PAGINATION CONTROL -->
-  @if (results$ | async) {
-    <div class="col-md-12 mt-3">
-      <pagination-controls (pageChange)="page = $event" previousLabel="" nextLabel=""></pagination-controls>
-    </div>
-  }
+  </div>
 </div>

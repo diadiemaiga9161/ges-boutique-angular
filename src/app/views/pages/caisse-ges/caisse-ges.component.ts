@@ -55,6 +55,8 @@ export class CaisseGesComponent implements OnInit, OnDestroy {
   creditsEnRetard: CreditInfo[] = [];
   situationCredits: SituationCredits | null = null;
   statistiquesJour: StatistiquesCaisse | null = null;
+  statistiquesMois: StatistiquesCaisse | null = null;
+  moisAffiche: Date | null = null; // dernier mois clôturé affiché par la carte "Bénéfice net"
   statistiquesPeriode: StatistiquesCaisse | null = null;
   revenusPertes: RevenusPertes | null = null;
   isLoading: boolean = false;
@@ -241,6 +243,7 @@ export class CaisseGesComponent implements OnInit, OnDestroy {
     this.loadOperations();
     this.loadCredits();
     this.loadStatistiquesJour();
+    this.loadStatistiquesMois();
   }
 
   loadCaisse(): void {
@@ -358,6 +361,36 @@ export class CaisseGesComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         console.error('Erreur chargement statistiques:', error);
+      }
+    });
+  }
+
+  // Demande explicite : "dans caisse je veux une option pour voir par mois ce
+  // que j'ai gagné" — carte "Bénéfice du mois" dédiée, indépendante du filtre
+  // de période de la section "Historique des opérations" plus bas (qui, lui,
+  // change selon ce que l'utilisateur sélectionne).
+  //
+  // BUG UX corrigé : afficher le MOIS EN COURS (pas encore terminé) induisait
+  // en erreur — en milieu de mois, les ventes du début de mois sont déjà là
+  // mais les dépenses (loyer, réassort, salaires...) ne sont souvent payées
+  // qu'en fin de mois : le "bénéfice" affiché paraît artificiellement élevé
+  // tant que ces sorties n'ont pas encore été enregistrées. On affiche donc
+  // le DERNIER MOIS CLÔTURÉ (le mois précédent, entièrement terminé), dont
+  // toutes les entrées ET sorties sont connues — un chiffre fiable, pas une
+  // photo à moitié prise.
+  loadStatistiquesMois(): void {
+    const aujourdhui = new Date();
+    const finMoisPrecedent = new Date(aujourdhui.getFullYear(), aujourdhui.getMonth(), 0);
+    const debutMoisPrecedent = new Date(finMoisPrecedent.getFullYear(), finMoisPrecedent.getMonth(), 1);
+    this.moisAffiche = finMoisPrecedent;
+    const fmt = (d: Date) => d.toISOString().split('T')[0];
+
+    this.caisseService.getStatistiquesParPeriode(fmt(debutMoisPrecedent), fmt(finMoisPrecedent)).subscribe({
+      next: (stats) => {
+        this.statistiquesMois = stats;
+      },
+      error: (error) => {
+        console.error('Erreur chargement statistiques du mois:', error);
       }
     });
   }
@@ -1592,6 +1625,22 @@ export class CaisseGesComponent implements OnInit, OnDestroy {
 
   get labelBilanceJour(): string {
     return this.isPerte ? 'Perte nette' : 'Bénéfice net';
+  }
+
+  get profitNetMois(): number {
+    return this.statistiquesMois?.soldeNetPeriode ?? 0;
+  }
+
+  get isPerteMois(): boolean {
+    return this.profitNetMois < 0;
+  }
+
+  get labelBilanceMois(): string {
+    return this.isPerteMois ? 'Perte nette' : 'Bénéfice net';
+  }
+
+  get nomMoisCourant(): string {
+    return (this.moisAffiche || new Date()).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
   }
 
   // ==================== PAIEMENT GROUPE ====================

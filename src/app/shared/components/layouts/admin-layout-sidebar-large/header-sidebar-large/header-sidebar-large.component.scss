@@ -1,0 +1,256 @@
+// Topbar "verre dépoli" façon edumanager. Toutes les règles sont scopées à
+// ce composant (aucun effet sur le reste de l'app).
+
+.edu-topbar {
+  align-items: center;
+  background: rgba(248, 250, 252, .86);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-bottom: 1px solid rgba(148, 163, 184, .18);
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  min-height: 76px;
+  padding: .85rem 1.5rem;
+  position: sticky;
+  top: 0;
+  z-index: 1010;
+}
+
+.topbar-left,
+.topbar-actions {
+  align-items: center;
+  display: flex;
+  gap: .6rem;
+}
+
+.topbar-actions {
+  flex-shrink: 0;
+}
+
+.topbar-left {
+  flex: 0 1 auto;
+  gap: .8rem;
+  min-width: 0;
+  max-width: 280px;
+}
+
+.school-logo {
+  border-radius: 12px;
+  height: 42px;
+  object-fit: cover;
+  width: 42px;
+  flex-shrink: 0;
+}
+
+// Le libellé (nom de boutique, potentiellement long) doit pouvoir se
+// tronquer sans repousser la recherche/les actions hors du viewport : il
+// lui faut son propre min-width:0 en tant qu'item flex de .topbar-left.
+.topbar-left > div {
+  min-width: 0;
+}
+
+.topbar-left span {
+  color: #64748b;
+  display: block;
+  font-size: .78rem;
+  font-weight: 700;
+}
+
+.topbar-left strong {
+  color: #0f172a;
+  display: block;
+  font-size: 1.05rem;
+  font-weight: 850;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.topbar-search {
+  align-items: center;
+  background: #fff;
+  border: 1px solid rgba(148, 163, 184, .2);
+  border-radius: 16px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, .05);
+  cursor: pointer;
+  display: flex;
+  flex: 1 1 220px;
+  gap: .65rem;
+  max-width: 420px;
+  min-width: 0;
+  padding: .72rem .95rem;
+}
+
+.topbar-search i {
+  color: #94a3b8;
+}
+
+.topbar-search input {
+  background: transparent;
+  border: none;
+  color: #0f172a;
+  cursor: pointer;
+  flex: 1;
+  font-size: .88rem;
+  outline: none;
+  width: 100%;
+}
+
+.icon-btn {
+  align-items: center;
+  background: #fff;
+  border: 1px solid rgba(148, 163, 184, .18);
+  border-radius: 14px;
+  color: #1e3a8a;
+  display: inline-grid;
+  height: 44px;
+  place-items: center;
+  position: relative;
+  text-decoration: none;
+  width: 44px;
+  flex-shrink: 0;
+}
+
+.icon-btn i {
+  font-size: 1.1rem;
+}
+
+.badge-count {
+  background: #3b82f6;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  color: #fff;
+  font-size: .63rem;
+  font-weight: 900;
+  line-height: 1;
+  min-width: 18px;
+  padding: 2px 5px;
+  position: absolute;
+  right: -5px;
+  text-align: center;
+  top: -5px;
+}
+
+.lang-dropdown {
+  position: relative;
+}
+
+.lang-flag {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.lang-menu {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, .16);
+  list-style: none;
+  margin: 0;
+  min-width: 180px;
+  padding: 6px;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 1030;
+}
+
+.lang-item {
+  align-items: center;
+  background: none;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  font-size: .85rem;
+  gap: 8px;
+  padding: 8px 10px;
+  text-align: left;
+  transition: background .12s;
+  width: 100%;
+}
+
+.lang-item:hover {
+  background: #f1f5f9;
+}
+
+.lang-item.active {
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-weight: 700;
+}
+
+.lang-item-flag {
+  font-size: 1rem;
+}
+
+.lang-item-name {
+  flex: 1;
+}
+
+.user-chip {
+  background: #fff;
+  border: 1px solid rgba(148, 163, 184, .18);
+  border-radius: 999px;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: .55rem;
+  padding: .35rem .75rem .35rem .35rem;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.user-chip img,
+.user-chip-icon {
+  border-radius: 50%;
+  height: 36px;
+  width: 36px;
+  object-fit: cover;
+}
+
+.user-chip-icon {
+  align-items: center;
+  background: #eff6ff;
+  color: #1d4ed8;
+  display: flex;
+  justify-content: center;
+}
+
+.user-chip span {
+  font-weight: 700;
+  font-size: .85rem;
+}
+
+.user-chip em {
+  background: #eff6ff;
+  border-radius: 999px;
+  color: #1d4ed8;
+  font-size: .68rem;
+  font-style: normal;
+  font-weight: 900;
+  padding: .18rem .45rem;
+}
+
+@media (max-width: 767.98px) {
+  .edu-topbar {
+    flex-wrap: wrap;
+    padding: .7rem 1rem;
+  }
+  .topbar-search {
+    flex-basis: 100%;
+    max-width: none;
+    order: 3;
+  }
+}
+
+// Mode sombre : voir les règles globales `body.dark-mode .edu-topbar...`
+// dans src/styles.css. `:host-context(body.dark-mode)` ne s'est pas montré
+// fiable ici avec l'encapsulation de vues émulée d'Angular (vérifié à la
+// capture d'écran — la classe body.dark-mode est bien posée mais ces
+// règles scopées au composant ne matchaient pas) ; les classes
+// .edu-topbar/.icon-btn/.topbar-search/.user-chip/.lang-menu sont donc
+// re-stylées en sombre depuis la feuille globale, comme .app-stat-card
+// et les autres cartes "premium" déjà présentes.

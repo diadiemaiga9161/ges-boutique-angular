@@ -1,80 +1,51 @@
-<div [ngClass]="{ open: navService.sidebarState.sidenavOpen }" class="sidebar-left rtl-ps-none">
-  <ng-scrollbar class="vh-100" visibility="hover" appearance="compact">
-    <div class="logo">
-      <img style="height: 40px;width: 40px;object-fit:contain;" [src]="logoPath" alt="logo" />
+<aside class="edu-sidebar" [class.is-open]="navService.sidebarState.sidenavOpen">
+  <div class="brand">
+    <div class="brand-mark">
+      <img [src]="logoPath" alt="logo" />
     </div>
-    <ul class="navigation-left">
-      @for (item of nav; track item) {
-        <li [ngClass]="{ active: item.active }" (click)="onClickChangeActiveFlag(item)" class="nav-item lvl1"
-          >
-          @if (!item.disabled && item.type === 'link') {
-            <div class="nav-item-hold" routerLink="{{ item.state }}" (click)="closeChildNav()"
-              >
-              <i [class]="'nav-icon ' + item.icon"></i>
-              <span class="nav-text">{{ item.name | translate }}</span>
-            </div>
-          }
-          @if (!item.disabled && item.type === 'dropDown') {
-            <div class="nav-item-hold" (mouseenter)="selectItem(item)">
-              <i [class]="'nav-icon ' + item.icon"></i>
-              <span class="nav-text">{{ item.name | translate }}</span>
-            </div>
-          }
-          @if (!item.disabled && item.type === 'extLink') {
-            <div class="nav-item-hold">
-              <a [href]="item.state" target="_blank">
-                <i [class]="'nav-icon ' + item.icon"></i>
-                <span class="nav-text">{{ item.name | translate }}</span>
-              </a>
-            </div>
-          }
-          @if (!item.disabled) {
-            <div class="triangle"></div>
-          }
-        </li>
-      }
-    </ul>
-  </ng-scrollbar>
-</div>
+    <div>
+      <strong>{{ boutiqueName }}</strong>
+      <span>Maïga Consulting</span>
+    </div>
+  </div>
 
-<div [ngClass]="{ open: navService.sidebarState.childnavOpen }" class="sidebar-left-secondary rtl-ps-none"
-  (mouseleave)="closeChildNav()">
-  <ng-scrollbar class="vh-100" visibility="hover" appearance="compact">
-
-    <header>
-      <h6>{{ navService.selectedItem?.name }}</h6>
-    </header>
-    <ng-container *ngTemplateOutlet="menuTemplate; context: { parentItem: navService.selectedItem }"></ng-container>
-  </ng-scrollbar>
-</div>
-
-<ng-template #menuTemplate let-parentItem="parentItem">
-  <ul class="childNav" appDropdown>
-    @for (item of parentItem?.sub; track item) {
-      <li appDropdownLink class="nav-item">
-        @if (item.type === 'link') {
-          <a routerLink="{{ item.state }}" class="" routerLinkActive="open">
-            @if (item.icon) {
-              <i [class]="'nav-icon ' + item.icon"></i>
-            }
-            <span class="item-name lvl1">{{ item.name | translate }}</span>
-          </a>
-        }
-        @if (item.type === 'dropDown') {
-          <div>
-            <a appDropdownToggle [ngClass]="{ open: item.active }" routerLinkActive="open">
-              @if (item.icon) {
-                <i [class]="'nav-icon ' + item.icon"></i>
-              }
-              <span class="item-name">{{ item.name | translate }}</span>
-              <i class="dd-arrow i-Arrow-Down"></i>
+  <ng-scrollbar class="edu-sidebar-scroll" visibility="hover" appearance="compact">
+    @for (item of nav; track item) {
+      @if (item.type === 'dropDown') {
+        <div class="nav-block">
+          <span class="nav-title">{{ item.name | translate }}</span>
+          @for (sub of item.sub; track sub) {
+            <a class="nav-link" [routerLink]="sub.state" routerLinkActive="active" (click)="onNavigate()">
+              <i [class]="sub.icon"></i>
+              <span>{{ sub.name | translate }}</span>
             </a>
-            <ng-container *ngTemplateOutlet="menuTemplate; context: { parentItem: item }"></ng-container>
-          </div>
-        }
-      </li>
+          }
+        </div>
+      }
+      @if (item.type === 'link') {
+        <div class="nav-block">
+          <a class="nav-link" [routerLink]="item.state" routerLinkActive="active" (click)="onNavigate()">
+            <i [class]="item.icon"></i>
+            <span>{{ item.name | translate }}</span>
+          </a>
+        </div>
+      }
+      @if (item.type === 'extLink') {
+        <div class="nav-block">
+          <a class="nav-link" [href]="item.state" target="_blank" rel="noopener" (click)="onNavigate()">
+            <i [class]="item.icon"></i>
+            <span>{{ item.name | translate }}</span>
+          </a>
+        </div>
+      }
     }
-  </ul>
-</ng-template>
+  </ng-scrollbar>
+</aside>
 
-<div [ngClass]="{ open: navService.sidebarState.childnavOpen }" class="sidebar-overlay" (click)="closeChildNav()"></div>
+<button
+  class="sidebar-backdrop"
+  type="button"
+  aria-label="Fermer le menu"
+  *ngIf="navService.sidebarState.sidenavOpen"
+  (click)="closeMobile()">
+</button>

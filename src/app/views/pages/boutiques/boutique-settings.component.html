@@ -9,95 +9,113 @@
       </div>
     </div>
   </div>
-  <div class="card mx-auto" style="max-width: 860px;">
-    <div class="card-body">
-      <h5 class="card-title mb-4">{{ 'BOUTIQUE_SETTINGS.TITLE' | translate }}</h5>
+  <div *ngIf="isLoading" class="alert alert-info">
+    Chargement des informations de la boutique ID 1...
+  </div>
 
-      <div *ngIf="isLoading" class="alert alert-info">
-        Chargement des informations de la boutique ID 1...
+  <div *ngIf="errorMessage" class="alert alert-danger">
+    {{ errorMessage }}
+  </div>
+
+  <div *ngIf="successMessage" class="alert alert-success">
+    {{ successMessage }}
+  </div>
+
+  <form (ngSubmit)="save()">
+
+    <!-- Disposition façon page Profil : carte identité + carte formulaire côte à côte -->
+    <div class="boutique-layout">
+
+      <!-- Carte identité boutique (logo, nom, contact) -->
+      <div class="boutique-card boutique-card--identity">
+        <div class="logo-circle" [class.logo-circle--has-logo]="previewLogo">
+          <img *ngIf="previewLogo" [src]="previewLogo" alt="Logo boutique" class="logo-img" />
+          <i *ngIf="!previewLogo" class="fa fa-store logo-icon-default"></i>
+        </div>
+
+        <h2 class="identity-name">{{ model.nom || '—' }}</h2>
+        <span class="identity-badge" *ngIf="model.ville || model.pays">
+          <i class="fa fa-map-marker-alt"></i> {{ model.ville }}{{ model.ville && model.pays ? ', ' : '' }}{{ model.pays }}
+        </span>
+
+        <div class="logo-actions">
+          <label class="btn-logo btn-logo--upload">
+            <i class="fas fa-camera"></i>
+            <span>{{ previewLogo ? 'Changer le logo' : 'Ajouter un logo' }}</span>
+            <input type="file" accept="image/*" (change)="onLogoFileSelected($event)" hidden />
+          </label>
+          <button *ngIf="selectedLogoFile" type="button" class="btn-logo btn-logo--save"
+                  [disabled]="isUploadingLogo" (click)="uploadLogo()">
+            <span *ngIf="isUploadingLogo" class="spinner-border spinner-border-sm"></span>
+            <span *ngIf="!isUploadingLogo"><i class="fas fa-check"></i></span>
+            {{ isUploadingLogo ? 'Envoi...' : 'Enregistrer' }}
+          </button>
+        </div>
+        <small class="text-muted d-block mt-2">PNG, JPG, SVG — max 2 Mo</small>
+
+        <div class="identity-meta">
+          <div class="im-row" *ngIf="model.telephone"><i class="fas fa-phone-alt"></i> {{ model.telephone }}</div>
+          <div class="im-row" *ngIf="model.email"><i class="fas fa-envelope"></i> {{ model.email }}</div>
+          <div class="im-row" *ngIf="model.adresse"><i class="fas fa-map-marker-alt"></i> {{ model.adresse }}</div>
+          <div class="im-row" *ngIf="model.numeroRc"><i class="fas fa-file-invoice"></i> RC : {{ model.numeroRc }}</div>
+          <div class="im-row" *ngIf="model.numeroIfu"><i class="fas fa-file-invoice"></i> IFU : {{ model.numeroIfu }}</div>
+        </div>
       </div>
 
-      <div *ngIf="errorMessage" class="alert alert-danger">
-        {{ errorMessage }}
-      </div>
+      <!-- Carte formulaire -->
+      <div class="boutique-card boutique-card--form">
+        <h2 class="boutique-card-title"><i class="fa fa-id-card me-2"></i>Informations générales</h2>
 
-      <div *ngIf="successMessage" class="alert alert-success">
-        {{ successMessage }}
-      </div>
-
-      <form (ngSubmit)="save()">
-        <!-- Informations de base de la boutique -->
-        <div class="section mb-4">
-          <h6 class="section-title">{{ 'BOUTIQUE_SETTINGS.SUBTITLE' | translate }}</h6>
-
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label">{{ 'BOUTIQUE_SETTINGS.NAME' | translate }}</label>
-              <input class="form-control" [(ngModel)]="model.nom" name="nom" required>
-            </div>
-            <div class="col-md-6 mb-3">
-              <label class="form-label">{{ 'BOUTIQUE_SETTINGS.PHONE' | translate }}</label>
-              <input class="form-control" [(ngModel)]="model.telephone" name="telephone">
-            </div>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label"><i class="fa fa-store me-1"></i>{{ 'BOUTIQUE_SETTINGS.NAME' | translate }}</label>
+            <input class="form-control" [(ngModel)]="model.nom" name="nom" required>
           </div>
-
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label">{{ 'CLIENTS.EMAIL' | translate }}</label>
-              <input class="form-control" [(ngModel)]="model.email" name="email" type="email">
-            </div>
-            <div class="col-md-6 mb-3">
-              <label class="form-label">{{ 'BOUTIQUE_SETTINGS.ADDRESS' | translate }}</label>
-              <input class="form-control" [(ngModel)]="model.adresse" name="adresse">
-            </div>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label fw-semibold">{{ 'BOUTIQUE_SETTINGS.LOGO' | translate }}</label>
-            <div class="d-flex align-items-center gap-3 flex-wrap">
-              <div *ngIf="previewLogo" class="border rounded p-1" style="background:#f8f9fa;">
-                <img [src]="previewLogo" alt="logo" style="height:70px; max-width:160px; object-fit:contain;">
-              </div>
-              <div>
-                <input type="file" class="form-control" accept="image/*"
-                  (change)="onLogoFileSelected($event)" style="max-width:280px;">
-                <small class="text-muted d-block mt-1">PNG, JPG, SVG — max 2 Mo</small>
-              </div>
-              <button type="button" class="btn btn-primary btn-sm"
-                [disabled]="!selectedLogoFile || isUploadingLogo"
-                (click)="uploadLogo()">
-                <span *ngIf="isUploadingLogo" class="spinner-border spinner-border-sm me-1"></span>
-                {{ isUploadingLogo ? 'Upload...' : 'Enregistrer le logo' }}
-              </button>
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Numéro RC</label>
-              <input class="form-control" [(ngModel)]="model.numeroRc" name="numeroRc" placeholder="RC-XXXX">
-            </div>
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Numéro IFU</label>
-              <input class="form-control" [(ngModel)]="model.numeroIfu" name="numeroIfu" placeholder="IFU-XXXX">
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Ville</label>
-              <input class="form-control" [(ngModel)]="model.ville" name="ville">
-            </div>
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Pays</label>
-              <input class="form-control" [(ngModel)]="model.pays" name="pays">
-            </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label"><i class="fa fa-phone-alt me-1"></i>{{ 'BOUTIQUE_SETTINGS.PHONE' | translate }}</label>
+            <input class="form-control" [(ngModel)]="model.telephone" name="telephone">
           </div>
         </div>
 
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label"><i class="fa fa-envelope me-1"></i>{{ 'CLIENTS.EMAIL' | translate }}</label>
+            <input class="form-control" [(ngModel)]="model.email" name="email" type="email">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label"><i class="fa fa-map-marker-alt me-1"></i>{{ 'BOUTIQUE_SETTINGS.ADDRESS' | translate }}</label>
+            <input class="form-control" [(ngModel)]="model.adresse" name="adresse">
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label"><i class="fa fa-file-invoice me-1"></i>Numéro RC</label>
+            <input class="form-control" [(ngModel)]="model.numeroRc" name="numeroRc" placeholder="RC-XXXX">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label"><i class="fa fa-file-invoice me-1"></i>Numéro IFU</label>
+            <input class="form-control" [(ngModel)]="model.numeroIfu" name="numeroIfu" placeholder="IFU-XXXX">
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label"><i class="fa fa-city me-1"></i>Ville</label>
+            <input class="form-control" [(ngModel)]="model.ville" name="ville">
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label"><i class="fa fa-flag me-1"></i>Pays</label>
+            <input class="form-control" [(ngModel)]="model.pays" name="pays">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-4">
         <!-- Personnalisation globale -->
         <div class="section mb-4">
-          <h6 class="section-title">{{ 'BOUTIQUE_SETTINGS.CUSTOMIZATION' | translate }}</h6>
+          <h6 class="section-title"><i class="fa fa-palette me-2"></i>{{ 'BOUTIQUE_SETTINGS.CUSTOMIZATION' | translate }}</h6>
 
           <!-- Mode sombre -->
           <div class="mb-4">
@@ -133,7 +151,7 @@
           <div class="mb-4">
             <div class="d-flex align-items-center justify-content-between">
               <div>
-                <h6 class="mb-1"><i class="i-Box3 me-1"></i> {{ 'BOUTIQUE_SETTINGS.PACKAGING' | translate }}</h6>
+                <h6 class="mb-1"><i class="i-Box1 me-1"></i> {{ 'BOUTIQUE_SETTINGS.PACKAGING' | translate }}</h6>
                 <small class="text-muted">{{ 'BOUTIQUE_SETTINGS.PACKAGING_DESC' | translate }}</small>
               </div>
               <div class="form-check form-switch">
@@ -171,9 +189,10 @@
             </div>
           </div>
         </div>
+    </div>
 
-        <!-- Boutons d'action -->
-        <div class="d-flex gap-2 justify-content-end">
+    <!-- Boutons d'action -->
+    <div class="d-flex gap-2 justify-content-end mt-4">
           <button class="btn btn-primary" type="submit" [disabled]="isSaving || isLoading">
             <i class="fas fa-save me-2"></i>{{ isSaving ? ('COMMON.LOADING' | translate) : ('COMMON.SAVE' | translate) }}
           </button>
@@ -189,7 +208,7 @@
       <!-- ── Section gestion des niveaux d'emballage ─────────────────────── -->
       <div *ngIf="conditionnementActif" class="section mt-4">
         <h6 class="section-title">
-          <i class="i-Box3 me-2"></i>{{ 'BOUTIQUE_SETTINGS.PACKAGING_LEVELS' | translate }}
+          <i class="i-Box1 me-2"></i>{{ 'BOUTIQUE_SETTINGS.PACKAGING_LEVELS' | translate }}
         </h6>
         <p class="text-muted small mb-3">{{ 'BOUTIQUE_SETTINGS.PACKAGING_LEVELS_DESC' | translate }}</p>
 
@@ -360,6 +379,4 @@
       </div>
       <!-- ── Fin section niveaux ─────────────────────────────────────────── -->
 
-    </div>
-  </div>
 </div>

@@ -319,7 +319,8 @@
       <table class="table table-hover mb-0">
         <thead>
           <tr>
-            <th>N° Vente</th>
+            <!-- Colonne N° Vente retirée : le numéro complet est déjà affiché dans la modale "Détails"
+                 (bouton oeil ci-dessous) — la garder ici ne servait qu'à réduire l'espace des boutons d'action. -->
             <th>{{ 'COMMON.DATE' | translate }}</th>
             <th>{{ 'COMMON.STATUS' | translate }}</th>
             <th>{{ 'CLIENTS.NAME' | translate }}</th>
@@ -334,7 +335,6 @@
         </thead>
         <tbody>
           <tr *ngFor="let vente of paginatedVentes">
-            <td><strong>{{ vente.numeroVente }}</strong><br><small class="text-muted">ID:{{ vente.id }}</small></td>
             <td>{{ formatDateShort(vente.dateVente) }}<br><small class="text-muted">{{ formatDate(vente.dateVente).split(' ')[1] }}</small></td>
             <td><span [class]="'badge ' + getVenteTypeBadgeClass(vente)">{{ getVenteTypeLabel(vente) }}</span></td>
             <td>{{ vente.clientNom || '-' }}</td>
@@ -345,18 +345,21 @@
             <td><span [class]="'badge ' + getModePaiementClass(vente.modePaiement)">{{ getModePaiementLabel(vente.modePaiement) }}</span></td>
             <td><span [class]="'badge ' + getVenteStatusBadgeClass(vente)">{{ getVenteStatusLabel(vente) }}</span></td>
             <td class="text-center">
-              <div class="btn-group btn-group-sm">
+              <div class="btn-group btn-group-sm btn-group-icons">
                 <button type="button" class="btn btn-outline-info" (click)="openVenteDetailModal(vente); $event.stopPropagation()" title="Détails"><i class="fa fa-eye"></i> Détails</button>
                 <button type="button" class="btn btn-outline-secondary" (click)="ouvrirModificationLignes(vente); $event.stopPropagation()" title="Changer des produits" *ngIf="canManageVentes && !vente.annulee">
                   <i class="fa fa-exchange-alt"></i> Modifier
                 </button>
                 <button type="button" class="btn btn-outline-danger" (click)="openAnnulationModal(vente); $event.stopPropagation()" title="Annuler" *ngIf="canManageVentes && peutAnnulerVente(vente)"><i class="fa fa-ban"></i> Annuler</button>
                 <button type="button" class="btn btn-outline-primary" (click)="openFactureDateModal(vente.id); $event.stopPropagation()" title="Facture"><i class="fa fa-file-pdf"></i> Facture</button>
+                <button type="button" class="btn btn-outline-success" (click)="envoyerFactureWhatsApp(vente); $event.stopPropagation()"
+                        [title]="vente.clientTelephone ? 'Envoyer la facture par WhatsApp' : 'Ajoutez un numéro de téléphone au client pour activer l\'envoi WhatsApp'"
+                        [disabled]="!vente.clientTelephone">💬 WhatsApp</button>
               </div>
             </td>
           </tr>
           <tr *ngIf="filteredVentes.length === 0">
-            <td colspan="11" class="text-center py-5">
+            <td colspan="10" class="text-center py-5">
               <div class="app-empty-state">
                 <i class="fa fa-shopping-cart fa-3x mb-3"></i>
                 <p>{{ 'PROMO.EMPTY' | translate }}</p>
@@ -2030,6 +2033,10 @@ MODALE NOUVELLE VENTE À CRÉDIT (ancienne)
           <label class="form-label">Date à afficher sur la facture</label>
           <input type="date" class="form-control" [(ngModel)]="factureDateCustom" />
           <small class="text-muted">Vous pouvez modifier cette date librement ; elle ne sera pas enregistrée en base.</small>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Chauffeur <span class="text-muted">(optionnel)</span></label>
+          <input type="text" class="form-control" [(ngModel)]="factureChauffeur" placeholder="Nom du chauffeur (livraison)..." />
         </div>
       </div>
       <div class="modal-footer">

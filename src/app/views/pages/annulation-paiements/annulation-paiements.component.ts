@@ -171,7 +171,9 @@ export class AnnulationPaiementsComponent implements OnInit {
   }
 
   get totalMontant(): number {
-    return this.listeActive.reduce((sum, x) => sum + (x.montant || 0), 0);
+    return this.listeActive
+      .filter(x => !x.annule)
+      .reduce((sum, x) => sum + (x.montant || 0), 0);
   }
 
   get countAnnules(): number {
@@ -195,7 +197,7 @@ export class AnnulationPaiementsComponent implements OnInit {
   }
 
   formatMontant(v: number): string {
-    return new Intl.NumberFormat('fr-FR').format(v || 0) + ' F';
+    return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(v || 0) + ' F';
   }
 
   formatDate(d: string): string {

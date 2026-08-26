@@ -80,8 +80,8 @@
     <div class="selector-group">
       <label>Fournisseur</label>
       <select class="form-control" [(ngModel)]="filtreFournisseurId" (change)="onFournisseurChange()">
-        <option [value]="0">-- Sélectionnez un fournisseur --</option>
-        <option *ngFor="let f of fournisseurs" [value]="f.id">{{ f.nom }} ({{ f.code }})</option>
+        <option [ngValue]="0">-- Sélectionnez un fournisseur --</option>
+        <option *ngFor="let f of fournisseurs" [ngValue]="f.id">{{ f.nom }} ({{ f.code }})</option>
       </select>
     </div>
   </div>
@@ -326,24 +326,27 @@
               </td>
               <td class="text-right font-weight-bold">{{ fmt(achat.montantTotal) }}</td>
               <td class="text-right text-success">{{ fmt(achat.montantPaye) }}</td>
-              <td class="text-right" [class.text-danger]="achat.montantRestant > 0">{{ fmt(achat.montantRestant) }}</td>
+              <td class="text-right" [class.text-danger]="achat.montantRestant > 0 && achat.statut !== 'ANNULE'">{{ fmt(achat.statut === 'ANNULE' ? 0 : achat.montantRestant) }}</td>
               <td class="text-center">
                 <span class="badge" [class]="statutClass(achat.statut)">{{ statutLabel(achat.statut) }}</span>
               </td>
-              <td class="btn-group-icons">
+              <td class="btn-group-icons d-flex flex-wrap">
                 <button class="btn btn-xs btn-success mr-1" (click)="ouvrirPaiementModal(achat)"
                         *ngIf="achat.statut !== 'PAYE' && achat.statut !== 'ANNULE'"
                         title="Payer">
-                  <i class="i-Money-Bag"></i>
+                  <i class="i-Money-Bag"></i> Payer
                 </button>
                 <button class="btn btn-xs btn-outline-danger mr-1" (click)="confirmerAnnulerAchat(achat)"
                         *ngIf="achat.statut !== 'ANNULE'"
                         [disabled]="isAnnulationEnCours"
                         title="Annuler cet achat">
-                  <i class="fa fa-ban"></i>
+                  <i class="fa fa-ban"></i> Annuler
                 </button>
                 <button class="btn btn-xs btn-outline-info ml-1" (click)="toggleDetailAchat(achat)" [title]="achatDetail?.id === achat.id ? 'Masquer les produits' : 'Voir les produits de cet achat'">
-                  <i class="fa" [class.fa-chevron-down]="achatDetail?.id !== achat.id" [class.fa-chevron-up]="achatDetail?.id === achat.id"></i>
+                  <i class="fa" [class.fa-chevron-down]="achatDetail?.id !== achat.id" [class.fa-chevron-up]="achatDetail?.id === achat.id"></i> Détail
+                </button>
+                <button class="btn btn-xs btn-outline-success ml-1" (click)="envoyerAchatWhatsApp(achat)" title="Envoyer cet achat par WhatsApp">
+                  💬 WhatsApp
                 </button>
               </td>
             </tr>
@@ -403,6 +406,9 @@
           </button>
         </div>
         <div class="toolbar-right">
+          <button class="btn btn-sm btn-outline-secondary mr-2" (click)="telechargerPdfPaiements()" [disabled]="!paiements.length">
+            <i class="i-File-Download mr-1"></i> PDF paiements
+          </button>
           <button class="btn btn-sm btn-outline-primary mr-2" (click)="ouvrirAvanceModal()">
             <i class="i-Add mr-1"></i> Avance
           </button>
@@ -507,6 +513,9 @@
           </button>
           <button class="btn btn-sm btn-outline-secondary" (click)="telechargerPdfSituation()" [disabled]="!situation">
             <i class="i-File-Download mr-1"></i> PDF situation
+          </button>
+          <button class="btn btn-sm btn-outline-success ml-2" (click)="envoyerSituationWhatsApp()" [disabled]="!situation">
+            💬 Envoyer par WhatsApp
           </button>
         </div>
       </div>
@@ -613,37 +622,15 @@
           </div>
         </div>
 
-        <!-- Top 5 produits achetés (depuis achats chargés) -->
-        <div class="mt-3 mb-3" *ngIf="achats.length > 0 && topProduits.length > 0">
-          <h5 class="section-title">Top 5 produits les plus achetés</h5>
-          <div class="table-wrapper">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Produit</th>
-                  <th class="text-center">Quantité totale</th>
-                  <th class="text-right">Total achats</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let item of topProduits; let i = index">
-                  <td>
-                    <span class="badge badge-secondary mr-1" style="min-width:22px">{{ i + 1 }}</span>
-                    {{ item.nom }}
-                  </td>
-                  <td class="text-center font-weight-bold">{{ item.quantite }}</td>
-                  <td class="text-right font-weight-bold">{{ fmt(item.total) }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <p class="text-muted" style="font-size:0.75rem;margin-top:4px">
-            <i class="fa fa-info-circle mr-1"></i> Calculé depuis les achats chargés dans l'onglet Achats. Chargez les achats d'abord pour voir ce résumé.
-          </p>
-        </div>
-        <div class="empty-state-sm mt-2 mb-3" *ngIf="achats.length === 0">
-          <i class="i-Shop"></i>
-          <span>Chargez les achats (onglet Achats) pour voir le top produits.</span>
+        <!-- Raccourcis vers l'historique complet — évite de dupliquer ici les tableaux
+             déjà disponibles dans les onglets Achats / Paiements & Avances. -->
+        <div class="mt-4 mb-2 d-flex flex-wrap" style="gap:.5rem">
+          <button class="btn btn-sm btn-outline-primary" (click)="changerOnglet('achats')">
+            <i class="i-Shop mr-1"></i> Voir tous les achats
+          </button>
+          <button class="btn btn-sm btn-outline-primary" (click)="changerOnglet('paiements')">
+            <i class="i-Money-Bag mr-1"></i> Voir tous les paiements & avances
+          </button>
         </div>
 
         <!-- Infos contact -->
@@ -662,61 +649,6 @@
           </div>
         </div>
 
-        <!-- Derniers achats -->
-        <div class="mt-4" *ngIf="situation.achatsRecents?.length">
-          <h5 class="section-title">Derniers achats</h5>
-          <div class="table-wrapper">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th class="text-right">Total</th>
-                  <th class="text-right">Payé</th>
-                  <th class="text-right">Restant</th>
-                  <th class="text-center">Statut</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let a of situation.achatsRecents">
-                  <td>{{ formatDate(a.dateAchat || a.dateCreation) }}</td>
-                  <td class="text-right font-weight-bold">{{ fmt(a.montantTotal) }}</td>
-                  <td class="text-right text-success">{{ fmt(a.montantPaye) }}</td>
-                  <td class="text-right" [class.text-danger]="a.montantRestant > 0">{{ fmt(a.montantRestant) }}</td>
-                  <td class="text-center">
-                    <span class="badge" [class]="statutClass(a.statut)">{{ statutLabel(a.statut) }}</span>
-                  </td>
-                  <td>
-                    <button class="btn btn-xs btn-success" (click)="ouvrirPaiementModal(a)"
-                            *ngIf="a.statut !== 'PAYE' && a.statut !== 'ANNULE'">
-                      <i class="i-Money-Bag"></i> Payer
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Derniers paiements -->
-        <div class="mt-4" *ngIf="situation.paiementsRecents?.length">
-          <h5 class="section-title">Derniers paiements</h5>
-          <div class="table-wrapper">
-            <table class="data-table">
-              <thead>
-                <tr><th>Date</th><th class="text-right">Montant</th><th>Mode</th><th>Référence</th></tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let p of situation.paiementsRecents">
-                  <td>{{ formatDate(p.datePaiement) }}</td>
-                  <td class="text-right font-weight-bold text-success">{{ fmt(p.montant) }}</td>
-                  <td>{{ p.modePaiement }}</td>
-                  <td>{{ p.reference || '—' }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
       </div>
 
       <div class="empty-state" *ngIf="!isLoadingSituation && !situation">
@@ -824,7 +756,7 @@
       <div class="form-row">
         <div class="form-group col-md-6">
           <label>Fournisseur <span class="text-danger">*</span></label>
-          <select class="form-control" [(ngModel)]="achatForm.fournisseurId">
+          <select class="form-control" [(ngModel)]="achatForm.fournisseurId" (change)="rafraichirAvanceDisponible()">
             <option [value]="0">-- Sélectionnez --</option>
             <option *ngFor="let f of fournisseurs" [value]="f.id">{{ f.nom }}</option>
           </select>
@@ -835,39 +767,150 @@
         </div>
       </div>
 
-      <h5 class="section-title">Lignes d'achat</h5>
-      <div class="ligne-achat" *ngFor="let ligne of achatForm.lignes; let i = index">
-        <div class="form-row align-items-center">
-          <div class="form-group col-md-5">
-            <label *ngIf="i === 0">Produit</label>
-            <select class="form-control" [(ngModel)]="ligne.produitId">
-              <option [value]="0">-- Produit --</option>
-              <option *ngFor="let p of produits" [value]="p.id">{{ p.nom }}</option>
-            </select>
-          </div>
-          <div class="form-group col-md-2">
-            <label *ngIf="i === 0">Quantité</label>
-            <input type="number" class="form-control" [(ngModel)]="ligne.quantite" min="1" />
-          </div>
-          <div class="form-group col-md-2">
-            <label *ngIf="i === 0">Prix achat</label>
-            <input type="number" class="form-control" [(ngModel)]="ligne.prixAchatUnitaire" min="0" />
-          </div>
-          <div class="form-group col-md-2">
-            <label *ngIf="i === 0">Sous-total</label>
-            <input type="text" class="form-control bg-light" readonly [value]="fmt((ligne.quantite || 0) * (ligne.prixAchatUnitaire || 0))" />
-          </div>
-          <div class="form-group col-md-1 d-flex align-items-end">
-            <button class="btn btn-sm btn-outline-danger" (click)="retirerLigne(i)" [disabled]="achatForm.lignes.length === 1">
-              <i class="i-Trash"></i>
-            </button>
-          </div>
+      <h5 class="section-title">Ajouter un produit</h5>
+      <ul class="nav nav-tabs mb-3">
+        <li class="nav-item">
+          <a class="nav-link" [class.active]="tempLigneAchat.nouveauProduitNom === undefined"
+             (click)="tempLigneAchat.nouveauProduitNom = undefined">
+            <i class="i-Box mr-1"></i> Produit existant
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" [class.active]="tempLigneAchat.nouveauProduitNom !== undefined"
+             (click)="tempLigneAchat.nouveauProduitNom = ''; tempLigneAchat.produitId = undefined">
+            <i class="i-Add mr-1"></i> Nouveau produit
+          </a>
+        </li>
+      </ul>
+
+      <!-- Produit existant -->
+      <div class="form-row" *ngIf="tempLigneAchat.nouveauProduitNom === undefined">
+        <div class="form-group col-md-12">
+          <label>Sélectionner un produit</label>
+          <select class="form-control" [(ngModel)]="tempLigneAchat.produitId" (change)="onProduitSelectionne()">
+            <option [ngValue]="undefined">-- Choisir un produit --</option>
+            <option *ngFor="let p of produits" [ngValue]="p.id">{{ p.nom }} — {{ p.prixAchat | number:'1.0-0' }} FCFA</option>
+          </select>
         </div>
       </div>
 
-      <button class="btn btn-sm btn-outline-primary mb-3" (click)="ajouterLigne()">
-        <i class="i-Add mr-1"></i> Ajouter une ligne
-      </button>
+      <!-- Nouveau produit -->
+      <div class="form-row" *ngIf="tempLigneAchat.nouveauProduitNom !== undefined">
+        <div class="form-group col-md-6">
+          <label>Nom du nouveau produit <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" [(ngModel)]="tempLigneAchat.nouveauProduitNom" placeholder="Nom du produit" />
+        </div>
+        <div class="form-group col-md-6">
+          <label>Catégorie <span class="text-danger">*</span></label>
+          <select class="form-control" [(ngModel)]="tempLigneAchat.nouvelleCategorieId">
+            <option [ngValue]="undefined">-- Sélectionnez une catégorie --</option>
+            <option *ngFor="let cat of categoriesPourNouveauProduit" [ngValue]="cat.id">{{ cat.nom }}</option>
+          </select>
+        </div>
+        <div class="form-group col-md-4">
+          <label>Code barre</label>
+          <input type="text" class="form-control" [(ngModel)]="tempLigneAchat.codeBarre" placeholder="Code barre" />
+        </div>
+        <div class="form-group col-md-4">
+          <label>Unité de mesure</label>
+          <select class="form-control" [(ngModel)]="tempLigneAchat.uniteMesure">
+            <option [ngValue]="undefined">Sélectionner</option>
+            <option value="kg">kg</option>
+            <option value="g">g</option>
+            <option value="L">litre</option>
+            <option value="ml">millilitre</option>
+            <option value="pce">pièce</option>
+            <option value="carton">carton</option>
+            <option value="sac">sac</option>
+          </select>
+        </div>
+        <div class="form-group col-md-4">
+          <label>Origine</label>
+          <input type="text" class="form-control" [(ngModel)]="tempLigneAchat.origine" placeholder="Origine" />
+        </div>
+        <div class="form-group col-md-6">
+          <label>Description</label>
+          <textarea class="form-control" rows="2" [(ngModel)]="tempLigneAchat.description" placeholder="Description du produit"></textarea>
+        </div>
+        <div class="form-group col-md-3">
+          <label>Prix de vente (optionnel)</label>
+          <input type="number" class="form-control" [(ngModel)]="tempLigneAchat.prixVente" step="0.01" placeholder="Auto calculé" />
+        </div>
+        <div class="form-group col-md-3">
+          <label>Seuil d'alerte</label>
+          <input type="number" class="form-control" [(ngModel)]="tempLigneAchat.seuilAlerte" placeholder="10" />
+        </div>
+        <div class="form-group col-md-12 form-check">
+          <input class="form-check-input" type="checkbox" [(ngModel)]="tempLigneAchat.bio" id="bioCheckAchatFrs" />
+          <label class="form-check-label" for="bioCheckAchatFrs">Produit Bio</label>
+        </div>
+      </div>
+
+      <div class="form-row align-items-end">
+        <div class="form-group col-md-4">
+          <label>Quantité <span class="text-danger">*</span></label>
+          <input type="number" class="form-control" [(ngModel)]="tempLigneAchat.quantite" min="1" />
+        </div>
+        <div class="form-group col-md-4">
+          <label>Prix achat unitaire <span class="text-danger">*</span></label>
+          <input type="number" class="form-control" [(ngModel)]="tempLigneAchat.prixAchatUnitaire" min="0" step="0.01" />
+        </div>
+        <div class="form-group col-md-4">
+          <button class="btn btn-sm btn-success w-100" (click)="ajouterLigneAchat()">
+            <i class="i-Add mr-1"></i> Ajouter à l'achat
+          </button>
+        </div>
+      </div>
+
+      <hr>
+      <h5 class="section-title">Produits de l'achat</h5>
+      <div class="empty-state-sm" *ngIf="!achatForm.lignes.length">
+        <span>Aucun produit ajouté pour l'instant.</span>
+      </div>
+      <div class="table-wrapper" *ngIf="achatForm.lignes.length">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Produit</th>
+              <th class="text-center">Qté</th>
+              <th class="text-right">Prix unitaire</th>
+              <th class="text-right">Sous-total</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let ligne of achatForm.lignes; let i = index">
+              <td>
+                {{ nomProduitLigne(ligne) }}
+                <span class="badge badge-info ml-1" *ngIf="!ligne.produitId">nouveau</span>
+              </td>
+              <td class="text-center">{{ ligne.quantite }}</td>
+              <td class="text-right">{{ fmt(ligne.prixAchatUnitaire) }}</td>
+              <td class="text-right font-weight-bold">{{ fmt(ligne.quantite * ligne.prixAchatUnitaire) }}</td>
+              <td class="text-center">
+                <button class="btn btn-xs btn-outline-danger" (click)="supprimerLigneAchat(i)" title="Retirer">
+                  <i class="i-Trash"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Avance fournisseur disponible — permet de déduire un achat d'une avance déjà
+           versée à ce fournisseur, au lieu de payer une deuxième fois. -->
+      <div class="alert alert-success py-2" *ngIf="achatForm.fournisseurId && avanceFournisseurDisponible > 0">
+        <i class="i-Wallet mr-1"></i><strong>Avance disponible :</strong> {{ fmt(avanceFournisseurDisponible) }}
+      </div>
+      <div class="form-group" *ngIf="achatForm.fournisseurId && avanceFournisseurDisponible > 0">
+        <label class="text-success font-weight-bold">Déduire de l'avance</label>
+        <input type="number" class="form-control" [(ngModel)]="avanceFournisseurUtilisee"
+               [max]="maxAvanceUtilisable" min="0" step="0.01" />
+        <small class="text-muted">Max : {{ fmt(maxAvanceUtilisable) }}</small>
+      </div>
+      <div class="alert alert-primary py-2" *ngIf="(avanceFournisseurUtilisee || 0) > 0">
+        <i class="i-Check mr-1"></i> Avance utilisée : {{ fmt(avanceFournisseurUtilisee) }} (déjà payé)
+      </div>
 
       <div class="achat-total-row">
         <div class="form-group col-md-4">
@@ -881,7 +924,7 @@
         <div class="form-group col-md-4">
           <label>Reste à payer</label>
           <input type="text" class="form-control bg-light text-danger" readonly
-                 [value]="fmt(montantTotalAchat - (achatForm.montantPaye || 0))" />
+                 [value]="fmt(montantTotalAchat - (achatForm.montantPaye || 0) - (avanceFournisseurUtilisee || 0))" />
         </div>
       </div>
     </div>

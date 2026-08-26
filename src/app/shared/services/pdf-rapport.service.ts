@@ -216,7 +216,7 @@ export class PdfRapportService {
 
   async genererRapportVentes(ventes: any[]): Promise<void> {
     const total = ventes.reduce((s, v) => s + (v.montantTotal || v.total || 0), 0);
-    const totalFormate = total.toLocaleString('fr-FR') + ' FCFA';
+    const totalFormate = total.toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + ' FCFA';
 
     const config: RapportConfig = {
       titre: 'Rapport des ventes',
@@ -230,7 +230,7 @@ export class PdfRapportService {
           v.reference || v.id || '-',
           v.clientNom || v.nomClient || 'Comptant',
           v.modePaiement || v.mode || '-',
-          (v.montantTotal || v.total || 0).toLocaleString('fr-FR') + ' F'
+          (v.montantTotal || v.total || 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + ' F'
         ]),
         totaux: ['', '', '', 'TOTAL', totalFormate]
       }]
@@ -252,10 +252,10 @@ export class PdfRapportService {
           p.categorie || '-',
           p.stock || 0,
           p.seuilAlerte || 5,
-          (p.prixAchat || 0).toLocaleString('fr-FR') + ' F',
-          ((p.stock || 0) * (p.prixAchat || 0)).toLocaleString('fr-FR') + ' F'
+          (p.prixAchat || 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + ' F',
+          ((p.stock || 0) * (p.prixAchat || 0)).toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + ' F'
         ]),
-        totaux: ['', '', '', '', 'Valeur totale', valeurTotal.toLocaleString('fr-FR') + ' FCFA']
+        totaux: ['', '', '', '', 'Valeur totale', valeurTotal.toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + ' FCFA']
       }]
     };
     await this.genererPDF(config);
@@ -266,19 +266,19 @@ export class PdfRapportService {
 
     const config: RapportConfig = {
       titre: 'Rapport des credits',
-      sousTitre: `${credits.length} credit(s) - Reste du : ${totalDu.toLocaleString('fr-FR')} FCFA`,
+      sousTitre: `${credits.length} credit(s) - Reste du : ${totalDu.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} FCFA`,
       sections: [{
         titre: 'Credits clients',
         colonnes: ['Client', 'Date', 'Montant', 'Verse', 'Restant', 'Statut'],
         donnees: credits.map(c => [
           c.clientNom || c.nomClient || '-',
           c.dateCredit ? new Date(c.dateCredit).toLocaleDateString('fr-FR') : '-',
-          (c.montant || 0).toLocaleString('fr-FR') + ' F',
-          (c.montantVerse || 0).toLocaleString('fr-FR') + ' F',
-          (c.montantRestant || c.montant || 0).toLocaleString('fr-FR') + ' F',
+          (c.montant || 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + ' F',
+          (c.montantVerse || 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + ' F',
+          (c.montantRestant || c.montant || 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + ' F',
           c.statut || '-'
         ]),
-        totaux: ['', '', '', 'Restant du', totalDu.toLocaleString('fr-FR') + ' FCFA', '']
+        totaux: ['', '', '', 'Restant du', totalDu.toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + ' FCFA', '']
       }]
     };
     await this.genererPDF(config);
@@ -297,7 +297,7 @@ export class PdfRapportService {
           t.boutiqueDestNom || '-',
           t.statut || '-',
           t.typePaiement || '-',
-          (t.montantPaiement || 0).toLocaleString('fr-FR') + ' F'
+          (t.montantPaiement || 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + ' F'
         ])
       }]
     };

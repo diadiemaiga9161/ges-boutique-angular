@@ -392,7 +392,7 @@ export class DepotGardeComponent implements OnInit {
   }
 
   formatMontant(m: number): string {
-    return new Intl.NumberFormat('fr-FR').format(m) + ' FCFA';
+    return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(m) + ' FCFA';
   }
 
   getPourcentageRetire(depot: DepotGarde): number {

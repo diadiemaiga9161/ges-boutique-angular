@@ -5,6 +5,8 @@ import { EmployeService, Employe } from '../../../shared/services/employe.servic
 import { PaiementEmployeService, PaiementEmploye, PaiementEmployeRequest, StatsPaiementEmploye } from '../../../shared/services/paiement-employe.service';
 import { AuthService } from '../../../shared/services/auth.service';
 import { FactureService } from '../../../shared/services/facture.service';
+import { BoutiqueService } from '../../../shared/services/boutique.service';
+import { formaterMessageWhatsApp, envoyerWhatsAppDirect } from '../../../shared/utils/whatsapp.util';
 import Swal from 'sweetalert2';
 import { TranslateModule } from '@ngx-translate/core';
 
@@ -95,7 +97,8 @@ export class PaiementEmployeComponent implements OnInit {
     private employeService: EmployeService,
     private paiementService: PaiementEmployeService,
     private authService: AuthService,
-    private factureService: FactureService
+    private factureService: FactureService,
+    private boutiqueService: BoutiqueService
   ) {}
 
   ngOnInit(): void {
@@ -251,14 +254,44 @@ export class PaiementEmployeComponent implements OnInit {
   }
 
   formatMontant(m: number): string {
-    return new Intl.NumberFormat('fr-FR').format(m) + ' FCFA';
+    return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(m) + ' FCFA';
+  }
+
+  /** Envoi du reçu de paiement par WhatsApp directement au numéro enregistré sur la fiche employé. */
+  envoyerRecuWhatsApp(p: PaiementEmploye): void {
+    const employe = this.employes.find(e => e.id === p.employeId);
+    const telephone = employe?.telephone;
+    const boutique = this.boutiqueService.getInfo();
+    const periodeLabel = p.periodeFin && p.periodeFin !== p.periodeDebut ? `${p.periodeDebut} à ${p.periodeFin}` : p.periodeDebut;
+
+    const message = formaterMessageWhatsApp({
+      boutiqueNom: boutique.nom || 'Ges Boutique',
+      boutiqueTelephone: boutique.telephone,
+      titreDocument: 'Reçu de paiement de salaire',
+      personneLabel: 'Employé',
+      personneNom: p.employeNomComplet,
+      date: p.datePaiement ? new Date(p.datePaiement).toLocaleDateString('fr-FR') : new Date().toLocaleDateString('fr-FR'),
+      lignes: [`Poste : ${p.employePoste || '—'}`, `Période : ${periodeLabel}`, `Nombre de mois : ${p.nombreMois}`],
+      totaux: [{ label: 'Montant payé', valeur: this.formatMontant(p.montant) }],
+      notePied: p.observation
+    });
+
+    if (!envoyerWhatsAppDirect(telephone, message)) {
+      Swal.fire({
+        icon: 'info',
+        title: 'Aucun numéro enregistré',
+        text: `Ajoutez un numéro de téléphone à la fiche de ${p.employeNomComplet} pour activer l'envoi WhatsApp.`,
+        timer: 3500,
+        showConfirmButton: false
+      });
+    }
   }
 
   telechargerRecuPaiement(p: PaiementEmploye): void {
     const qrData = encodeURIComponent(`PAIEMENT_EMPLOYE\nEmployé: ${p.employeNomComplet}\nPoste: ${p.employePoste || ''}\nMontant: ${p.montant} FCFA\nDate: ${p.datePaiement ? new Date(p.datePaiement).toLocaleDateString('fr-FR') : ''}`);
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${qrData}`;
-    const montantFmt = (p.montant || 0).toLocaleString('fr-FR');
-    const salaireFmt = (p.salaireMensuel || 0).toLocaleString('fr-FR');
+    const montantFmt = (p.montant || 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 });
+    const salaireFmt = (p.salaireMensuel || 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 });
     const datePaiement = p.datePaiement ? new Date(p.datePaiement).toLocaleDateString('fr-FR', { day:'2-digit', month:'long', year:'numeric' }) : '—';
 
     const html = `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>Reçu paiement — ${p.employeNomComplet}</title>

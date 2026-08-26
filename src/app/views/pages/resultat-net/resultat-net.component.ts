@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { ResultatNetService, ResultatNet } from '../../../shared/services/resultat-net.service';
+import { FactureService } from '../../../shared/services/facture.service';
 import { TranslateModule } from '@ngx-translate/core';
 
 type Periode = 'JOURNALIER' | 'MENSUEL' | 'ANNUEL';
@@ -35,7 +36,7 @@ export class ResultatNetComponent implements OnInit, OnDestroy {
 
   private subs: Subscription[] = [];
 
-  constructor(private resultatService: ResultatNetService) {}
+  constructor(private resultatService: ResultatNetService, private factureService: FactureService) {}
 
   ngOnInit(): void { this.charger(); }
 
@@ -65,6 +66,28 @@ export class ResultatNetComponent implements OnInit, OnDestroy {
   }
 
   fmt(v: number): string { return this.resultatService.formatPrice(v); }
+
+  imprimerResultatNet(): void {
+    if (!this.data) return;
+    const d = this.data;
+    this.factureService.ouvrirDocumentPDF({
+      titre: 'Résultat Net',
+      sousTitre: `${d.periode} — ${d.dateDebut} → ${d.dateFin}`,
+      colonnes: ['Indicateur', 'Montant'],
+      lignes: [
+        ['Bénéfices', this.fmt(d.benefices)],
+        ['Bonus fournisseurs', this.fmt(d.bonusFournisseurs)],
+        ['Dépenses', `− ${this.fmt(d.depenses)}`],
+        ['Résultat net', this.fmt(d.resultatNet)],
+        ['État', d.etat === 'GAIN' ? 'Gain' : 'Perte']
+      ],
+      totaux: [
+        { label: 'Résultat net', valeur: this.fmt(d.resultatNet) },
+        { label: 'État', valeur: d.etat === 'GAIN' ? 'Gain' : 'Perte' }
+      ],
+      pied: `Période : ${d.periode} (${d.dateDebut} → ${d.dateFin})`
+    });
+  }
 
   get pctBonus(): number {
     if (!this.data || this.data.benefices + this.data.bonusFournisseurs === 0) return 0;

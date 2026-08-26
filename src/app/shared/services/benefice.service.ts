@@ -10,6 +10,17 @@ export interface BeneficeLigne {
   nombreVentes: number;
 }
 
+export interface VenteAnnuleeTrace {
+  venteId: number;
+  numeroVente: string;
+  dateVente: string;
+  montantTotal: number;
+  beneficePerdu: number;
+  dateAnnulation: string;
+  motifAnnulation?: string;
+  annulePar?: string;
+}
+
 export interface BeneficeData {
   periode: 'JOURNALIER' | 'HEBDOMADAIRE' | 'MENSUEL' | 'ANNUEL';
   dateDebut: string;
@@ -20,6 +31,8 @@ export interface BeneficeData {
   margeMoyenne: number;
   evolution: number;
   lignes: BeneficeLigne[];
+  ventesAnnulees?: VenteAnnuleeTrace[];
+  beneficePerduAnnulations?: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -72,6 +85,24 @@ export class BeneficeService {
       </tr>
     `).join('');
 
+    const ventesAnnulees = data.ventesAnnulees || [];
+    const annulationsRows = ventesAnnulees.map(v => `
+      <tr>
+        <td>${v.numeroVente}</td>
+        <td>${new Date(v.dateAnnulation).toLocaleDateString('fr-FR')}</td>
+        <td>${v.annulePar || '—'}</td>
+        <td>${v.motifAnnulation || '—'}</td>
+        <td style="text-align:right;color:#ef4444">${this.formaterPrix(v.beneficePerdu)}</td>
+      </tr>
+    `).join('');
+    const annulationsSection = ventesAnnulees.length > 0 ? `
+      <h2 style="color:#ef4444;font-size:15px;margin-top:24px">Ventes annulées durant la période (traçabilité)</h2>
+      <table>
+        <thead><tr><th>N° Vente</th><th>Annulée le</th><th>Par</th><th>Motif</th><th style="text-align:right">Bénéfice perdu</th></tr></thead>
+        <tbody>${annulationsRows}</tbody>
+        <tfoot><tr><td colspan="4">TOTAL BÉNÉFICE PERDU</td><td style="text-align:right;color:#ef4444">${this.formaterPrix(data.beneficePerduAnnulations || 0)}</td></tr></tfoot>
+      </table>` : '';
+
     const html = `<!doctype html><html><head><meta charset="utf-8"><title>${titre}</title>
       <style>
         body{font-family:Arial,sans-serif;margin:24px;color:#111}
@@ -103,6 +134,7 @@ export class BeneficeService {
         <tbody>${lignesRows}</tbody>
         <tfoot><tr><td>TOTAL</td><td style="text-align:right;color:#10b981">${this.formaterPrix(data.beneficeTotal)}</td><td style="text-align:right">${data.nombreVentes}</td></tr></tfoot>
       </table>` : ''}
+      ${annulationsSection}
       <br><button onclick="window.print()">Imprimer</button>
       <button style="margin-left:10px;background:#ef4444;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer" onclick="window.close()">Fermer</button>
       <script>window.addEventListener('afterprint',function(){window.close();});<\/script>

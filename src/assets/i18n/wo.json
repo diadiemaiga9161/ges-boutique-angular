@@ -75,6 +75,7 @@
     "SAFE": "Dépôt yi",
     "SUPPLIER_OBJ": "Objectif fournisseur yi",
     "SUPPLIER_BONUS": "Bonus fournisseur yi",
+    "SELLER_BONUS": "Yóol yu jaaykat yi",
     "EXPENSES": "Depenses yi",
     "NET_RESULT": "Résultat bi",
     "SUPPLIERS": "Fournisseur yi",
@@ -104,6 +105,7 @@
   },
   "PRODUCTS": {
     "TITLE": "Ndaje yi",
+    "SUBTITLE": "Yorël sa liste jaay yi",
     "ADD": "Ndaj bu bees",
     "NAME": "Tur u ndaj bi",
     "PRICE_SELL": "Prix jaay bi",

@@ -156,8 +156,8 @@
         
         <div class="form-group">
           <label for="newTelephone">Téléphone *</label>
-          <div style="display:flex;gap:6px;align-items:center">
-            <select [(ngModel)]="selectedCountryCode" style="flex:0 0 auto;padding:6px 4px;border:1px solid #ced4da;border-radius:4px;font-size:14px">
+          <div style="display:flex;gap:6px;align-items:center;min-width:0">
+            <select [(ngModel)]="selectedCountryCode" style="flex:0 0 auto;max-width:90px;padding:6px 4px;border:1px solid #ced4da;border-radius:4px;font-size:14px">
               <option *ngFor="let c of countryCodes" [value]="c.code">{{ c.flag }} {{ c.code }}</option>
             </select>
             <input
@@ -165,12 +165,29 @@
               id="newTelephone"
               [(ngModel)]="newVendeurPhoneNumber"
               placeholder="6 12 34 56 78"
-              style="flex:1"
+              style="flex:1;min-width:0"
             >
           </div>
           <small class="text-muted">Numéro complet : {{ selectedCountryCode }}{{ newVendeurPhoneNumber }}</small>
         </div>
-        
+
+        <div class="form-group">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:normal">
+            <input type="checkbox" [(ngModel)]="newVendeurEstEmploye" style="width:auto">
+            Ce vendeur est aussi employé (paie)
+          </label>
+          <div *ngIf="newVendeurEstEmploye" style="display:flex;gap:8px;margin-top:8px">
+            <div style="flex:1">
+              <label for="newPosteEmploye" style="font-size:12px">Poste</label>
+              <input type="text" id="newPosteEmploye" [(ngModel)]="newVendeurPoste" placeholder="Vendeur">
+            </div>
+            <div style="flex:1">
+              <label for="newSalaireEmploye" style="font-size:12px">Salaire mensuel (FCFA)</label>
+              <input type="number" id="newSalaireEmploye" [(ngModel)]="newVendeurSalaire" min="0">
+            </div>
+          </div>
+        </div>
+
         <div class="form-group">
           <label for="newPassword">Mot de passe *</label>
           <div class="password-input">
@@ -354,6 +371,19 @@
           
           <div class="edit-form">
             <div class="form-group">
+              <label for="editUsername">Nom d'utilisateur *</label>
+              <input
+                type="text"
+                id="editUsername"
+                [(ngModel)]="editedUser.username"
+                [class.invalid]="editedUser.username && !editedUser.username.trim()"
+              >
+              <div *ngIf="editedUser.username && !editedUser.username.trim()" class="validation-error">
+                Le nom d'utilisateur est obligatoire
+              </div>
+            </div>
+
+            <div class="form-group">
               <label for="editNomComplet">Nom complet *</label>
               <input 
                 type="text" 
@@ -381,18 +411,48 @@
             
             <div class="form-group">
               <label for="editTelephone">Téléphone *</label>
-              <input 
-                type="tel" 
-                id="editTelephone"
-                [(ngModel)]="editedUser.telephone"
-                maxlength="10"
-                [class.invalid]="editedUser.telephone && !validatePhone(editedUser.telephone)"
-              >
-              <div *ngIf="editedUser.telephone && !validatePhone(editedUser.telephone)" class="validation-error">
-                Veuillez saisir un numéro de téléphone valide (10 chiffres)
+              <div class="phone-input-group" style="display:flex; gap:6px;">
+                <select
+                  id="editCountryCode"
+                  [(ngModel)]="editSelectedCountryCode"
+                  style="max-width:110px; flex-shrink:0"
+                >
+                  <option *ngFor="let c of countryCodes" [value]="c.code">{{ c.flag }} {{ c.code }}</option>
+                </select>
+                <input
+                  type="tel"
+                  id="editTelephone"
+                  [(ngModel)]="editTelephoneLocal"
+                  placeholder="Numéro sans l'indicatif"
+                  [class.invalid]="editTelephoneLocal && !validatePhone(editTelephoneLocal)"
+                  style="flex:1"
+                >
+              </div>
+              <div *ngIf="editTelephoneLocal && !validatePhone(editTelephoneLocal)" class="validation-error">
+                Numéro invalide pour l'indicatif {{ editSelectedCountryCode }}
               </div>
             </div>
-            
+
+            <div class="form-group">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:normal">
+                <input type="checkbox" [(ngModel)]="editEstEmploye" style="width:auto">
+                Ce vendeur est aussi employé (paie)
+              </label>
+              <small class="text-muted" *ngIf="editEstEmploye && editEstEmployeOriginal">
+                Déjà lié à une fiche employé — le poste et le salaire se gèrent depuis la page Employés.
+              </small>
+              <div *ngIf="editEstEmploye && !editEstEmployeOriginal" style="display:flex;gap:8px;margin-top:8px">
+                <div style="flex:1">
+                  <label for="editPosteEmploye" style="font-size:12px">Poste</label>
+                  <input type="text" id="editPosteEmploye" [(ngModel)]="editPosteEmploye" placeholder="Vendeur">
+                </div>
+                <div style="flex:1">
+                  <label for="editSalaireEmploye" style="font-size:12px">Salaire mensuel (FCFA)</label>
+                  <input type="number" id="editSalaireEmploye" [(ngModel)]="editSalaireEmploye" min="0">
+                </div>
+              </div>
+            </div>
+
             <div class="form-group">
               <label for="editRole">Rôle</label>
               <select id="editRole" [(ngModel)]="editedUser.role">
