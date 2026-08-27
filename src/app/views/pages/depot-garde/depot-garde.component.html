@@ -270,8 +270,7 @@
 
         <div class="form-group">
           <label>Montant à retirer (FCFA)</label>
-          <input type="number" class="form-control" [(ngModel)]="retraitGlobalForm.montant"
-            [max]="clientRetraitGlobal!.totalMontantRestant" min="0"
+          <input type="text" inputmode="numeric" class="form-control" appMontantInput [(ngModel)]="retraitGlobalForm.montant"
             placeholder="Laisser à 0 pour retirer TOUT" />
           <small class="text-muted">Laisser à 0 ou vide = retirer tout le solde disponible</small>
         </div>
@@ -397,8 +396,8 @@
           </div>
           <div class="col-md-6 form-group">
             <label>Montant déposé (FCFA) <span class="text-danger">*</span></label>
-            <input type="number" class="form-control" [(ngModel)]="form.montant"
-              [disabled]="isEditing" placeholder="Montant en FCFA" min="1" />
+            <input type="text" inputmode="numeric" class="form-control" appMontantInput [(ngModel)]="form.montant"
+              [disabled]="isEditing" placeholder="Montant en FCFA" />
             <small *ngIf="isEditing" class="text-muted">Le montant ne peut pas être modifié après création.</small>
           </div>
           <div class="col-12 form-group">
@@ -453,8 +452,8 @@
 
         <div class="form-group">
           <label>Montant à retirer (FCFA) <span class="text-danger">*</span></label>
-          <input type="number" class="form-control" [(ngModel)]="retraitForm.montant"
-            [max]="depotRetrait!.montantRestant" min="1" placeholder="Montant en FCFA" />
+          <input type="text" inputmode="numeric" class="form-control" appMontantInput [(ngModel)]="retraitForm.montant"
+            placeholder="Montant en FCFA" />
           <small class="text-muted">Maximum : {{ formatMontant(depotRetrait!.montantRestant) }}</small>
         </div>
         <div class="form-group">

@@ -834,7 +834,7 @@
         </div>
         <div class="form-group col-md-3">
           <label>Prix de vente (optionnel)</label>
-          <input type="number" class="form-control" [(ngModel)]="tempLigneAchat.prixVente" step="0.01" placeholder="Auto calculé" />
+          <input type="text" inputmode="numeric" class="form-control" appMontantInput [(ngModel)]="tempLigneAchat.prixVente" placeholder="Auto calculé" />
         </div>
         <div class="form-group col-md-3">
           <label>Seuil d'alerte</label>
@@ -853,7 +853,7 @@
         </div>
         <div class="form-group col-md-4">
           <label>Prix achat unitaire <span class="text-danger">*</span></label>
-          <input type="number" class="form-control" [(ngModel)]="tempLigneAchat.prixAchatUnitaire" min="0" step="0.01" />
+          <input type="text" inputmode="numeric" class="form-control" appMontantInput [(ngModel)]="tempLigneAchat.prixAchatUnitaire" />
         </div>
         <div class="form-group col-md-4">
           <button class="btn btn-sm btn-success w-100" (click)="ajouterLigneAchat()">
@@ -904,8 +904,7 @@
       </div>
       <div class="form-group" *ngIf="achatForm.fournisseurId && avanceFournisseurDisponible > 0">
         <label class="text-success font-weight-bold">Déduire de l'avance</label>
-        <input type="number" class="form-control" [(ngModel)]="avanceFournisseurUtilisee"
-               [max]="maxAvanceUtilisable" min="0" step="0.01" />
+        <input type="text" inputmode="numeric" class="form-control" appMontantInput [(ngModel)]="avanceFournisseurUtilisee" />
         <small class="text-muted">Max : {{ fmt(maxAvanceUtilisable) }}</small>
       </div>
       <div class="alert alert-primary py-2" *ngIf="(avanceFournisseurUtilisee || 0) > 0">
@@ -919,7 +918,7 @@
         </div>
         <div class="form-group col-md-4">
           <label>Montant payé maintenant</label>
-          <input type="number" class="form-control" [(ngModel)]="achatForm.montantPaye" min="0" [max]="montantTotalAchat" />
+          <input type="text" inputmode="numeric" class="form-control" appMontantInput [(ngModel)]="achatForm.montantPaye" />
         </div>
         <div class="form-group col-md-4">
           <label>Reste à payer</label>
@@ -961,7 +960,7 @@
       <div class="form-row">
         <div class="form-group col-md-6">
           <label>Montant <span class="text-danger">*</span></label>
-          <input type="number" class="form-control" [(ngModel)]="paiementForm.montant" min="1" />
+          <input type="text" inputmode="numeric" class="form-control" appMontantInput [(ngModel)]="paiementForm.montant" />
         </div>
         <div class="form-group col-md-6">
           <label>Mode de paiement</label>
@@ -1019,7 +1018,7 @@
       <div class="form-row">
         <div class="form-group col-md-6">
           <label>Montant <span class="text-danger">*</span></label>
-          <input type="number" class="form-control" [(ngModel)]="avanceForm.montant" min="1" />
+          <input type="text" inputmode="numeric" class="form-control" appMontantInput [(ngModel)]="avanceForm.montant" />
         </div>
         <div class="form-group col-md-6">
           <label>Source</label>

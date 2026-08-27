@@ -29,13 +29,15 @@ import { ProduitNiveau, ProduitNiveauService } from '../../../shared/services/pr
 import { BoutiqueService } from '../../../shared/services/boutique.service';
 import { OfflineService } from '../../../shared/services/offline.service';
 import { TranslateModule } from '@ngx-translate/core';
+import { annoncerMontantVente } from '../../../shared/utils/confirmation-vocale.util';
+import { MontantInputDirective } from '../../../shared/directives/montant-input.directive';
 
 @Component({
   selector: 'app-ventes',
   templateUrl: './ventes.component.html',
   styleUrls: ['./ventes.component.scss'],
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule]
+  imports: [CommonModule, FormsModule, TranslateModule, MontantInputDirective]
 })
 export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('modalBackdrop') modalBackdrop!: ElementRef;
@@ -1855,6 +1857,10 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
       timerProgressBar: true,
       confirmButtonColor: '#198754'
     });
+
+    // Confirmation vocale (optionnelle, activée par défaut) du montant total —
+    // ne doit jamais bloquer ni impacter la vente : voir confirmation-vocale.util.ts
+    annoncerMontantVente(vente.montantTotal);
 
     setTimeout(() => this.telechargerFacture(vente.id), 1000);
   }

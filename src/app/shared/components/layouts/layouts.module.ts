@@ -20,6 +20,7 @@ import { NotificationBellComponent } from '../notification-bell/notification-bel
 import { LoadingBarComponent } from '../loading-bar/loading-bar.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { OfflineBadgeComponent } from '../offline-badge/offline-badge.component';
+import { TutorielVendeurComponent } from '../tutoriel-vendeur/tutoriel-vendeur.component';
 
 // Regular components for declaration
 const components = [
@@ -37,6 +38,7 @@ const standaloneComponents = [
     NotificationBellComponent,
     LoadingBarComponent,
     OfflineBadgeComponent,
+    TutorielVendeurComponent,
 ];
 
 @NgModule({

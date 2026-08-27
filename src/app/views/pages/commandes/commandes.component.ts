@@ -7,6 +7,7 @@ import { ClientService } from '../../../shared/services/client.service';
 import { Client, ModePaiement, VenteService } from '../../../shared/services/vente.service';
 import { AuthService } from '../../../shared/services/auth.service';
 import Swal from 'sweetalert2';
+import { MontantInputDirective } from '../../../shared/directives/montant-input.directive';
 
 interface LigneForm {
   produitId: number;
@@ -19,7 +20,7 @@ interface LigneForm {
 @Component({
   selector: 'app-commandes',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MontantInputDirective],
   templateUrl: './commandes.component.html',
   styleUrl: './commandes.component.scss'
 })
@@ -407,6 +408,10 @@ export class CommandesComponent implements OnInit {
 
   confirmerReglementIndividuel(): void {
     if (!this.commandeSelectionnee || !this.montantReglement) return;
+    if (this.montantReglement > this.commandeSelectionnee.montantRestant) {
+      Swal.fire('Erreur', `Le montant ne peut pas dépasser ${this.formatMontant(this.commandeSelectionnee.montantRestant)}`, 'error');
+      return;
+    }
     this.commandeService.payerCredit(this.commandeSelectionnee.id, this.montantReglement).subscribe({
       next: () => {
         this.fermerReglementModal();
@@ -450,6 +455,10 @@ export class CommandesComponent implements OnInit {
 
   confirmerReglementGroupe(): void {
     if (!this.idsSelectionnes.length || !this.montantReglementGroupe) return;
+    if (this.montantReglementGroupe > this.totalCreditsSelectionnes) {
+      Swal.fire('Erreur', `Le montant ne peut pas dépasser ${this.formatMontant(this.totalCreditsSelectionnes)}`, 'error');
+      return;
+    }
     this.commandeService.payerCreditsGroupes(this.idsSelectionnes, this.montantReglementGroupe).subscribe({
       next: () => {
         this.fermerReglementGroupeModal();

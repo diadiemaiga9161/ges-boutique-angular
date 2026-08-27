@@ -10,6 +10,7 @@ import {
 } from '../../../shared/services/objectif-vendeur.service';
 import { UserService, User } from '../../../shared/services/user.service';
 import { AuthService } from '../../../shared/services/auth.service';
+import { MontantInputDirective } from '../../../shared/directives/montant-input.directive';
 
 /** Retourne le numéro de semaine ISO-8601 et l'année correspondante pour une date donnée. */
 function getSemaineIso(date: Date): { semaine: number; annee: number } {
@@ -24,7 +25,7 @@ function getSemaineIso(date: Date): { semaine: number; annee: number } {
 @Component({
   selector: 'app-objectif-vendeur',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule],
+  imports: [CommonModule, FormsModule, TranslateModule, MontantInputDirective],
   templateUrl: './objectif-vendeur.component.html',
   styleUrls: ['./objectif-vendeur.component.scss']
 })
@@ -93,7 +94,8 @@ export class ObjectifVendeurComponent implements OnInit {
   private chargerVendeurs(): void {
     const token = this.authService.getToken();
     if (!token) return;
-    this.userService.getUsersByRole('VENDEUR', token).subscribe({
+    // L'admin/patron peut aussi vendre et recevoir une prime : on inclut donc les deux rôles.
+    this.userService.getUsersByRole(['VENDEUR', 'ADMIN'], token).subscribe({
       next: d => this.vendeurs = d,
       error: () => {}
     });

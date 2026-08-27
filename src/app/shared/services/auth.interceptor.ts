@@ -71,7 +71,9 @@ export class AuthInterceptor implements HttpInterceptor {
       '/api/auth/login',
       '/api/auth/register',
       '/swagger-ui',
-      '/v3/api-docs'
+      '/v3/api-docs',
+      '/api/vitrine',
+      '/assets/i18n'
     ];
     
     return publicRoutes.some(route => url.includes(route));

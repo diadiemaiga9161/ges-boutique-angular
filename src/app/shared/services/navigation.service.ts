@@ -143,6 +143,9 @@ export class NavigationService {
                 { name: 'NAV.INVOICE_DESIGN',  type: 'link', icon: 'i-Pen-2',                       state: '/facture-design' },
                 { name: 'Annulation paiements',type: 'link', icon: 'i-Remove',                      state: '/annulation-paiements' },
                 { name: 'Paramètres',          type: 'link', icon: 'i-Gear',                        state: '/parametres' },
+                { name: 'JOURNAL_AUDIT.TITLE', type: 'link', icon: 'i-Data-Shield',                 state: '/journal-audit' },
+                { name: 'EXPORT.TITLE',        type: 'link', icon: 'i-File-Download',               state: '/export-donnees' },
+                { name: 'BACKUP.TITLE',        type: 'link', icon: 'i-Data-Backup',                 state: '/sauvegardes' },
                 // { name: 'Promotions',          type: 'link', icon: 'i-Tag-2',                       state: '/promotions' }, // gérer depuis l'app mobile
             ]
         },

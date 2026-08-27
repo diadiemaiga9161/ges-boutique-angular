@@ -136,7 +136,7 @@
           </div>
           <div class="col-md-6 form-group">
             <label>Salaire mensuel (FCFA) <span class="text-danger">*</span></label>
-            <input type="number" class="form-control" [(ngModel)]="form.salaireMensuel" placeholder="0" min="0" />
+            <input type="text" inputmode="numeric" class="form-control" appMontantInput [(ngModel)]="form.salaireMensuel" placeholder="0" />
           </div>
           <div class="col-md-6 form-group">
             <label>Téléphone <small class="text-muted">(pour l'envoi du reçu par WhatsApp)</small></label>

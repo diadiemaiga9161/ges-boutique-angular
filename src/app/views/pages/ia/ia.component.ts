@@ -37,6 +37,7 @@ export class IaComponent implements OnInit {
   showWizard = false;
   wizardStep = 1;
   isSavingProfil = false;
+  wizardErrorMessage = '';
   profil: ProfilIA = {
     typeBoutique: 'ALIMENTATION',
     joursApprovisionnement: [],
@@ -239,6 +240,7 @@ export class IaComponent implements OnInit {
 
   terminerWizard(): void {
     this.isSavingProfil = true;
+    this.wizardErrorMessage = '';
     this.iaService.sauvegarderProfil(this.profil).subscribe({
       next: () => {
         this.showWizard = false;
@@ -246,9 +248,12 @@ export class IaComponent implements OnInit {
         this.chargerAnalyse();
       },
       error: () => {
-        this.showWizard = false;
+        // Ne JAMAIS fermer l'assistant ni lancer l'analyse si l'enregistrement a
+        // échoué : sans profil réellement sauvegardé côté serveur, l'analyse
+        // échouerait de toute façon (message générique et trompeur pour
+        // l'utilisateur, sans plus aucun moyen de revenir configurer le profil).
         this.isSavingProfil = false;
-        this.chargerAnalyse();
+        this.wizardErrorMessage = 'IA.WIZARD_SAVE_ERROR';
       }
     });
   }

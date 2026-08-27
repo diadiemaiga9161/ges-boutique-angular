@@ -1030,11 +1030,11 @@
         <div class="row g-3 mb-3">
           <div class="col-md-6">
             <label class="form-label fw-semibold">Montant global payé (FCFA) *</label>
-            <input type="number" class="form-control"
-              [(ngModel)]="montantPaiementGroupe"
-              [max]="totalSelectedClientCredits('montantRestant')"
-              min="1" placeholder="Montant total versé par le client"
-              (input)="calculerRepartitionGroupe()">
+            <input type="text" inputmode="numeric" class="form-control" appMontantInput
+              [ngModel]="montantPaiementGroupe"
+              (ngModelChange)="montantPaiementGroupe = $event; calculerRepartitionGroupe()"
+              placeholder="Montant total versé par le client">
+            <small class="text-muted">Maximum : {{ formatPrice(totalSelectedClientCredits('montantRestant')) }}</small>
             <div class="d-flex gap-2 mt-2">
               <button class="btn btn-sm btn-outline-warning" type="button"
                 (click)="montantPaiementGroupe = Math.round(totalSelectedClientCredits('montantRestant') / 2); calculerRepartitionGroupe()">
@@ -1153,9 +1153,10 @@
 
     <div class="mb-3">
       <label class="form-label fw-semibold">Montant versé (FCFA)</label>
-      <input type="number" class="form-control"
+      <input type="text" inputmode="numeric" class="form-control" appMontantInput
         [(ngModel)]="reglementForm.montantRegle"
-        [max]="selectedCredit.montantRestant" min="1" placeholder="Montant versé">
+        placeholder="Montant versé">
+      <small class="text-muted">Maximum : {{ formatPrice(selectedCredit.montantRestant) }}</small>
       <div class="d-flex gap-2 mt-2">
         <button class="btn btn-sm btn-outline-warning" type="button"
           (click)="reglementForm.montantRegle = selectedCredit.montantRestant / 2">

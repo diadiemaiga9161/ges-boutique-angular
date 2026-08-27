@@ -40,6 +40,28 @@
     </div>
   </div>
 
+  <!-- ══ ONGLETS PRINCIPAUX (ajout : Réconciliation par vendeur, à côté de la caisse habituelle) ══ -->
+  <div class="card mb-3" *ngIf="isAdmin">
+    <div class="card-body py-2 px-3">
+      <div class="d-flex gap-2 flex-wrap">
+        <button class="btn btn-sm"
+          [class.btn-primary]="activeMainTab === 'principal'"
+          [class.btn-outline-primary]="activeMainTab !== 'principal'"
+          (click)="activeMainTab = 'principal'">
+          <i class="bi bi-safe2 me-1"></i> {{ 'CAISSE.TITLE' | translate }}
+        </button>
+        <button class="btn btn-sm"
+          [class.btn-warning]="activeMainTab === 'reconciliation'"
+          [class.btn-outline-warning]="activeMainTab !== 'reconciliation'"
+          (click)="activeMainTab = 'reconciliation'; loadReconciliationVendeurs()">
+          <i class="bi bi-people-fill me-1"></i> {{ 'CAISSE.RECONCILIATION.TAB' | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <ng-container *ngIf="activeMainTab === 'principal'">
+
   <!-- Messages -->
   <div *ngIf="errorMessage" class="alert alert-danger alert-dismissible fade show" role="alert">
     <i class="bi bi-exclamation-triangle me-2"></i> {{ errorMessage }}
@@ -493,6 +515,91 @@
       </ul>
     </nav>
   </div>
+
+  </ng-container><!-- fin onglet principal -->
+
+  <!-- ══ ONGLET RÉCONCILIATION CAISSE PAR VENDEUR (lecture seule, ajout) ══ -->
+  <ng-container *ngIf="activeMainTab === 'reconciliation'">
+    <div class="app-page-header mb-4">
+      <div class="app-page-header-left">
+        <div class="app-page-icon"><i class="bi bi-people-fill"></i></div>
+        <div>
+          <h1 class="app-page-title">{{ 'CAISSE.RECONCILIATION.TITLE' | translate }}</h1>
+          <p class="app-page-subtitle">{{ 'CAISSE.RECONCILIATION.SUBTITLE' | translate }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="row g-2 align-items-end">
+          <div class="col-6 col-md-3">
+            <label class="form-label small">{{ 'CAISSE.RECONCILIATION.DATE' | translate }}</label>
+            <input type="date" class="form-control form-control-sm" [(ngModel)]="reconciliationDate"
+              (change)="loadReconciliationVendeurs()">
+          </div>
+          <div class="col-6 col-md-3">
+            <button class="btn btn-outline-primary btn-sm" (click)="loadReconciliationVendeurs()">
+              <i class="bi bi-arrow-clockwise me-1"></i> {{ 'CAISSE.RECONCILIATION.REFRESH' | translate }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="isLoadingReconciliation" class="text-center py-5">
+      <i class="bi bi-arrow-repeat spin fs-1 text-muted"></i>
+      <p class="text-muted mt-2">{{ 'CAISSE.RECONCILIATION.LOADING' | translate }}</p>
+    </div>
+
+    <div *ngIf="reconciliationError && !isLoadingReconciliation" class="alert alert-danger">
+      <i class="bi bi-exclamation-triangle me-2"></i> {{ reconciliationError }}
+    </div>
+
+    <div *ngIf="!isLoadingReconciliation && !reconciliationError">
+      <div *ngIf="reconciliationList.length === 0" class="text-center py-5">
+        <i class="bi bi-inbox fs-1 text-muted d-block mb-2"></i>
+        <p class="text-muted">{{ 'CAISSE.RECONCILIATION.EMPTY' | translate }}</p>
+      </div>
+
+      <div class="row" *ngIf="reconciliationList.length > 0">
+        <div class="col-lg-4 col-md-6 mb-3" *ngFor="let v of reconciliationList">
+          <div class="card h-100 border-0 shadow-sm">
+            <div class="card-header bg-primary text-white d-flex align-items-center justify-content-between">
+              <span><i class="bi bi-person-badge me-2"></i><strong>{{ v.vendeurNom }}</strong></span>
+              <span class="badge bg-light text-primary">{{ v.nombreVentes }} {{ 'CAISSE.RECONCILIATION.SALES' | translate }}</span>
+            </div>
+            <div class="card-body">
+              <table class="table table-sm mb-3">
+                <tbody>
+                  <tr>
+                    <td>{{ 'CAISSE.RECONCILIATION.CASH_SALES' | translate }}</td>
+                    <td class="text-end fw-semibold text-success">{{ formatPrice(v.totalVentesEspeces) }}</td>
+                  </tr>
+                  <tr>
+                    <td>{{ 'CAISSE.RECONCILIATION.CREDIT_SALES' | translate }}</td>
+                    <td class="text-end fw-semibold text-warning">{{ formatPrice(v.totalVentesCredit) }}</td>
+                  </tr>
+                  <tr>
+                    <td>{{ 'CAISSE.RECONCILIATION.CREDIT_PAYMENTS_CASH' | translate }}</td>
+                    <td class="text-end fw-semibold text-info">{{ formatPrice(v.totalReglementsCreditEspeces) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="text-center p-3 rounded"
+                style="background: linear-gradient(135deg,#0e9f6e 0%,#057a55 100%);">
+                <div class="text-uppercase small text-white-50 fw-semibold mb-1">
+                  {{ 'CAISSE.RECONCILIATION.TO_REMIT' | translate }}
+                </div>
+                <div class="fs-3 fw-bold text-white">{{ formatPrice(v.totalAiRemettre) }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-container><!-- fin onglet réconciliation -->
+
 </div>
 
 <!-- ==================== MODALES ==================== -->
@@ -564,7 +671,7 @@
         </div>
         <div class="mb-3">
           <label class="form-label"> Solde réel *</label>
-          <input type="number" class="form-control" [(ngModel)]="verificationForm.soldeReelSaisi" min="0" step="1">
+          <input type="text" inputmode="numeric" class="form-control" appMontantInput [(ngModel)]="verificationForm.soldeReelSaisi">
         </div>
         <div class="mb-3">
           <label class="form-label"> Observations</label>
@@ -600,7 +707,7 @@
       <div class="modal-body">
         <div class="mb-3">
           <label class="form-label"> Montant *</label>
-          <input type="number" class="form-control" [(ngModel)]="entreeForm.montant" min="1" step="1">
+          <input type="text" inputmode="numeric" class="form-control" appMontantInput [(ngModel)]="entreeForm.montant">
         </div>
         <div class="mb-3">
           <label class="form-label"> Motif *</label>
@@ -650,8 +757,7 @@
         </div>
         <div class="mb-3">
           <label class="form-label"> Montant *</label>
-          <input type="number" class="form-control" [(ngModel)]="sortieForm.montant" [max]="soldeActuel" min="1"
-            step="1">
+          <input type="text" inputmode="numeric" class="form-control" appMontantInput [(ngModel)]="sortieForm.montant">
           <small class="text-muted">Maximum possible: {{ formatPrice(soldeActuel) }}</small>
         </div>
         <div class="mb-3">
@@ -717,9 +823,9 @@
               </div>
             </div>
           </div>
-          <div class="mb-3"><label class="form-label"> Montant du paiement *</label><input type="number"
-              class="form-control" [(ngModel)]="reglementForm.montantRegle" [max]="selectedCredit.montantRestant"
-              min="1" step="1"><small class="text-muted">Maximum: {{ formatPrice(selectedCredit.montantRestant)
+          <div class="mb-3"><label class="form-label"> Montant du paiement *</label><input type="text" inputmode="numeric"
+              class="form-control" appMontantInput [(ngModel)]="reglementForm.montantRegle"
+              ><small class="text-muted">Maximum: {{ formatPrice(selectedCredit.montantRestant)
               }}</small></div>
           <div class="mb-3"><label class="form-label"> Mode de paiement *</label><select class="form-select"
               [(ngModel)]="reglementForm.modePaiement">
@@ -1348,10 +1454,10 @@
           le client. Il sera réparti <strong>proportionnellement</strong> sur chacun de ses crédits selon le montant
           restant.</div>
         <div class="row g-3 mb-3">
-          <div class="col-md-4"><label class="form-label">Montant global payé *</label><input type="number"
-              class="form-control" [(ngModel)]="montantPaiementGroupe"
-              [max]="totalSelectedClientCredits('montantRestant')" min="1" placeholder="Ex: 5000"
-              (ngModelChange)="calculerRepartitionGroupe()"><small class="text-muted">Max: {{
+          <div class="col-md-4"><label class="form-label">Montant global payé *</label><input type="text" inputmode="numeric"
+              class="form-control" appMontantInput [ngModel]="montantPaiementGroupe"
+              placeholder="Ex: 5000"
+              (ngModelChange)="montantPaiementGroupe = $event; calculerRepartitionGroupe()"><small class="text-muted">Max: {{
               formatPrice(totalSelectedClientCredits('montantRestant')) }}</small></div>
           <div class="col-md-4"><label class="form-label">Mode de paiement</label><select class="form-select"
               [(ngModel)]="modePaiementGroupe">
@@ -1769,8 +1875,8 @@
           </div>
           <div class="mb-3">
             <label class="form-label fw-bold">Montant (FCFA) <span class="text-danger">*</span></label>
-            <input type="number" class="form-control" [(ngModel)]="transfertForm.montant" name="montant" required
-              min="1" [max]="caisse?.soldeActuel" placeholder="Saisir le montant à transférer">
+            <input type="text" inputmode="numeric" class="form-control" appMontantInput [(ngModel)]="transfertForm.montant" name="montant" required
+              placeholder="Saisir le montant à transférer">
             <small class="text-muted">Maximum : {{ formatPrice(caisse?.soldeActuel || 0) }}</small>
           </div>
           <div class="mb-3">

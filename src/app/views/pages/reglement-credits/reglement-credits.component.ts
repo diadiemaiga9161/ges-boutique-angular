@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { MontantInputDirective } from '../../../shared/directives/montant-input.directive';
 import { forkJoin, from } from 'rxjs';
 import { concatMap, toArray } from 'rxjs/operators';
 
@@ -36,7 +37,7 @@ interface GroupeClient {
 @Component({
   selector: 'app-reglement-credits',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, MontantInputDirective],
   templateUrl: './reglement-credits.component.html',
   styleUrl: './reglement-credits.component.scss'
 })
@@ -618,7 +619,15 @@ export class ReglementCreditsComponent implements OnInit {
   }
 
   confirmerPaiementGroupe() {
-    if (!this.montantPaiementGroupe || this.montantPaiementGroupe <= 0) return;
+    if (!this.montantPaiementGroupe || this.montantPaiementGroupe <= 0) {
+      Swal.fire('Erreur', 'Le montant doit être supérieur à 0', 'error');
+      return;
+    }
+    const maxMontantGroupe = this.totalSelectedClientCredits('montantRestant');
+    if (this.montantPaiementGroupe > maxMontantGroupe) {
+      Swal.fire('Erreur', `Le montant ne peut pas dépasser ${this.formatPrice(maxMontantGroupe)}`, 'error');
+      return;
+    }
     if (this.modePaiementGroupe !== ModePaiementCaisse.ESPECES && !this.referenceGroupePaiement) {
       Swal.fire('Erreur', 'Référence requise pour ce mode de paiement', 'error');
       return;

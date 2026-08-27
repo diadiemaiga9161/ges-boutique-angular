@@ -1,0 +1,113 @@
+<div class="container-fluid py-4 app-page">
+
+  <!-- Accès réservé aux admins -->
+  <div *ngIf="!isAdmin" class="alert alert-warning d-flex align-items-center gap-3">
+    <i class="fas fa-lock fa-2x text-warning"></i>
+    <div>
+      <strong>Accès refusé</strong><br>
+      <span>{{ 'EXPORT.ADMIN_ONLY' | translate }}</span>
+    </div>
+  </div>
+
+  <!-- Contenu admin uniquement -->
+  <div *ngIf="isAdmin">
+    <div class="app-page-header mb-4">
+      <div class="app-page-header-left">
+        <div class="app-page-icon"><i class="fas fa-file-export"></i></div>
+        <div>
+          <h1 class="app-page-title">{{ 'EXPORT.TITLE' | translate }}</h1>
+          <p class="app-page-subtitle">{{ 'EXPORT.SUBTITLE' | translate }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sélection de la catégorie -->
+    <div class="app-filter-card mb-4">
+      <label class="text-muted small mb-2 d-block">{{ 'EXPORT.CATEGORY_LABEL' | translate }}</label>
+      <div class="export-categories">
+        <button type="button" class="export-category-btn"
+                *ngFor="let cat of categories"
+                [class.active]="categorieSelectionnee === cat.value"
+                (click)="selectionnerCategorie(cat.value)">
+          <i class="fas" [ngClass]="cat.icon"></i>
+          <span>{{ cat.labelKey | translate }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Période (uniquement si la catégorie active le permet) -->
+    <div class="app-filter-card mb-4" *ngIf="categorieActive.avecPeriode">
+      <label class="text-muted small mb-2 d-block">{{ 'EXPORT.PERIOD_LABEL' | translate }}</label>
+      <div class="d-flex gap-2 flex-wrap align-items-center">
+        <div class="d-flex align-items-center gap-1">
+          <label class="text-muted small mb-0 me-1">{{ 'EXPORT.DATE_FROM' | translate }}</label>
+          <input type="date" class="form-control form-control-sm" style="max-width:150px"
+                 [(ngModel)]="dateDebut">
+          <span class="text-muted small">→</span>
+          <label class="text-muted small mb-0 me-1">{{ 'EXPORT.DATE_TO' | translate }}</label>
+          <input type="date" class="form-control form-control-sm" style="max-width:150px"
+                 [(ngModel)]="dateFin">
+          <button class="btn btn-sm btn-link text-muted" *ngIf="dateDebut || dateFin"
+                  (click)="resetDateFilter()" [title]="'EXPORT.RESET_PERIOD' | translate">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Format d'export -->
+    <div class="app-filter-card mb-4">
+      <label class="text-muted small mb-2 d-block">{{ 'EXPORT.FORMAT_LABEL' | translate }}</label>
+      <div class="d-flex gap-2">
+        <button type="button" class="btn btn-sm"
+                [class.btn-primary]="format === 'excel'"
+                [class.btn-outline-primary]="format !== 'excel'"
+                (click)="format = 'excel'">
+          <i class="fas fa-file-excel me-1"></i> {{ 'EXPORT.FORMAT_EXCEL' | translate }}
+        </button>
+        <button type="button" class="btn btn-sm"
+                [class.btn-danger]="format === 'pdf'"
+                [class.btn-outline-danger]="format !== 'pdf'"
+                (click)="format = 'pdf'">
+          <i class="fas fa-file-pdf me-1"></i> {{ 'EXPORT.FORMAT_PDF' | translate }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Lancement de l'export -->
+    <div class="d-flex justify-content-end gap-2">
+      <button type="button" class="btn btn-outline-primary" [disabled]="chargementApercu" (click)="apercu()">
+        <i class="fas" [class.fa-spinner]="chargementApercu" [class.fa-spin]="chargementApercu" [class.fa-eye]="!chargementApercu"></i>
+        {{ (chargementApercu ? 'EXPORT.PREVIEW_LOADING' : 'EXPORT.PREVIEW_BUTTON') | translate }}
+      </button>
+      <button type="button" class="btn btn-primary" [disabled]="chargement" (click)="exporter()">
+        <i class="fas" [class.fa-spinner]="chargement" [class.fa-spin]="chargement" [class.fa-download]="!chargement"></i>
+        {{ (chargement ? 'EXPORT.EXPORTING' : 'EXPORT.EXPORT_BUTTON') | translate }}
+      </button>
+    </div>
+
+    <!-- Aperçu des données à l'écran -->
+    <div class="app-table-card mt-4" *ngIf="donneesApercu && donneesApercu.lignes.length">
+      <div class="app-table-header">
+        <div class="app-table-title">
+          <i class="fas fa-table me-2"></i>{{ 'EXPORT.PREVIEW_TITLE' | translate }} — {{ donneesApercu.titre }}
+          <span class="app-table-count">{{ donneesApercu.lignes.length }}</span>
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th *ngFor="let colonne of donneesApercu.colonnes">{{ colonne }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let ligne of donneesApercu.lignes">
+              <td *ngFor="let cellule of ligne">{{ cellule }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

@@ -11,11 +11,12 @@ import {
 } from '../../../shared/services/bonus-fournisseur.service';
 import { ProductService } from '../../../shared/services/product.service';
 import { TranslateModule } from '@ngx-translate/core';
+import { MontantInputDirective } from '../../../shared/directives/montant-input.directive';
 
 @Component({
   selector: 'app-bonus-fournisseurs',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule],
+  imports: [CommonModule, FormsModule, TranslateModule, MontantInputDirective],
   templateUrl: './bonus-fournisseurs.component.html',
   styleUrls: ['./bonus-fournisseurs.component.scss']
 })

@@ -6,14 +6,16 @@ import {
   TransfertService, TransfertStock, BoutiquePartenaire, TransfertRequest, PaiementTransfert
 } from '../../../shared/services/transfert.service';
 import { ProductService } from '../../../shared/services/product.service';
+import { FactureService } from '../../../shared/services/facture.service';
 import { TranslateModule } from '@ngx-translate/core';
+import { MontantInputDirective } from '../../../shared/directives/montant-input.directive';
 
 @Component({
   selector: 'app-transferts',
   templateUrl: './transferts.component.html',
   styleUrls: ['./transferts.component.scss'],
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule]
+  imports: [CommonModule, FormsModule, TranslateModule, MontantInputDirective]
 })
 export class TransfertsComponent implements OnInit {
 
@@ -94,7 +96,8 @@ export class TransfertsComponent implements OnInit {
 
   constructor(
     private transfertService: TransfertService,
-    private produitService: ProductService
+    private produitService: ProductService,
+    private factureService: FactureService
   ) {}
 
   ngOnInit(): void {
@@ -173,9 +176,21 @@ export class TransfertsComponent implements OnInit {
       : this.transfertService.creer(this.form);
 
     obs$.subscribe({
-      next: () => {
+      next: (t: any) => {
         this.afficherFormulaire = false;
         this.charger();
+        // Le stock a bien été retiré ici, mais si la notification vers la boutique de
+        // destination a échoué (adresse injoignable, clé invalide...), il ne faut surtout
+        // pas dire "succès" — rien n'est arrivé de l'autre côté tant que ce n'est pas corrigé.
+        if (t?.statut === 'ECHEC_NOTIFICATION') {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Transfert non reçu par la destination',
+            html: `Le stock a été retiré ici, mais <strong>${t.boutiqueDestNom || 'la boutique de destination'}</strong> n'a rien reçu (adresse injoignable ou incorrecte).<br><br>Vérifiez la configuration de ce partenaire (menu Config Partenaires) avant de réessayer.`,
+            confirmButtonText: 'Compris'
+          });
+          return;
+        }
         Swal.fire('Succès', this.editingTransfert ? 'Transfert modifié' : 'Transfert créé', 'success');
       },
       error: e => Swal.fire('Erreur', e.error?.message ?? 'Erreur', 'error')
@@ -374,6 +389,60 @@ export class TransfertsComponent implements OnInit {
     if (this.ongletActif === 'envoyes') return this.transfertsEnvoyes;
     if (this.ongletActif === 'recus') return this.transfertsRecus;
     return this.transferts;
+  }
+
+  private moneyFmt(v: number): string {
+    return Math.round(v || 0).toLocaleString('fr-FR') + ' FCFA';
+  }
+
+  private statutLabelTransfert(s: string): string {
+    const labels: { [k: string]: string } = {
+      CREE: 'Créé', EN_ATTENTE_CONFIRMATION: 'En attente', EN_ATTENTE: 'En attente',
+      CONFIRME: 'Confirmé', ACCEPTE: 'Accepté', REJETE: 'Rejeté', COMPLETE: 'Complété',
+      ANNULE: 'Annulé', ECHEC_NOTIFICATION: 'Échec envoi'
+    };
+    return labels[s] || s;
+  }
+
+  /** Traçabilité imprimable des transferts (onglet actif : Tous/Envoyés/Reçus), sur le
+   *  même principe que la Situation Fournisseur — historique chronologique + totaux. */
+  imprimerTransferts(): void {
+    const liste = this.transfertsAffiches;
+    if (!liste.length) {
+      Swal.fire({ icon: 'info', title: 'Aucun transfert', text: 'Aucun transfert à imprimer pour cet onglet.' });
+      return;
+    }
+    const ongletLabels: { [k: string]: string } = { tous: 'Tous', envoyes: 'Envoyés', recus: 'Reçus' };
+
+    const lignes = liste.map(t => {
+      const montantTotal = (t.lignes || []).reduce((s, l) => s + (l.montantTotal || (l.prixUnitaire || 0) * l.quantite), 0);
+      const nbProduits = (t.lignes || []).length;
+      return [
+        t.numeroTransfert || '—',
+        t.dateCreation ? new Date(t.dateCreation).toLocaleDateString('fr-FR') : '—',
+        t.boutiqueSourceNom || '—',
+        t.boutiqueDestNom || '—',
+        `${nbProduits} produit(s)`,
+        this.moneyFmt(montantTotal),
+        this.statutLabelTransfert(t.statut)
+      ];
+    });
+
+    const totalGeneral = liste.reduce((s, t) =>
+      s + (t.lignes || []).reduce((s2, l) => s2 + (l.montantTotal || (l.prixUnitaire || 0) * l.quantite), 0), 0);
+
+    this.factureService.ouvrirDocumentPDF({
+      titre: 'Traçabilité des transferts',
+      sousTitre: `${ongletLabels[this.ongletActif]} — ${liste.length} transfert(s)`,
+      colonnes: ['N° Transfert', 'Date', 'Source', 'Destination', 'Produits', 'Montant', 'Statut'],
+      lignes,
+      totaux: [
+        { label: 'Nombre de transferts', valeur: String(liste.length) },
+        { label: 'Montant total', valeur: this.moneyFmt(totalGeneral) }
+      ],
+      pied: `Onglet : ${ongletLabels[this.ongletActif]}`,
+      paysage: true
+    });
   }
 
   accepterTransfert(t: TransfertStock): void {

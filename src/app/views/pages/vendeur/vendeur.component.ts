@@ -9,12 +9,13 @@ import { AuthService } from '../../../shared/services/auth.service';
 import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
 import { COUNTRY_CODES, validatePhoneForCountry, construireNumeroComplet, separerIndicatif } from '../../../shared/utils/telephone.util';
+import { MontantInputDirective } from '../../../shared/directives/montant-input.directive';
 
 @Component({
   selector: 'app-vendeur',
   templateUrl: './vendeur.component.html',
   styleUrls: ['./vendeur.component.scss'],
-  imports: [CommonModule, FormsModule, TranslateModule]
+  imports: [CommonModule, FormsModule, TranslateModule, MontantInputDirective]
 })
 export class VendeurComponent implements OnInit {
   // Liste des utilisateurs

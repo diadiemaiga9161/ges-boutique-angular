@@ -210,7 +210,7 @@
           </div>
           <div class="form-group">
             <label class="form-label required"><i class="fas fa-money-bill-wave"></i> Montant (F CFA)</label>
-            <input type="number" class="form-control" [(ngModel)]="detteForm.montant" name="montant" required>
+            <input type="text" inputmode="numeric" class="form-control" appMontantInput [(ngModel)]="detteForm.montant" name="montant" required>
           </div>
           <div class="form-group">
             <label class="form-label required"><i class="fas fa-calendar"></i> Date du crédit</label>
@@ -257,7 +257,7 @@
         <form (ngSubmit)="enregistrerReglement()">
           <div class="form-group">
             <label class="form-label required"><i class="fas fa-money-bill-wave"></i> Montant à payer (F CFA)</label>
-            <input type="number" class="form-control" [(ngModel)]="reglementForm.montantPaye" name="montantPaye" required>
+            <input type="text" inputmode="numeric" class="form-control" appMontantInput [(ngModel)]="reglementForm.montantPaye" name="montantPaye" required>
             <small class="help-text"><i class="fas fa-info-circle"></i> Maximum: {{ formatDecimal(detteSelectionnee.montantRestant) }} F CFA</small>
           </div>
           <div class="form-group">

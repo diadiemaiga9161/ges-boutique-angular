@@ -32,13 +32,14 @@ import { FactureService } from '../../../shared/services/facture.service';
 import { environment } from '../../../../environments/environment';
 import Swal from 'sweetalert2';
 import { TranslateModule } from '@ngx-translate/core';
+import { MontantInputDirective } from '../../../shared/directives/montant-input.directive';
 
 @Component({
   selector: 'app-produit',
   templateUrl: './produit.component.html',
   styleUrls: ['./produit.component.scss'],
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, TranslateModule]
+  imports: [CommonModule, FormsModule, RouterModule, TranslateModule, MontantInputDirective]
 })
 export class ProduitComponent implements OnInit, OnDestroy {
   private wsSubs: Subscription[] = [];
@@ -1426,6 +1427,16 @@ export class ProduitComponent implements OnInit, OnDestroy {
   creerAchat(): void {
     if (!this.achatForm.lignes.length) {
       Swal.fire('Erreur', 'Ajoutez au moins un produit à l\'achat', 'error');
+      return;
+    }
+    const totalAchatPourValidation = this.calculerTotalAchat();
+    const maxAvanceUtilisable = Math.min(this.avanceFournisseurDisponible, totalAchatPourValidation);
+    if ((this.avanceFournisseurUtilisee || 0) > maxAvanceUtilisable) {
+      Swal.fire('Erreur', `Le montant déduit de l'avance ne peut pas dépasser ${this.formatPrice(maxAvanceUtilisable)}`, 'error');
+      return;
+    }
+    if ((this.achatForm.montantPaye || 0) > totalAchatPourValidation) {
+      Swal.fire('Erreur', `Le montant payé ne peut pas dépasser le total de l'achat : ${this.formatPrice(totalAchatPourValidation)}`, 'error');
       return;
     }
 

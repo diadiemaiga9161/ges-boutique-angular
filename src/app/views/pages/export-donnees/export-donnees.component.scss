@@ -1,0 +1,46 @@
+// src/app/views/pages/export-donnees/export-donnees.component.scss
+// La majorité du style vient des classes globales (.app-page, .app-page-header,
+// .app-filter-card) définies dans src/styles.css.
+
+.export-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.export-category-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-width: 130px;
+  padding: 1rem 0.75rem;
+  border: 1px solid #dee2e6;
+  border-radius: 0.5rem;
+  background: #fff;
+  color: #495057;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+
+  i {
+    font-size: 1.4rem;
+  }
+
+  span {
+    font-size: 0.85rem;
+    text-align: center;
+  }
+
+  &:hover {
+    border-color: #1a56db;
+    color: #1a56db;
+  }
+
+  &.active {
+    border-color: #1a56db;
+    background: #e8f0fe;
+    color: #1a56db;
+    font-weight: 600;
+  }
+}

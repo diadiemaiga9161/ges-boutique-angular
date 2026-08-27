@@ -12,11 +12,12 @@ import { ClientService, Client } from '../../../shared/services/client.service';
 import { ProductService, Produit } from '../../../shared/services/product.service';
 import { FactureDesignService, DesignFacture } from '../../../shared/services/facture-design.service';
 import { TranslateModule } from '@ngx-translate/core';
+import { MontantInputDirective } from '../../../shared/directives/montant-input.directive';
 
 @Component({
   selector: 'app-factures',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule],
+  imports: [CommonModule, FormsModule, TranslateModule, MontantInputDirective],
   templateUrl: './factures.component.html',
   styleUrls: ['./factures.component.scss']
 })

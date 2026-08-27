@@ -377,3 +377,123 @@ label.btn-logo { cursor: pointer; }
 .dark-mode .color-name {
   color: #f9fafb;
 }
+
+/* ── QR code vitrine ───────────────────────────────────────────────────── */
+.qr-vitrine-card {
+  width: 100%;
+}
+
+.qr-content {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 32px;
+}
+
+.qr-print-area {
+  flex: 0 0 auto;
+}
+
+.qr-print-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+  padding: 24px 32px;
+  border: 2px solid var(--primary);
+  border-radius: 16px;
+  background: linear-gradient(180deg, var(--primary-soft), var(--surface));
+}
+
+.qr-boutique-name {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text);
+  margin: 0;
+}
+
+.qr-image-wrap {
+  width: 220px;
+  height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 4px 16px rgba(8, 22, 72, 0.1);
+}
+
+.qr-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.qr-scan-text {
+  margin: 0;
+  font-weight: 700;
+  color: var(--primary);
+  font-size: 14px;
+}
+
+.qr-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 200px;
+
+  .btn {
+    width: 100%;
+  }
+}
+
+/* Impression : uniquement la zone .qr-print-area doit apparaître, grande et centrée. */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .qr-print-area,
+  .qr-print-area * {
+    visibility: visible;
+  }
+
+  .qr-print-area {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 0;
+  }
+
+  .qr-print-inner {
+    border: none;
+    background: #ffffff;
+    padding: 40px;
+    gap: 24px;
+  }
+
+  .qr-boutique-name {
+    font-size: 42px;
+  }
+
+  .qr-image-wrap {
+    width: 380px;
+    height: 380px;
+    box-shadow: none;
+  }
+
+  .qr-scan-text {
+    font-size: 24px;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+}

@@ -12,11 +12,12 @@ import { ProductService } from '../../../shared/services/product.service';
 import { FactureService } from '../../../shared/services/facture.service';
 import Swal from 'sweetalert2';
 import { TranslateModule } from '@ngx-translate/core';
+import { MontantInputDirective } from '../../../shared/directives/montant-input.directive';
 
 @Component({
   selector: 'app-objectif-fournisseur',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule],
+  imports: [CommonModule, FormsModule, TranslateModule, MontantInputDirective],
   templateUrl: './objectif-fournisseur.component.html',
   styleUrls: ['./objectif-fournisseur.component.scss']
 })

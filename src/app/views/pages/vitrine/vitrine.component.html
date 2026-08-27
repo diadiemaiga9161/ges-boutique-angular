@@ -1,0 +1,81 @@
+<div class="vitrine-page">
+
+  <!-- En-tête / bannière boutique -->
+  <header class="vitrine-header">
+    <ng-container *ngIf="!loadingInfos && !erreurInfos && infos as info">
+      <div class="vitrine-header-content">
+        <img *ngIf="info.logoPath" [src]="info.logoPath" alt="Logo boutique" class="vitrine-logo">
+        <div class="vitrine-header-text">
+          <h1>{{ info.nom }}</h1>
+          <p class="vitrine-adresse" *ngIf="info.adresse">
+            <i class="fa fa-map-marker-alt"></i> {{ info.adresse }}
+          </p>
+          <p class="vitrine-tel" *ngIf="info.telephone">
+            <i class="fa fa-phone"></i> {{ info.telephone }}
+          </p>
+          <p class="vitrine-horaires" *ngIf="info.horairesOuverture">
+            <i class="fa fa-clock"></i> {{ info.horairesOuverture }}
+          </p>
+        </div>
+      </div>
+    </ng-container>
+
+    <div class="vitrine-header-loading" *ngIf="loadingInfos">
+      Chargement des informations de la boutique...
+    </div>
+
+    <div class="vitrine-header-error" *ngIf="!loadingInfos && erreurInfos">
+      <h1>Notre boutique</h1>
+    </div>
+  </header>
+
+  <main class="vitrine-content">
+
+    <div class="vitrine-loading" *ngIf="loadingProduits">
+      <div class="spinner"></div>
+      <p>Chargement du catalogue...</p>
+    </div>
+
+    <div class="vitrine-error" *ngIf="!loadingProduits && erreurProduits">
+      <i class="fa fa-exclamation-triangle"></i>
+      <p>Impossible de charger le catalogue pour le moment. Merci de réessayer plus tard.</p>
+    </div>
+
+    <ng-container *ngIf="!loadingProduits && !erreurProduits">
+      <div class="vitrine-empty" *ngIf="produits.length === 0">
+        <p>Aucun produit disponible pour le moment.</p>
+      </div>
+
+      <div class="vitrine-grid" *ngIf="produits.length > 0">
+        <div class="produit-card" *ngFor="let p of produits">
+
+          <div class="produit-card-top">
+            <span class="badge-disponibilite" [class.disponible]="p.disponible" [class.rupture]="!p.disponible">
+              {{ p.disponible ? 'Disponible' : 'Rupture' }}
+            </span>
+            <span class="badge-promo" *ngIf="p.enPromotion">
+              <i class="fa fa-tag"></i> Promo
+            </span>
+          </div>
+
+          <h3 class="produit-nom">{{ p.nom }}</h3>
+          <p class="produit-categorie" *ngIf="p.categorieNom">{{ p.categorieNom }}</p>
+
+          <div class="produit-prix">{{ formatPrix(p.prixVente) }}</div>
+
+          <div class="produit-promo-details" *ngIf="p.enPromotion">
+            <span *ngIf="p.promotionTitre">{{ p.promotionTitre }}</span>
+            <span *ngIf="p.promotionReduction" class="promo-reduction">-{{ p.promotionReduction }}</span>
+          </div>
+
+        </div>
+      </div>
+    </ng-container>
+
+  </main>
+
+  <footer class="vitrine-footer">
+    <p>Catalogue à titre indicatif — disponibilité et prix susceptibles de changer.</p>
+  </footer>
+
+</div>

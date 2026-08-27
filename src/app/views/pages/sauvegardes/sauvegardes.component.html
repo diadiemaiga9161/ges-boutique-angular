@@ -1,0 +1,86 @@
+<div class="container-fluid py-4 app-page">
+
+  <!-- Accès réservé aux admins -->
+  <div *ngIf="!isAdmin" class="alert alert-warning d-flex align-items-center gap-3">
+    <i class="fas fa-lock fa-2x text-warning"></i>
+    <div>
+      <strong>Accès refusé</strong><br>
+      <span>{{ 'BACKUP.ADMIN_ONLY' | translate }}</span>
+    </div>
+  </div>
+
+  <!-- Contenu admin uniquement -->
+  <div *ngIf="isAdmin">
+    <div class="app-page-header mb-4">
+      <div class="app-page-header-left">
+        <div class="app-page-icon"><i class="fas fa-database"></i></div>
+        <div>
+          <h1 class="app-page-title">{{ 'BACKUP.TITLE' | translate }}</h1>
+          <p class="app-page-subtitle">{{ 'BACKUP.SUBTITLE' | translate }}</p>
+        </div>
+      </div>
+      <div class="app-page-header-actions">
+        <button class="btn btn-outline-secondary me-2" (click)="refresh()" [disabled]="loading">
+          <i class="fas fa-sync-alt me-1"></i> Actualiser
+        </button>
+        <button class="btn btn-primary" (click)="declencherSauvegarde()" [disabled]="isDeclenchement">
+          <span *ngIf="!isDeclenchement">
+            <i class="fas fa-cloud-upload-alt me-1"></i>
+            {{ 'BACKUP.BTN_BACKUP_NOW' | translate }}
+          </span>
+          <span *ngIf="isDeclenchement">
+            <span class="spinner-border spinner-border-sm me-1"></span>
+            {{ 'BACKUP.LOADING' | translate }}
+          </span>
+        </button>
+      </div>
+    </div>
+
+    <div *ngIf="errorMessage" class="alert alert-danger">
+      <i class="fas fa-exclamation-triangle me-1"></i> {{ errorMessage }}
+    </div>
+
+    <div *ngIf="loading" class="loading-container text-center py-4">
+      <div class="spinner-border text-primary" role="status"></div>
+      <p class="mt-2"><i class="fas fa-spinner fa-spin"></i> {{ 'BACKUP.LOADING' | translate }}</p>
+    </div>
+
+    <div *ngIf="!loading" class="app-table-card">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th><i class="fas fa-file-archive"></i> {{ 'BACKUP.COL_FILENAME' | translate }}</th>
+            <th><i class="fas fa-calendar"></i> {{ 'BACKUP.COL_DATE' | translate }}</th>
+            <th><i class="fas fa-weight-hanging"></i> {{ 'BACKUP.COL_SIZE' | translate }}</th>
+            <th class="text-end">{{ 'BACKUP.COL_ACTIONS' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let sauvegarde of sauvegardes">
+            <td><i class="fas fa-file-archive text-muted me-1"></i> {{ sauvegarde.nomFichier }}</td>
+            <td>{{ formatDate(sauvegarde.dateCreation) }}</td>
+            <td><span class="badge bg-secondary">{{ formatTaille(sauvegarde.tailleOctets) }}</span></td>
+            <td class="text-end">
+              <button class="btn btn-sm btn-outline-primary"
+                      (click)="telecharger(sauvegarde)"
+                      [disabled]="telechargementEnCours === sauvegarde.nomFichier">
+                <span *ngIf="telechargementEnCours !== sauvegarde.nomFichier">
+                  <i class="fas fa-download me-1"></i>{{ 'BACKUP.BTN_DOWNLOAD' | translate }}
+                </span>
+                <span *ngIf="telechargementEnCours === sauvegarde.nomFichier">
+                  <span class="spinner-border spinner-border-sm me-1"></span>{{ 'BACKUP.LOADING' | translate }}
+                </span>
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="sauvegardes.length === 0">
+            <td colspan="4" class="app-empty-state text-center py-4">
+              <i class="fas fa-inbox fa-3x d-block mb-2 text-muted"></i>
+              <p>{{ 'BACKUP.EMPTY_LIST' | translate }}</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

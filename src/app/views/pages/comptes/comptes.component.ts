@@ -16,13 +16,14 @@ import { environment } from '../../../../environments/environment';
 import { FactureService } from '../../../shared/services/facture.service';
 import Swal from 'sweetalert2';
 import { TranslateModule } from '@ngx-translate/core';
+import { MontantInputDirective } from '../../../shared/directives/montant-input.directive';
 
 @Component({
   selector: 'app-comptes',
   templateUrl: './comptes.component.html',
   styleUrls: ['./comptes.component.scss'],
   standalone: true,
-  imports: [CommonModule, FormsModule, DecimalPipe, TranslateModule]
+  imports: [CommonModule, FormsModule, DecimalPipe, TranslateModule, MontantInputDirective]
 })
 export class ComptesComponent implements OnInit {
 

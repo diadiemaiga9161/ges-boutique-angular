@@ -257,6 +257,22 @@ export interface TransfertCaisseBanqueRequest {
   reference?: string;
 }
 
+export interface ReconciliationVendeur {
+  vendeurId: number;
+  vendeurNom: string;
+  nombreVentes: number;
+  totalVentesEspeces: number;
+  totalVentesCredit: number;
+  totalReglementsCreditEspeces: number;
+  totalAiRemettre: number;
+}
+
+export interface ReconciliationVendeursResponse {
+  success: boolean;
+  date: string;
+  reconciliation: ReconciliationVendeur[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -1328,6 +1344,27 @@ export class CaisseService {
     if (ecart > 0) return '+';
     if (ecart < 0) return '-';
     return '';
+  }
+
+  // ==================== RÉCONCILIATION CAISSE PAR VENDEUR ====================
+
+  /** Rapport en lecture seule : espèces à remettre par vendeur pour une date donnée (défaut = aujourd'hui). Réservé ADMIN côté backend. */
+  getReconciliationVendeurs(date?: string): Observable<ReconciliationVendeursResponse> {
+    let params = new HttpParams();
+    if (date) {
+      params = params.set('date', date);
+    }
+    return this.http.get<any>(`${this.apiUrl}/reconciliation-vendeurs`, {
+      headers: this.getAuthHeaders(),
+      params
+    }).pipe(
+      map(response => ({
+        success: response?.success !== false,
+        date: response?.date || date || this.getAujourdhui(),
+        reconciliation: response?.reconciliation || []
+      })),
+      catchError(error => this.handleError(error, 'récupérer la réconciliation caisse par vendeur'))
+    );
   }
 
   // ==================== TRANSFERT CAISSE → BANQUE ====================

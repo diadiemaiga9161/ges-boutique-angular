@@ -1,0 +1,13 @@
+// src/app/views/pages/journal-audit/journal-audit.component.scss
+// La majorité du style vient des classes globales (.app-page, .app-page-header,
+// .app-filter-card, .app-table-card, .app-empty-state) définies dans src/styles.css.
+
+.badge.bg-secondary {
+  font-weight: 500;
+  white-space: normal;
+  text-align: left;
+}
+
+.pagination .page-link {
+  cursor: pointer;
+}

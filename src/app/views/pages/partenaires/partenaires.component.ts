@@ -11,6 +11,7 @@ import { DesignFacture, FactureDesignService } from '../../../shared/services/fa
 import { forkJoin } from 'rxjs';
 import Swal from 'sweetalert2';
 import { TranslateModule } from '@ngx-translate/core';
+import { MontantInputDirective } from '../../../shared/directives/montant-input.directive';
 
 interface HistoriquePaiementEntry {
   date: string;
@@ -27,7 +28,7 @@ interface HistoriquePaiementEntry {
 @Component({
   selector: 'app-partenaires',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule],
+  imports: [CommonModule, FormsModule, TranslateModule, MontantInputDirective],
   templateUrl: './partenaires.component.html',
   styleUrls: ['../clients/clients.component.scss', './partenaires.component.scss']
 })

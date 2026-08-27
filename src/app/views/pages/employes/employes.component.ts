@@ -6,11 +6,12 @@ import { AuthService } from '../../../shared/services/auth.service';
 import Swal from 'sweetalert2';
 import { TranslateModule } from '@ngx-translate/core';
 import { COUNTRY_CODES, validatePhoneForCountry, construireNumeroComplet, separerIndicatif } from '../../../shared/utils/telephone.util';
+import { MontantInputDirective } from '../../../shared/directives/montant-input.directive';
 
 @Component({
   selector: 'app-employes',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule],
+  imports: [CommonModule, FormsModule, TranslateModule, MontantInputDirective],
   templateUrl: './employes.component.html',
   styleUrls: ['./employes.component.scss']
 })

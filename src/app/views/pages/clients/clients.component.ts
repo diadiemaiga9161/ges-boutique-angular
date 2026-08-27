@@ -15,6 +15,7 @@ import { formaterMessageWhatsApp, envoyerWhatsAppDirect } from '../../../shared/
 import { forkJoin, firstValueFrom } from 'rxjs';
 import Swal from 'sweetalert2';
 import { TranslateModule } from '@ngx-translate/core';
+import { MontantInputDirective } from '../../../shared/directives/montant-input.directive';
 
 interface HistoriquePaiementEntry {
   date: string;
@@ -38,7 +39,7 @@ interface LigneSituationAffichee extends ReleveClientLigne {
 @Component({
   selector: 'app-clients',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule],
+  imports: [CommonModule, FormsModule, TranslateModule, MontantInputDirective],
   templateUrl: './clients.component.html',
   styleUrls: ['./clients.component.scss']
 })

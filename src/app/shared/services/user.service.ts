@@ -194,9 +194,10 @@ export class UserService {
     );
   }
 
-  getUsersByRole(role: 'ADMIN' | 'VENDEUR', token: string): Observable<User[]> {
+  getUsersByRole(role: 'ADMIN' | 'VENDEUR' | Array<'ADMIN' | 'VENDEUR'>, token: string): Observable<User[]> {
+    const roles = Array.isArray(role) ? role : [role];
     return this.getAllUsers(token).pipe(
-      map(users => users.filter(user => user.role === role))
+      map(users => users.filter(user => roles.includes(user.role)))
     );
   }
 

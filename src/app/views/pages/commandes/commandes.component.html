@@ -327,7 +327,7 @@
                     </span>
                   </td>
                   <td>
-                    <input type="number" class="form-control form-control-sm" [(ngModel)]="l.prixUnitaire" min="0" />
+                    <input type="text" inputmode="numeric" class="form-control form-control-sm" appMontantInput [(ngModel)]="l.prixUnitaire" />
                   </td>
                   <td>
                     <div class="input-group input-group-sm">
@@ -385,7 +385,7 @@
             <div class="row g-2">
               <div class="col-md-4">
                 <label class="form-label small">Montant versé maintenant</label>
-                <input type="number" class="form-control" [(ngModel)]="form.montantVerse" min="0" />
+                <input type="text" inputmode="numeric" class="form-control" appMontantInput [(ngModel)]="form.montantVerse" />
               </div>
               <div class="col-md-4">
                 <label class="form-label small">Reste à payer</label>
@@ -439,8 +439,7 @@
         </div>
         <div class="mb-3">
           <label class="form-label">Montant à verser maintenant</label>
-          <input type="number" class="form-control" [(ngModel)]="montantReglement"
-            [max]="commandeSelectionnee.montantRestant" min="0"
+          <input type="text" inputmode="numeric" class="form-control" appMontantInput [(ngModel)]="montantReglement"
             placeholder="0" />
           <div class="form-text">Maximum : {{ formatMontant(commandeSelectionnee.montantRestant) }}</div>
         </div>
@@ -550,8 +549,7 @@
         <div class="row g-2 align-items-end">
           <div class="col">
             <label class="form-label fw-bold">Montant total à verser</label>
-            <input type="number" class="form-control" [(ngModel)]="montantReglementGroupe"
-              [max]="totalCreditsSelectionnes" min="0" />
+            <input type="text" inputmode="numeric" class="form-control" appMontantInput [(ngModel)]="montantReglementGroupe" />
           </div>
           <div class="col-auto">
             <button class="btn btn-outline-success" (click)="montantReglementGroupe = totalCreditsSelectionnes">

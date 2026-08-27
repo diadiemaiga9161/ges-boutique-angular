@@ -409,11 +409,11 @@
             </div>
             <div class="col-md-3">
               <label class="form-label">Prix achat (XOF) <span class="text-danger">*</span></label>
-              <input type="number" class="form-control" [(ngModel)]="productForm.prixAchat" name="prixAchat" required min="1" step="0.01">
+              <input type="text" inputmode="numeric" class="form-control" appMontantInput [(ngModel)]="productForm.prixAchat" name="prixAchat" required>
             </div>
             <div class="col-md-3">
               <label class="form-label">Prix vente (XOF) <span class="text-danger">*</span></label>
-              <input type="number" class="form-control" [(ngModel)]="productForm.prixVente" name="prixVente" required min="1" step="0.01">
+              <input type="text" inputmode="numeric" class="form-control" appMontantInput [(ngModel)]="productForm.prixVente" name="prixVente" required>
             </div>
             <div class="col-md-3">
               <label class="form-label">Quantité <span class="text-danger">*</span></label>
@@ -468,8 +468,8 @@
             <div class="col-12"><label class="form-label">Description</label><textarea class="form-control" rows="2" [(ngModel)]="productForm.description" name="description"></textarea></div>
             <div class="col-md-6"><label class="form-label">Catégorie <span class="text-danger">*</span></label><select class="form-select" [(ngModel)]="productForm.categorieId" name="categorieId" required><option [ngValue]="0">Sélectionnez une catégorie</option><option *ngFor="let cat of categories" [ngValue]="cat.id">{{ cat.nom }}</option></select></div>
             <div class="col-md-6"><label class="form-label">Fournisseur</label><select class="form-select" [(ngModel)]="productForm.fournisseurId" name="fournisseurId"><option [ngValue]="null">Aucun fournisseur</option><option *ngFor="let f of fournisseurs" [ngValue]="f.id">{{ f.nom }}</option></select></div>
-            <div class="col-md-3"><label class="form-label">Prix achat (XOF)</label><input type="number" class="form-control" [(ngModel)]="productForm.prixAchat" name="prixAchat" required min="1" step="0.01"></div>
-            <div class="col-md-3"><label class="form-label">Prix vente (XOF)</label><input type="number" class="form-control" [(ngModel)]="productForm.prixVente" name="prixVente" required min="1" step="0.01"></div>
+            <div class="col-md-3"><label class="form-label">Prix achat (XOF)</label><input type="text" inputmode="numeric" class="form-control" appMontantInput [(ngModel)]="productForm.prixAchat" name="prixAchat" required></div>
+            <div class="col-md-3"><label class="form-label">Prix vente (XOF)</label><input type="text" inputmode="numeric" class="form-control" appMontantInput [(ngModel)]="productForm.prixVente" name="prixVente" required></div>
             <div class="col-md-3"><label class="form-label">Quantité</label><input type="number" class="form-control" [(ngModel)]="productForm.quantite" name="quantite" required min="0"></div>
             <div class="col-md-3"><label class="form-label">Seuil alerte</label><input type="number" class="form-control" [(ngModel)]="productForm.seuilAlerte" name="seuilAlerte" min="0"></div>
             <div class="col-12"><hr></div>
@@ -772,13 +772,13 @@
               <div class="col-md-4"><label class="form-label small">Unité de mesure</label><select class="form-select form-select-sm" [(ngModel)]="tempLigneAchat.uniteMesure"><option [ngValue]="null">Sélectionner</option><option value="kg">kg</option><option value="g">g</option><option value="L">litre</option><option value="ml">millilitre</option><option value="pce">pièce</option><option value="carton">carton</option><option value="sac">sac</option></select></div>
               <div class="col-md-4"><label class="form-label small">Origine</label><input type="text" class="form-control form-control-sm" [(ngModel)]="tempLigneAchat.origine" placeholder="Origine"></div>
               <div class="col-md-6"><label class="form-label small">Description</label><textarea class="form-control form-control-sm" rows="2" [(ngModel)]="tempLigneAchat.description" placeholder="Description du produit"></textarea></div>
-              <div class="col-md-3"><label class="form-label small">Prix de vente (optionnel)</label><input type="number" class="form-control form-control-sm" [(ngModel)]="tempLigneAchat.prixVente" step="0.01" placeholder="Auto calculé"></div>
+              <div class="col-md-3"><label class="form-label small">Prix de vente (optionnel)</label><input type="text" inputmode="numeric" class="form-control form-control-sm" appMontantInput [(ngModel)]="tempLigneAchat.prixVente" placeholder="Auto calculé"></div>
               <div class="col-md-3"><label class="form-label small">Seuil d'alerte</label><input type="number" class="form-control form-control-sm" [(ngModel)]="tempLigneAchat.seuilAlerte" placeholder="10"></div>
               <div class="col-md-12"><div class="form-check"><input class="form-check-input" type="checkbox" [(ngModel)]="tempLigneAchat.bio" id="bioCheckAchat"><label class="form-check-label small" for="bioCheckAchat">Produit Bio</label></div></div>
             </div>
             <div class="row g-2 mb-3">
               <div class="col-md-3"><label class="form-label small">Quantité <span class="text-danger">*</span></label><input type="number" class="form-control form-control-sm" [(ngModel)]="tempLigneAchat.quantite" min="1"></div>
-              <div class="col-md-3"><label class="form-label small">Prix achat unitaire <span class="text-danger">*</span></label><input type="number" class="form-control form-control-sm" [(ngModel)]="tempLigneAchat.prixAchatUnitaire" step="0.01"></div>
+              <div class="col-md-3"><label class="form-label small">Prix achat unitaire <span class="text-danger">*</span></label><input type="text" inputmode="numeric" class="form-control form-control-sm" appMontantInput [(ngModel)]="tempLigneAchat.prixAchatUnitaire"></div>
               <div class="col-md-3 d-flex align-items-end"><button class="btn btn-sm btn-success w-100" (click)="ajouterLigneAchat()"><i class="fa fa-plus me-1"></i> Ajouter</button></div>
             </div>
             <hr><h6>Produits de l'achat</h6>
@@ -793,7 +793,7 @@
                 </div>
                 <div class="mb-2" *ngIf="avanceFournisseurDisponible > 0">
                   <label class="form-label fw-semibold text-success">Déduire de l'avance</label>
-                  <input type="number" class="form-control" [(ngModel)]="avanceFournisseurUtilisee" [max]="Math.min(avanceFournisseurDisponible, calculerTotalAchat())" min="0" step="0.01">
+                  <input type="text" inputmode="numeric" class="form-control" appMontantInput [(ngModel)]="avanceFournisseurUtilisee">
                   <small class="text-muted">Max : {{ formatPrice(Math.min(avanceFournisseurDisponible, calculerTotalAchat())) }}</small>
                 </div>
                 
@@ -818,7 +818,7 @@
                 
                 <div class="mb-2">
                   <label class="form-label">Montant payé immédiatement</label>
-                  <input type="number" class="form-control" [(ngModel)]="achatForm.montantPaye" step="0.01" min="0">
+                  <input type="text" inputmode="numeric" class="form-control" appMontantInput [(ngModel)]="achatForm.montantPaye">
                   <small class="text-muted" *ngIf="achatForm.modePaiementImmediat === 'ESPECES'">Le montant sera déduit de la caisse</small>
                   <small class="text-muted" *ngIf="achatForm.modePaiementImmediat === 'BANQUE'">Le montant sera déduit du compte bancaire</small>
                 </div>
@@ -985,11 +985,9 @@
               </label>
               <div class="input-group input-group-lg">
                 <span class="input-group-text bg-success text-white">XOF</span>
-                <input type="number" class="form-control form-control-lg" 
-                  [(ngModel)]="paiementForm.montant" 
-                  (input)="onMontantChange()"
-                  [max]="montantMaxPaiement"
-                  step="0.01" min="0.01"
+                <input type="text" inputmode="numeric" class="form-control form-control-lg" appMontantInput
+                  [ngModel]="paiementForm.montant"
+                  (ngModelChange)="paiementForm.montant = $event; onMontantChange()"
                   style="border-radius: 0 12px 12px 0;">
               </div>
               <div class="mt-3 d-flex gap-2 flex-wrap">
@@ -1088,7 +1086,7 @@
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content shadow-lg">
       <div class="modal-header bg-primary text-white"><div class="d-flex align-items-center"><i class="fa fa-hand-holding-usd fa-lg me-3"></i><div><h5 class="modal-title fw-bold mb-0">Avance fournisseur</h5><small class="opacity-75">{{ selectedFournisseurForAvance?.nom }}</small></div></div><button type="button" class="btn-close btn-close-white" (click)="showAvanceFournisseurModal=false"></button></div>
-      <div class="modal-body p-4"><div class="alert alert-info mb-3"><i class="fa fa-info-circle me-1"></i> L'avance sera déduite automatiquement lors des prochains achats avec ce fournisseur.</div><div class="mb-3"><label class="form-label fw-semibold">Montant de l'avance (F) *</label><input type="number" class="form-control form-control-lg" [(ngModel)]="avanceFournisseurForm.montant" min="1" step="0.01" placeholder="Ex: 500000"></div><div class="mb-3"><label class="form-label fw-semibold">Source du financement *</label><div class="d-flex gap-3"><div class="form-check"><input class="form-check-input" type="radio" id="src_caisse" name="sourceFinancement" value="CAISSE" [(ngModel)]="avanceFournisseurForm.sourceFinancement"><label class="form-check-label" for="src_caisse"><i class="fa fa-cash-register me-1"></i> Caisse</label></div><div class="form-check"><input class="form-check-input" type="radio" id="src_banque" name="sourceFinancement" value="BANQUE" [(ngModel)]="avanceFournisseurForm.sourceFinancement"><label class="form-check-label" for="src_banque"><i class="fa fa-university me-1"></i> Banque</label></div></div></div><div class="mb-3" *ngIf="avanceFournisseurForm.sourceFinancement === 'BANQUE'"><label class="form-label fw-semibold">Compte bancaire *</label><select class="form-select" [(ngModel)]="avanceFournisseurForm.compteId"><option [ngValue]="undefined">-- Choisir un compte --</option><option *ngFor="let c of comptes" [ngValue]="c.id">{{ c.nomBanque }} — Solde: {{ formatPrice(c.soldeActuel) }}</option></select></div><div class="mb-3"><label class="form-label fw-semibold">Motif</label><input type="text" class="form-control" [(ngModel)]="avanceFournisseurForm.motif" placeholder="Ex: Commande prévue, approvisionnement..."></div><div class="alert alert-warning mb-0" *ngIf="avanceFournisseurForm.sourceFinancement === 'CAISSE'"><i class="fa fa-exclamation-triangle me-1"></i> Le montant sera prélevé de la caisse (sortie d'espèces).</div></div>
+      <div class="modal-body p-4"><div class="alert alert-info mb-3"><i class="fa fa-info-circle me-1"></i> L'avance sera déduite automatiquement lors des prochains achats avec ce fournisseur.</div><div class="mb-3"><label class="form-label fw-semibold">Montant de l'avance (F) *</label><input type="text" inputmode="numeric" class="form-control form-control-lg" appMontantInput [(ngModel)]="avanceFournisseurForm.montant" placeholder="Ex: 500000"></div><div class="mb-3"><label class="form-label fw-semibold">Source du financement *</label><div class="d-flex gap-3"><div class="form-check"><input class="form-check-input" type="radio" id="src_caisse" name="sourceFinancement" value="CAISSE" [(ngModel)]="avanceFournisseurForm.sourceFinancement"><label class="form-check-label" for="src_caisse"><i class="fa fa-cash-register me-1"></i> Caisse</label></div><div class="form-check"><input class="form-check-input" type="radio" id="src_banque" name="sourceFinancement" value="BANQUE" [(ngModel)]="avanceFournisseurForm.sourceFinancement"><label class="form-check-label" for="src_banque"><i class="fa fa-university me-1"></i> Banque</label></div></div></div><div class="mb-3" *ngIf="avanceFournisseurForm.sourceFinancement === 'BANQUE'"><label class="form-label fw-semibold">Compte bancaire *</label><select class="form-select" [(ngModel)]="avanceFournisseurForm.compteId"><option [ngValue]="undefined">-- Choisir un compte --</option><option *ngFor="let c of comptes" [ngValue]="c.id">{{ c.nomBanque }} — Solde: {{ formatPrice(c.soldeActuel) }}</option></select></div><div class="mb-3"><label class="form-label fw-semibold">Motif</label><input type="text" class="form-control" [(ngModel)]="avanceFournisseurForm.motif" placeholder="Ex: Commande prévue, approvisionnement..."></div><div class="alert alert-warning mb-0" *ngIf="avanceFournisseurForm.sourceFinancement === 'CAISSE'"><i class="fa fa-exclamation-triangle me-1"></i> Le montant sera prélevé de la caisse (sortie d'espèces).</div></div>
       <div class="modal-footer"><button class="btn btn-outline-secondary" (click)="showAvanceFournisseurModal=false" [disabled]="isLoading">Annuler</button><button class="btn btn-primary" (click)="submitAvanceFournisseur()" [disabled]="isLoading"><span *ngIf="!isLoading"><i class="fa fa-check me-1"></i> Enregistrer l'avance</span><span *ngIf="isLoading"><i class="fa fa-spinner fa-spin me-1"></i> Enregistrement...</span></button></div>
     </div>
   </div>

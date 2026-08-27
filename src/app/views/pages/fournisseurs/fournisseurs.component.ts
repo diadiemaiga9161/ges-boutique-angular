@@ -26,11 +26,12 @@ import { environment } from '../../../../environments/environment';
 import Swal from 'sweetalert2';
 import { TranslateModule } from '@ngx-translate/core';
 import { formaterMessageWhatsApp, envoyerWhatsAppDirect } from '../../../shared/utils/whatsapp.util';
+import { MontantInputDirective } from '../../../shared/directives/montant-input.directive';
 
 @Component({
   selector: 'app-fournisseurs',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule],
+  imports: [CommonModule, FormsModule, TranslateModule, MontantInputDirective],
   templateUrl: './fournisseurs.component.html',
   styleUrls: ['./fournisseurs.component.scss']
 })
@@ -620,6 +621,12 @@ export class FournisseursComponent implements OnInit {
     // Une ligne est valide si elle référence un produit existant OU un nouveau produit (nom renseigné).
     if (this.achatForm.lignes.some(l => (!l.produitId && !l.nouveauProduitNom) || !l.quantite || !l.prixAchatUnitaire)) {
       Swal.fire({ icon: 'warning', title: 'Lignes incomplètes', text: 'Renseignez produit, quantité et prix pour chaque ligne.' }); return;
+    }
+    if ((this.avanceFournisseurUtilisee || 0) > this.maxAvanceUtilisable) {
+      Swal.fire({ icon: 'warning', title: 'Avance trop élevée', text: `Le montant déduit de l'avance ne peut pas dépasser ${this.fmt(this.maxAvanceUtilisable)}.` }); return;
+    }
+    if ((this.achatForm.montantPaye || 0) > this.montantTotalAchat) {
+      Swal.fire({ icon: 'warning', title: 'Montant payé trop élevé', text: `Le montant payé ne peut pas dépasser le total de l'achat : ${this.fmt(this.montantTotalAchat)}.` }); return;
     }
 
     const propositionsCUMP = this.calculerPropositionsCUMP();

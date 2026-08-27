@@ -1,0 +1,74 @@
+<div class="tuto-wizard-overlay" *ngIf="visible">
+  <div class="tuto-wizard-box">
+
+    <!-- Croix de fermeture : équivaut à "Compris, commencer" -->
+    <button type="button"
+            class="tuto-wizard-close"
+            (click)="fermer()"
+            [attr.aria-label]="'TUTORIEL_VENDEUR.CLOSE' | translate">
+      <i class="fas fa-times"></i>
+    </button>
+
+    <!-- Titre wizard -->
+    <div class="tuto-wizard-head">
+      <div class="tuto-wizard-icon">
+        <i class="fas fa-hand-sparkles" *ngIf="etape === 1"></i>
+        <i class="fas fa-cash-register" *ngIf="etape === 2"></i>
+        <i class="fas fa-hand-holding-usd" *ngIf="etape === 3"></i>
+      </div>
+      <h5>
+        <ng-container *ngIf="etape === 1">{{ 'TUTORIEL_VENDEUR.STEP1_TITLE' | translate }}</ng-container>
+        <ng-container *ngIf="etape === 2">{{ 'TUTORIEL_VENDEUR.STEP2_TITLE' | translate }}</ng-container>
+        <ng-container *ngIf="etape === 3">{{ 'TUTORIEL_VENDEUR.STEP3_TITLE' | translate }}</ng-container>
+      </h5>
+    </div>
+
+    <!-- Barre de progression -->
+    <div class="tuto-wizard-prog-wrap">
+      <div class="tuto-wizard-prog-bar" [style.width.%]="progression"></div>
+    </div>
+    <p class="tuto-wizard-step-info">
+      {{ 'TUTORIEL_VENDEUR.STEP' | translate }} {{ etape }} {{ 'TUTORIEL_VENDEUR.OF' | translate }} {{ totalEtapes }}
+    </p>
+
+    <!-- Étape 1 : Bienvenue -->
+    <div *ngIf="etape === 1" class="tuto-wizard-body">
+      <p>{{ 'TUTORIEL_VENDEUR.STEP1_TEXT' | translate: { nom: userNom, role: roleLabel } }}</p>
+      <p class="tuto-wizard-boutique" *ngIf="boutiqueNom">
+        <i class="fas fa-store me-1"></i>{{ boutiqueNom }}
+      </p>
+    </div>
+
+    <!-- Étape 2 : Enregistrer une vente -->
+    <div *ngIf="etape === 2" class="tuto-wizard-body">
+      <p>{{ 'TUTORIEL_VENDEUR.STEP2_TEXT' | translate }}</p>
+    </div>
+
+    <!-- Étape 3 : Gérer un crédit -->
+    <div *ngIf="etape === 3" class="tuto-wizard-body">
+      <p>{{ 'TUTORIEL_VENDEUR.STEP3_TEXT' | translate }}</p>
+    </div>
+
+    <!-- Footer wizard -->
+    <div class="tuto-wizard-footer">
+      <button *ngIf="etape > 1"
+              type="button"
+              class="btn btn-outline-secondary tuto-btn-prev"
+              (click)="precedent()">
+        <i class="fas fa-arrow-left me-1"></i>{{ 'TUTORIEL_VENDEUR.PREVIOUS' | translate }}
+      </button>
+
+      <button type="button"
+              class="btn btn-primary tuto-btn-next ms-auto"
+              (click)="suivant()">
+        <ng-container *ngIf="etape < totalEtapes">
+          {{ 'TUTORIEL_VENDEUR.NEXT' | translate }} <i class="fas fa-arrow-right ms-1"></i>
+        </ng-container>
+        <ng-container *ngIf="etape === totalEtapes">
+          {{ 'TUTORIEL_VENDEUR.FINISH' | translate }} <i class="fas fa-check ms-1"></i>
+        </ng-container>
+      </button>
+    </div>
+
+  </div>
+</div>

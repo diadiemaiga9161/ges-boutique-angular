@@ -194,6 +194,14 @@
             <i class="fas fa-sign-out-alt me-2"></i>
             Se déconnecter
           </button>
+
+          <button *ngIf="authService.isVendeur()"
+                  class="btn btn-outline-primary"
+                  type="button"
+                  (click)="revoirTutoriel()">
+            <i class="fas fa-graduation-cap me-2"></i>
+            {{ 'TUTORIEL_VENDEUR.REVIEW_LINK' | translate }}
+          </button>
         </div>
       </form>
     </div>

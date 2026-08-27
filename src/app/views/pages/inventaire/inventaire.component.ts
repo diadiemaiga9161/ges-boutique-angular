@@ -12,13 +12,14 @@ import { AuthService } from '../../../shared/services/auth.service';
 import { ProduitNiveau, ProduitNiveauService } from '../../../shared/services/produit-niveau.service';
 import * as XLSX from 'xlsx';
 import { TranslateModule } from '@ngx-translate/core';
+import { MontantInputDirective } from '../../../shared/directives/montant-input.directive';
 
 @Component({
   selector: 'app-inventaire',
   templateUrl: './inventaire.component.html',
   styleUrls: ['./inventaire.component.scss'],
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, TranslateModule]
+  imports: [CommonModule, FormsModule, RouterModule, TranslateModule, MontantInputDirective]
 })
 export class InventaireComponent implements OnInit {
   // Données
@@ -26,6 +27,9 @@ export class InventaireComponent implements OnInit {
   categories: Categorie[] = [];
   produitsStockFaible: ProduitStock[] = [];
   produitsStockFaibleFiltres: ProduitStock[] = [];
+  // Alerte informative (lecture seule) : produits proches de la péremption.
+  // La gestion des promotions reste réservée à l'application mobile.
+  produitsProchePeremption: Produit[] = [];
   mouvements: MouvementStock[] = [];
   mouvementsFiltres: MouvementStock[] = [];
   statistiques: StatistiquesInventaire | null = null;
@@ -126,6 +130,21 @@ export class InventaireComponent implements OnInit {
   searchNiveaux: string = '';
   showNiveauxSection: boolean = false;
 
+  // Dialogue guidé de création/modification d'un niveau de conditionnement
+  niveauWizardOpen: boolean = false;
+  niveauWizardStep: 'question' | 'form' = 'form';
+  niveauWizardMode: 'root' | 'child' | 'edit' = 'root';
+  niveauWizardProduit: Produit | null = null;
+  // Niveau "parent" de référence : null quand on crée/modifie un niveau racine
+  niveauWizardFeuille: ProduitNiveau | null = null;
+  niveauWizardEditId: number | null = null;
+  niveauWizardShowAvance: boolean = false;
+  niveauWizardSaving: boolean = false;
+  niveauWizardError: string = '';
+  niveauWizardForm: { nom: string; facteur: number | null; prixVente: number | null; prixAchat: number | null } = {
+    nom: '', facteur: null, prixVente: null, prixAchat: null
+  };
+
   private subscriptions: Subscription[] = [];
 
   constructor(
@@ -140,6 +159,7 @@ export class InventaireComponent implements OnInit {
     this.loadData();
     this.initExportDates();
     this.loadCategories();
+    this.loadProduitsProchePeremption();
 
     // Temps réel : mettre à jour seulement la quantité du produit concerné
     const wsSub = this.ws.subscribeTopic('/topic/stock').subscribe(event => {
@@ -175,6 +195,25 @@ export class InventaireComponent implements OnInit {
       },
       error: (error) => {
         console.error('Erreur chargement catégories:', error);
+      }
+    });
+  }
+
+  /**
+   * Alerte informative (lecture seule) : produits proches de la péremption.
+   * Endpoint réservé ADMIN côté backend : si l'utilisateur connecté n'est pas
+   * admin, l'appel échoue en 403. On l'ignore silencieusement, sans message
+   * d'erreur visible.
+   * Note : aucune action de création/gestion de promotion n'est proposée ici,
+   * cette gestion reste réservée à l'application mobile.
+   */
+  loadProduitsProchePeremption(): void {
+    this.productService.getNearExpiryProducts(7).subscribe({
+      next: (produits) => {
+        this.produitsProchePeremption = produits;
+      },
+      error: () => {
+        this.produitsProchePeremption = [];
       }
     });
   }
@@ -1183,5 +1222,213 @@ export class InventaireComponent implements OnInit {
     if (s === 0) return 'badge bg-danger';
     if (s <= 5) return 'badge bg-warning text-dark';
     return 'badge bg-success';
+  }
+
+  // ─── Dialogue guidé niveaux (créer / ajouter sous-conditionnement / modifier) ──
+
+  /**
+   * Trouve le niveau "feuille" actuel d'un produit, c'est-à-dire le niveau
+   * le plus bas de la chaîne (celui qui n'est parent d'aucun autre niveau).
+   */
+  private trouverFeuilleNiveau(niveaux: ProduitNiveau[]): ProduitNiveau | null {
+    if (!niveaux.length) return null;
+    return niveaux.find(n => !niveaux.some(autre => autre.parentId === n.id)) || niveaux[niveaux.length - 1];
+  }
+
+  /**
+   * Ouvre le dialogue guidé pour ce produit : première configuration (Cas A)
+   * si aucun niveau n'existe encore, sinon ajout d'un sous-conditionnement (Cas B).
+   */
+  ouvrirAjoutNiveau(produit: Produit): void {
+    if (!this.niveauxMap[produit.id]) {
+      this.niveauxLoadingMap[produit.id] = true;
+      this.niveauService.getNiveaux(produit.id).subscribe({
+        next: niveaux => {
+          this.niveauxMap[produit.id] = niveaux;
+          this.niveauxLoadingMap[produit.id] = false;
+          this.demarrerWizardNiveau(produit);
+        },
+        error: () => { this.niveauxLoadingMap[produit.id] = false; }
+      });
+    } else {
+      this.demarrerWizardNiveau(produit);
+    }
+  }
+
+  private demarrerWizardNiveau(produit: Produit): void {
+    const niveaux = this.niveauxMap[produit.id] || [];
+    this.niveauWizardProduit = produit;
+    this.niveauWizardEditId = null;
+    this.niveauWizardShowAvance = false;
+    this.niveauWizardError = '';
+    this.niveauWizardForm = { nom: '', facteur: null, prixVente: null, prixAchat: null };
+
+    if (niveaux.length === 0) {
+      // Cas A : premier niveau du produit
+      this.niveauWizardMode = 'root';
+      this.niveauWizardFeuille = null;
+      this.niveauWizardStep = 'question';
+    } else {
+      // Cas B : ajout d'un sous-conditionnement sous le niveau le plus bas actuel
+      this.niveauWizardMode = 'child';
+      this.niveauWizardFeuille = this.trouverFeuilleNiveau(niveaux);
+      this.niveauWizardStep = 'form';
+    }
+    this.niveauWizardOpen = true;
+  }
+
+  /**
+   * Réponse à la question "Ce produit se vend-il aussi en plus grand
+   * conditionnement (en gros) ?" (uniquement pour le Cas A).
+   */
+  repondreVeutGrosNiveau(reponse: boolean): void {
+    if (!reponse) {
+      this.fermerWizardNiveau();
+      return;
+    }
+    this.niveauWizardStep = 'form';
+  }
+
+  /**
+   * Ouvre le dialogue guidé en mode modification d'un niveau existant.
+   */
+  ouvrirModifierNiveau(niveau: ProduitNiveau, produit: Produit): void {
+    const niveaux = this.niveauxMap[produit.id] || [];
+    this.niveauWizardProduit = produit;
+    this.niveauWizardMode = 'edit';
+    this.niveauWizardEditId = niveau.id ?? null;
+    this.niveauWizardShowAvance = false;
+    this.niveauWizardError = '';
+    this.niveauWizardFeuille = niveau.parentId ? (niveaux.find(n => n.id === niveau.parentId) || null) : null;
+    this.niveauWizardForm = {
+      nom: niveau.nom,
+      facteur: niveau.facteur,
+      prixVente: niveau.prixVente,
+      prixAchat: niveau.prixAchat
+    };
+    this.niveauWizardStep = 'form';
+    this.niveauWizardOpen = true;
+  }
+
+  fermerWizardNiveau(): void {
+    this.niveauWizardOpen = false;
+    this.niveauWizardStep = 'form';
+    this.niveauWizardMode = 'root';
+    this.niveauWizardProduit = null;
+    this.niveauWizardFeuille = null;
+    this.niveauWizardEditId = null;
+    this.niveauWizardError = '';
+  }
+
+  /** true quand on crée/modifie un niveau racine (pas de parent) */
+  get niveauWizardEstRacine(): boolean {
+    return this.niveauWizardFeuille === null;
+  }
+
+  get niveauWizardValeurComparaison(): number {
+    const facteur = this.niveauWizardForm.facteur || 0;
+    if (this.niveauWizardEstRacine) {
+      return facteur * (this.niveauWizardProduit?.prixVente || 0);
+    }
+    return facteur * (this.niveauWizardForm.prixVente || 0);
+  }
+
+  get niveauWizardEcart(): number {
+    const reference = this.niveauWizardEstRacine
+      ? (this.niveauWizardForm.prixVente || 0)
+      : (this.niveauWizardFeuille?.prixVente || 0);
+    return this.niveauWizardValeurComparaison - reference;
+  }
+
+  get niveauWizardValide(): boolean {
+    const f = this.niveauWizardForm;
+    return !!f.nom?.trim() && !!f.facteur && f.facteur >= 1 && !!f.prixVente && f.prixVente > 0;
+  }
+
+  enregistrerNiveauWizard(): void {
+    if (!this.niveauWizardValide || !this.niveauWizardProduit) return;
+    const produit = this.niveauWizardProduit;
+    const payload: Partial<ProduitNiveau> = {
+      nom: this.niveauWizardForm.nom.trim(),
+      facteur: this.niveauWizardForm.facteur!,
+      prixVente: this.niveauWizardForm.prixVente!,
+      prixAchat: this.niveauWizardForm.prixAchat || 0
+    };
+
+    this.niveauWizardSaving = true;
+    this.niveauWizardError = '';
+
+    if (this.niveauWizardMode === 'edit' && this.niveauWizardEditId) {
+      this.niveauService.modifier(this.niveauWizardEditId, payload).subscribe({
+        next: () => {
+          this.niveauWizardSaving = false;
+          this.fermerWizardNiveau();
+          this.rafraichirNiveauxProduit(produit);
+          Swal.fire({ icon: 'success', title: 'Niveau modifié', timer: 2000, showConfirmButton: false });
+        },
+        error: e => {
+          this.niveauWizardSaving = false;
+          this.niveauWizardError = e.message || 'Erreur lors de la modification';
+        }
+      });
+      return;
+    }
+
+    const creation: Partial<ProduitNiveau> = {
+      ...payload,
+      stock: 0,
+      parentId: this.niveauWizardMode === 'child' ? (this.niveauWizardFeuille?.id ?? undefined) : undefined
+    };
+    const nomCree = creation.nom!;
+
+    this.niveauService.creer(produit.id, creation).subscribe({
+      next: niveauCree => {
+        this.niveauWizardSaving = false;
+        this.rafraichirNiveauxProduit(produit, () => {
+          Swal.fire({ icon: 'success', title: 'Niveau créé', timer: 1500, showConfirmButton: false }).then(() => {
+            this.proposerAjoutSousConditionnement(produit, niveauCree || null, nomCree);
+          });
+        });
+      },
+      error: e => {
+        this.niveauWizardSaving = false;
+        this.niveauWizardError = e.message || 'Erreur lors de la création du niveau';
+      }
+    });
+  }
+
+  private proposerAjoutSousConditionnement(produit: Produit, niveauCree: ProduitNiveau | null, nomCree: string): void {
+    this.fermerWizardNiveau();
+    Swal.fire({
+      icon: 'question',
+      title: `Ajouter encore un sous-conditionnement sous ${nomCree} ?`,
+      showCancelButton: true,
+      confirmButtonText: 'Oui',
+      cancelButtonText: 'Non'
+    }).then(res => {
+      if (res.isConfirmed) {
+        const niveaux = this.niveauxMap[produit.id] || [];
+        const feuille = niveauCree || this.trouverFeuilleNiveau(niveaux);
+        this.niveauWizardProduit = produit;
+        this.niveauWizardMode = 'child';
+        this.niveauWizardEditId = null;
+        this.niveauWizardShowAvance = false;
+        this.niveauWizardError = '';
+        this.niveauWizardFeuille = feuille;
+        this.niveauWizardForm = { nom: '', facteur: null, prixVente: null, prixAchat: null };
+        this.niveauWizardStep = 'form';
+        this.niveauWizardOpen = true;
+      }
+    });
+  }
+
+  private rafraichirNiveauxProduit(produit: Produit, apres?: () => void): void {
+    this.niveauService.getNiveaux(produit.id).subscribe({
+      next: niveaux => {
+        this.niveauxMap[produit.id] = niveaux;
+        if (apres) apres();
+      },
+      error: () => { if (apres) apres(); }
+    });
   }
 }

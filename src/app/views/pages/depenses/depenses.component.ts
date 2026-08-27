@@ -7,11 +7,12 @@ import { Depense, DepenseRequest, DepenseService, TypeDepense } from '../../../s
 import { PaiementEmployeService, PaiementEmploye } from '../../../shared/services/paiement-employe.service';
 import { FactureService } from '../../../shared/services/facture.service';
 import { TranslateModule } from '@ngx-translate/core';
+import { MontantInputDirective } from '../../../shared/directives/montant-input.directive';
 
 @Component({
   selector: 'app-depenses',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule],
+  imports: [CommonModule, FormsModule, TranslateModule, MontantInputDirective],
   templateUrl: './depenses.component.html',
   styleUrls: ['./depenses.component.scss']
 })

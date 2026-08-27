@@ -166,6 +166,25 @@
             </div>
           </div>
 
+          <!-- Confirmation vocale du montant (caisse/vente) -->
+          <div class="mb-4">
+            <div class="d-flex align-items-center justify-content-between">
+              <div>
+                <h6 class="mb-1"><i class="fas fa-volume-up me-1"></i> {{ 'BOUTIQUE_SETTINGS.VOICE_ANNOUNCE' | translate }}</h6>
+                <small class="text-muted">{{ 'BOUTIQUE_SETTINGS.VOICE_ANNOUNCE_DESC' | translate }}</small>
+              </div>
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox"
+                       id="confirmationVocaleToggle" [(ngModel)]="confirmationVocaleActive"
+                       name="confirmationVocale" (change)="toggleConfirmationVocale()">
+                <label class="form-check-label" for="confirmationVocaleToggle">
+                  <span *ngIf="confirmationVocaleActive" class="badge bg-success">{{ 'BOUTIQUE_SETTINGS.ENABLED' | translate }}</span>
+                  <span *ngIf="!confirmationVocaleActive" class="badge bg-secondary">{{ 'BOUTIQUE_SETTINGS.DISABLED' | translate }}</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
           <!-- Couleur globale -->
           <div class="mb-3">
             <h6 class="mb-3">{{ 'BOUTIQUE_SETTINGS.MAIN_COLOR' | translate }}</h6>
@@ -204,6 +223,41 @@
           </button>
         </div>
       </form>
+
+      <!-- ── Section QR code de la vitrine (réservée à l'admin) ───────────── -->
+      <div *ngIf="isAdmin" class="boutique-card qr-vitrine-card mt-4">
+        <h2 class="boutique-card-title"><i class="fas fa-qrcode me-2"></i>{{ 'QR_VITRINE.TITLE' | translate }}</h2>
+        <p class="text-muted small mb-3">{{ 'QR_VITRINE.SUBTITLE' | translate }}</p>
+
+        <div *ngIf="qrCodeError" class="alert alert-danger py-2">{{ qrCodeError }}</div>
+
+        <div class="qr-content">
+          <!-- Zone imprimable : uniquement celle-ci sera visible lors de l'impression -->
+          <div class="qr-print-area">
+            <div class="qr-print-inner">
+              <h2 class="qr-boutique-name">{{ model.nom || '—' }}</h2>
+              <div class="qr-image-wrap">
+                <span *ngIf="qrCodeLoading" class="spinner-border text-primary"></span>
+                <img *ngIf="!qrCodeLoading && qrCodeDataUrl" [src]="qrCodeDataUrl" alt="QR code vitrine" class="qr-image" />
+              </div>
+              <p class="qr-scan-text">{{ 'QR_VITRINE.SCAN_TEXT' | translate }}</p>
+            </div>
+          </div>
+
+          <!-- Actions : masquées automatiquement lors de l'impression -->
+          <div class="qr-actions no-print">
+            <button type="button" class="btn btn-outline-primary btn-sm" (click)="genererQrCode()" [disabled]="qrCodeLoading">
+              <i class="fas fa-sync-alt me-1"></i>{{ 'QR_VITRINE.GENERATE_BUTTON' | translate }}
+            </button>
+            <button type="button" class="btn btn-primary btn-sm" [disabled]="!qrCodeDataUrl || qrCodeLoading" (click)="telechargerQrCode()">
+              <i class="fas fa-download me-1"></i>{{ 'QR_VITRINE.DOWNLOAD_BUTTON' | translate }}
+            </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" [disabled]="!qrCodeDataUrl || qrCodeLoading" (click)="imprimerQrCode()">
+              <i class="fas fa-print me-1"></i>{{ 'QR_VITRINE.PRINT_BUTTON' | translate }}
+            </button>
+          </div>
+        </div>
+      </div>
 
       <!-- ── Section gestion des niveaux d'emballage ─────────────────────── -->
       <div *ngIf="conditionnementActif" class="section mt-4">
@@ -332,16 +386,16 @@
               <div class="col-6 mb-3">
                 <label class="form-label">{{ 'BOUTIQUE_SETTINGS.PURCHASE_PRICE' | translate }}</label>
                 <div class="input-group">
-                  <input type="number" class="form-control" [(ngModel)]="niveauForm.prixAchat"
-                         name="niveauAchat" min="0">
+                  <input type="text" inputmode="numeric" class="form-control" appMontantInput [(ngModel)]="niveauForm.prixAchat"
+                         name="niveauAchat">
                   <span class="input-group-text">F</span>
                 </div>
               </div>
               <div class="col-6 mb-3">
                 <label class="form-label">{{ 'BOUTIQUE_SETTINGS.SELL_PRICE' | translate }}</label>
                 <div class="input-group">
-                  <input type="number" class="form-control" [(ngModel)]="niveauForm.prixVente"
-                         name="niveauVente" min="1">
+                  <input type="text" inputmode="numeric" class="form-control" appMontantInput [(ngModel)]="niveauForm.prixVente"
+                         name="niveauVente">
                   <span class="input-group-text">F</span>
                 </div>
               </div>

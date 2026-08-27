@@ -23,12 +23,14 @@ import {
   RevenusPertes,
   VentesComptantDuJour,
   VentesCreditDuJour,
-  TransfertCaisseBanqueRequest
+  TransfertCaisseBanqueRequest,
+  ReconciliationVendeur
 } from '../../../shared/services/caisse.service';
 import { AuthService, User } from '../../../shared/services/auth.service';
 import { VenteService, VenteMap } from '../../../shared/services/vente.service';
 import { CompteService, Compte } from '../../../shared/services/compte.service';
 import { TranslateModule } from '@ngx-translate/core';
+import { MontantInputDirective } from '../../../shared/directives/montant-input.directive';
 
 interface CaisseSession {
   dateOuverture: string;
@@ -44,7 +46,7 @@ interface CaisseSession {
 @Component({
   selector: 'app-caisse-ges',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule],
+  imports: [CommonModule, FormsModule, TranslateModule, MontantInputDirective],
   templateUrl: './caisse-ges.component.html'
 })
 export class CaisseGesComponent implements OnInit, OnDestroy {
@@ -74,7 +76,14 @@ export class CaisseGesComponent implements OnInit, OnDestroy {
   heureDebut: string = '';
   heureFin: string = '';
   periodeActive: 'jour' | 'semaine' | 'mois' | 'annee' | 'personnalise' = 'jour';
-  
+
+  // Onglet principal de la page Caisse (ajout : réconciliation par vendeur, en plus de la caisse habituelle)
+  activeMainTab: 'principal' | 'reconciliation' = 'principal';
+  reconciliationDate: string = new Date().toISOString().split('T')[0];
+  reconciliationList: ReconciliationVendeur[] = [];
+  isLoadingReconciliation: boolean = false;
+  reconciliationError: string = '';
+
   // Modals
   showOuvertureModal: boolean = false;
   showFermetureModal: boolean = false;
@@ -404,6 +413,24 @@ export class CaisseGesComponent implements OnInit, OnDestroy {
       error: (error) => {
         this.errorMessage = error.message;
         setTimeout(() => this.errorMessage = '', 5000);
+      }
+    });
+  }
+
+  // ==================== RÉCONCILIATION CAISSE PAR VENDEUR (lecture seule) ====================
+
+  loadReconciliationVendeurs(): void {
+    this.isLoadingReconciliation = true;
+    this.reconciliationError = '';
+    this.caisseService.getReconciliationVendeurs(this.reconciliationDate).subscribe({
+      next: (res) => {
+        this.reconciliationList = res.reconciliation || [];
+        this.isLoadingReconciliation = false;
+      },
+      error: (error) => {
+        this.reconciliationError = error.message;
+        this.reconciliationList = [];
+        this.isLoadingReconciliation = false;
       }
     });
   }
@@ -1683,6 +1710,11 @@ export class CaisseGesComponent implements OnInit, OnDestroy {
     }
     if (this.montantPaiementGroupe <= 0) {
       this.alertError('Saisissez un montant valide');
+      return;
+    }
+    const maxMontantGroupe = this.totalSelectedClientCredits('montantRestant');
+    if (this.montantPaiementGroupe > maxMontantGroupe) {
+      this.alertError(`Le montant ne peut pas dépasser ${this.formatPrice(maxMontantGroupe)}`);
       return;
     }
     if (this.modePaiementGroupe !== ModePaiementCaisse.ESPECES && !this.referenceGroupePaiement) {

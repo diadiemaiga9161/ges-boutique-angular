@@ -1,0 +1,150 @@
+// Styles calqués sur le wizard overlay de ia.component.scss (même esprit
+// visuel : overlay plein écran, carte centrée, boutons Suivant/Terminer).
+
+$primary: #1a56db;
+$dark:    #081648;
+$border:  #e5e7eb;
+
+.tuto-wizard-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  backdrop-filter: blur(3px);
+}
+
+.tuto-wizard-box {
+  position: relative;
+  background: #fff;
+  border-radius: 18px;
+  padding: 32px 28px;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.22);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.tuto-wizard-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: #f3f4f6;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: #e5e7eb;
+    color: $dark;
+  }
+}
+
+.tuto-wizard-head {
+  text-align: center;
+  margin-bottom: 24px;
+
+  .tuto-wizard-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, $primary, #60a5fa);
+    color: #fff;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 12px;
+  }
+
+  h5 {
+    font-size: 20px;
+    font-weight: 800;
+    color: $dark;
+    margin-bottom: 4px;
+  }
+}
+
+// Barre de progression
+.tuto-wizard-prog-wrap {
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.tuto-wizard-prog-bar {
+  height: 100%;
+  background: linear-gradient(90deg, $primary, #60a5fa);
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.tuto-wizard-step-info {
+  text-align: center;
+  font-size: 12px;
+  color: #9ca3af;
+  margin-bottom: 24px;
+}
+
+.tuto-wizard-body {
+  min-height: 90px;
+  font-size: 15px;
+  color: #374151;
+  line-height: 1.5;
+
+  p {
+    margin-bottom: 8px;
+  }
+}
+
+.tuto-wizard-boutique {
+  font-weight: 700;
+  color: $primary;
+}
+
+// Footer wizard
+.tuto-wizard-footer {
+  margin-top: 28px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.tuto-btn-next {
+  background: $primary;
+  border-color: $primary;
+  padding: 10px 28px;
+  font-weight: 700;
+  border-radius: 8px;
+  font-size: 14px;
+
+  &:hover:not(:disabled) {
+    background: #1447b5;
+    border-color: #1447b5;
+  }
+}
+
+.tuto-btn-prev {
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+@media (max-width: 576px) {
+  .tuto-wizard-box {
+    padding: 24px 16px;
+  }
+}

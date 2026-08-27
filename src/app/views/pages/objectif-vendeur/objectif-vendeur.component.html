@@ -4,7 +4,7 @@
     <div class="app-page-header-left">
       <div class="app-page-icon"><i class="fa fa-gift"></i></div>
       <div>
-        <h1 class="app-page-title">{{ 'NAV.SELLER_BONUS' | translate }}</h1>
+        <h1 class="app-page-title">{{ 'SELLER_BONUS.TITLE' | translate }}</h1>
         <p class="app-page-subtitle">Primes hebdomadaires selon l'objectif de ventes atteint par chaque vendeur</p>
       </div>
     </div>
@@ -205,7 +205,7 @@
           </div>
           <div class="col-md-6 form-group">
             <label>Bonus (FCFA) <span class="text-danger">*</span></label>
-            <input type="number" class="form-control" [(ngModel)]="form.bonusMontant" placeholder="ex: 10000">
+            <input type="text" inputmode="numeric" class="form-control" appMontantInput [(ngModel)]="form.bonusMontant" placeholder="ex: 10000">
           </div>
           <div class="col-12 form-group">
             <label>Observation</label>

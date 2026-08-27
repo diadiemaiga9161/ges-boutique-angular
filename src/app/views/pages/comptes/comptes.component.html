@@ -166,7 +166,7 @@
           </div>
           <div class="col-md-6">
             <label class="form-label fw-semibold">Solde initial (F)</label>
-            <input type="number" class="form-control" [(ngModel)]="compteForm.soldeInitial" min="0">
+            <input type="text" inputmode="numeric" class="form-control" appMontantInput [(ngModel)]="compteForm.soldeInitial">
           </div>
           <div class="col-12">
             <label class="form-label fw-semibold">Description</label>
@@ -213,7 +213,7 @@
           </div>
           <div class="col-md-6">
             <label class="form-label fw-semibold">Solde initial (F)</label>
-            <input type="number" class="form-control" [(ngModel)]="compteForm.soldeInitial" min="0">
+            <input type="text" inputmode="numeric" class="form-control" appMontantInput [(ngModel)]="compteForm.soldeInitial">
           </div>
           <div class="col-12">
             <label class="form-label fw-semibold">Description</label>
@@ -249,7 +249,7 @@
         </div>
         <div class="mb-3">
           <label class="form-label fw-semibold">Montant (F) *</label>
-          <input type="number" class="form-control" [(ngModel)]="operationForm.montant" min="1">
+          <input type="text" inputmode="numeric" class="form-control" appMontantInput [(ngModel)]="operationForm.montant">
         </div>
         <div class="mb-3">
           <label class="form-label fw-semibold">Motif</label>

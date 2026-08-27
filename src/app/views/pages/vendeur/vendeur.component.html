@@ -183,7 +183,7 @@
             </div>
             <div style="flex:1">
               <label for="newSalaireEmploye" style="font-size:12px">Salaire mensuel (FCFA)</label>
-              <input type="number" id="newSalaireEmploye" [(ngModel)]="newVendeurSalaire" min="0">
+              <input type="text" inputmode="numeric" id="newSalaireEmploye" appMontantInput [(ngModel)]="newVendeurSalaire">
             </div>
           </div>
         </div>
@@ -448,7 +448,7 @@
                 </div>
                 <div style="flex:1">
                   <label for="editSalaireEmploye" style="font-size:12px">Salaire mensuel (FCFA)</label>
-                  <input type="number" id="editSalaireEmploye" [(ngModel)]="editSalaireEmploye" min="0">
+                  <input type="text" inputmode="numeric" id="editSalaireEmploye" appMontantInput [(ngModel)]="editSalaireEmploye">
                 </div>
               </div>
             </div>

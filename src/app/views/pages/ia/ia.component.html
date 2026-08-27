@@ -350,6 +350,12 @@
         </div>
       </div>
 
+      <!-- Erreur d'enregistrement du profil (assistant reste ouvert pour réessayer) -->
+      <div *ngIf="wizardErrorMessage" class="alert alert-danger d-flex align-items-center gap-2 mx-3 mb-0">
+        <i class="fas fa-exclamation-circle"></i>
+        <span>{{ wizardErrorMessage | translate }}</span>
+      </div>
+
       <!-- Footer wizard -->
       <div class="ia-wizard-footer">
         <button class="btn btn-primary ia-btn-wizard"

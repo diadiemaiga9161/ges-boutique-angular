@@ -63,6 +63,20 @@
     <button type="button" class="btn-close" (click)="successMessage = ''"></button>
   </div>
 
+  <!-- Alerte informative (lecture seule) : produits proches de la péremption.
+       La gestion des promotions se fait exclusivement depuis l'application mobile. -->
+  <div *ngIf="produitsProchePeremption.length > 0" class="alert alert-warning" role="alert">
+    <div class="d-flex align-items-center mb-2">
+      <i class="fa fa-clock me-2"></i>
+      <strong>{{ 'INVENTORY.NEAR_EXPIRY_ALERT_TITLE' | translate: { count: produitsProchePeremption.length } }}</strong>
+    </div>
+    <ul class="mb-0 ps-4">
+      <li *ngFor="let produit of produitsProchePeremption">
+        {{ produit.nom }} — {{ 'INVENTORY.NEAR_EXPIRY_ITEM' | translate: { days: produit.joursAvantPeremption } }}
+      </li>
+    </ul>
+  </div>
+
   <!-- Chargement -->
   <div *ngIf="isLoading && !showEntreeModal && !showSortieModal && !showAjustementModal && !showHistoriqueModal" 
        class="text-center py-5">
@@ -1027,6 +1041,13 @@
         </div>
 
         <ng-container *ngIf="!niveauxLoadingMap[produit.id]">
+          <div class="d-flex justify-content-end mb-2">
+            <button class="btn btn-sm btn-outline-primary" (click)="ouvrirAjoutNiveau(produit)">
+              <i class="fa fa-plus-circle me-1"></i>
+              {{ niveauxMap[produit.id]?.length ? 'Ajouter un sous-conditionnement' : 'Configurer gros / détail' }}
+            </button>
+          </div>
+
           <p *ngIf="!niveauxMap[produit.id]?.length" class="text-muted small mb-0">
             Aucun niveau de conditionnement pour ce produit.
           </p>
@@ -1040,13 +1061,157 @@
                 (1 {{ i === 0 ? produit.nom : niveauxMap[produit.id][i-1].nom }} = {{ niveau.facteur }} {{ niveau.nom }})
               </small>
             </div>
-            <button class="btn btn-sm btn-outline-primary"
-                    (click)="decomposerNiveau(niveau, produit)">
-              <i class="i-Scissors me-1"></i>
-              Prendre 1 {{ i === 0 ? produit.nom : niveauxMap[produit.id][i-1].nom }}
-            </button>
+            <div class="d-flex align-items-center gap-2">
+              <button class="btn btn-sm btn-outline-secondary" title="Modifier ce niveau"
+                      (click)="ouvrirModifierNiveau(niveau, produit)">
+                <i class="fa fa-edit"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-primary"
+                      (click)="decomposerNiveau(niveau, produit)">
+                <i class="i-Scissors me-1"></i>
+                Prendre 1 {{ i === 0 ? produit.nom : niveauxMap[produit.id][i-1].nom }}
+              </button>
+            </div>
           </div>
         </ng-container>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ DIALOGUE GUIDÉ NIVEAU DE CONDITIONNEMENT ═══════════════════════ -->
+<div class="modal fade show" [class.d-block]="niveauWizardOpen" *ngIf="niveauWizardOpen"
+     style="background-color: rgba(0,0,0,0.5); z-index: 1060;" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title">
+          <i class="fa fa-box me-2"></i>
+          <ng-container *ngIf="niveauWizardMode === 'root'">Configurer gros / détail — {{ niveauWizardProduit?.nom }}</ng-container>
+          <ng-container *ngIf="niveauWizardMode === 'child'">Ajouter un sous-conditionnement</ng-container>
+          <ng-container *ngIf="niveauWizardMode === 'edit'">Modifier {{ niveauWizardForm.nom }}</ng-container>
+        </h5>
+        <button type="button" class="btn-close btn-close-white" (click)="fermerWizardNiveau()"></button>
+      </div>
+      <div class="modal-body">
+
+        <!-- Étape question (uniquement Cas A : premier niveau du produit) -->
+        <ng-container *ngIf="niveauWizardStep === 'question'">
+          <p class="mb-3">
+            Ce produit (<strong>{{ niveauWizardProduit?.nom }}</strong>) se vend-il aussi en plus grand conditionnement (en gros) ?
+          </p>
+          <div class="d-flex gap-2 justify-content-center">
+            <button type="button" class="btn btn-outline-secondary" (click)="repondreVeutGrosNiveau(false)">Non</button>
+            <button type="button" class="btn btn-primary" (click)="repondreVeutGrosNiveau(true)">Oui</button>
+          </div>
+        </ng-container>
+
+        <!-- Étape formulaire (Cas A après "Oui", Cas B, ou modification) -->
+        <ng-container *ngIf="niveauWizardStep === 'form'">
+
+          <div class="alert alert-light border" *ngIf="niveauWizardMode === 'child'">
+            Ajouter un sous-conditionnement sous <strong>{{ niveauWizardFeuille?.nom }}</strong>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">
+              Comment s'appelle ce {{ niveauWizardEstRacine ? 'conditionnement' : 'sous-conditionnement' }} ?
+            </label>
+            <input type="text" class="form-control" [(ngModel)]="niveauWizardForm.nom"
+                   placeholder="Ex: Carton, Sachet, Bidon...">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">
+              <ng-container *ngIf="niveauWizardEstRacine">
+                Combien de {{ niveauWizardProduit?.nom }} (vendu à l'unité) contient un(e) {{ niveauWizardForm.nom || '...' }} ?
+              </ng-container>
+              <ng-container *ngIf="!niveauWizardEstRacine">
+                Combien de {{ niveauWizardForm.nom || 'ce sous-conditionnement' }} dans un(e) {{ niveauWizardFeuille?.nom }} ?
+              </ng-container>
+            </label>
+            <input type="number" class="form-control" [(ngModel)]="niveauWizardForm.facteur" min="1" step="1">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">
+              Prix de vente d'un(e) {{ niveauWizardForm.nom || 'ce conditionnement' }} ?
+            </label>
+            <div class="input-group">
+              <input type="text" inputmode="numeric" class="form-control" appMontantInput [(ngModel)]="niveauWizardForm.prixVente">
+              <span class="input-group-text">F</span>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <a href="javascript:void(0)" class="small text-muted text-decoration-none"
+               (click)="niveauWizardShowAvance = !niveauWizardShowAvance">
+              <i class="fa" [class.fa-chevron-right]="!niveauWizardShowAvance" [class.fa-chevron-down]="niveauWizardShowAvance"></i>
+              Avancé
+            </a>
+            <div *ngIf="niveauWizardShowAvance" class="mt-2">
+              <label class="form-label">
+                Prix d'achat d'un(e) {{ niveauWizardForm.nom || 'ce conditionnement' }} ?
+              </label>
+              <div class="input-group">
+                <input type="text" inputmode="numeric" class="form-control" appMontantInput [(ngModel)]="niveauWizardForm.prixAchat">
+                <span class="input-group-text">F</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Encart de comparaison gros/détail, recalculé en direct -->
+          <div class="alert" [ngClass]="niveauWizardEcart >= 0 ? 'alert-success' : 'alert-danger'"
+               *ngIf="niveauWizardForm.facteur && niveauWizardForm.prixVente">
+            <ng-container *ngIf="niveauWizardEstRacine">
+              1 {{ niveauWizardForm.nom }} = {{ niveauWizardForm.facteur }} {{ niveauWizardProduit?.nom }}
+              à {{ niveauWizardProduit?.prixVente }} F l'unité
+              = {{ niveauWizardValeurComparaison }} F si vendu(s) à l'unité.
+              <br>
+              <ng-container *ngIf="niveauWizardEcart >= 0">
+                Ton prix {{ niveauWizardForm.nom }} ({{ niveauWizardForm.prixVente }} F) fait économiser
+                {{ niveauWizardEcart }} F au client qui achète en gros.
+              </ng-container>
+              <ng-container *ngIf="niveauWizardEcart < 0">
+                Ton prix {{ niveauWizardForm.nom }} ({{ niveauWizardForm.prixVente }} F) coûte
+                {{ -niveauWizardEcart }} F de plus que l'achat à l'unité — vérifie ce prix.
+              </ng-container>
+            </ng-container>
+            <ng-container *ngIf="!niveauWizardEstRacine">
+              1 {{ niveauWizardFeuille?.nom }} = {{ niveauWizardForm.facteur }} {{ niveauWizardForm.nom }}
+              à {{ niveauWizardForm.prixVente }} F l'unité
+              = {{ niveauWizardValeurComparaison }} F si vendus séparément.
+              <br>
+              <ng-container *ngIf="niveauWizardEcart >= 0">
+                Le prix actuel d'1 {{ niveauWizardFeuille?.nom }} ({{ niveauWizardFeuille?.prixVente }} F) fait économiser
+                {{ niveauWizardEcart }} F au client qui achète en {{ niveauWizardFeuille?.nom }}.
+              </ng-container>
+              <ng-container *ngIf="niveauWizardEcart < 0">
+                Le prix actuel d'1 {{ niveauWizardFeuille?.nom }} ({{ niveauWizardFeuille?.prixVente }} F) coûte
+                {{ -niveauWizardEcart }} F de plus — vérifie le prix de {{ niveauWizardFeuille?.nom }} ou de {{ niveauWizardForm.nom }}.
+              </ng-container>
+            </ng-container>
+          </div>
+
+          <div *ngIf="niveauWizardError" class="alert alert-danger">
+            <i class="fa fa-exclamation-triangle me-1"></i>{{ niveauWizardError }}
+          </div>
+        </ng-container>
+
+      </div>
+      <div class="modal-footer" *ngIf="niveauWizardStep === 'form'">
+        <button type="button" class="btn btn-secondary" (click)="fermerWizardNiveau()" [disabled]="niveauWizardSaving">
+          {{ 'COMMON.CANCEL' | translate }}
+        </button>
+        <button type="button" class="btn btn-primary" [disabled]="!niveauWizardValide || niveauWizardSaving"
+                (click)="enregistrerNiveauWizard()">
+          <span *ngIf="!niveauWizardSaving">
+            <i class="fa fa-save me-1"></i> {{ 'COMMON.SAVE' | translate }}
+          </span>
+          <span *ngIf="niveauWizardSaving">
+            <span class="spinner-border spinner-border-sm me-1"></span> {{ 'COMMON.LOADING' | translate }}
+          </span>
+        </button>
       </div>
     </div>
   </div>

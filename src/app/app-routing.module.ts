@@ -33,6 +33,10 @@ const routes: Routes = [
     ]
   },
   {
+    path: 'vitrine',
+    loadComponent: () => import('./views/pages/vitrine/vitrine.component').then(m => m.VitrineComponent)
+  },
+  {
     path: '**',
     redirectTo: 'others/404'
   }

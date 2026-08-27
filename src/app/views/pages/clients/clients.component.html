@@ -1476,12 +1476,13 @@
             <label class="form-label fw-semibold">Montant <span class="text-danger">*</span></label>
             <div class="input-group">
               <input
-                type="number"
+                type="text"
+                inputmode="numeric"
                 class="form-control"
+                appMontantInput
                 [(ngModel)]="avanceForm.montant"
                 name="montantAvance"
                 placeholder="Ex: 4000"
-                min="1"
                 required
               />
               <span class="input-group-text">FCFA</span>

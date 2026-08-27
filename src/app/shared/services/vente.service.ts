@@ -747,9 +747,14 @@ export class VenteService {
     );
   }
 
-  getAllVentes(): Observable<VenteMap[]> {
+  getAllVentes(inclureAnnulees?: boolean): Observable<VenteMap[]> {
+    let params = new HttpParams();
+    if (inclureAnnulees) {
+      params = params.set('inclureAnnulees', 'true');
+    }
     return this.http.get<any>(this.apiUrl, {
-      headers: this.getAuthHeaders()
+      headers: this.getAuthHeaders(),
+      params
     }).pipe(
       map(response => {
         const ventes = response.ventes || response.data || response;

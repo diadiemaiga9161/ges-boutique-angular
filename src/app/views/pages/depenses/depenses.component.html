@@ -334,7 +334,7 @@
           </div>
           <div class="col-6">
             <label class="form-label fw-bold">{{ 'COMMON.AMOUNT' | translate }} (FCFA) *</label>
-            <input type="number" class="form-control" [(ngModel)]="form.montant" min="1" placeholder="0">
+            <input type="text" inputmode="numeric" class="form-control" appMontantInput [(ngModel)]="form.montant" placeholder="0">
           </div>
         </div>
 

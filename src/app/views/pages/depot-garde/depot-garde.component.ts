@@ -14,11 +14,12 @@ import {
 } from '../../../shared/services/depot-garde.service';
 import Swal from 'sweetalert2';
 import { TranslateModule } from '@ngx-translate/core';
+import { MontantInputDirective } from '../../../shared/directives/montant-input.directive';
 
 @Component({
   selector: 'app-depot-garde',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule],
+  imports: [CommonModule, FormsModule, TranslateModule, MontantInputDirective],
   templateUrl: './depot-garde.component.html',
   styleUrls: ['./depot-garde.component.scss']
 })

@@ -3,11 +3,15 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
+import * as QRCode from 'qrcode';
 import { BoutiqueService, BoutiqueInfo } from '../../../shared/services/boutique.service';
 import { ProduitNiveauService, ProduitNiveau } from '../../../shared/services/produit-niveau.service';
 import { ProductService } from '../../../shared/services/product.service';
 import { ThemeService, ThemeMode } from '../../../shared/services/theme.service';
+import { AuthService } from '../../../shared/services/auth.service';
 import { TranslateModule } from '@ngx-translate/core';
+import { isConfirmationVocaleActive, setConfirmationVocaleActive } from '../../../shared/utils/confirmation-vocale.util';
+import { MontantInputDirective } from '../../../shared/directives/montant-input.directive';
 
 interface ProduitDropdown {
   id: number;
@@ -18,7 +22,7 @@ interface ProduitDropdown {
 @Component({
   selector: 'app-boutique-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule],
+  imports: [CommonModule, FormsModule, TranslateModule, MontantInputDirective],
   templateUrl: './boutique-settings.component.html',
   styleUrls: ['./boutique-settings.component.scss']
 })
@@ -50,6 +54,7 @@ export class BoutiqueSettingsComponent implements OnInit {
 
   // Fonctionnalités optionnelles
   conditionnementActif: boolean = false;
+  confirmationVocaleActive: boolean = true; // activée par défaut
 
   // Palette de couleurs disponibles
   colorPalette = [
@@ -86,15 +91,25 @@ export class BoutiqueSettingsComponent implements OnInit {
   niveauSaving: boolean = false;
   niveauError: string = '';
 
+  // ── QR code vitrine ──────────────────────────────────────────────────────
+  qrCodeDataUrl: string = '';
+  qrCodeLoading: boolean = false;
+  qrCodeError: string = '';
+
   constructor(
     private boutiqueService: BoutiqueService,
     private niveauService: ProduitNiveauService,
     private productService: ProductService,
     private router: Router,
     private renderer: Renderer2,
-    private themeService: ThemeService
+    private themeService: ThemeService,
+    private authService: AuthService
   ) {
     this.loadPreferences();
+  }
+
+  get isAdmin(): boolean {
+    return this.authService.isAdmin();
   }
 
   ngOnInit() {
@@ -103,6 +118,9 @@ export class BoutiqueSettingsComponent implements OnInit {
     this.applyGlobalColor();
     if (this.conditionnementActif) {
       this.loadProduits();
+    }
+    if (this.isAdmin) {
+      this.genererQrCode();
     }
   }
 
@@ -141,6 +159,7 @@ export class BoutiqueSettingsComponent implements OnInit {
     const savedGlobalColor = localStorage.getItem('globalColor');
     if (savedGlobalColor) this.selectedGlobalColor = savedGlobalColor;
     this.conditionnementActif = localStorage.getItem('feat_conditionnement') === 'true';
+    this.confirmationVocaleActive = isConfirmationVocaleActive();
   }
 
   private savePreferences() {
@@ -153,6 +172,12 @@ export class BoutiqueSettingsComponent implements OnInit {
     if (this.conditionnementActif && this.produits.length === 0) {
       this.loadProduits();
     }
+  }
+
+  /** Confirmation vocale (voix haute) du montant total après validation d'une vente. */
+  toggleConfirmationVocale(): void {
+    this.confirmationVocaleActive = !this.confirmationVocaleActive;
+    setConfirmationVocaleActive(this.confirmationVocaleActive);
   }
 
   /** Sélection explicite du mode : 'light' | 'dark' | 'auto' */
@@ -512,5 +537,48 @@ export class BoutiqueSettingsComponent implements OnInit {
   // Indique si un niveau a des enfants
   aDesEnfants(niveau: ProduitNiveau): boolean {
     return this.niveaux.some(n => n.parentId === niveau.id);
+  }
+
+  // ── QR code vitrine ──────────────────────────────────────────────────────
+
+  /** URL publique de la vitrine, toujours calculée depuis l'origine courante (jamais codée en dur). */
+  get vitrineUrl(): string {
+    return `${window.location.origin}/vitrine`;
+  }
+
+  genererQrCode(): void {
+    this.qrCodeLoading = true;
+    this.qrCodeError = '';
+    QRCode.toDataURL(this.vitrineUrl, {
+      width: 320,
+      margin: 2,
+      color: {
+        dark: '#0b1f45',
+        light: '#ffffff'
+      }
+    })
+      .then((dataUrl: string) => {
+        this.qrCodeDataUrl = dataUrl;
+        this.qrCodeLoading = false;
+      })
+      .catch(() => {
+        this.qrCodeError = 'Impossible de générer le QR code.';
+        this.qrCodeLoading = false;
+      });
+  }
+
+  telechargerQrCode(): void {
+    if (!this.qrCodeDataUrl) return;
+    const lien = document.createElement('a');
+    lien.href = this.qrCodeDataUrl;
+    const nomFichier = (this.model.nom || 'boutique').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    lien.download = `qr-vitrine-${nomFichier || 'boutique'}.png`;
+    document.body.appendChild(lien);
+    lien.click();
+    document.body.removeChild(lien);
+  }
+
+  imprimerQrCode(): void {
+    window.print();
   }
 }

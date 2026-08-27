@@ -8,11 +8,12 @@ import { DetteAncienneService, DetteAncienne, ReglementDette, DetteAncienneReque
 import { ClientService, Client } from '../../../shared/services/client.service';
 import { FactureService } from '../../../shared/services/facture.service';
 import { TranslateModule } from '@ngx-translate/core';
+import { MontantInputDirective } from '../../../shared/directives/montant-input.directive';
 
 @Component({
   selector: 'app-dettes-anciennes',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule],
+  imports: [CommonModule, FormsModule, TranslateModule, MontantInputDirective],
   templateUrl: './dettes-anciennes.component.html',
   styleUrls: ['./dettes-anciennes.component.scss']
 })

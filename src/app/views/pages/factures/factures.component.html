@@ -4,7 +4,7 @@
     <div class="app-page-header-left">
       <div class="app-page-icon"><i class="fa fa-file-text"></i></div>
       <div>
-        <h1 class="app-page-title">{{ 'NAV.INVOICES' | translate }}</h1>
+        <h1 class="app-page-title">{{ 'INVOICES.TITLE' | translate }}</h1>
         <p class="app-page-subtitle">{{ 'INVOICES.SUBTITLE' | translate }}</p>
       </div>
     </div>
@@ -431,7 +431,7 @@
             <div class="line-editor" *ngIf="selectedProduit">
               <div class="line-inputs">
                 <div class="input-group"><label>Quantité</label><input type="number" class="form-control" [(ngModel)]="newLine.quantite" min="1" [max]="selectedProduit.quantite" [ngModelOptions]="{standalone: true}"></div>
-                <div class="input-group"><label>Prix unitaire (FCFA)</label><input type="number" class="form-control" [(ngModel)]="newLine.prixUnitaire" step="1" min="0" [ngModelOptions]="{standalone: true}"></div>
+                <div class="input-group"><label>Prix unitaire (FCFA)</label><input type="text" inputmode="numeric" class="form-control" appMontantInput [(ngModel)]="newLine.prixUnitaire" [ngModelOptions]="{standalone: true}"></div>
                 <div class="input-group"><label>Remise (%)</label><input type="number" class="form-control" [(ngModel)]="newLine.remisePourcentage" min="0" max="100" [ngModelOptions]="{standalone: true}"></div>
                 <button type="button" class="btn-primary" (click)="addLine()"><i class="fa fa-plus"></i> Ajouter</button>
               </div>
@@ -443,7 +443,7 @@
             <div class="line-inputs">
               <div class="input-group input-group-wide"><label>Désignation <span class="required">*</span></label><input type="text" class="form-control" placeholder="Ex: Transport, Service, Article spécial..." [(ngModel)]="ligneLibre.designation" [ngModelOptions]="{standalone: true}"></div>
               <div class="input-group"><label>Quantité</label><input type="number" class="form-control" [(ngModel)]="ligneLibre.quantite" min="1" [ngModelOptions]="{standalone: true}"></div>
-              <div class="input-group"><label>Prix unitaire (FCFA)</label><input type="number" class="form-control" [(ngModel)]="ligneLibre.prixUnitaire" step="1" min="0" [ngModelOptions]="{standalone: true}"></div>
+              <div class="input-group"><label>Prix unitaire (FCFA)</label><input type="text" inputmode="numeric" class="form-control" appMontantInput [(ngModel)]="ligneLibre.prixUnitaire" [ngModelOptions]="{standalone: true}"></div>
               <div class="input-group"><label>Remise (%)</label><input type="number" class="form-control" [(ngModel)]="ligneLibre.remisePourcentage" min="0" max="100" [ngModelOptions]="{standalone: true}"></div>
               <button type="button" class="btn-primary" (click)="addLine()"><i class="fa fa-plus"></i> Ajouter</button>
             </div>

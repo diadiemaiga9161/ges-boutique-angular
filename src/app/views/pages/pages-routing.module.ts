@@ -36,6 +36,9 @@ import { AssistantIaComponent } from './assistant-ia/assistant-ia.component';
 import { HistoriqueVendeurComponent } from './historique-vendeur/historique-vendeur.component';
 import { RessourcesComponent } from './ressources/ressources.component';
 import { ParametresComponent } from './parametres/parametres.component';
+import { JournalAuditComponent } from './journal-audit/journal-audit.component';
+import { ExportDonneesComponent } from './export-donnees/export-donnees.component';
+import { SauvegardesComponent } from './sauvegardes/sauvegardes.component';
 
 const routes: Routes = [
     {
@@ -176,6 +179,18 @@ const routes: Routes = [
     {
         path: 'parametres',
         component: ParametresComponent
+    },
+    {
+        path: 'journal-audit',
+        component: JournalAuditComponent
+    },
+    {
+        path: 'export-donnees',
+        component: ExportDonneesComponent
+    },
+    {
+        path: 'sauvegardes',
+        component: SauvegardesComponent
     },
 ];
 

@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../shared/services/auth.service';
+import { TutorielVendeurService } from '../../../shared/services/tutoriel-vendeur.service';
 import { TranslateModule } from '@ngx-translate/core';
 
 export const COUNTRY_CODES = [
@@ -73,7 +74,8 @@ export class ProfilComponent implements OnInit {
 
   constructor(
     public authService: AuthService,
-    private router: Router
+    private router: Router,
+    private tutorielVendeurService: TutorielVendeurService
   ) {}
 
   ngOnInit(): void {
@@ -314,6 +316,11 @@ export class ProfilComponent implements OnInit {
 
   logout(): void {
     this.authService.signout();
+  }
+
+  /** Rouvre l'overlay du tutoriel d'accueil vendeur (sans effacer la clé locale "vu"). */
+  revoirTutoriel(): void {
+    this.tutorielVendeurService.demanderOuverture();
   }
 
   private showMessage(message: string, isError: boolean = false): void {
