@@ -50,12 +50,19 @@
         <div class="produit-card" *ngFor="let p of produits">
 
           <div class="produit-card-top">
-            <span class="badge-disponibilite" [class.disponible]="p.disponible" [class.rupture]="!p.disponible">
-              {{ p.disponible ? 'Disponible' : 'Rupture' }}
+            <span class="badge-stock"
+                  [class.badge-stock--ok]="p.statutStock === 'DISPONIBLE'"
+                  [class.badge-stock--bas]="p.statutStock === 'STOCK_FAIBLE'"
+                  [class.badge-stock--rupture]="p.statutStock === 'RUPTURE'">
+              {{ stockLabel(p) }}
             </span>
             <span class="badge-promo" *ngIf="p.enPromotion">
               <i class="fa fa-tag"></i> Promo
             </span>
+          </div>
+
+          <div class="produit-visuel">
+            <i class="fa fa-box-open"></i>
           </div>
 
           <h3 class="produit-nom">{{ p.nom }}</h3>
@@ -68,6 +75,20 @@
             <span *ngIf="p.promotionReduction" class="promo-reduction">-{{ p.promotionReduction }}</span>
           </div>
 
+          <!-- Panier : bouton ajouter, ou stepper quantité si déjà dans le panier -->
+          <button class="btn-ajouter" *ngIf="p.statutStock !== 'RUPTURE' && quantiteDansPanier(p) === 0"
+                  (click)="ajouterAuPanier(p)">
+            <i class="fa fa-cart-plus"></i> Ajouter
+          </button>
+          <div class="stepper" *ngIf="quantiteDansPanier(p) > 0">
+            <button (click)="retirerDuPanier(p)" aria-label="Retirer">–</button>
+            <span>{{ quantiteDansPanier(p) }}</span>
+            <button (click)="ajouterAuPanier(p)" aria-label="Ajouter">+</button>
+          </div>
+          <div class="btn-ajouter btn-ajouter--indispo" *ngIf="p.statutStock === 'RUPTURE'">
+            Indisponible
+          </div>
+
         </div>
       </div>
     </ng-container>
@@ -77,5 +98,95 @@
   <footer class="vitrine-footer">
     <p>Catalogue à titre indicatif — disponibilité et prix susceptibles de changer.</p>
   </footer>
+
+  <!-- ==================== BOUTON PANIER FLOTTANT ==================== -->
+  <button class="panier-flottant" *ngIf="nombreArticles > 0" (click)="ouvrirPanier()">
+    <i class="fa fa-shopping-basket"></i>
+    <span class="panier-flottant-count">{{ nombreArticles }}</span>
+    <span class="panier-flottant-total">{{ formatPrix(totalPanier) }}</span>
+  </button>
+
+  <!-- ==================== PANIER (TIROIR) ==================== -->
+  <div class="overlay" *ngIf="panierOuvert" (click)="fermerPanier()"></div>
+  <aside class="panier-drawer" *ngIf="panierOuvert">
+    <div class="panier-drawer-header">
+      <h2><i class="fa fa-shopping-basket"></i> Mon panier</h2>
+      <button class="btn-fermer" (click)="fermerPanier()"><i class="fa fa-times"></i></button>
+    </div>
+    <div class="panier-drawer-body">
+      <div class="panier-ligne" *ngFor="let l of panier">
+        <div class="panier-ligne-info">
+          <p class="panier-ligne-nom">{{ l.produit.nom }}</p>
+          <p class="panier-ligne-prix">{{ formatPrix(l.produit.prixVente) }} / unité</p>
+        </div>
+        <div class="stepper stepper--sm">
+          <button (click)="retirerDuPanier(l.produit)">–</button>
+          <span>{{ l.quantite }}</span>
+          <button (click)="ajouterAuPanier(l.produit)">+</button>
+        </div>
+        <button class="btn-supprimer-ligne" (click)="supprimerLigne(l.produit)" aria-label="Supprimer">
+          <i class="fa fa-trash"></i>
+        </button>
+      </div>
+      <div class="panier-vide" *ngIf="panier.length === 0">Votre panier est vide.</div>
+    </div>
+    <div class="panier-drawer-footer" *ngIf="panier.length > 0">
+      <div class="panier-total-row">
+        <span>Total</span>
+        <strong>{{ formatPrix(totalPanier) }}</strong>
+      </div>
+      <button class="btn-commander" (click)="ouvrirFormulaire()">
+        Passer la commande <i class="fa fa-arrow-right"></i>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ==================== FORMULAIRE DE COMMANDE ==================== -->
+  <div class="overlay" *ngIf="formulaireOuvert" (click)="fermerFormulaire()"></div>
+  <div class="modal-commande" *ngIf="formulaireOuvert">
+    <div class="modal-commande-header">
+      <h2>Vos coordonnées</h2>
+      <button class="btn-fermer" (click)="fermerFormulaire()"><i class="fa fa-times"></i></button>
+    </div>
+    <div class="modal-commande-body">
+      <p class="modal-commande-sub">
+        La boutique vous contactera pour confirmer votre commande ({{ nombreArticles }} article{{ nombreArticles > 1 ? 's' : '' }}, {{ formatPrix(totalPanier) }}). Paiement à la remise.
+      </p>
+
+      <label class="champ">
+        <span>Nom *</span>
+        <input type="text" [(ngModel)]="form.nom" placeholder="Votre nom" maxlength="80">
+      </label>
+      <label class="champ">
+        <span>Prénom</span>
+        <input type="text" [(ngModel)]="form.prenom" placeholder="Votre prénom" maxlength="80">
+      </label>
+      <label class="champ">
+        <span>Téléphone *</span>
+        <input type="tel" [(ngModel)]="form.telephone" placeholder="Ex : 07 00 00 00 00" maxlength="20">
+      </label>
+      <label class="champ">
+        <span>Remarque (optionnel)</span>
+        <textarea [(ngModel)]="form.notes" rows="2" placeholder="Ex : préférence de couleur, heure de passage..."></textarea>
+      </label>
+
+      <p class="modal-commande-erreur" *ngIf="erreurEnvoi">{{ erreurEnvoi }}</p>
+
+      <button class="btn-envoyer" [disabled]="!formulaireValide || envoiEnCours" (click)="envoyerCommande()">
+        <span *ngIf="!envoiEnCours">Envoyer ma commande</span>
+        <span *ngIf="envoiEnCours">Envoi en cours...</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ==================== CONFIRMATION ==================== -->
+  <div class="overlay" *ngIf="commandeConfirmee" (click)="fermerConfirmation()"></div>
+  <div class="modal-confirmation" *ngIf="commandeConfirmee">
+    <div class="modal-confirmation-icon"><i class="fa fa-check-circle"></i></div>
+    <h2>Commande envoyée !</h2>
+    <p>Référence : <strong>{{ commandeConfirmee }}</strong></p>
+    <p class="modal-confirmation-sub">La boutique va préparer votre commande et vous contactera bientôt.</p>
+    <button class="btn-envoyer" (click)="fermerConfirmation()">D'accord</button>
+  </div>
 
 </div>

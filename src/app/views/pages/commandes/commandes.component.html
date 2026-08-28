@@ -168,6 +168,9 @@
           <tr *ngFor="let c of commandesFiltrees">
             <td>
               <strong class="text-primary">{{ c.numeroCommande }}</strong>
+              <span class="badge bg-info text-dark ms-1" *ngIf="c.origine === 'VITRINE'" title="Reçue via la vitrine en ligne">
+                <i class="bi bi-globe me-1"></i>En ligne
+              </span>
               <div *ngIf="c.venteId" class="small text-muted">Vente #{{ c.venteId }}</div>
             </td>
             <td>

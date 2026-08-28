@@ -216,8 +216,16 @@
                 *ngIf="t.statut !== 'CONFIRME' && t.statut !== 'ACCEPTE' && t.statut !== 'ANNULE' && t.statut !== 'REJETE'" title="Modifier">
                 <i class="i-Pen-2"></i>
               </button>
-              <!-- Boutons selon statut -->
-              <ng-container *ngIf="ongletActif !== 'recus'">
+              <!-- Boutons selon le ROLE réel de cette ligne (envoyée par nous vs reçue par nous),
+                   pas selon l'onglet actif : sur l'onglet "Tous" qui mélange les deux, se baser
+                   sur l'onglet affichait par erreur "Confirmer/Annuler" (actions de l'expéditeur)
+                   sur un transfert qu'on a reçu — cliquer dessus verrouillait le transfert en
+                   CONFIRME sans jamais ajouter le stock, et le vrai bouton "Accepter" disparaissait
+                   pour toujours (il n'apparaît que pour EN_ATTENTE/EN_ATTENTE_CONFIRMATION).
+                   boutiqueDestUrl n'est renseigné QUE sur l'enregistrement créé côté expéditeur
+                   (cf. TransfertService.creer/recevoir côté backend) : c'est un identifiant fiable
+                   du rôle, indépendant de l'onglet sélectionné. -->
+              <ng-container *ngIf="t.boutiqueDestUrl">
                 <button class="btn btn-xs btn-outline-success me-1"
                   *ngIf="t.statut !== 'CONFIRME' && t.statut !== 'ACCEPTE' && t.statut !== 'ANNULE' && t.statut !== 'REJETE'"
                   (click)="confirmer(t)" title="Confirmer">
@@ -229,7 +237,7 @@
                   <i class="i-Close-Window"></i>
                 </button>
               </ng-container>
-              <ng-container *ngIf="ongletActif === 'recus' && (t.statut === 'EN_ATTENTE_CONFIRMATION' || t.statut === 'EN_ATTENTE')">
+              <ng-container *ngIf="!t.boutiqueDestUrl && (t.statut === 'EN_ATTENTE_CONFIRMATION' || t.statut === 'EN_ATTENTE' || t.statut === 'CONFIRME')">
                 <button class="btn btn-xs btn-outline-success me-1" (click)="accepterTransfert(t)" title="Accepter">
                   <i class="i-Check-2"></i>
                 </button>

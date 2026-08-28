@@ -36,6 +36,12 @@ export interface TransfertStock {
   numeroTransfert?: string;
   boutiqueSourceNom: string;
   boutiqueDestNom: string;
+  // Vide côté source (boutiqueSourceUrl) et côté destination (boutiqueDestUrl) —
+  // c'est justement ce qui permet de savoir si CE transfert est un envoi ou une
+  // réception : boutiqueDestUrl est rempli uniquement sur l'enregistrement créé
+  // par creer() côté source (cf. accepterTransfert / bouton Confirmer vs Accepter).
+  boutiqueSourceUrl?: string;
+  boutiqueDestUrl?: string;
   statut: string;
   typePaiement: string;
   notes?: string;

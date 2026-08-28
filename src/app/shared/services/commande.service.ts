@@ -46,6 +46,8 @@ export interface Commande {
   venteId?: number;
   notes?: string;
   vendeur?: { id: number; nomComplet: string };
+  /** MAGASIN (par défaut) ou VITRINE (déposée par un client depuis le mini-site public). */
+  origine?: 'MAGASIN' | 'VITRINE';
 }
 
 export interface CommandeRequest {

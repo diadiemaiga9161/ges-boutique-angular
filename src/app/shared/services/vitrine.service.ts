@@ -10,6 +10,8 @@ export interface VitrineProduitDto {
   categorieNom: string;
   prixVente: number;
   disponible: boolean;
+  /** DISPONIBLE / STOCK_FAIBLE / RUPTURE */
+  statutStock: 'DISPONIBLE' | 'STOCK_FAIBLE' | 'RUPTURE';
   enPromotion: boolean;
   promotionTitre: string | null;
   promotionReduction: string | null;
@@ -21,6 +23,25 @@ export interface VitrineInfoDto {
   telephone: string;
   horairesOuverture: string | null;
   logoPath: string | null;
+}
+
+export interface VitrineCommandeLigne {
+  produitId: number;
+  quantite: number;
+}
+
+export interface VitrineCommandeRequest {
+  clientNom: string;
+  clientPrenom?: string;
+  clientTelephone: string;
+  notes?: string;
+  lignes: VitrineCommandeLigne[];
+}
+
+export interface VitrineCommandeReponse {
+  success: boolean;
+  numeroCommande?: string;
+  message: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -39,6 +60,12 @@ export class VitrineService {
   getInfos(): Observable<VitrineInfoDto> {
     return this.http.get<VitrineInfoDto>(`${this.apiUrl}/infos`).pipe(
       catchError(e => throwError(() => new Error(e?.error?.message || 'Erreur chargement des informations')))
+    );
+  }
+
+  passerCommande(request: VitrineCommandeRequest): Observable<VitrineCommandeReponse> {
+    return this.http.post<VitrineCommandeReponse>(`${this.apiUrl}/commande`, request).pipe(
+      catchError(e => throwError(() => new Error(e?.error?.message || 'Impossible d\'envoyer la commande')))
     );
   }
 }

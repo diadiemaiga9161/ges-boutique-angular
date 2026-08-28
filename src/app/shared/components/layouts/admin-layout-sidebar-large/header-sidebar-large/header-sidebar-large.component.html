@@ -24,6 +24,12 @@
       <b class="badge-count" *ngIf="transfertCount > 0">{{ transfertCount > 99 ? '99+' : transfertCount }}</b>
     </a>
 
+    <!-- Badge commandes vitrine en attente -->
+    <a routerLink="/commandes" class="icon-btn" title="Commandes en ligne en attente">
+      <i class="i-Cash-register-2"></i>
+      <b class="badge-count" *ngIf="commandeVitrineCount > 0">{{ commandeVitrineCount > 99 ? '99+' : commandeVitrineCount }}</b>
+    </a>
+
     <!-- Sélecteur de langue (Angular pur, sans Bootstrap JS) -->
     <div class="lang-dropdown">
       <button class="icon-btn" type="button" (click)="toggleLangMenu($event)" title="{{ 'LANG.SELECT' | translate }}">

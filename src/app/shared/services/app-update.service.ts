@@ -33,10 +33,23 @@ export class AppUpdateService {
       confirmButtonText: 'Mettre à jour',
       cancelButtonText: 'Plus tard',
       confirmButtonColor: '#1a56db'
-    }).then(result => {
+    }).then(async result => {
       if (result.isConfirmed) {
+        // Vide aussi le cache de données du service worker (dataGroups de
+        // ngsw-config.json : /api/produits, /api/clients... jusqu'à 2h) — sinon
+        // la nouvelle version de l'appli peut réafficher une réponse API mise
+        // en cache par l'ANCIENNE version, potentiellement dans un format qui a
+        // changé entre les deux (nouveaux champs, etc.).
+        await this.viderCacheDonnees();
         document.location.reload();
       }
     });
+  }
+
+  private async viderCacheDonnees(): Promise<void> {
+    try {
+      const noms = await caches.keys();
+      await Promise.all(noms.filter(n => n.includes('ngsw:')).map(n => caches.delete(n)));
+    } catch { /* pas grave si ça échoue, le reload reste utile seul */ }
   }
 }
