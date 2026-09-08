@@ -4,12 +4,13 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
 import * as QRCode from 'qrcode';
-import { BoutiqueService, BoutiqueInfo } from '../../../shared/services/boutique.service';
+import { BoutiqueService, BoutiqueInfo, PermissionVendeur } from '../../../shared/services/boutique.service';
 import { ProduitNiveauService, ProduitNiveau } from '../../../shared/services/produit-niveau.service';
 import { ProductService } from '../../../shared/services/product.service';
 import { ThemeService, ThemeMode } from '../../../shared/services/theme.service';
 import { AuthService } from '../../../shared/services/auth.service';
-import { TranslateModule } from '@ngx-translate/core';
+import { FideliteService, ParametresFidelite } from '../../../shared/services/fidelite.service';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { isConfirmationVocaleActive, setConfirmationVocaleActive } from '../../../shared/utils/confirmation-vocale.util';
 import { MontantInputDirective } from '../../../shared/directives/montant-input.directive';
 
@@ -55,6 +56,21 @@ export class BoutiqueSettingsComponent implements OnInit {
   // Fonctionnalités optionnelles
   conditionnementActif: boolean = false;
   confirmationVocaleActive: boolean = true; // activée par défaut
+
+  // Permissions vendeur (système générique, séparé des fonctionnalités avancées super admin) —
+  // accordables par n'importe quel ADMIN. Aujourd'hui : accès lecture seule à l'Inventaire.
+  permissionsVendeur: PermissionVendeur[] = [];
+
+  // Programme de fidélité — masqué entièrement si CleFonctionnalite.PROGRAMME_FIDELITE est
+  // désactivée par le super admin (voir BoutiqueService.fonctionnalitesAvancees$, même
+  // mécanisme que Dépôt garde / Comptes bancaires). Taux modifiables par n'importe quel
+  // ADMIN (pas besoin de super admin) — voir GET/PUT /api/fidelite/parametres.
+  fideliteActif: boolean = false;
+  fideliteParametres: ParametresFidelite = { montantParPoint: 100, pointValeur: 10 };
+  isLoadingFidelite: boolean = false;
+  isSavingFidelite: boolean = false;
+  fideliteErrorMessage: string = '';
+  fideliteSuccessMessage: string = '';
 
   // Palette de couleurs disponibles
   colorPalette = [
@@ -103,7 +119,9 @@ export class BoutiqueSettingsComponent implements OnInit {
     private router: Router,
     private renderer: Renderer2,
     private themeService: ThemeService,
-    private authService: AuthService
+    private authService: AuthService,
+    private fideliteService: FideliteService,
+    private translate: TranslateService
   ) {
     this.loadPreferences();
   }
@@ -121,7 +139,14 @@ export class BoutiqueSettingsComponent implements OnInit {
     }
     if (this.isAdmin) {
       this.genererQrCode();
+      this.chargerPermissionsVendeur();
     }
+    this.boutiqueService.fonctionnalitesAvancees$.subscribe(liste => {
+      this.fideliteActif = liste.find(f => f.cle === 'PROGRAMME_FIDELITE')?.actif === true;
+      if (this.fideliteActif && this.isAdmin) {
+        this.chargerParametresFidelite();
+      }
+    });
   }
 
   // ── Informations boutique ────────────────────────────────────────────────
@@ -580,5 +605,61 @@ export class BoutiqueSettingsComponent implements OnInit {
 
   imprimerQrCode(): void {
     window.print();
+  }
+
+  // ── Permissions vendeur ───────────────────────────────────────────────────
+
+  private chargerPermissionsVendeur(): void {
+    this.boutiqueService.getPermissionsVendeur().subscribe({
+      next: (liste) => { this.permissionsVendeur = liste; },
+      error: () => {}
+    });
+  }
+
+  get inventaireLectureActive(): boolean {
+    return this.permissionsVendeur.find(p => p.cle === 'INVENTAIRE_LECTURE')?.actif === true;
+  }
+
+  toggleInventaireLecture(): void {
+    const nouvelActif = !this.inventaireLectureActive;
+    this.boutiqueService.definirPermissionVendeur('INVENTAIRE_LECTURE', nouvelActif).subscribe({
+      next: (liste) => { this.permissionsVendeur = liste; },
+      error: (err: Error) => { this.errorMessage = err.message || 'Impossible de mettre à jour cette permission.'; }
+    });
+  }
+
+  // ── Programme de fidélité (taux modifiables par n'importe quel admin) ──────
+
+  private chargerParametresFidelite(): void {
+    this.isLoadingFidelite = true;
+    this.fideliteService.getParametres().subscribe({
+      next: (params) => {
+        this.fideliteParametres = params;
+        this.isLoadingFidelite = false;
+      },
+      error: () => {
+        this.isLoadingFidelite = false;
+        this.fideliteErrorMessage = this.translate.instant('FIDELITE.SETTINGS_LOAD_ERROR');
+      }
+    });
+  }
+
+  enregistrerParametresFidelite(): void {
+    this.isSavingFidelite = true;
+    this.fideliteErrorMessage = '';
+    this.fideliteSuccessMessage = '';
+    this.fideliteService.updateParametres(this.fideliteParametres).subscribe({
+      next: (params) => {
+        this.fideliteParametres = params;
+        this.isSavingFidelite = false;
+        this.fideliteSuccessMessage = this.translate.instant('FIDELITE.SETTINGS_SAVE_SUCCESS');
+        setTimeout(() => (this.fideliteSuccessMessage = ''), 5000);
+      },
+      error: (err: Error) => {
+        this.isSavingFidelite = false;
+        this.fideliteErrorMessage = err.message || this.translate.instant('FIDELITE.SETTINGS_SAVE_ERROR');
+        setTimeout(() => (this.fideliteErrorMessage = ''), 5000);
+      }
+    });
   }
 }

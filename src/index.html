@@ -11,6 +11,20 @@
     <link rel="manifest" href="manifest.webmanifest">
     <meta name="theme-color" content="#27ae60">
 
+    <script>
+      // Bascule le manifeste AVANT même qu'Angular ne démarre, pour un chargement direct
+      // sur /vitrine (ex: ouverture de l'app PWA déjà installée). Sans ça, le manifeste de
+      // l'appli de gestion du personnel (start_url="/") reste actif le temps qu'Angular
+      // charge, ce qui peut faire échouer la détection d'installabilité côté navigateur.
+      // La bascule en navigation interne (SPA, sans rechargement complet) est gérée par
+      // vitrine.component.ts. Ici on pointe vers une vraie ressource HTTP (pas un blob:),
+      // plus fiable pour le moteur d'installation "Ajouter à l'écran d'accueil".
+      if (location.pathname.indexOf('/vitrine') === 0) {
+        var lienManifeste = document.querySelector('link[rel="manifest"]');
+        if (lienManifeste) lienManifeste.setAttribute('href', '/api/vitrine/manifest.webmanifest');
+      }
+    </script>
+
 
 </head>
 

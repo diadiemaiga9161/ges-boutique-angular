@@ -606,16 +606,21 @@ export class ReglementCreditsComponent implements OnInit {
       this.repartitionGroupe = [];
       return;
     }
-    let reste = montant;
-    this.repartitionGroupe = credits.map((credit, index) => {
-      const isLast = index === credits.length - 1;
-      let part = isLast
-        ? reste
-        : Math.min(Math.round((credit.montantRestant / totalRestant) * montant), credit.montantRestant);
-      part = Math.min(part, credit.montantRestant);
-      reste -= part;
-      return { credit, montantAPayer: part };
-    });
+    const parts = credits.map(credit =>
+      Math.min(Math.round((credit.montantRestant / totalRestant) * montant), credit.montantRestant)
+    );
+    // L'arrondi individuel de chaque part peut laisser un écart de quelques francs
+    // par rapport au montant saisi (en plus ou en moins). On le réinjecte crédit
+    // par crédit sur le premier qui a encore de la marge, au lieu de le faire
+    // porter uniquement par le dernier crédit de la liste : ancien bug, si ce
+    // dernier avait un petit solde restant il ne pouvait pas absorber tout le
+    // reliquat et l'écart disparaissait, jamais envoyé au serveur.
+    let ecart = montant - parts.reduce((s, p) => s + p, 0);
+    for (let idx = 0; ecart !== 0; idx = (idx + 1) % parts.length) {
+      if (ecart > 0 && parts[idx] < credits[idx].montantRestant) { parts[idx]++; ecart--; }
+      else if (ecart < 0 && parts[idx] > 0) { parts[idx]--; ecart++; }
+    }
+    this.repartitionGroupe = credits.map((credit, index) => ({ credit, montantAPayer: parts[index] }));
   }
 
   confirmerPaiementGroupe() {

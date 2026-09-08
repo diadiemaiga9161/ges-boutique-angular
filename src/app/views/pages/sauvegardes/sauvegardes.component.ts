@@ -25,6 +25,8 @@ export class SauvegardesComponent implements OnInit {
   isDeclenchement: boolean = false;
   /** Nom du fichier en cours de téléchargement (un seul à la fois par simplicité). */
   telechargementEnCours: string | null = null;
+  /** Nom du fichier en cours de restauration (un seul à la fois par simplicité). */
+  restaurationEnCours: string | null = null;
 
   constructor(
     private authService: AuthService,
@@ -34,6 +36,10 @@ export class SauvegardesComponent implements OnInit {
 
   get isAdmin(): boolean {
     return this.authService.isAdmin();
+  }
+
+  get isSuperAdmin(): boolean {
+    return this.authService.isSuperAdmin();
   }
 
   ngOnInit(): void {
@@ -130,6 +136,51 @@ export class SauvegardesComponent implements OnInit {
           confirmButtonColor: '#dc3545'
         });
       }
+    });
+  }
+
+  // ==================== RESTAURATION ====================
+
+  restaurer(sauvegarde: BackupInfo): void {
+    if (this.restaurationEnCours) return;
+
+    Swal.fire({
+      title: this.t('BACKUP.CONFIRM_RESTORE_TITLE'),
+      html: `${this.t('BACKUP.CONFIRM_RESTORE_TEXT')}<br><br><strong>${sauvegarde.nomFichier}</strong>`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: this.t('BACKUP.BTN_RESTORE'),
+      cancelButtonText: this.t('COMMON.CANCEL'),
+      confirmButtonColor: '#dc3545',
+      cancelButtonColor: '#6c757d'
+    }).then(result => {
+      if (!result.isConfirmed) return;
+
+      this.restaurationEnCours = sauvegarde.nomFichier;
+      this.errorMessage = '';
+
+      this.backupService.restaurer(sauvegarde.nomFichier).subscribe({
+        next: (res) => {
+          this.restaurationEnCours = null;
+          Swal.fire({
+            icon: 'success',
+            title: this.t('BACKUP.SUCCESS_RESTORE_TITLE'),
+            text: res?.message || '',
+            confirmButtonColor: '#198754'
+          }).then(() => {
+            this.chargerListe();
+          });
+        },
+        error: (err) => {
+          this.restaurationEnCours = null;
+          Swal.fire({
+            icon: 'error',
+            title: this.t('BACKUP.ERROR_RESTORE_TITLE'),
+            text: err.message,
+            confirmButtonColor: '#dc3545'
+          });
+        }
+      });
     });
   }
 

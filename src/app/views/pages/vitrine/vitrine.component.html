@@ -17,6 +17,25 @@
             <i class="fa fa-clock"></i> {{ info.horairesOuverture }}
           </p>
         </div>
+
+        <div class="vitrine-header-actions">
+          <button class="btn-header-action" *ngIf="peutInstaller" (click)="installerApplication()">
+            <i class="fa fa-download"></i> Installer
+          </button>
+          <button class="btn-header-action" *ngIf="estIOS" (click)="basculerInstructionsIOS()">
+            <i class="fa fa-mobile-screen-button"></i> Installer
+          </button>
+          <button class="btn-header-action" (click)="partagerVitrine()">
+            <i class="fa fa-share-nodes"></i> {{ lienCopie ? 'Lien copié !' : 'Partager' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- iOS ne permet pas de déclencher l'installation par script — juste expliquer la manip -->
+      <div class="ios-instructions" *ngIf="afficherInstructionsIOS">
+        <i class="fa fa-circle-info"></i>
+        Pour installer : appuyez sur <strong>Partager</strong>
+        <i class="fa fa-arrow-up-from-bracket"></i> puis <strong>Sur l'écran d'accueil</strong>.
       </div>
     </ng-container>
 
@@ -30,6 +49,15 @@
   </header>
 
   <main class="vitrine-content">
+
+    <!-- Vitrine désactivée par le super admin (Boutique > Paramètres) -->
+    <div class="vitrine-indisponible" *ngIf="!loadingInfos && !erreurInfos && infos && !infos.vitrineActive">
+      <i class="fa fa-store-slash"></i>
+      <p>Les commandes en ligne ne sont pas disponibles pour le moment.</p>
+      <p class="vitrine-indisponible-sub" *ngIf="infos.telephone">Contactez-nous directement : {{ infos.telephone }}</p>
+    </div>
+
+    <ng-container *ngIf="loadingInfos || erreurInfos || !infos || infos.vitrineActive">
 
     <div class="vitrine-loading" *ngIf="loadingProduits">
       <div class="spinner"></div>
@@ -46,51 +74,91 @@
         <p>Aucun produit disponible pour le moment.</p>
       </div>
 
-      <div class="vitrine-grid" *ngIf="produits.length > 0">
-        <div class="produit-card" *ngFor="let p of produits">
+      <!-- Recherche + filtre catégorie -->
+      <div class="vitrine-recherche" *ngIf="produits.length > 0">
+        <div class="champ-recherche">
+          <i class="fa fa-search"></i>
+          <input type="search" [ngModel]="recherche" (ngModelChange)="onRechercheChange($event)" placeholder="Rechercher un produit...">
+          <button class="btn-effacer" *ngIf="recherche" (click)="viderRecherche()" aria-label="Effacer">
+            <i class="fa fa-times"></i>
+          </button>
+        </div>
 
-          <div class="produit-card-top">
+        <div class="filtre-categories" *ngIf="categoriesDisponibles.length > 1">
+          <button class="chip-categorie" [class.chip-categorie--active]="!categorieSelectionnee"
+                  (click)="choisirCategorie(null)">
+            Toutes
+          </button>
+          <button class="chip-categorie" *ngFor="let c of categoriesDisponibles"
+                  [class.chip-categorie--active]="categorieSelectionnee === c"
+                  (click)="choisirCategorie(c)">
+            {{ c }}
+          </button>
+        </div>
+      </div>
+
+      <div class="vitrine-empty" *ngIf="produits.length > 0 && produitsFiltres.length === 0">
+        <i class="fa fa-search" style="font-size:1.6rem;display:block;margin-bottom:8px;"></i>
+        <p>Aucun produit ne correspond à votre recherche.</p>
+      </div>
+
+      <div class="vitrine-grid" *ngIf="produitsFiltres.length > 0">
+        <div class="produit-card" *ngFor="let p of produitsPagines" [class.produit-card--rupture]="p.statutStock === 'RUPTURE'">
+
+          <div class="produit-visuel" [class]="'produit-visuel--' + getCategorieVisuel(p.categorieNom).couleur">
+            <i class="fa" [ngClass]="getCategorieVisuel(p.categorieNom).icone"></i>
+            <span class="badge-promo" *ngIf="p.enPromotion">
+              <i class="fa fa-tag"></i> Promo
+            </span>
             <span class="badge-stock"
                   [class.badge-stock--ok]="p.statutStock === 'DISPONIBLE'"
                   [class.badge-stock--bas]="p.statutStock === 'STOCK_FAIBLE'"
                   [class.badge-stock--rupture]="p.statutStock === 'RUPTURE'">
               {{ stockLabel(p) }}
             </span>
-            <span class="badge-promo" *ngIf="p.enPromotion">
-              <i class="fa fa-tag"></i> Promo
-            </span>
           </div>
 
-          <div class="produit-visuel">
-            <i class="fa fa-box-open"></i>
-          </div>
+          <div class="produit-card-body">
+            <p class="produit-categorie" *ngIf="p.categorieNom">{{ p.categorieNom }}</p>
+            <h3 class="produit-nom">{{ p.nom }}</h3>
 
-          <h3 class="produit-nom">{{ p.nom }}</h3>
-          <p class="produit-categorie" *ngIf="p.categorieNom">{{ p.categorieNom }}</p>
+            <div class="produit-prix-row">
+              <div class="produit-prix">{{ formatPrix(p.prixVente) }}</div>
+              <div class="produit-promo-details" *ngIf="p.enPromotion">
+                <span class="promo-reduction" *ngIf="p.promotionReduction">-{{ p.promotionReduction }}</span>
+              </div>
+            </div>
+            <p class="produit-promo-titre" *ngIf="p.enPromotion && p.promotionTitre">{{ p.promotionTitre }}</p>
 
-          <div class="produit-prix">{{ formatPrix(p.prixVente) }}</div>
-
-          <div class="produit-promo-details" *ngIf="p.enPromotion">
-            <span *ngIf="p.promotionTitre">{{ p.promotionTitre }}</span>
-            <span *ngIf="p.promotionReduction" class="promo-reduction">-{{ p.promotionReduction }}</span>
-          </div>
-
-          <!-- Panier : bouton ajouter, ou stepper quantité si déjà dans le panier -->
-          <button class="btn-ajouter" *ngIf="p.statutStock !== 'RUPTURE' && quantiteDansPanier(p) === 0"
-                  (click)="ajouterAuPanier(p)">
-            <i class="fa fa-cart-plus"></i> Ajouter
-          </button>
-          <div class="stepper" *ngIf="quantiteDansPanier(p) > 0">
-            <button (click)="retirerDuPanier(p)" aria-label="Retirer">–</button>
-            <span>{{ quantiteDansPanier(p) }}</span>
-            <button (click)="ajouterAuPanier(p)" aria-label="Ajouter">+</button>
-          </div>
-          <div class="btn-ajouter btn-ajouter--indispo" *ngIf="p.statutStock === 'RUPTURE'">
-            Indisponible
+            <!-- Panier : bouton ajouter, ou stepper quantité si déjà dans le panier -->
+            <button class="btn-ajouter" *ngIf="p.statutStock !== 'RUPTURE' && quantiteDansPanier(p) === 0"
+                    (click)="ajouterAuPanier(p)">
+              <i class="fa fa-cart-plus"></i> Ajouter
+            </button>
+            <div class="stepper" *ngIf="quantiteDansPanier(p) > 0">
+              <button (click)="retirerDuPanier(p)" aria-label="Retirer">–</button>
+              <span>{{ quantiteDansPanier(p) }}</span>
+              <button (click)="ajouterAuPanier(p)" aria-label="Ajouter">+</button>
+            </div>
+            <div class="btn-ajouter btn-ajouter--indispo" *ngIf="p.statutStock === 'RUPTURE'">
+              Indisponible
+            </div>
           </div>
 
         </div>
       </div>
+
+      <div class="vitrine-pagination" *ngIf="produitsFiltres.length > produitsParPage">
+        <button class="btn-page" (click)="pagePrecedente()" [disabled]="pageEffective === 1" aria-label="Page précédente">
+          <i class="fa fa-chevron-left"></i>
+        </button>
+        <span class="vitrine-pagination-info">Page {{ pageEffective }} / {{ totalPages }}</span>
+        <button class="btn-page" (click)="pageSuivante()" [disabled]="pageEffective === totalPages" aria-label="Page suivante">
+          <i class="fa fa-chevron-right"></i>
+        </button>
+      </div>
+    </ng-container>
+
     </ng-container>
 
   </main>
@@ -98,6 +166,11 @@
   <footer class="vitrine-footer">
     <p>Catalogue à titre indicatif — disponibilité et prix susceptibles de changer.</p>
   </footer>
+
+  <!-- ==================== BOUTON WHATSAPP FLOTTANT ==================== -->
+  <a class="whatsapp-flottant" *ngIf="lienWhatsApp" [href]="lienWhatsApp" target="_blank" rel="noopener" aria-label="Contacter sur WhatsApp">
+    <i class="fab fa-whatsapp" aria-hidden="true"></i>
+  </a>
 
   <!-- ==================== BOUTON PANIER FLOTTANT ==================== -->
   <button class="panier-flottant" *ngIf="nombreArticles > 0" (click)="ouvrirPanier()">
@@ -163,7 +236,29 @@
       </label>
       <label class="champ">
         <span>Téléphone *</span>
-        <input type="tel" [(ngModel)]="form.telephone" placeholder="Ex : 07 00 00 00 00" maxlength="20">
+        <div class="phone-input-group" style="display:flex; gap:6px;">
+          <select
+            [(ngModel)]="selectedCountryCode"
+            style="max-width:110px; flex-shrink:0"
+          >
+            <option *ngFor="let c of countryCodes" [value]="c.code">{{ c.flag }} {{ c.code }}</option>
+          </select>
+          <input
+            type="tel"
+            [(ngModel)]="telephoneLocal"
+            placeholder="Numéro sans l'indicatif"
+            [class.invalid]="telephoneLocal && !validatePhone(telephoneLocal)"
+            style="flex:1"
+            maxlength="20"
+          >
+        </div>
+        <div *ngIf="telephoneLocal && !validatePhone(telephoneLocal)" class="validation-error">
+          Numéro invalide pour l'indicatif {{ selectedCountryCode }}
+        </div>
+      </label>
+      <label class="champ">
+        <span>Adresse de livraison (optionnel)</span>
+        <textarea [(ngModel)]="form.adresseLivraison" rows="2" placeholder="Ex : quartier, rue, point de repère..."></textarea>
       </label>
       <label class="champ">
         <span>Remarque (optionnel)</span>

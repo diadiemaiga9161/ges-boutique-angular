@@ -29,6 +29,8 @@ import {
 import { AuthService } from '../../../shared/services/auth.service';
 import { CompteService, Compte } from '../../../shared/services/compte.service';
 import { FactureService } from '../../../shared/services/facture.service';
+import { BoutiqueService } from '../../../shared/services/boutique.service';
+import { UniteVenteService, UniteVente, UniteVenteRequest } from '../../../shared/services/unite-vente.service';
 import { environment } from '../../../../environments/environment';
 import Swal from 'sweetalert2';
 import { TranslateModule } from '@ngx-translate/core';
@@ -109,7 +111,8 @@ export class ProduitComponent implements OnInit, OnDestroy {
     poidsVolume: null,
     uniteMesure: '',
     bio: false,
-    origine: ''
+    origine: '',
+    uniteBase: 'Unité'
   };
 
   categoryForm: any = {
@@ -228,6 +231,24 @@ export class ProduitComponent implements OnInit, OnDestroy {
 
   showGestionDropdown: boolean = false;
 
+  // ==================== VENTE EN GROS / DÉTAIL (unités de vente) ====================
+  // Nouveau système simple, séparé de ProduitNiveau (Carton→Cartouche→Pièce, non touché
+  // ici). Visible seulement si la fonctionnalité avancée VENTE_GROS_DETAIL est active
+  // (voir BoutiqueService.fonctionnalitesAvancees$, même mécanisme que Dépôt garde /
+  // Comptes bancaires).
+  venteGrosDetailActif: boolean = false;
+  unitesVente: UniteVente[] = [];
+  isLoadingUnitesVente: boolean = false;
+  isEditingUniteVente: boolean = false;
+  selectedUniteVente: UniteVente | null = null;
+  uniteVenteForm: { nom: string; prixVente: number; prixAchat: number; uniteReferenceId: number | null; facteurRelatif: number } = {
+    nom: '',
+    prixVente: 0,
+    prixAchat: 0,
+    uniteReferenceId: null,
+    facteurRelatif: 1
+  };
+
   constructor(
     private productService: ProductService,
     private authService: AuthService,
@@ -235,6 +256,8 @@ export class ProduitComponent implements OnInit, OnDestroy {
     private http: HttpClient,
     private ws: WebSocketService,
     private factureService: FactureService,
+    private boutiqueService: BoutiqueService,
+    private uniteVenteService: UniteVenteService,
     private elementRef: ElementRef
   ) {}
 
@@ -261,6 +284,13 @@ export class ProduitComponent implements OnInit, OnDestroy {
       }
     });
     this.wsSubs.push(stockSub);
+
+    // Vente en gros / détail : masqué entièrement si la fonctionnalité est désactivée
+    // par le super admin (même mécanisme que Dépôt garde / Comptes bancaires).
+    const featureSub = this.boutiqueService.fonctionnalitesAvancees$.subscribe(liste => {
+      this.venteGrosDetailActif = liste.find(f => f.cle === 'VENTE_GROS_DETAIL')?.actif === true;
+    });
+    this.wsSubs.push(featureSub);
   }
 
   ngOnDestroy(): void {
@@ -434,9 +464,16 @@ export class ProduitComponent implements OnInit, OnDestroy {
       poidsVolume: produit.poidsVolume || null,
       uniteMesure: produit.uniteMesure || '',
       bio: produit.bio,
-      origine: produit.origine || ''
+      origine: produit.origine || '',
+      uniteBase: produit.uniteBase || 'Unité'
     };
     this.showEditModal = true;
+    this.resetUniteVenteForm();
+    if (this.venteGrosDetailActif) {
+      this.loadUnitesVente(produit.id);
+    } else {
+      this.unitesVente = [];
+    }
   }
 
   openDetailsModal(produit: Produit): void {
@@ -1041,7 +1078,8 @@ export class ProduitComponent implements OnInit, OnDestroy {
       poidsVolume: null,
       uniteMesure: '',
       bio: false,
-      origine: ''
+      origine: '',
+      uniteBase: 'Unité'
     };
   }
 
@@ -1089,11 +1127,131 @@ export class ProduitComponent implements OnInit, OnDestroy {
     this.selectedCategory = null;
     this.selectedFile = null;
     this.errorMessage = '';
+    this.unitesVente = [];
+    this.resetUniteVenteForm();
   }
 
   closeImportResultModal(): void {
     this.showImportResultModal = false;
     this.importResult = null;
+  }
+
+  // ==================== VENTE EN GROS / DÉTAIL (unités de vente) ====================
+
+  loadUnitesVente(produitId: number): void {
+    this.isLoadingUnitesVente = true;
+    this.uniteVenteService.getUnites(produitId).subscribe({
+      next: (unites) => {
+        this.unitesVente = unites;
+        this.isLoadingUnitesVente = false;
+      },
+      error: () => {
+        this.unitesVente = [];
+        this.isLoadingUnitesVente = false;
+      }
+    });
+  }
+
+  /** Options proposées dans le sélecteur "par rapport à quelle unité" du formulaire :
+   *  l'unité de base du produit + les unités déjà créées (sauf celle en cours d'édition,
+   *  qui ne peut pas se référencer elle-même). */
+  get optionsReferenceUniteVente(): UniteVente[] {
+    return this.unitesVente.filter(u => !this.selectedUniteVente || u.id !== this.selectedUniteVente.id);
+  }
+
+  resetUniteVenteForm(): void {
+    this.uniteVenteForm = { nom: '', prixVente: 0, prixAchat: 0, uniteReferenceId: null, facteurRelatif: 1 };
+    this.isEditingUniteVente = false;
+    this.selectedUniteVente = null;
+  }
+
+  startEditUniteVente(unite: UniteVente): void {
+    this.selectedUniteVente = unite;
+    this.isEditingUniteVente = true;
+    // Le serveur ne renvoie que le facteur total déjà calculé (facteurBase), pas la
+    // référence d'origine choisie à la création. Par défaut on repropose "par rapport à
+    // l'unité de base" avec ce même facteur (résultat identique tant que l'utilisateur
+    // ne change pas volontairement la référence).
+    this.uniteVenteForm = {
+      nom: unite.nom,
+      prixVente: unite.prixVente,
+      prixAchat: unite.prixAchat,
+      uniteReferenceId: null,
+      facteurRelatif: unite.facteurBase
+    };
+  }
+
+  cancelEditUniteVente(): void {
+    this.resetUniteVenteForm();
+  }
+
+  submitUniteVente(): void {
+    if (!this.selectedProduct) return;
+    if (!this.uniteVenteForm.nom?.trim()) {
+      Swal.fire('Erreur', "Le nom de l'unité de vente est obligatoire", 'error');
+      return;
+    }
+    if (!this.uniteVenteForm.facteurRelatif || this.uniteVenteForm.facteurRelatif <= 0) {
+      Swal.fire('Erreur', 'Le facteur doit être supérieur à 0', 'error');
+      return;
+    }
+    if (!this.uniteVenteForm.prixVente || this.uniteVenteForm.prixVente <= 0) {
+      Swal.fire('Erreur', 'Le prix de vente doit être supérieur à 0', 'error');
+      return;
+    }
+
+    const payload: UniteVenteRequest = {
+      nom: this.uniteVenteForm.nom.trim(),
+      prixVente: this.uniteVenteForm.prixVente,
+      prixAchat: this.uniteVenteForm.prixAchat || 0,
+      facteurRelatif: this.uniteVenteForm.facteurRelatif
+    };
+    // uniteReferenceId omis = relatif à l'unité de base du produit.
+    if (this.uniteVenteForm.uniteReferenceId) {
+      payload.uniteReferenceId = this.uniteVenteForm.uniteReferenceId;
+    }
+
+    this.isLoadingUnitesVente = true;
+    const requete = this.isEditingUniteVente && this.selectedUniteVente
+      ? this.uniteVenteService.updateUnite(this.selectedUniteVente.id, payload)
+      : this.uniteVenteService.createUnite(this.selectedProduct.id, payload);
+
+    requete.subscribe({
+      next: () => {
+        const produitId = this.selectedProduct!.id;
+        this.resetUniteVenteForm();
+        this.loadUnitesVente(produitId);
+        Swal.fire({ icon: 'success', title: 'Unité de vente enregistrée', timer: 1500, timerProgressBar: true, showConfirmButton: false });
+      },
+      error: (error) => {
+        this.isLoadingUnitesVente = false;
+        Swal.fire('Erreur', error.message, 'error');
+      }
+    });
+  }
+
+  deleteUniteVente(unite: UniteVente): void {
+    if (!this.selectedProduct) return;
+    Swal.fire({
+      title: '⚠️ Supprimer cette unité de vente ?',
+      html: `<b>${unite.nom}</b> sera supprimée définitivement.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Oui, supprimer',
+      cancelButtonText: 'Annuler',
+      confirmButtonColor: '#dc3545',
+      cancelButtonColor: '#6c757d'
+    }).then(result => {
+      if (!result.isConfirmed || !this.selectedProduct) return;
+      const produitId = this.selectedProduct.id;
+      this.uniteVenteService.deleteUnite(unite.id).subscribe({
+        next: () => {
+          if (this.selectedUniteVente?.id === unite.id) this.resetUniteVenteForm();
+          this.loadUnitesVente(produitId);
+        },
+        error: (error) => Swal.fire('Erreur', error.message, 'error')
+      });
+    });
   }
 
   // ✅ CORRECTION: Utiliser produits (filtrés) au lieu de tousLesProduits

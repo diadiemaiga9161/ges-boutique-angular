@@ -61,13 +61,23 @@
             <td>{{ formatDate(sauvegarde.dateCreation) }}</td>
             <td><span class="badge bg-secondary">{{ formatTaille(sauvegarde.tailleOctets) }}</span></td>
             <td class="text-end">
-              <button class="btn btn-sm btn-outline-primary"
+              <button class="btn btn-sm btn-outline-primary me-1"
                       (click)="telecharger(sauvegarde)"
-                      [disabled]="telechargementEnCours === sauvegarde.nomFichier">
+                      [disabled]="telechargementEnCours === sauvegarde.nomFichier || restaurationEnCours">
                 <span *ngIf="telechargementEnCours !== sauvegarde.nomFichier">
                   <i class="fas fa-download me-1"></i>{{ 'BACKUP.BTN_DOWNLOAD' | translate }}
                 </span>
                 <span *ngIf="telechargementEnCours === sauvegarde.nomFichier">
+                  <span class="spinner-border spinner-border-sm me-1"></span>{{ 'BACKUP.LOADING' | translate }}
+                </span>
+              </button>
+              <button *ngIf="isSuperAdmin" class="btn btn-sm btn-outline-danger"
+                      (click)="restaurer(sauvegarde)"
+                      [disabled]="restaurationEnCours === sauvegarde.nomFichier || (restaurationEnCours && restaurationEnCours !== sauvegarde.nomFichier) || telechargementEnCours">
+                <span *ngIf="restaurationEnCours !== sauvegarde.nomFichier">
+                  <i class="fas fa-undo me-1"></i>{{ 'BACKUP.BTN_RESTORE' | translate }}
+                </span>
+                <span *ngIf="restaurationEnCours === sauvegarde.nomFichier">
                   <span class="spinner-border spinner-border-sm me-1"></span>{{ 'BACKUP.LOADING' | translate }}
                 </span>
               </button>

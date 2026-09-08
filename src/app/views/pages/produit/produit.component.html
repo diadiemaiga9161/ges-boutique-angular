@@ -441,6 +441,14 @@
             </div>
             <div class="col-md-2"><label class="form-label">Origine</label><input type="text" class="form-control" [(ngModel)]="productForm.origine" name="origine"></div>
             <div class="col-md-3"><div class="form-check mt-4"><input class="form-check-input" type="checkbox" [(ngModel)]="productForm.bio" name="bio" id="bioCheckAdd"><label class="form-check-label" for="bioCheckAdd">Produit Bio</label></div></div>
+            <ng-container *ngIf="venteGrosDetailActif">
+              <div class="col-12"><hr></div>
+              <div class="col-md-4">
+                <label class="form-label">{{ 'UNITE_VENTE.BASE_UNIT_LABEL' | translate }}</label>
+                <input type="text" class="form-control" [(ngModel)]="productForm.uniteBase" name="uniteBaseAdd" placeholder="Unité">
+                <small class="text-muted">{{ 'UNITE_VENTE.BASE_UNIT_HINT' | translate }}</small>
+              </div>
+            </ng-container>
           </div>
         </form>
       </div>
@@ -481,8 +489,98 @@
             <div class="col-md-2"><label class="form-label">Unité</label><select class="form-select" [(ngModel)]="productForm.uniteMesure" name="uniteMesure"><option [ngValue]="null">Sélectionner</option><option value="kg">kg</option><option value="demi-kg">demi-kg (0.5 kg)</option><option value="g">g</option><option value="L">litre</option><option value="ml">millilitre</option><option value="pce">pièce</option><option value="carton">carton</option><option value="demi-carton">demi-carton</option><option value="sac">sac</option></select></div>
             <div class="col-md-2"><label class="form-label">Origine</label><input type="text" class="form-control" [(ngModel)]="productForm.origine" name="origine"></div>
             <div class="col-md-3"><div class="form-check mt-4"><input class="form-check-input" type="checkbox" [(ngModel)]="productForm.bio" name="bio" id="bioCheckEdit"><label class="form-check-label" for="bioCheckEdit">Produit Bio</label></div></div>
+            <ng-container *ngIf="venteGrosDetailActif">
+              <div class="col-12"><hr></div>
+              <div class="col-md-4">
+                <label class="form-label">{{ 'UNITE_VENTE.BASE_UNIT_LABEL' | translate }}</label>
+                <input type="text" class="form-control" [(ngModel)]="productForm.uniteBase" name="uniteBaseEdit" placeholder="Unité">
+                <small class="text-muted">{{ 'UNITE_VENTE.BASE_UNIT_HINT' | translate }}</small>
+              </div>
+            </ng-container>
           </div>
         </form>
+
+        <!-- ==================== UNITÉS DE VENTE (VENTE_GROS_DETAIL) ====================
+             Nouveau système simple : stock unique, conversion automatique. Séparé de
+             ProduitNiveau (non affiché, non modifié ici). -->
+        <div class="mt-4" *ngIf="venteGrosDetailActif && selectedProduct">
+          <hr>
+          <h6 class="mb-1"><i class="fa fa-layer-group me-2"></i>{{ 'UNITE_VENTE.SECTION_TITLE' | translate }}</h6>
+          <p class="text-muted small mb-3">{{ 'UNITE_VENTE.SECTION_HINT' | translate }}</p>
+
+          <div *ngIf="isLoadingUnitesVente" class="text-center py-2">
+            <div class="spinner-border spinner-border-sm text-primary"></div>
+          </div>
+
+          <div class="table-responsive mb-3" *ngIf="!isLoadingUnitesVente">
+            <table class="table table-sm table-bordered align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>{{ 'UNITE_VENTE.NAME' | translate }}</th>
+                  <th class="text-center">{{ 'UNITE_VENTE.TOTAL_FACTOR' | translate }}</th>
+                  <th class="text-end">{{ 'UNITE_VENTE.PRICE_SELL' | translate }}</th>
+                  <th class="text-end">{{ 'UNITE_VENTE.PRICE_BUY' | translate }}</th>
+                  <th class="text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let u of unitesVente">
+                  <td><strong>{{ u.nom }}</strong></td>
+                  <td class="text-center">1 {{ u.nom }} = {{ u.facteurBase }} {{ productForm.uniteBase || 'Unité' }}</td>
+                  <td class="text-end">{{ formatPrice(u.prixVente) }}</td>
+                  <td class="text-end">{{ formatPrice(u.prixAchat) }}</td>
+                  <td class="text-center">
+                    <div class="btn-group btn-group-sm">
+                      <button class="btn btn-outline-primary" type="button" (click)="startEditUniteVente(u)" title="Modifier"><i class="fa fa-edit"></i></button>
+                      <button class="btn btn-outline-danger" type="button" (click)="deleteUniteVente(u)" title="Supprimer"><i class="fa fa-trash"></i></button>
+                    </div>
+                  </td>
+                </tr>
+                <tr *ngIf="unitesVente.length === 0">
+                  <td colspan="5" class="text-center text-muted py-3">{{ 'UNITE_VENTE.EMPTY' | translate }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="card bg-light border-0">
+            <div class="card-body py-3">
+              <h6 class="mb-3">{{ isEditingUniteVente ? ('UNITE_VENTE.EDIT' | translate) : ('UNITE_VENTE.ADD' | translate) }}</h6>
+              <div class="row g-2 align-items-end">
+                <div class="col-md-3">
+                  <label class="form-label small">{{ 'UNITE_VENTE.NAME' | translate }}</label>
+                  <input type="text" class="form-control form-control-sm" [(ngModel)]="uniteVenteForm.nom" name="uniteVenteNom" [placeholder]="'UNITE_VENTE.NAME_PLACEHOLDER' | translate">
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label small">{{ 'UNITE_VENTE.RELATIVE_TO' | translate }}</label>
+                  <select class="form-select form-select-sm" [(ngModel)]="uniteVenteForm.uniteReferenceId" name="uniteVenteReference">
+                    <option [ngValue]="null">{{ productForm.uniteBase || 'Unité' }} ({{ 'UNITE_VENTE.BASE_UNIT_LABEL' | translate }})</option>
+                    <option *ngFor="let u of optionsReferenceUniteVente" [ngValue]="u.id">{{ u.nom }}</option>
+                  </select>
+                </div>
+                <div class="col-md-2">
+                  <label class="form-label small">{{ 'UNITE_VENTE.RELATIVE_FACTOR' | translate }}</label>
+                  <input type="number" class="form-control form-control-sm" [(ngModel)]="uniteVenteForm.facteurRelatif" name="uniteVenteFacteur" min="0.01" step="0.01">
+                </div>
+                <div class="col-md-2">
+                  <label class="form-label small">{{ 'UNITE_VENTE.PRICE_SELL' | translate }}</label>
+                  <input type="text" inputmode="numeric" class="form-control form-control-sm" appMontantInput [(ngModel)]="uniteVenteForm.prixVente" name="uniteVentePrixVente">
+                </div>
+                <div class="col-md-2">
+                  <label class="form-label small">{{ 'UNITE_VENTE.PRICE_BUY' | translate }}</label>
+                  <input type="text" inputmode="numeric" class="form-control form-control-sm" appMontantInput [(ngModel)]="uniteVenteForm.prixAchat" name="uniteVentePrixAchat">
+                </div>
+              </div>
+              <small class="text-muted d-block mt-2">{{ 'UNITE_VENTE.RELATIVE_FACTOR_HELP' | translate }}</small>
+              <div class="mt-3 d-flex gap-2">
+                <button class="btn btn-sm btn-success" type="button" (click)="submitUniteVente()" [disabled]="isLoadingUnitesVente">
+                  <i class="fa fa-save me-1"></i> {{ isEditingUniteVente ? ('UNITE_VENTE.EDIT' | translate) : ('UNITE_VENTE.ADD' | translate) }}
+                </button>
+                <button class="btn btn-sm btn-outline-secondary" type="button" *ngIf="isEditingUniteVente" (click)="cancelEditUniteVente()">Annuler</button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" (click)="closeAllModals()" [disabled]="isLoading">Annuler</button>

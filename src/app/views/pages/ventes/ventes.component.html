@@ -584,6 +584,48 @@
   </div>
 </div>
 
+<!-- ==================== MODALE CHOIX UNITÉ DE VENTE (gros/détail simple) ====================
+     Nouveau système, séparé de la modale de niveaux ci-dessus (ProduitNiveau, non touchée). -->
+<div class="modal fade show" [class.d-block]="showUniteVenteModal" *ngIf="showUniteVenteModal"
+     style="background-color: rgba(0,0,0,0.6); z-index: 1060;" tabindex="-1" (click)="showUniteVenteModal=false; produitEnAttenteUnite=null">
+  <div class="modal-dialog modal-sm modal-dialog-centered" (click)="$event.stopPropagation()">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white py-2">
+        <h6 class="modal-title"><i class="fa fa-boxes-stacked me-2"></i>{{ 'UNITE_VENTE.CHOOSE_UNIT_TITLE' | translate }} — {{ produitEnAttenteUnite?.nom }}</h6>
+        <button type="button" class="btn-close btn-close-white" (click)="showUniteVenteModal=false; produitEnAttenteUnite=null"></button>
+      </div>
+      <div class="modal-body p-2">
+        <div *ngIf="loadingUnitesVente" class="text-center py-3">
+          <div class="spinner-border spinner-border-sm text-primary"></div>
+        </div>
+        <div *ngIf="!loadingUnitesVente">
+          <div class="card mb-2 border-secondary" style="cursor:pointer" (click)="choisirUniteVenteBase()">
+            <div class="card-body py-2 px-3 d-flex justify-content-between align-items-center">
+              <div>
+                <div class="fw-bold">{{ produitEnAttenteUnite?.uniteBase || 'Unité' }}</div>
+                <small class="text-muted">{{ 'UNITE_VENTE.USE_BASE_UNIT' | translate }}</small>
+              </div>
+              <div class="text-primary fw-bold">{{ formatPrice(produitEnAttenteUnite?.prixVente || 0) }}</div>
+            </div>
+          </div>
+          <div *ngFor="let u of unitesVenteDisponibles"
+               class="card mb-2 border-primary"
+               style="cursor:pointer"
+               (click)="choisirUniteVente(u)">
+            <div class="card-body py-2 px-3 d-flex justify-content-between align-items-center">
+              <div>
+                <div class="fw-bold">{{ u.nom }}</div>
+                <small class="text-muted">1 {{ u.nom }} = {{ u.facteurBase }} {{ produitEnAttenteUnite?.uniteBase || 'Unité' }}</small>
+              </div>
+              <div class="text-primary fw-bold">{{ formatPrice(u.prixVente) }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ==================== MODALE NOUVELLE VENTE (comptant + crédit unifiés, comme sur Ionic) ==================== -->
 <div class="modal fade show nouvelle-vente-modal" [class.d-block]="showNewVenteModal" *ngIf="showNewVenteModal"
      style="background-color: rgba(0,0,0,0.5); z-index: 1050;" tabindex="-1" (click)="closeAllModals()">
@@ -853,6 +895,35 @@
                         Remise globale: {{ formatPrice(calculerMontantRemiseGlobale()) }}
                       </div>
                     </div>
+
+                    <!-- Programme de fidélité : masqué entièrement si désactivé (fideliteActif)
+                         ou si aucun client identifié n'est sélectionné (client divers exclu). -->
+                    <div class="mt-2 pt-2 border-top" *ngIf="fideliteActif && clientSelectionne">
+                      <div *ngIf="isLoadingFidelite" class="small text-muted">
+                        <i class="fa fa-spinner fa-spin me-1"></i>{{ 'FIDELITE.LOADING' | translate }}
+                      </div>
+                      <div *ngIf="!isLoadingFidelite && soldeFideliteClient" class="alert alert-info py-2 mb-0 small">
+                        <div>
+                          <i class="fa fa-star me-1"></i>
+                          {{ 'FIDELITE.CLIENT_BALANCE' | translate: { points: soldeFideliteClient.points, valeur: formatPrice(soldeFideliteClient.valeurFcfa) } }}
+                        </div>
+                        <div class="mt-2" *ngIf="soldeFideliteClient.points > 0">
+                          <label class="form-label small mb-1">{{ 'FIDELITE.USE_POINTS_LABEL' | translate }}</label>
+                          <div class="input-group input-group-sm">
+                            <input type="number" class="form-control" [(ngModel)]="pointsFideliteAUtiliser" name="pointsFideliteAUtiliser"
+                                   min="0" [max]="soldeFideliteClient.points" (ngModelChange)="onPointsFideliteChange()">
+                            <span class="input-group-text">pts</span>
+                            <button type="button" class="btn btn-outline-primary" (click)="utiliserTousLesPointsFidelite()">
+                              {{ 'FIDELITE.USE_ALL' | translate }}
+                            </button>
+                          </div>
+                          <small class="text-success d-block mt-1" *ngIf="pointsFideliteAUtiliser > 0">
+                            {{ 'FIDELITE.REDUCTION_APPLIED' | translate: { montant: formatPrice(getReductionFidelitePourVente()) } }}
+                          </small>
+                        </div>
+                      </div>
+                    </div>
+
                     <div class="d-flex justify-content-between mt-2 pt-2 border-top">
                       <strong class="fs-6">{{ nouvelleVenteEstCredit ? 'TOTAL À CRÉDITER:' : 'TOTAL À PAYER:' }}</strong>
                       <strong class="text-primary fs-4">{{ formatPrice(calculerTotalAvecRemiseGlobale()) }}</strong>

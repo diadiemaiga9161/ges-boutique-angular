@@ -23,6 +23,8 @@ export interface VitrineInfoDto {
   telephone: string;
   horairesOuverture: string | null;
   logoPath: string | null;
+  /** false si le super admin a désactivé la vitrine (Boutique > Paramètres). */
+  vitrineActive: boolean;
 }
 
 export interface VitrineCommandeLigne {
@@ -35,6 +37,7 @@ export interface VitrineCommandeRequest {
   clientPrenom?: string;
   clientTelephone: string;
   notes?: string;
+  adresseLivraison?: string;
   lignes: VitrineCommandeLigne[];
 }
 

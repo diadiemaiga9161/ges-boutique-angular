@@ -339,11 +339,13 @@ export class RapportsComponent implements OnInit, OnDestroy, AfterViewInit {
   genererRapportJournalier(date: string): void {
     this.isLoading = true;
     this.errorMessage = '';
-    
+
     const sub = this.rapportService.genererRapportJournalier(date).subscribe({
       next: (rapport) => {
         this.rapportActif = this.enrichirRapportAvecCredits(rapport);
         this.typeRapportActif = 'journalier';
+        this.dateDebut = date;
+        this.dateFin = date;
         this.isLoading = false;
         this.successMessage = 'Rapport journalier généré avec succès';
         setTimeout(() => this.initialiserCharts(), 200);
@@ -366,6 +368,8 @@ export class RapportsComponent implements OnInit, OnDestroy, AfterViewInit {
       next: (rapport) => {
         this.rapportActif = this.enrichirRapportAvecCredits(rapport);
         this.typeRapportActif = 'hebdomadaire';
+        this.dateDebut = rapport.debutSemaine;
+        this.dateFin = rapport.finSemaine;
         this.isLoading = false;
         this.successMessage = 'Rapport hebdomadaire généré avec succès';
         setTimeout(() => this.initialiserCharts(), 200);
@@ -388,6 +392,8 @@ export class RapportsComponent implements OnInit, OnDestroy, AfterViewInit {
       next: (rapport) => {
         this.rapportActif = this.enrichirRapportAvecCredits(rapport);
         this.typeRapportActif = 'mensuel';
+        this.dateDebut = rapport.debutMois;
+        this.dateFin = rapport.finMois;
         this.isLoading = false;
         this.successMessage = 'Rapport mensuel généré avec succès';
         setTimeout(() => this.initialiserCharts(), 200);
@@ -439,6 +445,44 @@ export class RapportsComponent implements OnInit, OnDestroy, AfterViewInit {
     this.subscriptions.push(sub);
   }
 
+  genererRapportAnnuel(): void {
+    const annee = this.dateFin ? new Date(this.dateFin).getFullYear() : new Date().getFullYear();
+    const dateDebut = `${annee}-01-01`;
+    const dateFin = `${annee}-12-31`;
+    this.dateDebut = dateDebut;
+    this.dateFin = dateFin;
+
+    this.isLoading = true;
+    this.errorMessage = '';
+
+    const sub = this.rapportService.genererRapportPeriodique(dateDebut, dateFin).subscribe({
+      next: (rapport) => {
+        this.rapportActif = this.enrichirRapportAvecCredits({
+          ...rapport.resume,
+          dateDebut: dateDebut,
+          dateFin: dateFin,
+          topProduits: rapport.topProduits,
+          modePaiementStats: rapport.modePaiementStats,
+          statistiquesCategories: rapport.statistiquesCategories,
+          gains: rapport.gains,
+          pertes: rapport.pertes,
+          bilanNet: rapport.bilanNet
+        });
+        this.typeRapportActif = 'annuel';
+        this.isLoading = false;
+        this.successMessage = 'Rapport annuel généré avec succès';
+        setTimeout(() => this.initialiserCharts(), 200);
+        setTimeout(() => this.successMessage = '', 3000);
+      },
+      error: (err) => {
+        this.errorMessage = err.message;
+        this.isLoading = false;
+        setTimeout(() => this.errorMessage = '', 5000);
+      }
+    });
+    this.subscriptions.push(sub);
+  }
+
   appliquerFiltres(): void {
     if (this.typeRapport === 'journalier') {
       this.genererRapportJournalier(this.dateFin);
@@ -448,6 +492,8 @@ export class RapportsComponent implements OnInit, OnDestroy, AfterViewInit {
       this.genererRapportHebdomadaire();
     } else if (this.typeRapport === 'mensuel') {
       this.genererRapportMensuel();
+    } else if (this.typeRapport === 'annuel') {
+      this.genererRapportAnnuel();
     }
   }
 
@@ -764,6 +810,8 @@ export class RapportsComponent implements OnInit, OnDestroy, AfterViewInit {
       return `Rapport Hebdomadaire - Du ${this.formatDateShort(this.rapportActif.debutSemaine)} au ${this.formatDateShort(this.rapportActif.finSemaine)}`;
     } else if (this.typeRapportActif === 'personnalise' && this.rapportActif.dateDebut) {
       return `Rapport Personnalisé - Du ${this.formatDateShort(this.rapportActif.dateDebut)} au ${this.formatDateShort(this.rapportActif.dateFin)}`;
+    } else if (this.typeRapportActif === 'annuel' && this.rapportActif.dateDebut) {
+      return `Rapport Annuel - Année ${new Date(this.rapportActif.dateDebut).getFullYear()}`;
     }
     return `Rapport Journalier - ${this.formatDateLong(this.rapportActif.date)}`;
   }
@@ -890,9 +938,9 @@ export class RapportsComponent implements OnInit, OnDestroy, AfterViewInit {
 
   telechargerPDFVentes(): void {
     this.pdfEnCours = true;
-    this.pdfService.getVentes().subscribe({
-      next: async (ventes) => {
-        await this.pdfService.genererRapportVentes(ventes);
+    this.pdfService.getRapportComplet(this.dateDebut, this.dateFin).subscribe({
+      next: async (rapport) => {
+        await this.pdfService.genererRapportVentes(rapport);
         this.pdfEnCours = false;
       },
       error: () => { this.pdfEnCours = false; }

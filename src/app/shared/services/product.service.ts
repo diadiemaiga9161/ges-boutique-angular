@@ -113,6 +113,10 @@ export interface Produit {
   joursAvantPeremption?: number;
   typeVente?: string;
   niveaux?: { id?: number; nom: string; stock?: number; prixVente: number; prixAchat: number; facteur: number; ordre?: number; parentId?: number; }[];
+  /** Nouveau système "Vente en gros / détail" (simple, séparé de ProduitNiveau ci-dessus) —
+   *  libellé de l'unité de base du produit (ex: "Pièce", "Kg"), défaut serveur "Unité".
+   *  Voir shared/services/unite-vente.service.ts. */
+  uniteBase?: string;
 }
 
 export interface ProduitDto {
@@ -143,6 +147,8 @@ export interface ProduitDto {
   tauxMarge: number;
   joursAvantPeremption?: number;
   typeVente?: string;
+  /** Voir Produit.uniteBase ci-dessus. */
+  uniteBase?: string;
 }
 
 export interface ProduitRequest {
@@ -164,6 +170,9 @@ export interface ProduitRequest {
   bio?: boolean;
   origine?: string;
   typeVente?: string;
+  /** Voir Produit.uniteBase ci-dessus. Se modifie via le même endpoint générique
+   *  PUT/POST /api/produits que les autres champs produit. */
+  uniteBase?: string;
 }
 
 export interface ProduitUpdate {
@@ -185,6 +194,7 @@ export interface ProduitUpdate {
   bio?: boolean;
   origine?: string;
   typeVente?: string;
+  uniteBase?: string;
 }
 
 export interface StatistiquesStock {

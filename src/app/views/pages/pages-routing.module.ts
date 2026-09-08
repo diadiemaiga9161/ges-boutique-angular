@@ -39,6 +39,7 @@ import { ParametresComponent } from './parametres/parametres.component';
 import { JournalAuditComponent } from './journal-audit/journal-audit.component';
 import { ExportDonneesComponent } from './export-donnees/export-donnees.component';
 import { SauvegardesComponent } from './sauvegardes/sauvegardes.component';
+import { SuperAdminFonctionnalitesComponent } from './super-admin/super-admin-fonctionnalites.component';
 
 const routes: Routes = [
     {
@@ -73,6 +74,10 @@ const routes: Routes = [
     {
         path: 'boutique',
         component: BoutiqueSettingsComponent
+    },
+    {
+        path: 'super-admin/fonctionnalites',
+        component: SuperAdminFonctionnalitesComponent
     },
     {
         path: 'client',

@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
+import { RapportService } from './rapport.service';
 
 export interface RapportConfig {
   titre: string;
@@ -18,6 +19,45 @@ export interface RapportSection {
   totaux?: (string | number | null)[];
 }
 
+export interface RapportCompletVenteDto {
+  date: string;
+  numeroVente: string;
+  clientNom: string;
+  modePaiement: string;
+  montantTotal: number;
+}
+
+export interface RapportCompletTopProduitDto {
+  produitNom: string;
+  quantiteVendue: number;
+  ca: number;
+}
+
+export interface RapportCompletRepartitionModePaiementDto {
+  mode: string;
+  montant: number;
+  nombre: number;
+}
+
+export interface RapportCompletResumeCreditsDto {
+  nombreCredits: number;
+  totalCredits: number;
+  totalVerse: number;
+  totalRestant: number;
+}
+
+export interface RapportCompletDto {
+  dateDebut: string;
+  dateFin: string;
+  nombreVentes: number;
+  totalVentes: number;
+  ventes: RapportCompletVenteDto[];
+  topProduits: RapportCompletTopProduitDto[];
+  repartitionModePaiement: RapportCompletRepartitionModePaiementDto[];
+  resumeCredits: RapportCompletResumeCreditsDto;
+  nombreClients: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class PdfRapportService {
   private readonly HEADER_COLOR = '#081648';
@@ -27,12 +67,31 @@ export class PdfRapportService {
   private readonly BORDER_COLOR = '#e2e8f0';
   private readonly BG_STRIPE = '#f8fafc';
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private rapportService: RapportService
+  ) {}
 
   // ===== Données API =====
 
   getVentes(params?: any): Observable<any[]> {
     return this.http.get<any[]>(`${environment.apiUrl}/ventes`, { params }).pipe(catchError(() => of([])));
+  }
+
+  getRapportComplet(dateDebut: string, dateFin: string): Observable<RapportCompletDto> {
+    return this.http.get<RapportCompletDto>(`${environment.apiUrl}/rapports/complet`, {
+      params: { dateDebut, dateFin }
+    }).pipe(catchError(() => of({
+      dateDebut,
+      dateFin,
+      nombreVentes: 0,
+      totalVentes: 0,
+      ventes: [],
+      topProduits: [],
+      repartitionModePaiement: [],
+      resumeCredits: { nombreCredits: 0, totalCredits: 0, totalVerse: 0, totalRestant: 0 },
+      nombreClients: 0
+    } as RapportCompletDto)));
   }
 
   getProduits(): Observable<any[]> {
@@ -214,26 +273,71 @@ export class PdfRapportService {
 
   // ===== Rapports prédéfinis =====
 
-  async genererRapportVentes(ventes: any[]): Promise<void> {
-    const total = ventes.reduce((s, v) => s + (v.montantTotal || v.total || 0), 0);
-    const totalFormate = total.toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + ' FCFA';
+  async genererRapportVentes(rapport: RapportCompletDto): Promise<void> {
+    const fmt = (n: number) => (n || 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + ' F';
+
+    const totalVentesFormate = (rapport.totalVentes || 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + ' FCFA';
+
+    const sectionVentes: RapportSection = {
+      titre: 'Liste des ventes',
+      colonnes: ['Date', 'Reference', 'Client', 'Mode', 'Montant'],
+      donnees: (rapport.ventes || []).map(v => [
+        v.date ? new Date(v.date).toLocaleDateString('fr-FR') : '-',
+        v.numeroVente || '-',
+        v.clientNom || 'Comptant',
+        this.rapportService.getModePaiementLabel(v.modePaiement),
+        fmt(v.montantTotal)
+      ]),
+      totaux: ['', '', '', 'TOTAL', totalVentesFormate]
+    };
+
+    const sectionTopProduits: RapportSection = {
+      titre: 'Produits les plus vendus',
+      colonnes: ['Produit', 'Quantite vendue', 'Chiffre d affaires'],
+      donnees: (rapport.topProduits || []).map(p => [
+        p.produitNom || '-',
+        p.quantiteVendue || 0,
+        fmt(p.ca)
+      ])
+    };
+
+    const sectionModePaiement: RapportSection = {
+      titre: 'Repartition par mode de paiement',
+      colonnes: ['Mode', 'Montant', 'Nombre de transactions'],
+      donnees: (rapport.repartitionModePaiement || []).map(m => [
+        this.rapportService.getModePaiementLabel(m.mode),
+        fmt(m.montant),
+        m.nombre || 0
+      ])
+    };
+
+    const resumeCredits = rapport.resumeCredits || { nombreCredits: 0, totalCredits: 0, totalVerse: 0, totalRestant: 0 };
+    const sectionCredits: RapportSection = {
+      titre: 'Resume des credits',
+      colonnes: ['Indicateur', 'Valeur'],
+      donnees: [
+        ['Nombre de credits', resumeCredits.nombreCredits || 0],
+        ['Total credits', fmt(resumeCredits.totalCredits)],
+        ['Total verse', fmt(resumeCredits.totalVerse)],
+        ['Restant du', fmt(resumeCredits.totalRestant)]
+      ]
+    };
+
+    const sectionClients: RapportSection = {
+      titre: 'Clients',
+      colonnes: ['Indicateur', 'Valeur'],
+      donnees: [
+        ['Nombre de clients servis', rapport.nombreClients || 0]
+      ]
+    };
+
+    const periode = `${this.rapportService.formatDateLong(rapport.dateDebut)} au ${this.rapportService.formatDateLong(rapport.dateFin)}`;
 
     const config: RapportConfig = {
       titre: 'Rapport des ventes',
-      sousTitre: `${ventes.length} vente(s) enregistree(s)`,
-      periode: new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }),
-      sections: [{
-        titre: 'Liste des ventes',
-        colonnes: ['Date', 'Reference', 'Client', 'Mode', 'Montant'],
-        donnees: ventes.map(v => [
-          v.dateVente ? new Date(v.dateVente).toLocaleDateString('fr-FR') : '-',
-          v.reference || v.id || '-',
-          v.clientNom || v.nomClient || 'Comptant',
-          v.modePaiement || v.mode || '-',
-          (v.montantTotal || v.total || 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + ' F'
-        ]),
-        totaux: ['', '', '', 'TOTAL', totalFormate]
-      }]
+      sousTitre: `${rapport.nombreVentes || 0} vente(s) enregistree(s)`,
+      periode: periode,
+      sections: [sectionVentes, sectionTopProduits, sectionModePaiement, sectionCredits, sectionClients]
     };
     await this.genererPDF(config);
   }

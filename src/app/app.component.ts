@@ -4,6 +4,7 @@ import { BoutiqueService } from './shared/services/boutique.service';
 import { WebSocketService } from './shared/services/websocket.service';
 import { ThemeService } from './shared/services/theme.service';
 import { AppUpdateService } from './shared/services/app-update.service';
+import { AuthService } from './shared/services/auth.service';
 
 @Component({
     selector: 'app-root',
@@ -21,7 +22,8 @@ export class AppComponent implements OnInit {
     // Injecté ici pour forcer l'initialisation du thème (clair/sombre/auto)
     // dès le démarrage de l'application, avant tout affichage de page.
     private themeService: ThemeService,
-    private appUpdateService: AppUpdateService
+    private appUpdateService: AppUpdateService,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -36,6 +38,13 @@ export class AppComponent implements OnInit {
     this.ws.connect();
     // Détecte les nouvelles versions déployées et propose de recharger
     this.appUpdateService.init();
+    // Rafraîchit le profil utilisateur stocké localement depuis le serveur au
+    // démarrage — une session ouverte AVANT l'ajout d'un champ (ex: superAdmin)
+    // gardait sinon un objet utilisateur incomplet en cache indéfiniment, sans
+    // qu'aucune reconnexion manuelle ne soit jamais demandée à l'utilisateur.
+    if (this.authService.isAuthenticated()) {
+      this.authService.getCurrentProfile().subscribe({ error: () => {} });
+    }
   }
 
   private updateFavicon(logoUrl: string): void {

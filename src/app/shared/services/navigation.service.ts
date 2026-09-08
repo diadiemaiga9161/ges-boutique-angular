@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { AuthService } from './auth.service';
+import { BoutiqueService } from './boutique.service';
 
 export interface IMenuItem {
     id?: string;
@@ -148,6 +149,7 @@ export class NavigationService {
                 { name: 'JOURNAL_AUDIT.TITLE', type: 'link', icon: 'i-Data-Shield',                 state: '/journal-audit' },
                 { name: 'EXPORT.TITLE',        type: 'link', icon: 'i-File-Download',               state: '/export-donnees' },
                 { name: 'BACKUP.TITLE',        type: 'link', icon: 'i-Data-Backup',                 state: '/sauvegardes' },
+                { name: 'Fonctionnalités (super admin)', type: 'link', icon: 'i-Shield-2',           state: '/super-admin/fonctionnalites' },
                 // { name: 'Promotions',          type: 'link', icon: 'i-Tag-2',                       state: '/promotions' }, // gérer depuis l'app mobile
             ]
         },
@@ -164,11 +166,80 @@ export class NavigationService {
     menuItems = new BehaviorSubject<IMenuItem[]>([]);
     menuItems$ = this.menuItems.asObservable();
 
-    constructor(private authService: AuthService) {
+    // Fonctionnalités désactivables par le super admin (Boutique > Paramètres) —
+    // masque l'entrée de menu correspondante ; le vrai blocage (si quelqu'un
+    // tape l'URL directement, ou via l'API) est fait côté serveur.
+    private featureTransfertsActif = true;
+
+    // Fonctionnalités avancées (système séparé, voir FonctionnaliteAvancee côté
+    // backend) — associe chaque clé à l'état de menu correspondant.
+    private readonly etatParCleAvancee: Record<string, string> = {
+        DEPOT_GARDE: '/depot-garde',
+        DETTES_ANCIENNES: '/dettes',
+        COMPTES_BANCAIRES: '/comptes',
+        PROMOTIONS: '/promotions',
+        MOBILE_MONEY: '/mobile-money',
+        BONUS_FOURNISSEURS: '/bonus-fournisseurs',
+        OBJECTIFS_FOURNISSEUR: '/objectif-fournisseur',
+        OBJECTIFS_VENDEUR: '/objectifs-vendeur',
+        RAPPORTS: '/rapport',
+        IA: '/ia',
+        RESULTAT_NET: '/resultat-net'
+    };
+    private etatsAvancesDesactives = new Set<string>();
+
+    // Permissions vendeur (système générique séparé des fonctionnalités avancées ci-dessus) —
+    // accordées par n'importe quel ADMIN (voir Boutique > Paramètres). Aujourd'hui une seule
+    // clé existe : INVENTAIRE_LECTURE (accès lecture seule du VENDEUR à /inventaire).
+    private permissionInventaireLectureActive = false;
+
+    constructor(private authService: AuthService, private boutiqueService: BoutiqueService) {
         this.authService.currentUser$.subscribe(() => {
             this.publishNavigationForCurrentUser();
         });
+        this.boutiqueService.info$.subscribe(info => {
+            this.featureTransfertsActif = info.featureTransfertsActif !== false;
+            this.publishNavigationForCurrentUser();
+        });
+        this.boutiqueService.fonctionnalitesAvancees$.subscribe(liste => {
+            this.etatsAvancesDesactives = new Set(
+                liste.filter(f => !f.actif).map(f => this.etatParCleAvancee[f.cle]).filter((s): s is string => !!s)
+            );
+            this.publishNavigationForCurrentUser();
+        });
+        this.boutiqueService.permissionsVendeur$.subscribe(liste => {
+            this.permissionInventaireLectureActive = liste.find(p => p.cle === 'INVENTAIRE_LECTURE')?.actif === true;
+            this.publishNavigationForCurrentUser();
+        });
         this.publishNavigationForCurrentUser();
+    }
+
+    /** Retire les entrées liées à une fonctionnalité désactivée (state ciblé), sans
+     *  toucher au reste de l'arborescence (dropDown, sous-menus, items simples). */
+    private filtrerFonctionnalites(menu: IMenuItem[]): IMenuItem[] {
+        const etatsMasques = new Set<string>(this.etatsAvancesDesactives);
+        if (!this.featureTransfertsActif) etatsMasques.add('/transferts');
+        // Page super admin — visible uniquement pour le compte promu (flag super_admin
+        // en base, voir AuthService.isSuperAdmin) ; masqué pour ADMIN/VENDEUR classiques.
+        if (!this.authService.isSuperAdmin()) etatsMasques.add('/super-admin/fonctionnalites');
+        if (etatsMasques.size === 0) return menu;
+
+        return menu
+            .map(item => item.sub
+                ? { ...item, sub: item.sub.filter(s => !etatsMasques.has(s.state || '')) }
+                : item)
+            .filter(item => !(item.state && etatsMasques.has(item.state)));
+    }
+
+    /** Retire l'entrée /inventaire du menu VENDEUR tant que l'ADMIN n'a pas accordé la
+     *  permission INVENTAIRE_LECTURE (système séparé de filtrerFonctionnalites ci-dessus). */
+    private appliquerPermissionInventaire(menu: IMenuItem[]): IMenuItem[] {
+        if (this.permissionInventaireLectureActive) return menu;
+        return menu
+            .map(item => item.sub
+                ? { ...item, sub: item.sub.filter(s => s.state !== '/inventaire') }
+                : item)
+            .filter(item => item.state !== '/inventaire');
     }
 
     publishNavigationForCurrentUser() {
@@ -180,16 +251,18 @@ export class NavigationService {
         }
 
         if (this.authService.isAdmin()) {
-            this.menuItems.next(this.adminMenu);
+            this.menuItems.next(this.filtrerFonctionnalites(this.adminMenu));
             return;
         }
 
         if (this.authService.isVendeur()) {
-            this.menuItems.next(this.vendeurMenu);
+            let menu = this.filtrerFonctionnalites(this.vendeurMenu);
+            menu = this.appliquerPermissionInventaire(menu);
+            this.menuItems.next(menu);
             return;
         }
 
-        this.menuItems.next(this.vendeurMenu);
+        this.menuItems.next(this.appliquerPermissionInventaire(this.filtrerFonctionnalites(this.vendeurMenu)));
     }
 
     // Méthode publique pour accéder au menu par défaut (pour compatibilité)

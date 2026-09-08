@@ -32,6 +32,7 @@ export interface User {
   actif?: boolean;
   dateCreation?: string;
   dateModification?: string;
+  superAdmin?: boolean;
 }
 
 @Injectable({
@@ -92,7 +93,8 @@ export class AuthService {
             nomComplet: response.nomComplet,
             email: response.email,
             telephone: response.telephone,
-            photo: (response as any).photo || undefined
+            photo: (response as any).photo || undefined,
+            superAdmin: (response as any).superAdmin === true
           };
           
           // Sauvegarder l'utilisateur
@@ -198,6 +200,14 @@ export class AuthService {
     return this.hasRole('VENDEUR');
   }
 
+  // Privilège additionnel réservé au propriétaire de l'app, activé manuellement en
+  // base sur un compte ADMIN existant (pas un rôle séparé — voir Utilisateur.java
+  // côté backend). Contrôle uniquement l'accès à la page Fonctionnalités boutique ;
+  // le vrai blocage est fait côté serveur (PUT /api/boutique/fonctionnalites).
+  isSuperAdmin(): boolean {
+    return this.isAdmin() && this.getUser()?.superAdmin === true;
+  }
+
   getDisplayName(): string {
     const user = this.getUser();
     return user?.nomComplet || user?.username || 'Utilisateur';
@@ -269,7 +279,8 @@ export class AuthService {
           nomComplet: user.nomComplet,
           email: user.email,
           telephone: user.telephone,
-          photo: user.photo
+          photo: user.photo,
+          superAdmin: (user as any).superAdmin === true
         };
         this.store.setItem(this.userKey, userData);
         this.currentUserSubject.next(userData);
@@ -313,7 +324,8 @@ export class AuthService {
           nomComplet: updatedUser.nomComplet,
           email: updatedUser.email,
           telephone: updatedUser.telephone,
-          photo: existing?.photo
+          photo: existing?.photo,
+          superAdmin: (updatedUser as any).superAdmin === true
         };
         this.store.setItem(this.userKey, updatedUserData);
         this.currentUserSubject.next(updatedUserData);

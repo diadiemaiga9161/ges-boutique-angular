@@ -8,6 +8,7 @@ import { AuthService } from './auth.service';
 import { ProductService, Produit } from './product.service';
 import { VenteService, VenteMap } from './vente.service';
 import { CaisseService, CreditInfo, SituationCredits } from './caisse.service';
+import { BoutiqueService } from './boutique.service';
 import { environment } from '../../../environments/environment';
 
 // =====================================================
@@ -264,7 +265,8 @@ export class RapportService {
     private authService: AuthService,
     private productService: ProductService,
     private venteService: VenteService,
-    private caisseService: CaisseService
+    private caisseService: CaisseService,
+    private boutiqueService: BoutiqueService
   ) { }
 
   private getAuthHeaders() {
@@ -983,6 +985,12 @@ export class RapportService {
     const dateGeneration = new Date().toLocaleDateString('fr-FR', {
       day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
     });
+    const boutique = this.boutiqueService.getInfo();
+    const boutiqueNom = boutique?.nom || 'Ma Boutique';
+    const boutiqueCoordonnees = [
+      boutique?.adresse ? `📍 ${boutique.adresse}` : '',
+      boutique?.telephone ? `📞 ${boutique.telephone}` : ''
+    ].filter(v => !!v).join(' | ');
 
     const styles = `
       <style>
@@ -1018,7 +1026,13 @@ export class RapportService {
       </style>
     `;
 
-    // Construction simplifiée du HTML
+    const sectionTopProduits = this.genererSectionTopProduits(rapport.topProduits);
+    const sectionModePaiement = this.genererSectionModePaiement(rapport.modePaiementStats);
+    const sectionCategories = this.genererSectionCategories(rapport.statistiquesCategories);
+    const sectionCredits = this.genererSectionCredits(rapport.credits);
+    const sectionBilan = this.genererSectionBilan(rapport.gains, rapport.pertes, rapport.bilanNet);
+
+    // Construction du HTML
     const html = `
       <!DOCTYPE html>
       <html lang="fr">
@@ -1030,8 +1044,8 @@ export class RapportService {
       <body>
         <div class="rapport-container">
           <div class="header">
-            <div class="shop-name">Boutique Alimentation Ndjim Et Frères</div>
-            <div>📍 Misa bougou | 📞 76 96 21 20 / 66 43 66 03</div>
+            <div class="shop-name">${boutiqueNom}</div>
+            ${boutiqueCoordonnees ? `<div>${boutiqueCoordonnees}</div>` : ''}
             <div class="rapport-title">${titre}</div>
             <div>Généré le : ${dateGeneration}</div>
           </div>
@@ -1043,9 +1057,15 @@ export class RapportService {
             <div class="stat-card"><h3>${this.formaterPrixFCFA((rapport.chiffreAffaireTotal || 0) / (rapport.nombreVentes || 1))}</h3><p>Panier Moyen</p></div>
           </div>
 
+          ${sectionTopProduits}
+          ${sectionModePaiement}
+          ${sectionCategories}
+          ${sectionCredits}
+          ${sectionBilan}
+
           <div class="footer">
             <p>Merci de votre confiance !</p>
-            <p>© ${new Date().getFullYear()} - Boutique Alimentation Ndjim Et Frères</p>
+            <p>© ${new Date().getFullYear()} - ${boutiqueNom}</p>
           </div>
 
           <button class="print-btn no-print" onclick="window.print()">🖨️ Imprimer / Télécharger PDF</button>
@@ -1059,6 +1079,127 @@ export class RapportService {
     return html;
   }
 
+  /** topProduits est un tableau {nom, quantite, chiffreAffaire?, categorie?} pour Journalier/Hebdomadaire,
+   *  mais un dictionnaire {nom: quantite} pour Mensuel — on normalise les deux formes ici. */
+  private normaliserTopProduits(topProduits: any): Array<{ nom: string; quantite: number; chiffreAffaire?: number; categorie?: string }> {
+    if (!topProduits) return [];
+    if (Array.isArray(topProduits)) {
+      return topProduits;
+    }
+    return Object.keys(topProduits).map(nom => ({ nom, quantite: topProduits[nom] }))
+      .sort((a, b) => b.quantite - a.quantite);
+  }
+
+  private genererSectionTopProduits(topProduitsBrut: any): string {
+    const topProduits = this.normaliserTopProduits(topProduitsBrut).slice(0, 10);
+    if (topProduits.length === 0) return '';
+    const avecCA = topProduits.some(p => p.chiffreAffaire !== undefined);
+    const lignes = topProduits.map((p, i) => `
+      <tr>
+        <td>${i + 1}</td>
+        <td>${p.nom}</td>
+        <td>${p.categorie || '-'}</td>
+        <td class="text-right">${p.quantite}</td>
+        ${avecCA ? `<td class="text-right">${this.formaterPrixFCFA(p.chiffreAffaire || 0)}</td>` : ''}
+      </tr>`).join('');
+    return `
+      <div class="section">
+        <div class="section-title">🏆 Produits les plus vendus</div>
+        <table>
+          <thead>
+            <tr>
+              <th>#</th><th>Produit</th><th>Catégorie</th><th class="text-right">Quantité vendue</th>
+              ${avecCA ? '<th class="text-right">Chiffre d\'affaires</th>' : ''}
+            </tr>
+          </thead>
+          <tbody>${lignes}</tbody>
+        </table>
+      </div>`;
+  }
+
+  private genererSectionModePaiement(modePaiementStats: any): string {
+    if (!Array.isArray(modePaiementStats) || modePaiementStats.length === 0) return '';
+    const lignes = modePaiementStats.map((m: any) => `
+      <tr>
+        <td>${this.getModePaiementLabel(m.mode)}</td>
+        <td class="text-right">${m.nombreVentes || 0}</td>
+        <td class="text-right">${this.formaterPrixFCFA(m.montant || 0)}</td>
+        <td class="text-right">${m.pourcentage !== undefined ? m.pourcentage.toFixed(1) + ' %' : '-'}</td>
+      </tr>`).join('');
+    return `
+      <div class="section">
+        <div class="section-title">💳 Répartition par mode de paiement</div>
+        <table>
+          <thead><tr><th>Mode</th><th class="text-right">Ventes</th><th class="text-right">Montant</th><th class="text-right">%</th></tr></thead>
+          <tbody>${lignes}</tbody>
+        </table>
+      </div>`;
+  }
+
+  private genererSectionCategories(statistiquesCategories: any): string {
+    if (!Array.isArray(statistiquesCategories) || statistiquesCategories.length === 0) return '';
+    const lignes = statistiquesCategories.map((c: any) => `
+      <tr>
+        <td>${c.nom}</td>
+        <td class="text-right">${c.nombreProduitsVendus ?? '-'}</td>
+        <td class="text-right">${this.formaterPrixFCFA(c.chiffreAffaire || 0)}</td>
+      </tr>`).join('');
+    return `
+      <div class="section">
+        <div class="section-title">📦 Ventes par catégorie</div>
+        <table>
+          <thead><tr><th>Catégorie</th><th class="text-right">Quantité vendue</th><th class="text-right">Chiffre d'affaires</th></tr></thead>
+          <tbody>${lignes}</tbody>
+        </table>
+      </div>`;
+  }
+
+  /** La forme de "credits" varie selon journalier/hebdomadaire/mensuel — on n'affiche que les
+   *  champs réellement présents plutôt que de figer une forme unique. */
+  private genererSectionCredits(credits: any): string {
+    if (!credits) return '';
+    const champs: Array<{ cle: string; label: string; montant: boolean }> = [
+      { cle: 'nouveauxCredits', label: 'Nouveaux crédits', montant: false },
+      { cle: 'montantNouveauxCredits', label: 'Montant nouveaux crédits', montant: true },
+      { cle: 'reglementsCredits', label: 'Règlements reçus', montant: false },
+      { cle: 'montantReglementsCredits', label: 'Montant réglé', montant: true },
+      { cle: 'totalCredits', label: 'Crédits en cours', montant: false },
+      { cle: 'creditsEnCours', label: 'Crédits en cours', montant: false },
+      { cle: 'montantTotalCredits', label: 'Montant restant dû', montant: true },
+      { cle: 'montantCreditsEnCours', label: 'Montant restant dû', montant: true },
+      { cle: 'creditsRegles', label: 'Crédits soldés', montant: false },
+      { cle: 'montantCreditsRegles', label: 'Montant soldé', montant: true },
+      { cle: 'creditsEnRetard', label: 'Crédits en retard', montant: false },
+      { cle: 'montantCreditsEnRetard', label: 'Montant en retard', montant: true }
+    ];
+    const cartes = champs
+      .filter(c => credits[c.cle] !== undefined && credits[c.cle] !== null)
+      .map(c => `<div class="stat-card"><h3>${c.montant ? this.formaterPrixFCFA(credits[c.cle]) : credits[c.cle]}</h3><p>${c.label}</p></div>`)
+      .join('');
+    if (!cartes) return '';
+    return `
+      <div class="section">
+        <div class="section-title">💰 Crédits clients</div>
+        <div class="stats-grid">${cartes}</div>
+      </div>`;
+  }
+
+  private genererSectionBilan(gains: any, pertes: any, bilanNet: any): string {
+    if (!gains && !pertes && bilanNet === undefined) return '';
+    const cartes = [
+      gains ? `<div class="stat-card gain-card"><h3>${this.formaterPrixFCFA(gains.totalRevenus || 0)}</h3><p>Revenus totaux</p></div>` : '',
+      gains ? `<div class="stat-card gain-card"><h3>${this.formaterPrixFCFA(gains.beneficeBrut || 0)}</h3><p>Bénéfice brut</p></div>` : '',
+      pertes ? `<div class="stat-card perte-card"><h3>${this.formaterPrixFCFA(pertes.totalPertes || 0)}</h3><p>Pertes totales</p></div>` : '',
+      bilanNet !== undefined ? `<div class="stat-card"><h3 class="${bilanNet >= 0 ? 'text-success' : 'text-danger'}">${this.formaterPrixFCFA(bilanNet)}</h3><p>Bilan net</p></div>` : ''
+    ].filter(v => !!v).join('');
+    if (!cartes) return '';
+    return `
+      <div class="section">
+        <div class="section-title">📊 Bilan gains / pertes</div>
+        <div class="stats-grid">${cartes}</div>
+      </div>`;
+  }
+
   private getTitreRapport(rapport: any, type: string): string {
     if (type === 'journalier' && rapport.date) {
       return `Rapport Journalier - ${this.formatDateLong(rapport.date)}`;
@@ -1066,6 +1207,14 @@ export class RapportService {
       return `Rapport Hebdomadaire - Du ${this.formatDateShort(rapport.debutSemaine)} au ${this.formatDateShort(rapport.finSemaine)}`;
     } else if (type === 'mensuel' && rapport.mois) {
       return `Rapport Mensuel - ${rapport.mois} ${rapport.annee}`;
+    } else if (type === 'personnalise' && rapport.dateDebut) {
+      // BUG FIX : rapportActif (rapports.component.ts) porte dateDebut/dateFin à plat,
+      // pas dans un sous-objet `periode` — la branche `rapport.periode` plus bas ne
+      // matchait donc jamais pour ce type, et le PDF exporté retombait sur le titre
+      // générique "Rapport" sans aucune période affichée.
+      return `Rapport Personnalisé - Du ${this.formatDateShort(rapport.dateDebut)} au ${this.formatDateShort(rapport.dateFin)}`;
+    } else if (type === 'annuel' && rapport.dateDebut) {
+      return `Rapport Annuel - Année ${new Date(rapport.dateDebut).getFullYear()} (du ${this.formatDateShort(rapport.dateDebut)} au ${this.formatDateShort(rapport.dateFin)})`;
     } else if (rapport.periode) {
       return `Rapport Périodique - Du ${this.formatDateShort(rapport.periode.dateDebut)} au ${this.formatDateShort(rapport.periode.dateFin)}`;
     }
@@ -1095,6 +1244,7 @@ export class RapportService {
       'ESPECES': 'Espèces',
       'ORANGE_MONEY': 'Orange Money',
       'MOOV_MONEY': 'Moov Money',
+      'WAVE_MONEY': 'Wave',
       'CARTE_BANCAIRE': 'Carte Bancaire',
       'VIREMENT': 'Virement'
     };

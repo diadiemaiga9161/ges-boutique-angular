@@ -11,10 +11,11 @@ import { DesignFacture, FactureDesignService } from '../../../shared/services/fa
 import { FactureService } from '../../../shared/services/facture.service';
 import { ProductService } from '../../../shared/services/product.service';
 import { BoutiqueService } from '../../../shared/services/boutique.service';
+import { FideliteService, SoldeFidelite, MouvementFidelite } from '../../../shared/services/fidelite.service';
 import { formaterMessageWhatsApp, envoyerWhatsAppDirect } from '../../../shared/utils/whatsapp.util';
 import { forkJoin, firstValueFrom } from 'rxjs';
 import Swal from 'sweetalert2';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { MontantInputDirective } from '../../../shared/directives/montant-input.directive';
 
 interface HistoriquePaiementEntry {
@@ -98,13 +99,14 @@ export class ClientsComponent implements OnInit {
   // "mettre situation dans la partie historique de vente ... comme des fonctions tabs
   // pour ne pas mettre trop d'infos", puis "tu mets paiement avance et historique dedans
   // pour ne pas avoir beaucoup de bouton").
-  clientDetailTab: 'historique' | 'situation' | 'paiements' | 'avances' = 'historique';
+  clientDetailTab: 'historique' | 'situation' | 'paiements' | 'avances' | 'fidelite' = 'historique';
 
   get clientDetailTitle(): string {
     switch (this.clientDetailTab) {
       case 'situation': return 'Situation client';
       case 'paiements': return 'Paiements';
       case 'avances': return 'Avances';
+      case 'fidelite': return this.translate.instant('FIDELITE.TAB_LABEL');
       default: return 'Historique des ventes';
     }
   }
@@ -171,6 +173,18 @@ export class ClientsComponent implements OnInit {
     partenaire: false
   };
 
+  // ==================== PROGRAMME DE FIDÉLITÉ ====================
+  // Masqué entièrement si CleFonctionnalite.PROGRAMME_FIDELITE est désactivée (voir
+  // BoutiqueService.fonctionnalitesAvancees$, même mécanisme que Dépôt garde / Comptes
+  // bancaires — voir NavigationService).
+  fideliteActif: boolean = false;
+  isLoadingFidelite: boolean = false;
+  soldeFideliteClient: SoldeFidelite | null = null;
+  mouvementsFidelite: MouvementFidelite[] = [];
+  showAjustementFideliteForm: boolean = false;
+  isSavingAjustementFidelite: boolean = false;
+  ajustementFideliteForm: { delta: number; motif: string } = { delta: 0, motif: '' };
+
   constructor(
     private clientService: ClientService,
     private authService: AuthService,
@@ -179,12 +193,17 @@ export class ClientsComponent implements OnInit {
     private designService: FactureDesignService,
     private factureService: FactureService,
     private productService: ProductService,
-    private boutiqueService: BoutiqueService
+    private boutiqueService: BoutiqueService,
+    private fideliteService: FideliteService,
+    private translate: TranslateService
   ) {}
 
   ngOnInit(): void {
     this.design = this.designService.getDesign();
     this.loadClients();
+    this.boutiqueService.fonctionnalitesAvancees$.subscribe(liste => {
+      this.fideliteActif = liste.find(f => f.cle === 'PROGRAMME_FIDELITE')?.actif === true;
+    });
   }
 
   get isAdmin(): boolean {
@@ -338,6 +357,11 @@ export class ClientsComponent implements OnInit {
     this.filterVenteNumero = '';
     this.filterVenteType = '';
     this.filterVenteMois = '';
+
+    // Réinitialise la fidélité pour ne jamais afficher les données du client
+    // précédemment consulté (rechargée à la demande, voir switchClientDetailTab).
+    this.soldeFideliteClient = null;
+    this.mouvementsFidelite = [];
 
     this.venteService.getAllVentes().subscribe({
       next: (ventes) => {
@@ -1077,11 +1101,11 @@ export class ClientsComponent implements OnInit {
     }
   }
 
-  /** Bascule entre les 4 onglets de la modale unique (Historique des ventes / Situation
-   *  du compte / Paiements / Avances), en chargeant les données à la demande si pas
-   *  encore fait — les onglets Historique et Paiements partagent déjà les mêmes données
-   *  (chargées ensemble par loadPaiementsForVentesModal). */
-  switchClientDetailTab(tab: 'historique' | 'situation' | 'paiements' | 'avances'): void {
+  /** Bascule entre les onglets de la modale unique (Historique des ventes / Situation
+   *  du compte / Paiements / Avances / Fidélité), en chargeant les données à la demande
+   *  si pas encore fait — les onglets Historique et Paiements partagent déjà les mêmes
+   *  données (chargées ensemble par loadPaiementsForVentesModal). */
+  switchClientDetailTab(tab: 'historique' | 'situation' | 'paiements' | 'avances' | 'fidelite'): void {
     this.clientDetailTab = tab;
     if (tab === 'situation' && !this.releveClient && this.selectedClientForVentes) {
       this.clientPourSituation = this.selectedClientForVentes;
@@ -1090,6 +1114,100 @@ export class ClientsComponent implements OnInit {
     if (tab === 'avances' && !this.historiqueAvances && !this.isLoadingAvance && this.selectedClientForVentes) {
       this.chargerHistoriqueAvancesPourOnglet(this.selectedClientForVentes);
     }
+    if (tab === 'fidelite' && !this.soldeFideliteClient && !this.isLoadingFidelite && this.selectedClientForVentes) {
+      this.chargerFideliteClient(this.selectedClientForVentes);
+    }
+  }
+
+  // ==================== PROGRAMME DE FIDÉLITÉ (fiche client) ====================
+
+  private chargerFideliteClient(client: Client): void {
+    if (!client.id) return;
+    this.isLoadingFidelite = true;
+    this.soldeFideliteClient = null;
+    this.mouvementsFidelite = [];
+    forkJoin({
+      solde: this.fideliteService.getSoldeClient(client.id),
+      mouvements: this.fideliteService.getMouvementsClient(client.id)
+    }).subscribe({
+      next: ({ solde, mouvements }) => {
+        this.soldeFideliteClient = solde;
+        this.mouvementsFidelite = (mouvements || []).sort((a, b) =>
+          new Date(b.dateMouvement).getTime() - new Date(a.dateMouvement).getTime()
+        );
+        this.isLoadingFidelite = false;
+      },
+      error: () => { this.isLoadingFidelite = false; }
+    });
+  }
+
+  getMouvementFideliteLabel(type: string): string {
+    switch (type) {
+      case 'GAGNE': return this.translate.instant('FIDELITE.MOVEMENT_GAGNE');
+      case 'UTILISE': return this.translate.instant('FIDELITE.MOVEMENT_UTILISE');
+      case 'AJUSTEMENT': return this.translate.instant('FIDELITE.MOVEMENT_AJUSTEMENT');
+      default: return type;
+    }
+  }
+
+  getMouvementFideliteBadge(type: string): string {
+    switch (type) {
+      case 'GAGNE': return 'badge bg-success';
+      case 'UTILISE': return 'badge bg-danger';
+      case 'AJUSTEMENT': return 'badge bg-secondary';
+      default: return 'badge bg-secondary';
+    }
+  }
+
+  // Réservé à ADMIN — le serveur revérifie systématiquement le privilège (403 sinon).
+  ouvrirAjustementFidelite(): void {
+    this.ajustementFideliteForm = { delta: 0, motif: '' };
+    this.showAjustementFideliteForm = true;
+  }
+
+  fermerAjustementFidelite(): void {
+    this.showAjustementFideliteForm = false;
+  }
+
+  confirmerAjustementFidelite(): void {
+    if (!this.selectedClientForVentes?.id) return;
+    if (!this.ajustementFideliteForm.delta) {
+      Swal.fire({
+        icon: 'warning',
+        title: this.translate.instant('FIDELITE.ADJUST_DELTA_REQUIRED'),
+        confirmButtonColor: '#f0ad4e'
+      });
+      return;
+    }
+
+    this.isSavingAjustementFidelite = true;
+    this.fideliteService.ajusterSolde(
+      this.selectedClientForVentes.id,
+      this.ajustementFideliteForm.delta,
+      this.ajustementFideliteForm.motif
+    ).subscribe({
+      next: () => {
+        this.isSavingAjustementFidelite = false;
+        this.showAjustementFideliteForm = false;
+        Swal.fire({
+          icon: 'success',
+          title: this.translate.instant('FIDELITE.ADJUST_SUCCESS'),
+          timer: 2000,
+          timerProgressBar: true,
+          confirmButtonColor: '#198754'
+        });
+        this.chargerFideliteClient(this.selectedClientForVentes!);
+      },
+      error: (err: Error) => {
+        this.isSavingAjustementFidelite = false;
+        Swal.fire({
+          icon: 'error',
+          title: this.translate.instant('FIDELITE.ADJUST_ERROR'),
+          text: err.message,
+          confirmButtonColor: '#d33'
+        });
+      }
+    });
   }
 
   private chargerHistoriqueAvancesPourOnglet(client: Client): void {

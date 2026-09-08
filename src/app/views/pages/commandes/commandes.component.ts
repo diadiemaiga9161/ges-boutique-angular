@@ -8,6 +8,8 @@ import { Client, ModePaiement, VenteService } from '../../../shared/services/ven
 import { AuthService } from '../../../shared/services/auth.service';
 import Swal from 'sweetalert2';
 import { MontantInputDirective } from '../../../shared/directives/montant-input.directive';
+import { COUNTRY_CODES, construireNumeroComplet, validatePhoneForCountry } from '../../../shared/utils/telephone.util';
+import { envoyerWhatsAppDirect } from '../../../shared/utils/whatsapp.util';
 
 interface LigneForm {
   produitId: number;
@@ -304,6 +306,10 @@ export class CommandesComponent implements OnInit {
   // ─── Valider ───────────────────────────────────────────────────────────────
 
   valider(commande: Commande): void {
+    if (commande.origine === 'VITRINE') {
+      this.validerCommandeVitrine(commande);
+      return;
+    }
     Swal.fire({
       title: 'Valider la commande ?',
       html: `<p>La commande <strong>${commande.numeroCommande}</strong> sera convertie en vente.<br>Le stock sera décrémenté.</p>`,
@@ -321,6 +327,136 @@ export class CommandesComponent implements OnInit {
         },
         error: (e: any) => Swal.fire('Erreur', e.error?.message || 'Erreur validation', 'error')
       });
+    });
+  }
+
+  // ─── Valider (commandes VITRINE) — saisie livraison + notifications WhatsApp ──
+
+  /** Étape 1 (VITRINE uniquement) : saisie optionnelle des infos de livraison avant la
+   *  confirmation habituelle. On peut valider sans rien remplir — pas de livraison. */
+  private validerCommandeVitrine(commande: Commande): void {
+    const optionsIndicatifs = COUNTRY_CODES
+      .map(c => `<option value="${c.code}" ${c.code === '+223' ? 'selected' : ''}>${c.flag} ${c.code}</option>`)
+      .join('');
+
+    Swal.fire({
+      title: 'Infos de livraison (optionnel)',
+      html: `
+        <div style="text-align:left">
+          <p>Commande <strong>${commande.numeroCommande}</strong> — à remplir uniquement si une livraison est prévue.</p>
+          <label style="display:block;margin:10px 0 4px;font-weight:600">Frais de livraison (FCFA)</label>
+          <input id="swal-frais-livraison" type="number" min="0" class="swal2-input" style="margin:0" placeholder="Ex : 1000">
+          <label style="display:block;margin:10px 0 4px;font-weight:600">Nom du chauffeur</label>
+          <input id="swal-chauffeur-nom" type="text" class="swal2-input" style="margin:0" placeholder="Ex : Moussa">
+          <label style="display:block;margin:10px 0 4px;font-weight:600">Téléphone du chauffeur</label>
+          <div style="display:flex;gap:6px">
+            <select id="swal-chauffeur-indicatif" class="swal2-select" style="margin:0;max-width:110px">${optionsIndicatifs}</select>
+            <input id="swal-chauffeur-telephone" type="tel" class="swal2-input" style="margin:0;flex:1" placeholder="Numéro sans l'indicatif">
+          </div>
+          <div id="swal-chauffeur-erreur" style="color:#dc2626;font-size:0.82rem;margin-top:6px"></div>
+        </div>
+      `,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Continuer',
+      cancelButtonText: 'Annuler',
+      confirmButtonColor: '#16a34a',
+      focusConfirm: false,
+      preConfirm: () => {
+        const fraisStr = (document.getElementById('swal-frais-livraison') as HTMLInputElement)?.value?.trim();
+        const chauffeurNom = (document.getElementById('swal-chauffeur-nom') as HTMLInputElement)?.value?.trim();
+        const indicatif = (document.getElementById('swal-chauffeur-indicatif') as HTMLSelectElement)?.value || '+223';
+        const telLocal = (document.getElementById('swal-chauffeur-telephone') as HTMLInputElement)?.value?.trim();
+
+        if (telLocal && !validatePhoneForCountry(telLocal, indicatif)) {
+          Swal.showValidationMessage(`Numéro de chauffeur invalide pour l'indicatif ${indicatif}`);
+          return false;
+        }
+
+        return {
+          fraisLivraison: fraisStr ? Number(fraisStr) : undefined,
+          chauffeurNom: chauffeurNom || undefined,
+          chauffeurTelephone: telLocal ? construireNumeroComplet(indicatif, telLocal) : undefined
+        };
+      }
+    }).then(result => {
+      if (!result.isConfirmed) return;
+      this.confirmerValidationVitrine(commande, result.value || {});
+    });
+  }
+
+  /** Étape 2 (VITRINE) : confirmation habituelle, puis appel de validation avec les infos de livraison. */
+  private confirmerValidationVitrine(
+    commande: Commande,
+    infosLivraison: { fraisLivraison?: number; chauffeurNom?: string; chauffeurTelephone?: string }
+  ): void {
+    Swal.fire({
+      title: 'Valider la commande ?',
+      html: `<p>La commande <strong>${commande.numeroCommande}</strong> sera convertie en vente.<br>Le stock sera décrémenté.</p>`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Valider',
+      cancelButtonText: 'Annuler',
+      confirmButtonColor: '#16a34a'
+    }).then(result => {
+      if (!result.isConfirmed) return;
+      this.commandeService.valider(commande.id, infosLivraison).subscribe({
+        next: (rep: any) => {
+          this.charger();
+          const commandeMaj: Commande = rep?.commande || { ...commande, ...infosLivraison };
+          this.afficherSuccesValidationVitrine(commandeMaj);
+        },
+        error: (e: any) => Swal.fire('Erreur', e.error?.message || 'Erreur validation', 'error')
+      });
+    });
+  }
+
+  /** Étape 3 (VITRINE) : succès + boutons WhatsApp (client toujours, chauffeur si renseigné). */
+  private afficherSuccesValidationVitrine(commande: Commande): void {
+    const totalProduits = commande.montantTotal || 0;
+    const frais = commande.fraisLivraison || 0;
+    const totalAPreparer = totalProduits + frais;
+
+    const messageClient = [
+      `Bonjour ${commande.clientNom || ''},`.trim(),
+      `Votre commande N°${commande.numeroCommande} a été validée.`,
+      `Total produits : ${this.formatMontant(totalProduits)}`,
+      frais ? `Frais de livraison : ${this.formatMontant(frais)}` : null,
+      `TOTAL à préparer : ${this.formatMontant(totalAPreparer)}`,
+      `Paiement à la livraison. Merci de votre confiance !`
+    ].filter(Boolean).join('\n');
+
+    const messageChauffeur = [
+      `Livraison à effectuer — commande N°${commande.numeroCommande}`,
+      `Client : ${this.getClientNom(commande)}`,
+      `Téléphone client : ${commande.clientTelephone || 'N/A'}`,
+      `Adresse : ${commande.adresseLivraison || 'non renseignée'}`,
+      `Montant total à collecter : ${this.formatMontant(totalAPreparer)}`
+    ].join('\n');
+
+    const boutons: string[] = [
+      `<button id="wa-client-btn" class="swal2-styled" style="background:#25D366;color:#fff;margin:4px;border:none">💬 WhatsApp au client</button>`
+    ];
+    if (commande.chauffeurTelephone) {
+      boutons.push(`<button id="wa-chauffeur-btn" class="swal2-styled" style="background:#128C7E;color:#fff;margin:4px;border:none">💬 WhatsApp au chauffeur</button>`);
+    }
+
+    Swal.fire({
+      icon: 'success',
+      title: 'Commande validée !',
+      html: `
+        <p>La vente a été créée et le stock mis à jour.</p>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">${boutons.join('')}</div>
+      `,
+      confirmButtonText: 'Fermer',
+      didOpen: () => {
+        document.getElementById('wa-client-btn')?.addEventListener('click', () => {
+          envoyerWhatsAppDirect(commande.clientTelephone, messageClient);
+        });
+        document.getElementById('wa-chauffeur-btn')?.addEventListener('click', () => {
+          envoyerWhatsAppDirect(commande.chauffeurTelephone, messageChauffeur);
+        });
+      }
     });
   }
 

@@ -8,7 +8,11 @@ import Swal from 'sweetalert2';
  *  continue de servir l'ancienne version en cache indéfiniment après un déploiement. */
 @Injectable({ providedIn: 'root' })
 export class AppUpdateService {
-  private readonly INTERVALLE_VERIFICATION_MS = 6 * 60 * 60 * 1000; // 6h
+  // 15 min : un poste de caisse reste souvent ouvert sur la même page toute la
+  // journée (Ventes...) — avec 6h, une boutique pouvait garder des données en
+  // cache (produits, ventes, rapports...) pendant la majeure partie de la
+  // journée après le déploiement d'un correctif sur les 6 boutiques.
+  private readonly INTERVALLE_VERIFICATION_MS = 15 * 60 * 1000;
 
   constructor(private swUpdate: SwUpdate) {}
 

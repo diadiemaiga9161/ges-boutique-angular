@@ -1042,7 +1042,7 @@
 
         <ng-container *ngIf="!niveauxLoadingMap[produit.id]">
           <div class="d-flex justify-content-end mb-2">
-            <button class="btn btn-sm btn-outline-primary" (click)="ouvrirAjoutNiveau(produit)">
+            <button class="btn btn-sm btn-outline-primary" *ngIf="isAdmin" (click)="ouvrirAjoutNiveau(produit)">
               <i class="fa fa-plus-circle me-1"></i>
               {{ niveauxMap[produit.id]?.length ? 'Ajouter un sous-conditionnement' : 'Configurer gros / détail' }}
             </button>
@@ -1061,7 +1061,7 @@
                 (1 {{ i === 0 ? produit.nom : niveauxMap[produit.id][i-1].nom }} = {{ niveau.facteur }} {{ niveau.nom }})
               </small>
             </div>
-            <div class="d-flex align-items-center gap-2">
+            <div class="d-flex align-items-center gap-2" *ngIf="isAdmin">
               <button class="btn btn-sm btn-outline-secondary" title="Modifier ce niveau"
                       (click)="ouvrirModifierNiveau(niveau, produit)">
                 <i class="fa fa-edit"></i>

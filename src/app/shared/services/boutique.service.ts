@@ -7,6 +7,21 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { AuthService } from './auth.service';
 import { catchError, map, tap } from 'rxjs/operators';
 
+export interface FonctionnaliteAvancee {
+  cle: string;
+  libelle: string;
+  actif: boolean;
+}
+
+/** Permissions vendeur (système générique, séparé des fonctionnalités avancées
+ *  ci-dessus qui restent réservées au super admin) : un ADMIN normal peut accorder
+ *  au VENDEUR un accès en lecture seule à certaines pages, ex. INVENTAIRE_LECTURE. */
+export interface PermissionVendeur {
+  cle: string;
+  libelle: string;
+  actif: boolean;
+}
+
 export interface BoutiqueInfo {
   id?: number;
   nom: string;
@@ -22,6 +37,9 @@ export interface BoutiqueInfo {
   couleurPrimaire?: string;
   createdAt?: string;
   updatedAt?: string;
+  /** Activables/désactivables par le super admin (Boutique > Paramètres), vérifiés côté serveur. */
+  featureTransfertsActif?: boolean;
+  featureVitrineActif?: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -31,6 +49,19 @@ export class BoutiqueService {
   private infoSubject: BehaviorSubject<BoutiqueInfo>;
   public info$: Observable<BoutiqueInfo>;
 
+  // Fonctionnalités avancées (Dépôt garde, Dettes anciennes, Comptes bancaires...) —
+  // lues par TOUT le personnel connecté pour masquer les menus désactivés (voir
+  // NavigationService), modifiables uniquement par le super admin. Système séparé de
+  // featureTransfertsActif/featureVitrineActif ci-dessus (déjà en place, non touché).
+  private fonctionnalitesAvanceesSubject = new BehaviorSubject<FonctionnaliteAvancee[]>([]);
+  public fonctionnalitesAvancees$ = this.fonctionnalitesAvanceesSubject.asObservable();
+
+  // Permissions vendeur (système générique, séparé de fonctionnalitesAvancees ci-dessus) —
+  // lues par TOUT le personnel connecté (ADMIN/VENDEUR), modifiables par n'importe quel ADMIN
+  // (pas besoin d'être super admin). Voir GET/PUT /api/boutique/permissions-vendeur.
+  private permissionsVendeurSubject = new BehaviorSubject<PermissionVendeur[]>([]);
+  public permissionsVendeur$ = this.permissionsVendeurSubject.asObservable();
+
   constructor(private http: HttpClient, private authService: AuthService) {
     this.info = this.defaultInfo();
     this.infoSubject = new BehaviorSubject<BoutiqueInfo>({ ...this.info });
@@ -38,8 +69,12 @@ export class BoutiqueService {
     this.authService.authenticated$.subscribe(isAuthenticated => {
       if (isAuthenticated) {
         this.loadBoutiqueInfo();
+        this.chargerFonctionnalitesAvancees();
+        this.chargerPermissionsVendeur();
       } else {
         this.setCurrentInfo(this.defaultInfo());
+        this.fonctionnalitesAvanceesSubject.next([]);
+        this.permissionsVendeurSubject.next([]);
       }
     });
   }
@@ -64,7 +99,9 @@ export class BoutiqueService {
       ville: 'Bamako',
       pays: 'Mali',
       logoPath: 'assets/images/logo.png',
-      couleurPrimaire: '#2a63ff'
+      couleurPrimaire: '#2a63ff',
+      featureTransfertsActif: true,
+      featureVitrineActif: true
     };
   }
 
@@ -131,7 +168,9 @@ export class BoutiqueService {
       logo: data.logo ?? undefined,
       couleurPrimaire: data.couleurPrimaire ?? fallback.couleurPrimaire,
       createdAt: data.createdAt,
-      updatedAt: data.updatedAt
+      updatedAt: data.updatedAt,
+      featureTransfertsActif: data.featureTransfertsActif ?? fallback.featureTransfertsActif,
+      featureVitrineActif: data.featureVitrineActif ?? fallback.featureVitrineActif
     };
   }
 
@@ -237,5 +276,91 @@ export class BoutiqueService {
 
   resetToDefaults(): Observable<BoutiqueInfo> {
     return this.updateBoutique(this.defaultInfo());
+  }
+
+  /** Réservé au super admin — voir AuthService.isSuperAdmin(). Le serveur revérifie
+   *  systématiquement le privilège (403 sinon), cette méthode ne fait aucun contrôle
+   *  d'accès côté client. */
+  modifierFonctionnalites(featureTransfertsActif: boolean, featureVitrineActif: boolean): Observable<BoutiqueInfo> {
+    const headers = this.getAuthHeaders();
+    if (!headers) {
+      return throwError(() => new Error('Token non disponible'));
+    }
+    return this.http.put<any>(`${this.apiUrl}/fonctionnalites`, { featureTransfertsActif, featureVitrineActif }, { headers }).pipe(
+      map(response => {
+        const updated = this.normalizeBoutique(response);
+        this.setCurrentInfo(updated);
+        return updated;
+      }),
+      catchError(error => {
+        console.error('Erreur lors de la mise à jour des fonctionnalités:', error);
+        return throwError(() => new Error(error?.error?.error || 'Impossible de mettre à jour les fonctionnalités'));
+      })
+    );
+  }
+
+  private chargerFonctionnalitesAvancees(): void {
+    this.getFonctionnalitesAvancees().subscribe({ error: () => {} });
+  }
+
+  /** Lecture ouverte à tout le personnel (ADMIN/VENDEUR) — voir GET /api/boutique/fonctionnalites-avancees. */
+  getFonctionnalitesAvancees(): Observable<FonctionnaliteAvancee[]> {
+    const headers = this.getAuthHeaders();
+    if (!headers) return throwError(() => new Error('Token non disponible'));
+    return this.http.get<any>(`${this.apiUrl}/fonctionnalites-avancees`, { headers }).pipe(
+      map(response => (response?.fonctionnalites || []) as FonctionnaliteAvancee[]),
+      tap(liste => this.fonctionnalitesAvanceesSubject.next(liste)),
+      catchError(error => {
+        console.error('Erreur lors du chargement des fonctionnalités avancées:', error);
+        return throwError(() => new Error('Impossible de charger les fonctionnalités avancées'));
+      })
+    );
+  }
+
+  /** Réservé au super admin — le serveur revérifie systématiquement le privilège (403 sinon). */
+  definirFonctionnaliteAvancee(cle: string, actif: boolean): Observable<FonctionnaliteAvancee[]> {
+    const headers = this.getAuthHeaders();
+    if (!headers) return throwError(() => new Error('Token non disponible'));
+    return this.http.put<any>(`${this.apiUrl}/fonctionnalites-avancees/${cle}`, { actif }, { headers }).pipe(
+      map(response => (response?.fonctionnalites || []) as FonctionnaliteAvancee[]),
+      tap(liste => this.fonctionnalitesAvanceesSubject.next(liste)),
+      catchError(error => {
+        console.error('Erreur lors de la mise à jour de la fonctionnalité:', error);
+        return throwError(() => new Error(error?.error?.error || 'Impossible de mettre à jour cette fonctionnalité'));
+      })
+    );
+  }
+
+  private chargerPermissionsVendeur(): void {
+    this.getPermissionsVendeur().subscribe({ error: () => {} });
+  }
+
+  /** Lecture ouverte à tout le personnel (ADMIN/VENDEUR) — voir GET /api/boutique/permissions-vendeur. */
+  getPermissionsVendeur(): Observable<PermissionVendeur[]> {
+    const headers = this.getAuthHeaders();
+    if (!headers) return throwError(() => new Error('Token non disponible'));
+    return this.http.get<any>(`${this.apiUrl}/permissions-vendeur`, { headers }).pipe(
+      map(response => (response?.permissions || []) as PermissionVendeur[]),
+      tap(liste => this.permissionsVendeurSubject.next(liste)),
+      catchError(error => {
+        console.error('Erreur lors du chargement des permissions vendeur:', error);
+        return throwError(() => new Error('Impossible de charger les permissions vendeur'));
+      })
+    );
+  }
+
+  /** Réservé à ADMIN (n'importe quel admin de la boutique, pas besoin d'être super admin) —
+   *  le serveur revérifie systématiquement le privilège (403 sinon). */
+  definirPermissionVendeur(cle: string, actif: boolean): Observable<PermissionVendeur[]> {
+    const headers = this.getAuthHeaders();
+    if (!headers) return throwError(() => new Error('Token non disponible'));
+    return this.http.put<any>(`${this.apiUrl}/permissions-vendeur/${cle}`, { actif }, { headers }).pipe(
+      map(response => (response?.permissions || []) as PermissionVendeur[]),
+      tap(liste => this.permissionsVendeurSubject.next(liste)),
+      catchError(error => {
+        console.error('Erreur lors de la mise à jour de la permission vendeur:', error);
+        return throwError(() => new Error(error?.error?.error || 'Impossible de mettre à jour cette permission'));
+      })
+    );
   }
 }

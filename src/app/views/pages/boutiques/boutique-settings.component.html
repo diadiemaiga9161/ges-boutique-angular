@@ -259,6 +259,58 @@
         </div>
       </div>
 
+      <!-- ── Section permissions vendeur (accordable par n'importe quel admin) ── -->
+      <div *ngIf="isAdmin" class="boutique-card permissions-vendeur-card mt-4">
+        <h2 class="boutique-card-title"><i class="fas fa-user-shield me-2"></i>{{ 'PERMISSIONS_VENDEUR.TITLE' | translate }}</h2>
+        <p class="text-muted small mb-3">{{ 'PERMISSIONS_VENDEUR.SUBTITLE' | translate }}</p>
+
+        <div class="mb-2">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <h6 class="mb-1"><i class="i-Bar-Chart me-1"></i> {{ 'PERMISSIONS_VENDEUR.INVENTORY_READ_LABEL' | translate }}</h6>
+              <small class="text-muted">{{ 'PERMISSIONS_VENDEUR.INVENTORY_READ_DESC' | translate }}</small>
+            </div>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox"
+                     id="inventaireLectureToggle" [ngModel]="inventaireLectureActive" [ngModelOptions]="{standalone: true}"
+                     name="inventaireLecture" (change)="toggleInventaireLecture()">
+              <label class="form-check-label" for="inventaireLectureToggle">
+                <span *ngIf="inventaireLectureActive" class="badge bg-success">{{ 'BOUTIQUE_SETTINGS.ENABLED' | translate }}</span>
+                <span *ngIf="!inventaireLectureActive" class="badge bg-secondary">{{ 'BOUTIQUE_SETTINGS.DISABLED' | translate }}</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Section Programme de fidélité (taux modifiables par n'importe quel admin) ── -->
+      <div *ngIf="isAdmin && fideliteActif" class="boutique-card mt-4">
+        <h2 class="boutique-card-title"><i class="fas fa-gift me-2"></i>{{ 'FIDELITE.SETTINGS_TITLE' | translate }}</h2>
+        <p class="text-muted small mb-3">{{ 'FIDELITE.SETTINGS_SUBTITLE' | translate }}</p>
+
+        <div *ngIf="fideliteErrorMessage" class="alert alert-danger py-2">{{ fideliteErrorMessage }}</div>
+        <div *ngIf="fideliteSuccessMessage" class="alert alert-success py-2">{{ fideliteSuccessMessage }}</div>
+
+        <form (ngSubmit)="enregistrerParametresFidelite()">
+          <div class="row g-3 align-items-end">
+            <div class="col-md-5">
+              <label class="form-label fw-semibold">{{ 'FIDELITE.SETTINGS_MONTANT_PAR_POINT_LABEL' | translate }}</label>
+              <input type="number" min="1" class="form-control" [(ngModel)]="fideliteParametres.montantParPoint" name="montantParPoint" required>
+            </div>
+            <div class="col-md-5">
+              <label class="form-label fw-semibold">{{ 'FIDELITE.SETTINGS_POINT_VALEUR_LABEL' | translate }}</label>
+              <input type="number" min="0" class="form-control" [(ngModel)]="fideliteParametres.pointValeur" name="pointValeur" required>
+            </div>
+            <div class="col-md-2">
+              <button type="submit" class="btn btn-primary w-100" [disabled]="isSavingFidelite || isLoadingFidelite">
+                <span *ngIf="!isSavingFidelite"><i class="fa fa-save me-1"></i>{{ 'FIDELITE.SETTINGS_SAVE' | translate }}</span>
+                <span *ngIf="isSavingFidelite"><i class="fa fa-spinner fa-spin"></i></span>
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+
       <!-- ── Section gestion des niveaux d'emballage ─────────────────────── -->
       <div *ngIf="conditionnementActif" class="section mt-4">
         <h6 class="section-title">

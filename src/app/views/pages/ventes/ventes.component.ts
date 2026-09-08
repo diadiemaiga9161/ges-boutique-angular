@@ -26,9 +26,11 @@ import { AuthService, User } from '../../../shared/services/auth.service';
 import { ClientService } from '../../../shared/services/client.service';
 import { DesignFacture, FactureDesignService } from '../../../shared/services/facture-design.service';
 import { ProduitNiveau, ProduitNiveauService } from '../../../shared/services/produit-niveau.service';
+import { UniteVente, UniteVenteService } from '../../../shared/services/unite-vente.service';
 import { BoutiqueService } from '../../../shared/services/boutique.service';
 import { OfflineService } from '../../../shared/services/offline.service';
-import { TranslateModule } from '@ngx-translate/core';
+import { FideliteService, ParametresFidelite, SoldeFidelite } from '../../../shared/services/fidelite.service';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { annoncerMontantVente } from '../../../shared/utils/confirmation-vocale.util';
 import { MontantInputDirective } from '../../../shared/directives/montant-input.directive';
 
@@ -260,6 +262,17 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
   loadingNiveaux: boolean = false;
   quantitePrincipale: number = 0; // stock du produit principal pas encore décomposé (cartons fermés)
 
+  // ==================== VENTE EN GROS / DÉTAIL (unités de vente) ====================
+  // Nouveau système simple, séparé de ProduitNiveau ci-dessus (non touché). Stock unique
+  // du produit, conversion automatique via facteurBase — voir unite-vente.service.ts.
+  // Masqué entièrement si CleFonctionnalite.VENTE_GROS_DETAIL est désactivée (même
+  // mécanisme que Programme de fidélité ci-dessous).
+  venteGrosDetailActif: boolean = false;
+  showUniteVenteModal: boolean = false;
+  produitEnAttenteUnite: Produit | null = null;
+  unitesVenteDisponibles: UniteVente[] = [];
+  loadingUnitesVente: boolean = false;
+
   searchProduit: string = '';
 
   // ==================== UTILISATEUR ====================
@@ -280,6 +293,18 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
   utiliserAvance: boolean = false;
   montantAvanceAUtiliser: number = 0;
   isLoadingAvance: boolean = false;
+
+  // ==================== PROGRAMME DE FIDÉLITÉ ====================
+  // Masqué entièrement si CleFonctionnalite.PROGRAMME_FIDELITE est désactivée (voir
+  // BoutiqueService.fonctionnalitesAvancees$, même mécanisme que Dépôt garde / Comptes
+  // bancaires). La réduction correspondant aux points utilisés passe entièrement par le
+  // mécanisme de remise globale déjà existant (remiseGlobale/MONTANT_FIXE) — voir
+  // prepareRemises() — jamais par un nouveau calcul de montant de vente.
+  fideliteActif: boolean = false;
+  soldeFideliteClient: SoldeFidelite | null = null;
+  pointsFideliteAUtiliser: number = 0;
+  isLoadingFidelite: boolean = false;
+  private fideliteParametres: ParametresFidelite | null = null;
 
   // ==================== ONGLETS ====================
   activeTab: 'toutes' | 'annulees' = 'toutes';
@@ -307,8 +332,11 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
     private ws: WebSocketService,
     private designService: FactureDesignService,
     private niveauService: ProduitNiveauService,
+    private uniteVenteService: UniteVenteService,
     private boutiqueService: BoutiqueService,
-    private offlineService: OfflineService
+    private offlineService: OfflineService,
+    private fideliteService: FideliteService,
+    private translate: TranslateService
   ) {}
 
   ngOnInit(): void {
@@ -326,6 +354,31 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
       this.loadVentesAnnulees();
     });
     this.subscriptions.push(wsSub);
+
+    // Programme de fidélité : masqué entièrement si la fonctionnalité est désactivée
+    // par le super admin (même mécanisme que Dépôt garde / Comptes bancaires).
+    const fideliteSub = this.boutiqueService.fonctionnalitesAvancees$.subscribe(liste => {
+      this.fideliteActif = liste.find(f => f.cle === 'PROGRAMME_FIDELITE')?.actif === true;
+      if (this.fideliteActif && !this.fideliteParametres) {
+        this.fideliteService.getParametres().subscribe({
+          next: (params) => { this.fideliteParametres = params; },
+          error: () => {}
+        });
+      }
+      if (!this.fideliteActif) {
+        this.soldeFideliteClient = null;
+        this.pointsFideliteAUtiliser = 0;
+      }
+      this.cdr.detectChanges();
+    });
+    this.subscriptions.push(fideliteSub);
+
+    // Vente en gros / détail (unités de vente) : masqué entièrement si la fonctionnalité
+    // est désactivée par le super admin (même mécanisme que Programme de fidélité).
+    const venteGrosDetailSub = this.boutiqueService.fonctionnalitesAvancees$.subscribe(liste => {
+      this.venteGrosDetailActif = liste.find(f => f.cle === 'VENTE_GROS_DETAIL')?.actif === true;
+    });
+    this.subscriptions.push(venteGrosDetailSub);
   }
 
   ngAfterViewInit(): void {
@@ -793,6 +846,25 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
         }
       });
     }
+
+    // Charger le solde de points fidélité du client (programme désactivable, voir fideliteActif)
+    this.soldeFideliteClient = null;
+    this.pointsFideliteAUtiliser = 0;
+    if (this.fideliteActif && client.id) {
+      this.isLoadingFidelite = true;
+      this.fideliteService.getSoldeClient(client.id).subscribe({
+        next: (solde) => {
+          this.soldeFideliteClient = solde;
+          this.isLoadingFidelite = false;
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.soldeFideliteClient = null;
+          this.isLoadingFidelite = false;
+          this.cdr.detectChanges();
+        }
+      });
+    }
   }
 
   utiliserClientDivers(): void {
@@ -803,7 +875,78 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
     this.venteForm.clientPrenom = '';
     this.venteForm.clientTelephone = '';
     this.showClientSelectorModal = false;
+    this.soldeFideliteClient = null;
+    this.pointsFideliteAUtiliser = 0;
     this.cdr.detectChanges();
+  }
+
+  // ==================== PROGRAMME DE FIDÉLITÉ (utilisation pendant une vente) ====================
+
+  /** Clamp l'entrée utilisateur entre 0 et le solde de points disponible du client. */
+  onPointsFideliteChange(): void {
+    const max = this.soldeFideliteClient?.points || 0;
+    let val = Math.floor(Number(this.pointsFideliteAUtiliser) || 0);
+    if (val < 0) val = 0;
+    if (val > max) val = max;
+    this.pointsFideliteAUtiliser = val;
+    this.cdr.detectChanges();
+  }
+
+  utiliserTousLesPointsFidelite(): void {
+    this.pointsFideliteAUtiliser = this.soldeFideliteClient?.points || 0;
+    this.cdr.detectChanges();
+  }
+
+  /** Réduction FCFA correspondant aux points fidélité actuellement saisis (0 si aucun point,
+   *  fonctionnalité désactivée, aucun client identifié sélectionné, ou modification d'une
+   *  vente existante en cours — la fidélité ne s'applique jamais à une modification, voir
+   *  showModifierVenteModal, pour ne jamais impacter ce flux indépendant). Utilisée à la
+   *  fois pour l'affichage du total (voir calculerTotalAvecRemiseGlobale) et pour construire
+   *  la remiseGlobale envoyée au serveur (voir prepareRemises). */
+  getReductionFidelitePourVente(): number {
+    if (this.showModifierVenteModal) return 0;
+    if (!this.fideliteActif || !this.clientSelectionne?.id || !this.fideliteParametres) return 0;
+    const max = this.soldeFideliteClient?.points || 0;
+    const points = Math.min(Math.max(0, Math.floor(this.pointsFideliteAUtiliser || 0)), max);
+    if (points <= 0) return 0;
+    return points * this.fideliteParametres.pointValeur;
+  }
+
+  /** Points/clientId à envoyer à FideliteService.utiliserPoints() une fois la vente créée
+   *  (capturés avant resetForms(), qui efface clientSelectionne). undefined si aucun point
+   *  utilisé — dans ce cas rien n'est appelé après la création de la vente. */
+  private getFideliteAUtiliserPourEnvoi(): { clientId: number; points: number } | undefined {
+    if (this.showModifierVenteModal) return undefined;
+    if (!this.fideliteActif || !this.clientSelectionne?.id) return undefined;
+    const max = this.soldeFideliteClient?.points || 0;
+    const points = Math.min(Math.max(0, Math.floor(this.pointsFideliteAUtiliser || 0)), max);
+    if (points <= 0) return undefined;
+    return { clientId: this.clientSelectionne.id, points };
+  }
+
+  /** Débite réellement le solde du client après la création réussie de la vente. En cas
+   *  d'échec, la vente reste enregistrée et payée : on avertit simplement le vendeur qu'il
+   *  faudra refaire le débit manuellement (voir PATCH .../ajuster sur la fiche client). */
+  private debiterPointsFideliteApresVente(clientId: number, points: number, venteId: number): void {
+    this.fideliteService.utiliserPoints(clientId, points, venteId).subscribe({
+      next: (res) => {
+        if (!res?.success) {
+          this.avertirEchecDebitFidelite(res?.message);
+        }
+      },
+      error: (err: Error) => {
+        this.avertirEchecDebitFidelite(err?.message);
+      }
+    });
+  }
+
+  private avertirEchecDebitFidelite(message?: string): void {
+    Swal.fire({
+      icon: 'warning',
+      title: this.translate.instant('FIDELITE.DEBIT_FAILED_TITLE'),
+      text: message || this.translate.instant('FIDELITE.DEBIT_FAILED_TEXT'),
+      confirmButtonColor: '#f0ad4e'
+    });
   }
 
   ouvrirFormulaireNouveauClient(): void {
@@ -1041,6 +1184,7 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
 
       this.prepareRemises(false);
       this.prepareClientInfo(false);
+      const fideliteAUtiliser = this.getFideliteAUtiliserPourEnvoi();
 
       this.isLoading = true;
       this.errorMessage = '';
@@ -1053,7 +1197,7 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
 
       this.venteService.createVente(this.venteForm).subscribe({
         next: (response: any) => {
-          this.handleVenteSuccess(response, 'comptant');
+          this.handleVenteSuccess(response, 'comptant', fideliteAUtiliser);
         },
         error: async (error: Error) => {
           if (this.isErreurReseau(error)) {
@@ -1096,6 +1240,7 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
       if (!result.isConfirmed) return;
 
       this.prepareRemises(true);
+      const fideliteAUtiliser = this.getFideliteAUtiliserPourEnvoi();
 
       this.creditForm.montantAvanceUtilise = this.utiliserAvance ? Math.min(this.montantAvanceAUtiliser, this.soldeAvanceClient) : 0;
 
@@ -1110,7 +1255,7 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
 
       this.venteService.createVenteCredit(this.creditForm).subscribe({
         next: (response: any) => {
-          this.handleVenteSuccess(response, 'crédit');
+          this.handleVenteSuccess(response, 'crédit', fideliteAUtiliser);
         },
         error: async (error: Error) => {
           if (this.isErreurReseau(error)) {
@@ -1344,6 +1489,37 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
       return;
     }
 
+    // Nouveau système simple "vente en gros / détail" (unités de vente, stock unique) —
+    // vérifié en priorité, séparé de l'ancien système ProduitNiveau ci-dessous (non touché).
+    if (this.venteGrosDetailActif) {
+      this.loadingUnitesVente = true;
+      this.uniteVenteService.getUnites(produit.id).subscribe({
+        next: (unites) => {
+          this.loadingUnitesVente = false;
+          if (unites.length > 0) {
+            this.unitesVenteDisponibles = unites;
+            this.produitEnAttenteUnite = produit;
+            this.showUniteVenteModal = true;
+            this.cdr.detectChanges();
+          } else {
+            this.addProduitToVenteSansUniteVente(produit);
+          }
+        },
+        error: () => {
+          this.loadingUnitesVente = false;
+          this.addProduitToVenteSansUniteVente(produit);
+        }
+      });
+      return;
+    }
+
+    this.addProduitToVenteSansUniteVente(produit);
+  }
+
+  /** Comportement inchangé : ancien système ProduitNiveau (si activé) ou vente directe
+   *  à l'unité de base du produit. Isolé dans sa propre méthode pour ne rien modifier de
+   *  la logique existante tout en insérant le nouveau système simple en amont. */
+  private addProduitToVenteSansUniteVente(produit: Produit): void {
     // Vérifier les niveaux de conditionnement (si fonctionnalité activée)
     const conditionnementActif = localStorage.getItem('feat_conditionnement') === 'true';
     if (!conditionnementActif) {
@@ -1370,6 +1546,59 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
         this.addProduitSansNiveau(produit);
       }
     });
+  }
+
+  /** Choix "vendre à l'unité de base" dans la modale de sélection d'unité de vente —
+   *  comportement strictement identique à une vente sans unité de vente. */
+  choisirUniteVenteBase(): void {
+    const produit = this.produitEnAttenteUnite;
+    this.showUniteVenteModal = false;
+    this.produitEnAttenteUnite = null;
+    if (produit) this.addProduitSansNiveau(produit);
+  }
+
+  choisirUniteVente(unite: UniteVente): void {
+    const produit = this.produitEnAttenteUnite;
+    this.showUniteVenteModal = false;
+    this.produitEnAttenteUnite = null;
+    if (produit) this.addProduitAvecUniteVente(produit, unite);
+  }
+
+  /**
+   * Ajoute au panier une ligne vendue dans une unité de vente alternative (nouveau
+   * système simple). CRITIQUE : ne jamais renseigner niveauId ici — c'est précisément ce
+   * qui distingue ce système (déduction directe sur le stock unique du produit,
+   * quantité × facteurBase) de l'ancien ProduitNiveau (cascade sur des stocks séparés,
+   * activé via niveauId). Voir addProduitAvecNiveau ci-dessous pour l'ancien système,
+   * volontairement non réutilisé/non modifié.
+   */
+  private addProduitAvecUniteVente(produit: Produit, unite: UniteVente): void {
+    const facteur = unite.facteurBase > 0 ? unite.facteurBase : 1;
+    const quantiteDisponibleUnite = Math.floor((produit.quantite || 0) / facteur);
+
+    // Dédoublonnage par produit + nom d'unité (et jamais un niveauId, réservé à l'ancien
+    // système) : deux lignes différentes si le même produit est ajouté dans deux unités
+    // de vente différentes (ex: un carton ET une pièce du même produit).
+    const existingIndex = this.produitsPanier.findIndex(p => p.id === produit.id && p.niveauId == null && p.niveauNom === unite.nom);
+    if (existingIndex >= 0) {
+      this.produitsPanier[existingIndex].quantite++;
+      if (this.venteForm.lignes[existingIndex]) this.venteForm.lignes[existingIndex].quantite++;
+      if (this.creditForm.lignes[existingIndex]) this.creditForm.lignes[existingIndex].quantite++;
+      this.cdr.detectChanges();
+      return;
+    }
+
+    this.venteForm.lignes.push({ produitId: produit.id, quantite: 1, prixUnitaire: unite.prixVente, prixAchat: unite.prixAchat, niveauNom: unite.nom, niveauFacteur: facteur });
+    this.creditForm.lignes.push({ produitId: produit.id, quantite: 1, prixUnitaire: unite.prixVente, prixAchat: unite.prixAchat, niveauNom: unite.nom, niveauFacteur: facteur });
+    this.produitsPanier.push({
+      id: produit.id, nom: produit.nom,
+      prixAchat: unite.prixAchat, prixVente: unite.prixVente, prixModifie: unite.prixVente,
+      quantite: 1, quantiteDisponible: quantiteDisponibleUnite,
+      codeBarre: produit.codeBarre, modifierPrix: false, categorie: produit.categorie,
+      niveauNom: unite.nom, niveauPrixAchat: unite.prixAchat, niveauFacteurTotal: facteur
+    });
+    this.searchProduit = '';
+    this.cdr.detectChanges();
   }
 
   choisirNiveauPourVente(niveau: ProduitNiveau): void {
@@ -1770,7 +1999,15 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     const produitComplet = this.produits.find(p => p.id === produitPanier.id);
-    const stockDisponible = produitComplet?.quantite ?? produitPanier.quantiteDisponible ?? 0;
+    let stockDisponible = produitComplet?.quantite ?? produitPanier.quantiteDisponible ?? 0;
+
+    // Nouveau système simple (unité de vente) : le stock du produit est exprimé en
+    // unité de base, pas dans l'unité vendue — il faut diviser par le facteur figé à
+    // l'ajout au panier (voir addProduitAvecUniteVente). Distingué de l'ancien système
+    // par l'absence de niveauId (déjà géré par le "return" ci-dessus).
+    if (produitPanier.niveauFacteurTotal && produitPanier.niveauFacteurTotal > 0) {
+      stockDisponible = Math.floor(stockDisponible / produitPanier.niveauFacteurTotal);
+    }
 
     if (this.showModifierVenteModal) {
       return Math.max(produitPanier.quantite, produitPanier.quantiteDisponible, stockDisponible);
@@ -1823,7 +2060,19 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
       }
     });
 
-    if (this.showRemiseGlobale && this.remiseGlobale > 0) {
+    // Programme de fidélité : si le vendeur n'utilise aucun point, le flux reste strictement
+    // identique à avant (branche else ci-dessous, inchangée). Sinon, la réduction fidélité
+    // (points x valeur du point) passe par le même mécanisme de remise globale que le
+    // vendeur utiliserait manuellement — cumulée avec une éventuelle remise manuelle déjà
+    // saisie (jamais l'inverse : les deux s'additionnent, converties en un seul montant fixe).
+    const reductionFidelite = this.getReductionFidelitePourVente();
+    if (reductionFidelite > 0) {
+      const remiseManuelleFcfa = (this.showRemiseGlobale && this.remiseGlobale > 0)
+        ? this.calculerMontantRemiseGlobale()
+        : 0;
+      form.remiseGlobale = remiseManuelleFcfa + reductionFidelite;
+      form.typeRemiseGlobale = RemiseType.MONTANT_FIXE;
+    } else if (this.showRemiseGlobale && this.remiseGlobale > 0) {
       form.remiseGlobale = this.remiseGlobale;
       form.typeRemiseGlobale = this.typeRemiseGlobale;
     } else {
@@ -1832,7 +2081,7 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
-  private handleVenteSuccess(response: any, type: string): void {
+  private handleVenteSuccess(response: any, type: string, fideliteAUtiliser?: { clientId: number; points: number }): void {
     const vente = response.data || response;
 
     // ✅ Mettre à jour le stock localement sans appel API
@@ -1863,6 +2112,14 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
     annoncerMontantVente(vente.montantTotal);
 
     setTimeout(() => this.telechargerFacture(vente.id), 1000);
+
+    // Programme de fidélité : débite réellement le solde du client maintenant que la vente
+    // a un id (resetForms() ci-dessus a déjà effacé clientSelectionne, d'où la capture de
+    // fideliteAUtiliser avant l'appel — voir getFideliteAUtiliserPourEnvoi()). Un échec ici
+    // n'annule jamais la vente déjà créée et payée.
+    if (fideliteAUtiliser && fideliteAUtiliser.points > 0 && vente?.id) {
+      this.debiterPointsFideliteApresVente(fideliteAUtiliser.clientId, fideliteAUtiliser.points, vente.id);
+    }
   }
 
   private handleVenteError(error: Error): void {
@@ -1983,7 +2240,9 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
     return total;
   }
 
-  calculerTotalAvecRemiseGlobale(): number {
+  /** Total après application de la seule remise globale saisie manuellement par le vendeur
+   *  (inchangé — logique identique à avant l'ajout du programme de fidélité). */
+  private calculerTotalApresRemiseManuelle(): number {
     const total = this.calculerTotalSansRemiseGlobale();
     if (!this.showRemiseGlobale || this.remiseGlobale <= 0) return total;
 
@@ -1994,8 +2253,20 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
+  /** Total final affiché/envoyé : remise manuelle puis réduction fidélité (0 si aucun point
+   *  utilisé, auquel cas ce total est strictement identique à avant). */
+  calculerTotalAvecRemiseGlobale(): number {
+    const totalApresRemiseManuelle = this.calculerTotalApresRemiseManuelle();
+    const reductionFidelite = this.getReductionFidelitePourVente();
+    if (reductionFidelite <= 0) return totalApresRemiseManuelle;
+    return Math.max(0, totalApresRemiseManuelle - reductionFidelite);
+  }
+
+  /** Montant de la seule remise globale manuelle (n'inclut jamais la réduction fidélité) —
+   *  utilisé pour l'affichage sous la case à cocher "Remise globale" et pour cumuler avec
+   *  la réduction fidélité dans prepareRemises(). */
   calculerMontantRemiseGlobale(): number {
-    return this.calculerTotalSansRemiseGlobale() - this.calculerTotalAvecRemiseGlobale();
+    return this.calculerTotalSansRemiseGlobale() - this.calculerTotalApresRemiseManuelle();
   }
 
   // ==================== CALCUL DU BÉNÉFICE PAR PRODUIT ====================
@@ -2243,6 +2514,8 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
     this.soldeAvanceClient = 0;
     this.utiliserAvance = false;
     this.montantAvanceAUtiliser = 0;
+    this.soldeFideliteClient = null;
+    this.pointsFideliteAUtiliser = 0;
     this.cdr.detectChanges();
   }
 

@@ -259,7 +259,7 @@
   <div class="modal-container modal-large">
     <div class="modal-header">
       <h3>
-        <i class="fa" [class.fa-shopping-cart]="clientDetailTab==='historique'" [class.fa-book]="clientDetailTab==='situation'" [class.fa-history]="clientDetailTab==='paiements'" [class.fa-list]="clientDetailTab==='avances'" style="margin-right:.5rem"></i>
+        <i class="fa" [class.fa-shopping-cart]="clientDetailTab==='historique'" [class.fa-book]="clientDetailTab==='situation'" [class.fa-history]="clientDetailTab==='paiements'" [class.fa-list]="clientDetailTab==='avances'" [class.fa-star]="clientDetailTab==='fidelite'" style="margin-right:.5rem"></i>
         {{ clientDetailTitle }} - {{ selectedClientForVentes?.nom }} {{ selectedClientForVentes?.prenom }}
       </h3>
       <button type="button" class="close-btn" (click)="closeVentesModal()">&times;</button>
@@ -280,6 +280,9 @@
       </button>
       <button type="button" class="client-detail-tab" [class.active]="clientDetailTab==='avances'" (click)="switchClientDetailTab('avances')">
         <i class="fa fa-list me-2"></i>Avances
+      </button>
+      <button type="button" class="client-detail-tab" *ngIf="fideliteActif" [class.active]="clientDetailTab==='fidelite'" (click)="switchClientDetailTab('fidelite')">
+        <i class="fa fa-star me-2"></i>{{ 'FIDELITE.TAB_LABEL' | translate }}
       </button>
     </div>
 
@@ -1110,10 +1113,101 @@
       </div>
     </div>
 
+    <!-- Onglet Fidélité : masqué entièrement si le programme est désactivé (fideliteActif) -->
+    <div class="modal-body" *ngIf="clientDetailTab === 'fidelite'">
+      <div *ngIf="isLoadingFidelite" class="text-center py-4">
+        <i class="fa fa-spinner fa-spin fa-2x text-primary"></i>
+        <p class="mt-2 text-muted">{{ 'FIDELITE.LOADING' | translate }}</p>
+      </div>
+
+      <div *ngIf="!isLoadingFidelite && soldeFideliteClient">
+        <div class="ventes-summary mb-3">
+          <div class="summary-card">
+            <span class="summary-label">{{ 'FIDELITE.BALANCE_TITLE' | translate }}</span>
+            <span class="summary-value text-success">{{ soldeFideliteClient.points }} {{ 'FIDELITE.POINTS_UNIT_SHORT' | translate }}</span>
+          </div>
+          <div class="summary-card">
+            <span class="summary-label">{{ 'FIDELITE.COLUMN_POINTS' | translate }} (FCFA)</span>
+            <span class="summary-value">{{ formatPrice(soldeFideliteClient.valeurFcfa) }}</span>
+          </div>
+        </div>
+
+        <h6 class="mb-2">{{ 'FIDELITE.HISTORY_TITLE' | translate }}</h6>
+        <div *ngIf="mouvementsFidelite.length === 0" class="text-center py-4">
+          <i class="fa fa-inbox fa-3x text-muted mb-2 d-block"></i>
+          <p class="text-muted">{{ 'FIDELITE.HISTORY_EMPTY' | translate }}</p>
+        </div>
+
+        <div *ngIf="mouvementsFidelite.length > 0" class="table-responsive">
+          <table class="table table-hover">
+            <thead class="table-light">
+              <tr>
+                <th>{{ 'FIDELITE.COLUMN_DATE' | translate }}</th>
+                <th class="text-center">{{ 'FIDELITE.COLUMN_TYPE' | translate }}</th>
+                <th class="text-end">{{ 'FIDELITE.COLUMN_POINTS' | translate }}</th>
+                <th>{{ 'FIDELITE.COLUMN_VENTE' | translate }}</th>
+                <th>{{ 'FIDELITE.COLUMN_MOTIF' | translate }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let mouvement of mouvementsFidelite">
+                <td>{{ mouvement.dateMouvement | date:'dd/MM/yyyy HH:mm' }}</td>
+                <td class="text-center">
+                  <span class="badge" [class]="getMouvementFideliteBadge(mouvement.type)">
+                    {{ getMouvementFideliteLabel(mouvement.type) }}
+                  </span>
+                </td>
+                <td class="text-end fw-bold" [class.text-success]="mouvement.points > 0" [class.text-danger]="mouvement.points < 0">
+                  {{ mouvement.points > 0 ? '+' : '' }}{{ mouvement.points }}
+                </td>
+                <td>{{ mouvement.venteId || '—' }}</td>
+                <td>{{ mouvement.motif || '—' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div *ngIf="!isLoadingFidelite && !soldeFideliteClient" class="text-center py-4">
+        <i class="fa fa-exclamation-circle fa-2x text-muted mb-2 d-block"></i>
+        <p class="text-muted">{{ 'FIDELITE.LOAD_ERROR' | translate }}</p>
+      </div>
+
+      <!-- Ajustement manuel (ADMIN uniquement) -->
+      <div *ngIf="isAdmin && showAjustementFideliteForm" class="border rounded p-3 mt-3 bg-light">
+        <h6 class="mb-2">{{ 'FIDELITE.ADJUST_TITLE' | translate }}</h6>
+        <div class="row g-2 align-items-end">
+          <div class="col-md-4">
+            <label class="form-label small mb-1">{{ 'FIDELITE.ADJUST_DELTA_LABEL' | translate }}</label>
+            <input type="number" class="form-control form-control-sm" [(ngModel)]="ajustementFideliteForm.delta" name="ajustementDelta">
+          </div>
+          <div class="col-md-5">
+            <label class="form-label small mb-1">{{ 'FIDELITE.ADJUST_MOTIF_LABEL' | translate }}</label>
+            <input type="text" class="form-control form-control-sm" [(ngModel)]="ajustementFideliteForm.motif" name="ajustementMotif"
+                   [placeholder]="'FIDELITE.ADJUST_MOTIF_PLACEHOLDER' | translate">
+          </div>
+          <div class="col-md-3 d-flex gap-2">
+            <button type="button" class="btn btn-primary btn-sm flex-fill" [disabled]="isSavingAjustementFidelite" (click)="confirmerAjustementFidelite()">
+              <i class="fa fa-check me-1" *ngIf="!isSavingAjustementFidelite"></i>
+              <i class="fa fa-spinner fa-spin me-1" *ngIf="isSavingAjustementFidelite"></i>
+              {{ 'FIDELITE.ADJUST_CONFIRM' | translate }}
+            </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" (click)="fermerAjustementFidelite()">
+              {{ 'FIDELITE.ADJUST_CANCEL' | translate }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="modal-footer">
       <button type="button" class="btn-secondary" (click)="closeVentesModal()">Fermer</button>
       <button type="button" class="btn-primary" (click)="openAvanceModal(selectedClientForVentes!)" *ngIf="clientDetailTab==='avances' && selectedClientForVentes">
         <i class="fa fa-plus me-1"></i> Nouvelle avance
+      </button>
+      <button type="button" class="btn-primary" (click)="ouvrirAjustementFidelite()"
+              *ngIf="clientDetailTab==='fidelite' && isAdmin && !showAjustementFideliteForm && selectedClientForVentes">
+        <i class="fa fa-sliders me-1"></i> {{ 'FIDELITE.ADJUST_BUTTON' | translate }}
       </button>
     </div>
   </div>

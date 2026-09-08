@@ -117,4 +117,18 @@ export class BackupService {
       catchError(error => this.handleError(error, 'télécharger la sauvegarde'))
     );
   }
+
+  /**
+   * POST /api/backup/restaurer/{nomFichier} — restaure la base de données à
+   * partir du fichier de sauvegarde donné (réservé au super admin). Opération
+   * destructive et synchrone côté serveur : à l'appelant de bloquer le bouton
+   * pendant l'appel (spinner).
+   */
+  restaurer(nomFichier: string): Observable<{success: boolean; message: string}> {
+    return this.http.post<{success: boolean; message: string}>(`${this.apiUrl}/restaurer/${encodeURIComponent(nomFichier)}`, null, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      catchError(error => this.handleError(error, 'restaurer la sauvegarde'))
+    );
+  }
 }
