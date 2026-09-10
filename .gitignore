@@ -1,1 +1,4 @@
 .angular/cache/**/vite/
+
+# Config locale des agents Claude Code — reste en local/prive, jamais sur GitHub.
+.claude/
