@@ -457,3 +457,119 @@ html, body {
     transition-duration: .001ms !important;
   }
 }
+
+/* ── 9. Système « .app-* » (bandeaux de page, KPI, cartes-tableaux) ──── */
+/* Ces classes sont écrites directement dans les gabarits (app-page-header
+   105×, app-stat-card 62×, app-table-card 14×, app-filter-card 23×) avec
+   des rayons de 16-20px et des ombres bleutées. Sans reprise, ces blocs
+   resteraient arrondis et flottants au milieu d'une variante à filets. */
+
+.app-page-header,
+.app-stat-card,
+.app-filter-card,
+.app-table-card {
+  background: var(--v-surface) !important;
+  border: 1px solid var(--v-line) !important;
+  border-radius: var(--v-radius) !important;
+  box-shadow: none !important;
+}
+
+/* Halo décoratif du bandeau de page : sans objet dans une variante qui
+   ne repose que sur des filets. */
+.app-page-header::before { display: none !important; }
+
+.app-page-header {
+  margin-bottom: 1.15rem !important;
+  padding: 1rem 1.15rem !important;
+}
+
+.app-page-icon {
+  background: var(--v-accent) !important;
+  border-radius: var(--v-radius) !important;
+  box-shadow: none !important;
+  height: 42px !important;
+  width: 42px !important;
+}
+
+.app-page-title { letter-spacing: -.02em !important; }
+
+.app-page-header .btn {
+  background: var(--v-surface) !important;
+  border: 1px solid var(--v-line-strong) !important;
+  border-radius: var(--v-radius) !important;
+  color: var(--v-ink-soft) !important;
+}
+
+.app-page-header .btn:hover {
+  background: var(--v-accent-soft) !important;
+  border-color: var(--v-accent) !important;
+  color: var(--v-accent) !important;
+}
+
+.app-page-header .btn-primary-action {
+  background: var(--v-accent) !important;
+  border-color: var(--v-accent) !important;
+  box-shadow: none !important;
+  color: #fff !important;
+}
+
+/* Pas de soulèvement au survol : sur une grille de 6 KPI, ça fait
+   tressauter la ligne entière au passage de la souris. */
+.app-stat-card {
+  padding: .75rem .9rem !important;
+  transition: border-color .12s ease !important;
+}
+
+.app-stat-card:hover {
+  border-color: var(--v-line-strong) !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.app-stat-icon {
+  border-radius: var(--v-radius) !important;
+  box-shadow: none !important;
+}
+
+.app-stat-label {
+  color: var(--v-muted) !important;
+  letter-spacing: .06em !important;
+}
+
+.app-stat-value { color: var(--v-ink) !important; }
+.app-stat-sub   { color: var(--v-muted) !important; }
+
+.app-table-header {
+  background: var(--v-surface-alt) !important;
+  border-bottom: 1px solid var(--v-line) !important;
+  padding: .6rem .9rem !important;
+}
+
+.app-table-title { color: var(--v-ink) !important; }
+
+.app-table-count {
+  background: var(--v-surface) !important;
+  border: 1px solid var(--v-line) !important;
+  color: var(--v-muted) !important;
+}
+
+.app-table-card .table thead th {
+  background: var(--v-surface-alt) !important;
+  color: var(--v-ink-soft) !important;
+}
+
+.app-table-card .table tbody td     { color: var(--v-ink) !important; }
+.app-table-card .table tbody tr:hover { background: #eef1f4 !important; }
+
+.app-filter-card { padding: .7rem .9rem !important; }
+
+.app-filter-card .btn-period {
+  border-radius: var(--v-radius-sm) !important;
+  color: var(--v-ink-soft) !important;
+}
+
+.app-filter-card .btn-period:hover,
+.app-filter-card .btn-period.active {
+  background: var(--v-accent-soft) !important;
+  color: var(--v-accent) !important;
+}
