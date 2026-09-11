@@ -1,0 +1,604 @@
+/* ══════════════════════════════════════════════════════════════════════
+   VARIANTE D'APPARENCE — « NOCTURNE »
+   ──────────────────────────────────────────────────────────────────────
+   Intention : la boutique le soir. Surfaces graphite bleuté, profondeur
+   obtenue par l'empilement des fonds et des filets (jamais par des
+   ombres, invisibles sur fond sombre), accent bleu froid unique, textes
+   à contraste AA sur chaque niveau de surface.
+
+   À ne pas confondre avec le `body.dark-mode` déjà présent dans l'app :
+   celui-ci est un basculement à la demande de l'utilisateur, la variante
+   Nocturne est l'apparence par défaut de cette branche. Les deux se
+   superposent sans se contredire.
+
+   Décision assumée : les aperçus de facture (.facture-doc--*) et leurs
+   QR codes RESTENT sur fond blanc. Ce sont des documents destinés à
+   l'impression et à la remise au client — les inverser donnerait un
+   aperçu qui ne ressemble pas au papier sorti de l'imprimante.
+
+   Ce que ça ne change PAS : structure du DOM, libellés, flux, sémantique
+   des couleurs (vert = succès, rouge = danger, orange = alerte). Les
+   pastilles de statut gardent leurs fonds d'origine, déjà assez foncés
+   pour porter du texte blanc sur n'importe quel fond.
+
+   Chargée en dernier dans angular.json (après src/styles.css), d'où les
+   !important : les règles de base y sont elles-mêmes en !important.
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* ── 1. Jetons ─────────────────────────────────────────────────────── */
+
+:root {
+  --v-canvas:        #0e1117;   /* fond de page          */
+  --v-surface:       #161b22;   /* cartes, tableaux      */
+  --v-surface-alt:   #1c2430;   /* en-têtes, champs      */
+  --v-surface-high:  #222c3a;   /* survol, menus         */
+  --v-line:          #2a323d;
+  --v-line-strong:   #3a434f;
+  --v-ink:           #e6edf3;
+  --v-ink-soft:      #c3ccd6;
+  --v-muted:         #93a1b0;
+  --v-accent:        #3673d2;   /* aplats + texte blanc : 4.63:1 (AA) */
+  --v-accent-hover:  #2d61b5;
+  --v-accent-text:   #79aaff;   /* accent sur fond sombre */
+  --v-accent-soft:   rgba(54, 115, 210, .18);
+  --v-radius:        10px;
+  --v-radius-sm:     8px;
+
+  /* Jetons déjà consommés par src/styles.css : on les réaligne. */
+  --background:      var(--v-canvas);
+  --surface:         var(--v-surface);
+  --surface-strong:  var(--v-surface-alt);
+  --primary:         var(--v-accent);
+  --primary-dark:    #0b1b33;
+  --primary-soft:    var(--v-accent-soft);
+  --accent:          var(--v-accent);
+  --text:            var(--v-ink);
+  --text-muted:      var(--v-muted);
+  --border:          var(--v-line);
+  --edu-radius:      var(--v-radius);
+  --edu-shadow:      none;
+  --shadow:          none;
+
+  /* Jetons du second bloc :root de src/styles.css (ligne ~1233). */
+  --bg-primary:      var(--v-canvas);
+  --bg-secondary:    var(--v-surface-alt);
+  --bg-card:         var(--v-surface);
+  --text-primary:    var(--v-ink);
+  --text-secondary:  var(--v-muted);
+  --border-color:    var(--v-line);
+  --blue-primary:    var(--v-accent);
+  --blue-light:      var(--v-accent-soft);
+
+  /* Tableaux Bootstrap : les variables pilotent zébrage et survol. */
+  --bs-table-bg:        transparent;
+  --bs-table-color:     var(--v-ink);
+  --bs-table-hover-bg:  var(--v-surface-high);
+  --bs-table-hover-color: var(--v-ink);
+  --bs-body-bg:         var(--v-canvas);
+  --bs-body-color:      var(--v-ink);
+  --bs-emphasis-color:  var(--v-ink);
+}
+
+/* ── 2. Coquille ───────────────────────────────────────────────────── */
+
+body,
+.edu-main {
+  background: var(--v-canvas) !important;
+  color: var(--v-ink) !important;
+}
+
+.edu-content {
+  padding: 1.4rem 1.4rem 0 !important;
+}
+
+/* Sidebar : le niveau le plus sombre, pour que le contenu reste le point
+   lumineux de l'écran. */
+.edu-sidebar {
+  background: #0a0d12 !important;
+  border-right: 1px solid var(--v-line) !important;
+  color: var(--v-ink-soft) !important;
+}
+
+.edu-sidebar .brand strong { color: var(--v-ink) !important; }
+.edu-sidebar .brand span   { color: var(--v-accent-text) !important; }
+
+.edu-sidebar .brand-mark {
+  background: var(--v-surface-alt) !important;
+  border: 1px solid var(--v-line) !important;
+  border-radius: var(--v-radius) !important;
+}
+
+.edu-sidebar .nav-title {
+  color: var(--v-muted) !important;
+  font-size: .68rem !important;
+  letter-spacing: .1em !important;
+}
+
+.edu-sidebar .nav-link {
+  border-radius: var(--v-radius) !important;
+  color: var(--v-ink-soft) !important;
+  font-weight: 600 !important;
+  transition: background-color .14s ease, color .14s ease !important;
+}
+
+.edu-sidebar .nav-link:hover {
+  background: rgba(255, 255, 255, .06) !important;
+  color: var(--v-ink) !important;
+  transform: none !important;
+}
+
+.edu-sidebar .nav-link.active {
+  background: var(--v-accent-soft) !important;
+  color: #cfe0ff !important;
+  transform: none !important;
+}
+
+/* Repère d'actif indépendant de la couleur seule (utile en cas de
+   daltonisme ou d'écran mal calibré). */
+.edu-sidebar .nav-link.active::before {
+  content: '';
+  background: var(--v-accent-text);
+  border-radius: 2px;
+  height: 18px;
+  margin-left: -.85rem;
+  margin-right: .55rem;
+  width: 3px;
+}
+
+.sidebar-backdrop { background: rgba(0, 0, 0, .6) !important; }
+
+.edu-topbar {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background: var(--v-canvas) !important;
+  border-bottom: 1px solid var(--v-line) !important;
+  min-height: 64px !important;
+}
+
+.edu-topbar .topbar-left strong { color: var(--v-ink) !important; }
+.edu-topbar .topbar-left span   { color: var(--v-muted) !important; }
+
+.edu-topbar .topbar-search {
+  background: var(--v-surface-alt) !important;
+  border: 1px solid var(--v-line) !important;
+  border-radius: var(--v-radius) !important;
+  box-shadow: none !important;
+}
+
+.edu-topbar .topbar-search input { color: var(--v-ink) !important; }
+.edu-topbar .topbar-search input::placeholder { color: var(--v-muted) !important; }
+
+.mobile-bottom-nav {
+  background: var(--v-surface) !important;
+  border-top: 1px solid var(--v-line) !important;
+}
+
+.mobile-nav-item { color: var(--v-muted) !important; }
+.mobile-nav-item.active,
+.mobile-nav-item.active i { color: var(--v-accent-text) !important; }
+
+/* ── 3. Surfaces ───────────────────────────────────────────────────── */
+
+.card,
+.app-stat-card,
+.app-filter-card,
+.app-table-card {
+  background: var(--v-surface) !important;
+  border: 1px solid var(--v-line) !important;
+  border-radius: var(--v-radius) !important;
+  box-shadow: none !important;
+  color: var(--v-ink) !important;
+}
+
+.card-header,
+.app-table-header {
+  background: var(--v-surface-alt) !important;
+  border-bottom: 1px solid var(--v-line) !important;
+  color: var(--v-ink) !important;
+}
+
+.app-page-header {
+  background: var(--v-surface) !important;
+  border: 1px solid var(--v-line) !important;
+}
+
+/* Halo décoratif du bandeau de page : invisible et inutile sur sombre. */
+.app-page-header::before { display: none !important; }
+
+.app-page-title,
+.app-table-title,
+.app-stat-value { color: var(--v-ink) !important; }
+
+.app-page-subtitle,
+.app-stat-label,
+.app-stat-sub { color: var(--v-muted) !important; }
+
+.app-table-count {
+  background: var(--v-surface-alt) !important;
+  color: var(--v-muted) !important;
+}
+
+.app-page-header .btn {
+  background: var(--v-surface-alt) !important;
+  border-color: var(--v-line-strong) !important;
+  color: var(--v-ink-soft) !important;
+}
+
+.app-page-header .btn:hover {
+  background: var(--v-accent-soft) !important;
+  border-color: var(--v-accent) !important;
+  color: var(--v-accent-text) !important;
+}
+
+/* Les aplats dégradés vifs (icône de page, action principale, icônes de
+   KPI) sont conservés : ce sont les seuls points de couleur saturée de
+   l'écran, ils servent de repère. On retire juste les ombres portées,
+   qui ne se voient pas sur fond sombre. */
+.app-page-header .btn-primary-action,
+.app-page-icon,
+.app-stat-icon { box-shadow: none !important; }
+
+.app-filter-card .btn-period {
+  background: var(--v-surface-alt) !important;
+  border-color: var(--v-line-strong) !important;
+  color: var(--v-ink-soft) !important;
+}
+
+.app-filter-card .btn-period:hover,
+.app-filter-card .btn-period.active {
+  background: var(--v-accent-soft) !important;
+  color: var(--v-accent-text) !important;
+}
+
+.modal-content,
+.dropdown-menu,
+.popover,
+.swal2-popup,
+.p-component,
+.p-dialog,
+.p-datatable,
+.ngb-dp-month,
+.ngb-dp-header {
+  background: var(--v-surface) !important;
+  border: 1px solid var(--v-line-strong) !important;
+  color: var(--v-ink) !important;
+}
+
+.modal-header,
+.swal2-title {
+  background: var(--v-surface-alt) !important;
+  border-bottom: 1px solid var(--v-line) !important;
+  color: var(--v-ink) !important;
+}
+
+.swal2-html-container,
+.swal2-content { color: var(--v-ink-soft) !important; }
+
+.dropdown-item { color: var(--v-ink-soft) !important; }
+
+.dropdown-item:hover,
+.dropdown-item:focus {
+  background: var(--v-surface-high) !important;
+  color: var(--v-ink) !important;
+}
+
+.dropdown-header { color: var(--v-muted) !important; }
+
+.dropdown-divider,
+hr { border-color: var(--v-line) !important; }
+
+/* ── 4. Tableaux ───────────────────────────────────────────────────── */
+
+.table,
+.p-datatable .p-datatable-tbody > tr {
+  background: transparent !important;
+  color: var(--v-ink) !important;
+}
+
+.table thead th,
+.table-light,
+.table-light th,
+.table-light td,
+.app-table-card .table thead th,
+.p-datatable .p-datatable-thead > tr > th {
+  background: var(--v-surface-alt) !important;
+  border-bottom: 1px solid var(--v-line-strong) !important;
+  color: var(--v-ink-soft) !important;
+}
+
+.table tbody td,
+.app-table-card .table tbody td {
+  border-bottom: 1px solid var(--v-line) !important;
+  color: var(--v-ink) !important;
+}
+
+.table tbody tr:hover,
+.app-table-card .table tbody tr:hover {
+  background: var(--v-surface-high) !important;
+}
+
+/* La colonne Actions épinglée à droite (cf. src/styles.css) a des fonds
+   clairs codés en dur : sans ça elle reste une bande blanche flottante
+   au-dessus des lignes sombres. */
+.table-responsive table thead th:last-child,
+.table-responsive table thead.table-light th:last-child {
+  background: var(--v-surface-alt) !important;
+}
+
+.table-responsive table tbody td:last-child {
+  background: var(--v-surface) !important;
+}
+
+.table-responsive table tbody tr:hover td:last-child {
+  background: var(--v-surface-high) !important;
+}
+
+.table-responsive table thead th:last-child,
+.table-responsive table tbody td:last-child {
+  box-shadow: -1px 0 0 0 var(--v-line-strong) !important;
+}
+
+/* ── 5. Contrôles ──────────────────────────────────────────────────── */
+
+.btn { border-radius: var(--v-radius-sm) !important; font-weight: 600 !important; }
+
+.btn-primary {
+  background: var(--v-accent) !important;
+  border-color: var(--v-accent) !important;
+  color: #fff !important;
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active {
+  background: var(--v-accent-hover) !important;
+  border-color: var(--v-accent-hover) !important;
+}
+
+.btn-outline-primary {
+  border-color: var(--v-accent) !important;
+  color: var(--v-accent-text) !important;
+}
+
+.btn-light,
+.btn-outline-secondary,
+.btn-secondary {
+  background: var(--v-surface-alt) !important;
+  border-color: var(--v-line-strong) !important;
+  color: var(--v-ink-soft) !important;
+}
+
+.btn-light:hover,
+.btn-outline-secondary:hover,
+.btn-secondary:hover {
+  background: var(--v-surface-high) !important;
+  color: var(--v-ink) !important;
+}
+
+.form-control,
+.form-select,
+.input-group-text,
+.p-inputtext {
+  background-color: var(--v-surface-alt) !important;
+  border-color: var(--v-line-strong) !important;
+  border-radius: var(--v-radius-sm) !important;
+  color: var(--v-ink) !important;
+}
+
+.form-control::placeholder,
+.p-inputtext::placeholder { color: var(--v-muted) !important; }
+
+.input-group-text { color: var(--v-muted) !important; }
+
+.form-control:focus,
+.form-select:focus {
+  background-color: var(--v-surface-alt) !important;
+  border-color: var(--v-accent) !important;
+  box-shadow: 0 0 0 3px rgba(54, 115, 210, .3) !important;
+  color: var(--v-ink) !important;
+}
+
+/* La flèche du <select> Bootstrap est une image SVG sombre codée en dur :
+   redessinée en clair, sinon elle disparaît sur fond sombre. */
+.form-select {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%2393a1b0' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e") !important;
+}
+
+.form-label,
+label { color: var(--v-ink-soft) !important; }
+
+.form-check-input {
+  background-color: var(--v-surface-alt) !important;
+  border-color: var(--v-line-strong) !important;
+}
+
+.form-check-input:checked {
+  background-color: var(--v-accent) !important;
+  border-color: var(--v-accent) !important;
+}
+
+/* ── 6. Signalétique ───────────────────────────────────────────────── */
+
+/* Les .badge gardent volontairement leurs fonds d'origine (#059669,
+   #d97706, #dc2626…) : assez foncés pour porter du texte blanc, ils
+   restent lisibles ici comme sur les variantes claires — et surtout
+   identiques d'une variante à l'autre, ce qui est le but. */
+
+/* Les alertes ont des fonds pastel codés en dur, illisibles ici :
+   on les retourne en aplats teintés + texte clair, teinte conservée. */
+.alert {
+  border-radius: var(--v-radius-sm) !important;
+  border-width: 1px !important;
+  border-left-width: 3px !important;
+}
+
+.alert-success {
+  background: rgba(5, 150, 105, .14) !important;
+  border-color: #059669 !important;
+  color: #7ee2b8 !important;
+}
+
+.alert-danger {
+  background: rgba(220, 38, 38, .14) !important;
+  border-color: #dc2626 !important;
+  color: #ff9d99 !important;
+}
+
+.alert-warning {
+  background: rgba(217, 119, 6, .14) !important;
+  border-color: #d97706 !important;
+  color: #f5c77e !important;
+}
+
+.alert-info {
+  background: var(--v-accent-soft) !important;
+  border-color: var(--v-accent) !important;
+  color: #a8c8ff !important;
+}
+
+.nav-tabs { border-bottom-color: var(--v-line) !important; }
+
+.nav-tabs .nav-link { color: var(--v-muted) !important; }
+
+.nav-tabs .nav-link.active {
+  background: var(--v-surface) !important;
+  border-color: var(--v-line) var(--v-line) var(--v-surface) !important;
+  color: var(--v-accent-text) !important;
+}
+
+.nav-pills .nav-link { color: var(--v-muted) !important; }
+
+.nav-pills .nav-link.active {
+  background: var(--v-accent) !important;
+  color: #fff !important;
+}
+
+.pagination .page-link {
+  background: var(--v-surface-alt) !important;
+  border-color: var(--v-line) !important;
+  color: var(--v-ink-soft) !important;
+}
+
+.pagination .page-item.active .page-link {
+  background: var(--v-accent) !important;
+  border-color: var(--v-accent) !important;
+  color: #fff !important;
+}
+
+.pagination .page-item.disabled .page-link { color: var(--v-muted) !important; }
+
+/* ── 7. Utilitaires Bootstrap posés en dur dans les gabarits ───────── */
+/* .bg-white (20 usages), .bg-light (63), .text-dark (80), .table-light
+   (67) sont écrits directement dans les templates : non repris, ils
+   produisent du blanc sur blanc ou du noir sur noir. */
+
+.bg-white          { background-color: var(--v-surface) !important; }
+.bg-light          { background-color: var(--v-surface-alt) !important; }
+.text-dark,
+.text-black        { color: var(--v-ink) !important; }
+.text-muted,
+.text-secondary    { color: var(--v-muted) !important; }
+.border,
+.border-top,
+.border-bottom,
+.border-start,
+.border-end        { border-color: var(--v-line) !important; }
+
+::-webkit-scrollbar-track { background: var(--v-canvas) !important; }
+::-webkit-scrollbar-thumb { background: #38424f !important; }
+::-webkit-scrollbar-thumb:hover { background: #47535f !important; }
+
+::selection { background: rgba(59, 125, 224, .35); color: #fff; }
+
+/* ── 8. Exceptions volontaires : documents destinés au papier ──────── */
+/* Aperçus de facture (clients, ventes, partenaires) et QR codes : ils
+   représentent une feuille imprimée remise au client. Ils restent
+   blancs, et on le signale par un cadre plutôt que par une ombre. */
+
+.facture-doc,
+[class*="facture-doc--"] {
+  background: #ffffff !important;
+  border: 1px solid var(--v-line-strong) !important;
+  color: #0f172a !important;
+}
+
+.facture-doc *,
+[class*="facture-doc--"] * { color: inherit; }
+
+[class*="fd-meta--"],
+[class*="fd-total--"],
+[class*="fd-qr--"],
+.fd-notes--modern,
+.fd-credit-block { color: #0f172a !important; }
+
+canvas,
+img[src^="data:image/png"] { background: transparent; }
+
+/* ── 9. Typographie ────────────────────────────────────────────────── */
+
+h1, h2, h3, h4, h5, h6,
+.card-title, .text-title,
+h1.h3, h1.h4 { color: var(--v-ink) !important; }
+
+a { color: var(--v-accent-text); }
+a:hover { color: #a8c8ff; }
+
+/* Chiffres à chasse fixe : les montants s'alignent colonne par colonne,
+   on compare deux totaux sans les relire. */
+.table td, .table th,
+.display-6, .h1, .h2, .h3, h1, h2, h3,
+.badge, .card-title, .app-stat-value,
+input[type="number"], .text-end {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* ── 10. Accessibilité & responsivité ──────────────────────────────── */
+
+:focus-visible {
+  outline: 2px solid var(--v-accent-text) !important;
+  outline-offset: 2px !important;
+}
+
+html, body { overflow-x: hidden; }
+
+/* Le navigateur doit savoir qu'il sert une interface sombre : champs
+   natifs, barres de défilement système et surfaces par défaut suivent. */
+:root { color-scheme: dark; }
+
+@media (pointer: coarse) {
+  .btn,
+  .nav-link,
+  .page-link,
+  .dropdown-item {
+    min-height: 44px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+  }
+}
+
+@media (max-width: 767.98px) {
+  /* 16px minimum : en dessous, iOS zoome tout seul à la saisie. */
+  .form-control,
+  .form-select,
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+  .edu-content { padding: 1rem 1rem 0 !important; }
+  .edu-topbar  { min-height: 56px !important; padding: .5rem .9rem !important; }
+  .card-body   { padding: .9rem !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    transition-duration: .001ms !important;
+  }
+}
+
+/* À l'impression, on repasse en clair : personne n'imprime un fond
+   graphite. */
+@media print {
+  body, .edu-main, .card, .table { background: #fff !important; color: #000 !important; }
+  .edu-sidebar, .edu-topbar, .mobile-bottom-nav { display: none !important; }
+}
