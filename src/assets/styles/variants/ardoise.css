@@ -1,0 +1,459 @@
+/* ══════════════════════════════════════════════════════════════════════
+   VARIANTE D'APPARENCE — « ARDOISE »
+   ──────────────────────────────────────────────────────────────────────
+   Intention : un instrument de travail. Densité élevée, hiérarchie portée
+   par des filets de 1px plutôt que par des ombres, angles courts (6px),
+   palette graphite/ardoise avec un seul accent pétrole. Pensée pour la
+   caisse et l'inventaire : voir le maximum de lignes à l'écran, repérer
+   un montant d'un coup d'œil, ne jamais douter de l'élément actif.
+
+   Ce que ça ne change PAS : la structure du DOM, les libellés, les flux,
+   la sémantique des couleurs (vert = succès, rouge = danger, orange =
+   alerte) — le personnel s'y fie pour des opérations d'argent.
+
+   Chargée en dernier dans angular.json (après src/styles.css), d'où les
+   !important : les règles de base y sont elles-mêmes en !important.
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* ── 1. Jetons ─────────────────────────────────────────────────────── */
+
+:root {
+  --v-canvas:        #f2f4f6;
+  --v-surface:       #ffffff;
+  --v-surface-alt:   #f7f8fa;
+  --v-line:          #dde1e6;
+  --v-line-strong:   #c8ced6;
+  --v-ink:           #1b232e;
+  --v-ink-soft:      #4a5460;
+  --v-muted:         #626c78;
+  --v-accent:        #1a5f79;
+  --v-accent-hover:  #144d63;
+  --v-accent-soft:   #e8f1f5;
+  --v-radius:        6px;
+  --v-radius-sm:     4px;
+
+  /* Jetons déjà consommés par src/styles.css : on les réaligne. */
+  --background:      var(--v-canvas);
+  --surface:         var(--v-surface);
+  --surface-strong:  var(--v-surface-alt);
+  --primary:         var(--v-accent);
+  --primary-dark:    #0f3a4a;
+  --primary-soft:    var(--v-accent-soft);
+  --accent:          var(--v-accent);
+  --text:            var(--v-ink);
+  --text-muted:      var(--v-muted);
+  --border:          var(--v-line);
+  --edu-radius:      var(--v-radius);
+  --edu-shadow:      none;
+  --shadow:          none;
+  --bs-body-font-size: .8125rem;
+}
+
+/* ── 2. Coquille : fond, sidebar, topbar ───────────────────────────── */
+
+body,
+.edu-main {
+  background: var(--v-canvas) !important;
+  color: var(--v-ink) !important;
+}
+
+.edu-content {
+  padding: 1.15rem 1.15rem 0 !important;
+}
+
+/* Sidebar à plat : plus de dégradé marine, un aplat graphite et un
+   marqueur d'actif franc (filet gauche) au lieu d'un décalage animé. */
+.edu-sidebar {
+  background: #1b2430 !important;
+  border-right: 1px solid #10171f !important;
+  padding: .85rem .7rem !important;
+}
+
+.edu-sidebar .brand {
+  border-bottom: 1px solid rgba(255, 255, 255, .09) !important;
+  margin-bottom: .55rem !important;
+  padding: .3rem .4rem .8rem !important;
+}
+
+.edu-sidebar .brand-mark {
+  border-radius: var(--v-radius) !important;
+  height: 40px !important;
+  width: 40px !important;
+}
+
+.edu-sidebar .brand strong {
+  font-size: .97rem !important;
+  font-weight: 700 !important;
+  letter-spacing: -.01em !important;
+}
+
+.edu-sidebar .brand span {
+  color: #8a97a6 !important;
+  font-size: .72rem !important;
+  font-weight: 600 !important;
+}
+
+.edu-sidebar .nav-title {
+  color: #75828f !important;
+  font-size: .655rem !important;
+  font-weight: 700 !important;
+  letter-spacing: .11em !important;
+  padding: .85rem .6rem .3rem !important;
+}
+
+.edu-sidebar .nav-link {
+  border-left: 3px solid transparent !important;
+  border-radius: 0 var(--v-radius-sm) var(--v-radius-sm) 0 !important;
+  color: #c3ccd6 !important;
+  font-size: .83rem !important;
+  font-weight: 600 !important;
+  gap: .65rem !important;
+  min-height: 36px !important;
+  padding: .42rem .6rem !important;
+  transition: background-color .12s ease, color .12s ease !important;
+}
+
+.edu-sidebar .nav-link i {
+  font-size: 1.02rem !important;
+}
+
+.edu-sidebar .nav-link:hover {
+  background: rgba(255, 255, 255, .07) !important;
+  color: #fff !important;
+  transform: none !important;
+}
+
+.edu-sidebar .nav-link.active {
+  background: rgba(74, 163, 196, .16) !important;
+  border-left-color: #4aa3c4 !important;
+  color: #fff !important;
+  transform: none !important;
+}
+
+/* Topbar opaque et basse : pas de flou, un simple filet de séparation. */
+.edu-topbar {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background: var(--v-surface) !important;
+  border-bottom: 1px solid var(--v-line) !important;
+  min-height: 58px !important;
+  padding: .5rem 1.15rem !important;
+}
+
+.edu-topbar .topbar-left strong {
+  font-size: .95rem !important;
+  font-weight: 700 !important;
+  letter-spacing: -.01em !important;
+}
+
+.edu-topbar .topbar-left span {
+  font-size: .72rem !important;
+  font-weight: 600 !important;
+}
+
+.edu-topbar .school-logo {
+  border-radius: var(--v-radius) !important;
+  height: 34px !important;
+  width: 34px !important;
+}
+
+.edu-topbar .topbar-search {
+  background: var(--v-surface-alt) !important;
+  border: 1px solid var(--v-line) !important;
+  border-radius: var(--v-radius) !important;
+  box-shadow: none !important;
+  padding: .42rem .7rem !important;
+}
+
+.edu-topbar .icon-btn,
+.edu-topbar .user-chip {
+  border-radius: var(--v-radius) !important;
+}
+
+/* ── 3. Surfaces : cartes, modales, menus ──────────────────────────── */
+
+.card {
+  border: 1px solid var(--v-line) !important;
+  border-radius: var(--v-radius) !important;
+  box-shadow: none !important;
+}
+
+.card-header {
+  background: var(--v-surface-alt) !important;
+  border-bottom: 1px solid var(--v-line) !important;
+  border-radius: var(--v-radius) var(--v-radius) 0 0 !important;
+  font-size: .82rem !important;
+  font-weight: 700 !important;
+  letter-spacing: .01em !important;
+  padding: .6rem .9rem !important;
+}
+
+.card-body {
+  padding: .9rem !important;
+}
+
+.modal-content {
+  border: 1px solid var(--v-line-strong) !important;
+  border-radius: var(--v-radius) !important;
+  box-shadow: 0 24px 60px -20px rgba(27, 35, 46, .35) !important;
+}
+
+.modal-header {
+  background: var(--v-surface-alt) !important;
+  border-bottom: 1px solid var(--v-line) !important;
+  border-radius: var(--v-radius) var(--v-radius) 0 0 !important;
+}
+
+.dropdown-menu {
+  border: 1px solid var(--v-line-strong) !important;
+  border-radius: var(--v-radius) !important;
+  box-shadow: 0 12px 28px -12px rgba(27, 35, 46, .3) !important;
+  padding: .25rem !important;
+}
+
+.dropdown-item {
+  border-radius: var(--v-radius-sm) !important;
+  font-size: .82rem !important;
+  padding: .38rem .6rem !important;
+}
+
+/* ── 4. Tableaux : le cœur du métier ───────────────────────────────── */
+
+.table {
+  --bs-table-hover-bg: #eef1f4;
+  font-size: .8125rem !important;
+}
+
+/* En-tête collant : sur l'inventaire (13 colonnes) ou la caisse, on garde
+   les intitulés visibles pendant qu'on descend dans les lignes. */
+.table thead th {
+  background: var(--v-surface-alt) !important;
+  border-bottom: 1px solid var(--v-line-strong) !important;
+  color: var(--v-ink-soft) !important;
+  font-size: .7rem !important;
+  font-weight: 700 !important;
+  letter-spacing: .06em !important;
+  padding: .45rem .6rem !important;
+  position: sticky;
+  top: 0;
+  z-index: 3;
+}
+
+.table tbody td {
+  border-bottom: 1px solid var(--v-line) !important;
+  padding: .4rem .6rem !important;
+  vertical-align: middle !important;
+}
+
+.table tbody tr:hover {
+  background: #eef1f4 !important;
+}
+
+/* La colonne Actions épinglée à droite (cf. src/styles.css) doit suivre
+   les fonds de la variante, sinon elle « flotte » sur le reste. */
+.table-responsive table thead th:last-child,
+.table-responsive table thead.table-light th:last-child {
+  background: var(--v-surface-alt) !important;
+}
+
+.table-responsive table tbody td:last-child {
+  background: var(--v-surface) !important;
+}
+
+.table-responsive table tbody tr:hover td:last-child {
+  background: #eef1f4 !important;
+}
+
+.table-responsive table thead th:last-child,
+.table-responsive table tbody td:last-child {
+  box-shadow: -1px 0 0 0 var(--v-line) !important;
+}
+
+/* ── 5. Contrôles ──────────────────────────────────────────────────── */
+
+.btn {
+  border-radius: var(--v-radius) !important;
+  font-size: .8125rem !important;
+  font-weight: 600 !important;
+  letter-spacing: .01em !important;
+  padding: .38rem .75rem !important;
+  transition: background-color .12s ease, border-color .12s ease !important;
+}
+
+.btn-primary {
+  background: var(--v-accent) !important;
+  border-color: var(--v-accent) !important;
+  color: #fff !important;
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active {
+  background: var(--v-accent-hover) !important;
+  border-color: var(--v-accent-hover) !important;
+}
+
+.btn-outline-primary {
+  border-color: var(--v-accent) !important;
+  color: var(--v-accent) !important;
+}
+
+.btn-light,
+.btn-outline-secondary {
+  background: var(--v-surface) !important;
+  border-color: var(--v-line-strong) !important;
+  color: var(--v-ink-soft) !important;
+}
+
+.btn-light:hover,
+.btn-outline-secondary:hover {
+  background: var(--v-surface-alt) !important;
+  color: var(--v-ink) !important;
+}
+
+.form-control,
+.form-select,
+.input-group-text {
+  border-color: var(--v-line-strong) !important;
+  border-radius: var(--v-radius) !important;
+  font-size: .8125rem !important;
+  padding: .35rem .6rem !important;
+}
+
+.input-group-text {
+  background: var(--v-surface-alt) !important;
+  color: var(--v-muted) !important;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--v-accent) !important;
+  box-shadow: 0 0 0 3px rgba(26, 95, 121, .16) !important;
+}
+
+.form-label {
+  color: var(--v-ink-soft) !important;
+  font-size: .74rem !important;
+  font-weight: 700 !important;
+  letter-spacing: .03em !important;
+  margin-bottom: .2rem !important;
+  text-transform: uppercase;
+}
+
+/* ── 6. Signalétique ───────────────────────────────────────────────── */
+
+.badge {
+  border-radius: var(--v-radius-sm) !important;
+  font-size: .68rem !important;
+  font-weight: 700 !important;
+  letter-spacing: .03em !important;
+  padding: .28em .5em !important;
+}
+
+.alert {
+  border-radius: var(--v-radius) !important;
+  border-left-width: 3px !important;
+  font-size: .82rem !important;
+}
+
+.nav-tabs .nav-link,
+.nav-pills .nav-link {
+  border-radius: var(--v-radius-sm) var(--v-radius-sm) 0 0 !important;
+  font-size: .82rem !important;
+  font-weight: 600 !important;
+}
+
+.nav-pills .nav-link.active {
+  background: var(--v-accent) !important;
+}
+
+.pagination .page-link {
+  border-radius: var(--v-radius-sm) !important;
+  font-size: .8rem !important;
+}
+
+.pagination .page-item.active .page-link {
+  background: var(--v-accent) !important;
+  border-color: var(--v-accent) !important;
+}
+
+/* ── 7. Typographie ────────────────────────────────────────────────── */
+
+h1, h2, h3, h4, h5, h6,
+.card-title, .text-title {
+  color: var(--v-ink) !important;
+  letter-spacing: -.015em !important;
+}
+
+h1.h3, h1.h4 {
+  color: var(--v-ink) !important;
+  font-weight: 700 !important;
+}
+
+/* Chiffres à chasse fixe : les montants s'alignent colonne par colonne,
+   on compare deux totaux sans les relire. */
+.table td, .table th,
+.display-6, .h1, .h2, .h3, h1, h2, h3,
+.badge, .card-title,
+input[type="number"], .text-end {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* ── 8. Accessibilité & responsivité ───────────────────────────────── */
+
+:focus-visible {
+  outline: 2px solid var(--v-accent) !important;
+  outline-offset: 2px !important;
+}
+
+.edu-sidebar :focus-visible {
+  outline-color: #7cc4dd !important;
+}
+
+html, body {
+  overflow-x: hidden;
+}
+
+/* Cibles tactiles : sur écran tactile la densité ne doit pas coûter la
+   précision du doigt — on ré-élargit les contrôles sans toucher au
+   desktop (souris). */
+@media (pointer: coarse) {
+  .btn,
+  .nav-link,
+  .page-link,
+  .dropdown-item {
+    min-height: 44px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+  }
+  .btn-sm,
+  .btn-group-sm > .btn {
+    min-height: 40px !important;
+  }
+}
+
+@media (max-width: 767.98px) {
+  /* 16px minimum : en dessous, iOS zoome tout seul à la saisie. */
+  .form-control,
+  .form-select,
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+  .edu-topbar {
+    min-height: 52px !important;
+    padding: .4rem .75rem !important;
+  }
+  .card-body { padding: .75rem !important; }
+  .table { font-size: .8rem !important; }
+  /* En-tête collant désactivé sur mobile : combiné au défilement
+     horizontal de .table-responsive, il décalait les intitulés. */
+  .table thead th { position: static !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    transition-duration: .001ms !important;
+  }
+}
