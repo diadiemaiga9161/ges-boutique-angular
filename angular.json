@@ -51,7 +51,8 @@
               "node_modules/@fortawesome/fontawesome-free/css/all.min.css",
               "node_modules/@fortawesome/fontawesome-free/css/v4-shims.min.css",
               "src/assets/styles/app/_app.scss",
-              "src/styles.css"
+              "src/styles.css",
+              "src/assets/styles/variants/papier.css"
             ],
             "stylePreprocessorOptions": {
               "sass": {
@@ -163,7 +164,8 @@
               "node_modules/@fortawesome/fontawesome-free/css/all.min.css",
               "node_modules/@fortawesome/fontawesome-free/css/v4-shims.min.css",
               "src/assets/styles/app/_app.scss",
-              "src/styles.css"
+              "src/styles.css",
+              "src/assets/styles/variants/papier.css"
             ],
             "scripts": [],
             "optimization": true,
