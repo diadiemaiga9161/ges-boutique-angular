@@ -1880,6 +1880,23 @@ export class VenteService {
     );
   }
 
+  /** Ventes (comptant + credit) d'un client, filtrees cote serveur — remplace l'ancien
+   *  pattern getAllVentes() + filtre JS (chargeait TOUTE la boutique, lent). */
+  getVentesParClientId(clientId: number): Observable<VenteMap[]> {
+    return this.http.get<any>(`${this.apiUrl}/by-client/${clientId}`, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(response => {
+        const ventes = response.ventes || response.data || response;
+        if (Array.isArray(ventes)) {
+          return ventes.map(v => this.mapVenteResponse(v));
+        }
+        return [];
+      }),
+      catchError(error => this.handleError(error, 'récupérer les ventes du client'))
+    );
+  }
+
   getCreditsParClientId(clientId: number): Observable<VenteMap[]> {
     return this.http.get<any>(`${this.apiUrl}/credits/by-client/${clientId}`, {
       headers: this.getAuthHeaders()

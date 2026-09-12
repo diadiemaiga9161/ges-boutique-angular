@@ -14,6 +14,7 @@ import { BoutiqueService } from '../../../shared/services/boutique.service';
 import { FideliteService, SoldeFidelite, MouvementFidelite } from '../../../shared/services/fidelite.service';
 import { formaterMessageWhatsApp, envoyerWhatsAppDirect } from '../../../shared/utils/whatsapp.util';
 import { forkJoin, firstValueFrom } from 'rxjs';
+import { map } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { MontantInputDirective } from '../../../shared/directives/montant-input.directive';
@@ -363,9 +364,16 @@ export class ClientsComponent implements OnInit {
     this.soldeFideliteClient = null;
     this.mouvementsFidelite = [];
 
-    this.venteService.getAllVentes().subscribe({
+    // BUG FIX (lenteur) : chargeait auparavant TOUTES les ventes de la boutique
+    // (getAllVentes) puis filtrait cote JS avec isVenteForClient — un vrai filtre serveur
+    // (getVentesParClientId) evite ce chargement complet a chaque ouverture.
+    const chargement$ = client.id
+      ? this.venteService.getVentesParClientId(client.id)
+      : this.venteService.getAllVentes().pipe(map(ventes => ventes.filter(vente => this.isVenteForClient(vente, client))));
+
+    chargement$.subscribe({
       next: (ventes) => {
-        this.ventesClient = ventes.filter(vente => this.isVenteForClient(vente, client));
+        this.ventesClient = [...ventes];
         this.ventesClient.sort((a, b) => new Date(b.dateVente).getTime() - new Date(a.dateVente).getTime());
         this.ventesClientFiltered = [...this.ventesClient];
         this.isLoadingVentes = false;
@@ -970,9 +978,16 @@ export class ClientsComponent implements OnInit {
     this.ventesClient = [];
     this.ventesClientFiltered = [];
     this.isLoadingVentes = true;
-    this.venteService.getAllVentes().subscribe({
+    // BUG FIX (lenteur) : chargeait auparavant TOUTES les ventes de la boutique
+    // (getAllVentes) puis filtrait cote JS avec isVenteForClient — un vrai filtre serveur
+    // (getVentesParClientId) evite ce chargement complet a chaque ouverture.
+    const chargement$ = client.id
+      ? this.venteService.getVentesParClientId(client.id)
+      : this.venteService.getAllVentes().pipe(map(ventes => ventes.filter(vente => this.isVenteForClient(vente, client))));
+
+    chargement$.subscribe({
       next: (ventes) => {
-        this.ventesClient = ventes.filter(vente => this.isVenteForClient(vente, client));
+        this.ventesClient = [...ventes];
         this.ventesClient.sort((a, b) => new Date(b.dateVente).getTime() - new Date(a.dateVente).getTime());
         this.ventesClientFiltered = [...this.ventesClient];
         this.isLoadingVentes = false;
@@ -1088,9 +1103,12 @@ export class ClientsComponent implements OnInit {
     // soit instantané (pas d'attente au clic sur "Historique des ventes").
     if (this.ventesClient.length === 0 || this.selectedClientForVentes !== client) {
       this.isLoadingVentes = true;
-      this.venteService.getAllVentes().subscribe({
+      const chargementHistorique$ = client.id
+        ? this.venteService.getVentesParClientId(client.id)
+        : this.venteService.getAllVentes().pipe(map(ventes => ventes.filter(vente => this.isVenteForClient(vente, client))));
+      chargementHistorique$.subscribe({
         next: (ventes) => {
-          this.ventesClient = ventes.filter(vente => this.isVenteForClient(vente, client));
+          this.ventesClient = [...ventes];
           this.ventesClient.sort((a, b) => new Date(b.dateVente).getTime() - new Date(a.dateVente).getTime());
           this.ventesClientFiltered = [...this.ventesClient];
           this.isLoadingVentes = false;
@@ -1259,7 +1277,16 @@ export class ClientsComponent implements OnInit {
   appliquerSituationPreset(preset: 'jour' | 'hier' | 'semaine' | 'mois' | 'annee' | 'personnalise' | 'tout'): void {
     this.situationPreset = preset;
     const today = new Date();
-    const fmt = (d: Date) => d.toISOString().split('T')[0];
+    // BUG FIX : toISOString() convertit en UTC, ce qui décale la date d'un jour en arrière
+    // sur les fuseaux horaires en avance sur UTC (ex: UTC+1) — "Ce mois" incluait alors le
+    // dernier jour du mois précédent. On construit la chaîne yyyy-MM-dd à partir des
+    // composants de date LOCAUX à la place (même approche que fournisseurs.component.ts).
+    const fmt = (d: Date) => {
+      const annee = d.getFullYear();
+      const mois = String(d.getMonth() + 1).padStart(2, '0');
+      const jour = String(d.getDate()).padStart(2, '0');
+      return `${annee}-${mois}-${jour}`;
+    };
 
     if (preset === 'tout') {
       this.situationDateDebut = '';
@@ -1477,9 +1504,14 @@ export class ClientsComponent implements OnInit {
     this.historiquePaiementsFiltres = [];
     this.clientPourHistorique = client;
 
-    this.venteService.getAllVentes().subscribe({
-      next: (ventes) => {
-        const ventesClient = ventes.filter(v => this.isVenteForClient(v, client) && !v.annulee);
+    // BUG FIX (lenteur) : c'etait un 2e chargement complet de TOUTES les ventes de la
+    // boutique (en plus de celui de showClientVentes juste au-dessus) — meme correctif.
+    const chargementPaiements$ = client.id
+      ? this.venteService.getVentesParClientId(client.id).pipe(map(ventes => ventes.filter(v => !v.annulee)))
+      : this.venteService.getAllVentes().pipe(map(ventes => ventes.filter(v => this.isVenteForClient(v, client) && !v.annulee)));
+
+    chargementPaiements$.subscribe({
+      next: (ventesClient) => {
         const entries: HistoriquePaiementEntry[] = [];
 
         const comptant = ventesClient.filter(v => !v.estCredit);
@@ -1597,9 +1629,12 @@ export class ClientsComponent implements OnInit {
     // Charge aussi l'onglet Historique en arrière-plan (même logique que loadSituationClient).
     if (this.ventesClient.length === 0) {
       this.isLoadingVentes = true;
-      this.venteService.getAllVentes().subscribe({
+      const chargementAvances$ = client.id
+        ? this.venteService.getVentesParClientId(client.id)
+        : this.venteService.getAllVentes().pipe(map(ventes => ventes.filter(vente => this.isVenteForClient(vente, client))));
+      chargementAvances$.subscribe({
         next: (ventes) => {
-          this.ventesClient = ventes.filter(vente => this.isVenteForClient(vente, client));
+          this.ventesClient = [...ventes];
           this.ventesClient.sort((a, b) => new Date(b.dateVente).getTime() - new Date(a.dateVente).getTime());
           this.ventesClientFiltered = [...this.ventesClient];
           this.isLoadingVentes = false;
