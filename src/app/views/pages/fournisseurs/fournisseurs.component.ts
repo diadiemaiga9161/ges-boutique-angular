@@ -28,10 +28,13 @@ import { TranslateModule } from '@ngx-translate/core';
 import { formaterMessageWhatsApp, envoyerWhatsAppDirect } from '../../../shared/utils/whatsapp.util';
 import { MontantInputDirective } from '../../../shared/directives/montant-input.directive';
 
+import { MesurePuPipe, MesureQtePipe, MesureSuffixePipe } from '../../../shared/pipes/mesure.pipe';
+import { infoMesure, prixAffiche, prixStocke, puDoc, qteDoc, qteStockee } from '../../../shared/utils/mesure.util';
+
 @Component({
   selector: 'app-fournisseurs',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule, MontantInputDirective],
+  imports: [CommonModule, FormsModule, TranslateModule, MontantInputDirective, MesureQtePipe, MesurePuPipe, MesureSuffixePipe],
   templateUrl: './fournisseurs.component.html',
   styleUrls: ['./fournisseurs.component.scss']
 })
@@ -479,8 +482,16 @@ export class FournisseursComponent implements OnInit {
     const produit = this.produits.find(p => p.id === this.tempLigneAchat.produitId);
     if (produit) {
       this.tempLigneAchat.produitNom = produit.nom;
-      this.tempLigneAchat.prixAchatUnitaire = produit.prixAchat;
+      // prix au kg pour un produit vendu à la mesure
+      this.tempLigneAchat.prixAchatUnitaire = Math.round(prixAffiche(produit as any, produit.prixAchat) * 100) / 100;
     }
+  }
+
+  /** Produit existant choisi dans la ligne d'achat, s'il est vendu au kg/L/m. */
+  get produitAchatMesure(): any {
+    const id = this.tempLigneAchat?.produitId;
+    const p: any = id ? (this.produits as any[]).find(x => x.id === +id) : null;
+    return infoMesure(p) ? p : null;
   }
 
   /** Ajoute la ligne en cours de saisie (produit existant ou nouveau produit) à l'achat. */
@@ -495,10 +506,13 @@ export class FournisseursComponent implements OnInit {
       Swal.fire({ icon: 'error', title: 'Choisissez un produit', text: 'Sélectionnez un produit existant ou renseignez le nom du nouveau produit.' }); return;
     }
 
+    // Vente à la mesure : saisie en kg et prix au kg, envoyés en g et prix au g.
+    const mesure: any = this.produitAchatMesure;
     const nouvelleLigne: LigneAchatRequest = {
-      quantite: this.tempLigneAchat.quantite,
-      prixAchatUnitaire: this.tempLigneAchat.prixAchatUnitaire
+      quantite: mesure ? qteStockee(mesure, this.tempLigneAchat.quantite) : this.tempLigneAchat.quantite,
+      prixAchatUnitaire: mesure ? prixStocke(mesure, this.tempLigneAchat.prixAchatUnitaire) : this.tempLigneAchat.prixAchatUnitaire
     };
+    if (mesure) (nouvelleLigne as any).modeMesure = mesure.modeMesure;
     if (this.tempLigneAchat.produitId) {
       nouvelleLigne.produitId = this.tempLigneAchat.produitId;
     }
@@ -573,7 +587,7 @@ export class FournisseursComponent implements OnInit {
         ? prixEntree
         : (stockActuel * ancienPrix + quantiteEntree * prixEntree) / (stockActuel + quantiteEntree);
 
-      propositions.push({ ligne, produitNom: produit.nom, stockActuel, ancienPrix, quantiteEntree, prixEntree, nouveauPrix });
+      propositions.push({ ligne, produitNom: produit.nom, stockActuel, ancienPrix, quantiteEntree, prixEntree, nouveauPrix, mesure: produit } as any);
     }
 
     return propositions;
@@ -585,10 +599,10 @@ export class FournisseursComponent implements OnInit {
     const lignesHtml = propositions.map(p => `
       <div style="text-align:left;border:1px solid #e5e7eb;border-radius:6px;padding:10px;margin-bottom:8px;">
         <strong>${escapeHtml(p.produitNom)}</strong><br>
-        Stock actuel: ${p.stockActuel} × ${this.fmt(p.ancienPrix)} = <strong>${this.fmt(p.stockActuel * p.ancienPrix)}</strong><br>
-        Entrée: ${p.quantiteEntree} × ${this.fmt(p.prixEntree)} = <strong>${this.fmt(p.quantiteEntree * p.prixEntree)}</strong><br>
-        <span style="color:#6b7280;font-size:0.85em;">Formule: (${p.stockActuel} × ${this.fmt(p.ancienPrix)} + ${p.quantiteEntree} × ${this.fmt(p.prixEntree)}) / (${p.stockActuel} + ${p.quantiteEntree})</span><br>
-        <span style="color:#198754;">➜ Nouveau prix d'achat proposé: <strong>${this.fmt(p.nouveauPrix)}</strong></span>
+        Stock actuel: ${qteDoc((p as any).mesure, p.stockActuel)} × ${puDoc((p as any).mesure, v => this.fmt(v), p.ancienPrix)} = <strong>${this.fmt(p.stockActuel * p.ancienPrix)}</strong><br>
+        Entrée: ${qteDoc((p as any).mesure, p.quantiteEntree)} × ${puDoc((p as any).mesure, v => this.fmt(v), p.prixEntree)} = <strong>${this.fmt(p.quantiteEntree * p.prixEntree)}</strong><br>
+        <span style="color:#6b7280;font-size:0.85em;${(p as any).mesure?.modeMesure ? 'display:none;' : ''}">Formule: (${p.stockActuel} × ${this.fmt(p.ancienPrix)} + ${p.quantiteEntree} × ${this.fmt(p.prixEntree)}) / (${p.stockActuel} + ${p.quantiteEntree})</span><br>
+        <span style="color:#198754;">➜ Nouveau prix d'achat proposé: <strong>${puDoc((p as any).mesure, v => this.fmt(v), p.nouveauPrix)}</strong></span>
       </div>
     `).join('');
 
@@ -878,7 +892,7 @@ export class FournisseursComponent implements OnInit {
   envoyerAchatWhatsApp(achat: any): void {
     const fournisseur = this.fournisseurs.find(f => f.id === this.filtreFournisseurId);
     if (!fournisseur) return;
-    const lignesDetail = (achat.lignes || []).map((l: any) => `${l.produit?.nom || '?'} ×${l.quantite}`);
+    const lignesDetail = (achat.lignes || []).map((l: any) => `${l.produit?.nom || '?'} ×${qteDoc(l)}`);
     const { telephone, message } = this.whatsAppFournisseur(
       fournisseur,
       `Achat N°${achat.id}`,
@@ -921,7 +935,7 @@ export class FournisseursComponent implements OnInit {
     const lignes = this.achatsFiltres.map(a => [
       `#${a.id}`,
       this.formatDate(a.dateAchat || a.dateCreation),
-      (a.lignes || []).map((l: any) => `${l.produit?.nom || '?'} ×${l.quantite}`).join(', ') || '—',
+      (a.lignes || []).map((l: any) => `${l.produit?.nom || '?'} ×${qteDoc(l)}`).join(', ') || '—',
       this.fmt(a.montantTotal),
       this.fmt(a.montantPaye),
       this.fmt(a.montantRestant),
@@ -1115,9 +1129,13 @@ export class FournisseursComponent implements OnInit {
     if (!fournisseur) return;
     this.showFicheModal = false;
 
+    // BUG FIX : ignorait le filtre de période actif (Jour/Semaine/Mois/Personnalisé) et
+    // chargeait systématiquement tout l'historique, quel que soit ce qui était sélectionné
+    // dans les onglets Achats/Paiements/Situation.
+    const { dateDebut, dateFin } = this.periodeActive;
     forkJoin({
-      achats: this.productService.getHistoriqueAchats(fournisseur.id!),
-      paiements: this.productService.getHistoriquePaiements(fournisseur.id!)
+      achats: this.productService.getHistoriqueAchats(fournisseur.id!, dateDebut, dateFin),
+      paiements: this.productService.getHistoriquePaiements(fournisseur.id!, dateDebut, dateFin)
     }).subscribe({
       next: ({ achats, paiements }) => {
         this.achats = achats;
@@ -1133,12 +1151,12 @@ export class FournisseursComponent implements OnInit {
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${qrTel}`;
 
     const topRows = this.topProduits.map(p =>
-      `<tr><td>${p.nom}</td><td style="text-align:center">${p.quantite}</td><td style="text-align:right;font-weight:700">${this.fmt(p.total)}</td></tr>`
+      `<tr><td>${p.nom}</td><td style="text-align:center">${qteDoc(p)}</td><td style="text-align:right;font-weight:700">${this.fmt(p.total)}</td></tr>`
     ).join('') || '<tr><td colspan="3" style="color:#94a3b8;text-align:center">Aucune donnée</td></tr>';
 
     const achatRows = this.achatsFiltres.map(a => {
       const lignesStr = ((a as any).ligneAchats || (a as any).lignes || [])
-        .map((l: any) => `${l.nomProduit || l.produit?.nom || '?'} ×${l.quantite}`).join(', ') || '—';
+        .map((l: any) => `${l.nomProduit || l.produit?.nom || '?'} ×${qteDoc(l)}`).join(', ') || '—';
       return `<tr>
         <td>#${a.id}</td>
         <td>${this.formatDate(a.dateAchat || a.dateCreation)}</td>

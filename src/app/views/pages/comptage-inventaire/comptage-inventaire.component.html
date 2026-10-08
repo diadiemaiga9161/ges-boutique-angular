@@ -1,0 +1,173 @@
+<div class="container-fluid py-4 app-page cp-page">
+  <!-- En-tête -->
+  <div class="app-page-header mb-4">
+    <div class="app-page-header-left">
+      <div class="app-page-icon"><i class="fa fa-clipboard-list"></i></div>
+      <div>
+        <h1 class="app-page-title">Comptage d'inventaire</h1>
+        <p class="app-page-subtitle">Comptez les produits, voyez les écarts, corrigez le stock d'un coup</p>
+      </div>
+    </div>
+    <div class="app-page-header-actions">
+      <a class="btn btn-outline-secondary" routerLink="/inventaire"><i class="fa fa-arrow-left me-1"></i> Inventaire</a>
+    </div>
+  </div>
+
+  <div class="cp-carte cp-info" *ngIf="!autorise">
+    <i class="fa fa-lock" aria-hidden="true"></i>
+    <p>Votre rôle ne permet pas de faire un comptage. Il faut « Inventaire » sur Modifier ou Tout. Demandez au gérant.</p>
+  </div>
+
+  <ng-container *ngIf="autorise">
+    <div class="text-center py-5" *ngIf="chargement">
+      <div class="spinner-border text-primary" role="status"></div>
+    </div>
+
+    <!-- ══════════ Aucun comptage en cours ══════════ -->
+    <div class="cp-grille" *ngIf="!chargement && !comptage">
+      <div class="cp-carte">
+        <h2 class="cp-titre">Nouveau comptage</h2>
+        <ol class="cp-etapes">
+          <li>Scannez (douchette) ou cherchez un produit, tapez la quantité trouvée.</li>
+          <li>L'écran montre les écarts avec le stock enregistré.</li>
+          <li>Validez : le stock est corrigé d'un coup. Les produits non comptés ne changent pas.</li>
+        </ol>
+        <label class="form-label fw-semibold" for="cp-categorie">Que voulez-vous compter ?</label>
+        <select id="cp-categorie" class="form-select mb-3" [(ngModel)]="categorieChoisie">
+          <option [ngValue]="null">Tous les produits</option>
+          <option *ngFor="let c of categories" [ngValue]="c.id">{{ c.nom }}</option>
+        </select>
+        <button type="button" class="btn btn-primary btn-lg w-100" (click)="demarrer()" [disabled]="envoi">
+          <i class="fa fa-play me-2" aria-hidden="true"></i> Commencer le comptage
+        </button>
+      </div>
+
+      <div class="cp-carte" *ngIf="historique.length">
+        <h2 class="cp-titre">Derniers comptages</h2>
+        <div class="cp-hist" *ngFor="let h of historique">
+          <div class="cp-hist__texte">
+            <strong>{{ h.dateDebut | date:'dd/MM/yyyy HH:mm' }} · {{ h.categorieNom || 'Tous les produits' }}</strong>
+            <span>{{ h.nbComptes }} produit(s) compté(s) · {{ h.nbEcarts }} écart(s) · {{ h.commencePar }}</span>
+          </div>
+          <span class="badge" [class.bg-success]="h.statut === 'VALIDE'" [class.bg-secondary]="h.statut === 'ABANDONNE'"
+                [class.bg-primary]="h.statut === 'EN_COURS'">
+            {{ h.statut === 'VALIDE' ? 'Validé' : (h.statut === 'ABANDONNE' ? 'Abandonné' : 'En cours') }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ Comptage en cours ══════════ -->
+    <ng-container *ngIf="!chargement && comptage as c">
+      <div class="cp-kpis mb-3">
+        <div class="cp-kpi"><span>{{ c.categorieNom || 'Tous les produits' }}</span><strong>{{ c.nbComptes }} / {{ c.nbProduitsACompter }}</strong><small>produits comptés</small></div>
+        <div class="cp-kpi"><span>Écarts</span><strong>{{ c.nbEcarts }}</strong><small>produit(s)</small></div>
+        <div class="cp-kpi cp-kpi--bad"><span>Manquants</span><strong>{{ money(c.valeurManquants || 0) }}</strong><small>au prix d'achat</small></div>
+        <div class="cp-kpi cp-kpi--ok"><span>En trop</span><strong>{{ money(c.valeurSurplus || 0) }}</strong><small>au prix d'achat</small></div>
+      </div>
+
+      <div class="cp-grille cp-grille--travail">
+        <!-- Saisie -->
+        <div class="cp-carte">
+          <h2 class="cp-titre">Compter un produit</h2>
+          <p class="cp-meta">Commencé par {{ c.commencePar }} le {{ c.dateDebut | date:'dd/MM à HH:mm' }}</p>
+
+          <div *ngIf="!produitChoisi" class="position-relative">
+            <label class="form-label fw-semibold" for="cp-recherche">Produit (nom ou code-barres)</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="fa fa-barcode" aria-hidden="true"></i></span>
+              <input #champRecherche id="cp-recherche" class="form-control form-control-lg" [(ngModel)]="recherche"
+                     (input)="chercher()" (keyup.enter)="validerRecherche()" placeholder="Scannez ou tapez…" autocomplete="off">
+            </div>
+            <div class="list-group cp-resultats" *ngIf="resultats.length">
+              <button type="button" class="list-group-item list-group-item-action" *ngFor="let p of resultats" (click)="choisir(p)">
+                <strong>{{ p.nom }}</strong>
+                <span class="text-muted"> · stock enregistré : {{ stockTexte(p) }}</span>
+                <span class="badge bg-info ms-1" *ngIf="ligneDe(p.id)">déjà compté</span>
+              </button>
+            </div>
+          </div>
+
+          <ng-container *ngIf="produitChoisi as p">
+            <div class="cp-choisi">
+              <div>
+                <strong>{{ p.nom }}</strong>
+                <span>Stock enregistré : {{ stockTexte(p) }}</span>
+              </div>
+              <button type="button" class="btn btn-sm btn-outline-secondary" (click)="annulerChoix()" aria-label="Choisir un autre produit">
+                <i class="fa fa-times"></i>
+              </button>
+            </div>
+            <label class="form-label fw-semibold mt-3" for="cp-quantite">Quantité trouvée ({{ unite(p) }})</label>
+            <input #champQuantite id="cp-quantite" class="form-control form-control-lg mb-3" type="text" inputmode="decimal"
+                   [(ngModel)]="quantiteSaisie" (keyup.enter)="enregistrerQuantite()" placeholder="ex : 42">
+            <button type="button" class="btn btn-primary btn-lg w-100" (click)="enregistrerQuantite()"
+                    [disabled]="envoi || quantiteSaisie.trim() === ''">
+              <i class="fa fa-check me-2" aria-hidden="true"></i> Enregistrer
+            </button>
+          </ng-container>
+
+          <hr>
+          <p class="cp-note">Les produits non comptés ne changent pas. Les ventes faites pendant le comptage restent justes.</p>
+          <button type="button" class="btn btn-success btn-lg w-100 mb-2" (click)="valider()" [disabled]="envoi || !c.nbComptes">
+            <i class="fa fa-check-double me-2" aria-hidden="true"></i> Valider et corriger le stock
+          </button>
+          <button type="button" class="btn btn-outline-danger w-100" (click)="abandonner()" [disabled]="envoi">Abandonner</button>
+        </div>
+
+        <!-- Produits comptés -->
+        <div class="cp-carte">
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+            <h2 class="cp-titre mb-0">Produits comptés</h2>
+            <div class="btn-group btn-group-sm" role="group" aria-label="Filtrer">
+              <button type="button" class="btn" [class.btn-primary]="filtreLignes === 'tous'" [class.btn-outline-primary]="filtreLignes !== 'tous'"
+                      (click)="filtreLignes = 'tous'" [attr.aria-pressed]="filtreLignes === 'tous'">Tous ({{ c.nbComptes }})</button>
+              <button type="button" class="btn" [class.btn-primary]="filtreLignes === 'ecarts'" [class.btn-outline-primary]="filtreLignes !== 'ecarts'"
+                      (click)="filtreLignes = 'ecarts'" [attr.aria-pressed]="filtreLignes === 'ecarts'">Écarts ({{ c.nbEcarts }})</button>
+            </div>
+          </div>
+          <p class="text-muted small mb-0" *ngIf="!lignesAffichees.length">Aucun produit pour l'instant.</p>
+          <div class="table-responsive" *ngIf="lignesAffichees.length">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Produit</th>
+                  <th class="text-end">Enregistré</th>
+                  <th class="text-end">Compté</th>
+                  <th class="text-end">Écart</th>
+                  <th class="text-end">Valeur</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let l of lignesAffichees" [class.cp-gros]="grosEcart(l)">
+                  <td>
+                    <strong>{{ l.produitNom }}</strong>
+                    <div class="small text-danger" *ngIf="grosEcart(l)"><i class="fa fa-exclamation-triangle"></i> Gros écart : à vérifier</div>
+                  </td>
+                  <td class="text-end">{{ qte(l.produitId, l.stockAuComptage) }}</td>
+                  <td class="text-end fw-semibold">{{ qte(l.produitId, l.quantiteComptee) }}</td>
+                  <td class="text-end">
+                    <span class="badge" [class.bg-success]="l.ecart === 0" [class.bg-danger]="l.ecart < 0" [class.bg-warning]="l.ecart > 0"
+                          [class.text-dark]="l.ecart > 0">{{ ecartTexte(l) }}</span>
+                  </td>
+                  <td class="text-end" [class.text-danger]="l.valeurEcart < 0" [class.text-success]="l.valeurEcart > 0">
+                    {{ l.ecart !== 0 ? money(l.valeurEcart) : '—' }}
+                  </td>
+                  <td class="text-end text-nowrap">
+                    <button type="button" class="btn btn-sm btn-outline-primary me-1" (click)="recompter(l)" title="Recompter">
+                      <i class="fa fa-redo"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-danger" (click)="retirer(l)" title="Retirer du comptage">
+                      <i class="fa fa-times"></i>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+  </ng-container>
+</div>

@@ -1,0 +1,166 @@
+<div class="container-fluid py-4 app-page roles-page">
+  <div class="app-page-header mb-4">
+    <div class="app-page-header-left">
+      <div class="app-page-icon"><i class="fa fa-user-shield" aria-hidden="true"></i></div>
+      <div>
+        <h1 class="app-page-title">Rôles et permissions</h1>
+        <p class="app-page-subtitle">Choisissez ce que chaque rôle peut voir et faire dans la boutique</p>
+      </div>
+    </div>
+    <div class="app-page-header-actions">
+      <button type="button" class="btn btn-primary-action" (click)="nouveauRole()" [disabled]="chargement">
+        <i class="fa fa-plus mr-1" aria-hidden="true"></i> Nouveau rôle
+      </button>
+    </div>
+  </div>
+
+  <!-- Chargement -->
+  <div class="roles-etat" *ngIf="chargement">
+    <div class="spinner-border text-primary" role="status"></div>
+    <p>Chargement des rôles…</p>
+  </div>
+
+  <!-- Erreur -->
+  <div class="roles-etat" *ngIf="!chargement && erreur">
+    <i class="fa fa-triangle-exclamation text-danger" aria-hidden="true"></i>
+    <p>{{ erreur }}</p>
+    <button type="button" class="btn btn-outline-primary btn-sm" (click)="charger()">Réessayer</button>
+  </div>
+
+  <ng-container *ngIf="!chargement && !erreur">
+    <div class="roles-layout">
+      <!-- Liste des rôles -->
+      <aside class="roles-liste" aria-label="Rôles de la boutique">
+        <button type="button" *ngFor="let r of roles" class="role-item"
+                [class.actif]="brouillon?.id === r.id" (click)="selectionner(r)">
+          <span class="role-item-icone" [class.gerant]="r.roleBase === 'ADMIN'">
+            <i class="fa" [ngClass]="r.verrouille ? 'fa-crown' : (r.roleBase === 'ADMIN' ? 'fa-user-tie' : 'fa-user')" aria-hidden="true"></i>
+          </span>
+          <span class="role-item-texte">
+            <span class="role-item-nom">{{ r.nom }}</span>
+            <span class="role-item-meta">{{ libelleBase(r.roleBase) }} · {{ r.nombreUtilisateurs }} pers.</span>
+          </span>
+          <i *ngIf="r.verrouille" class="fa fa-lock role-item-lock" title="Tous les droits, non modifiable" aria-label="Verrouillé"></i>
+        </button>
+        <button type="button" class="role-item role-item-nouveau" *ngIf="brouillon && !brouillon.id" [class.actif]="true">
+          <span class="role-item-icone"><i class="fa fa-plus" aria-hidden="true"></i></span>
+          <span class="role-item-texte"><span class="role-item-nom">{{ brouillon.nom || 'Nouveau rôle' }}</span>
+            <span class="role-item-meta">Pas encore enregistré</span></span>
+        </button>
+      </aside>
+
+      <!-- Éditeur -->
+      <section class="roles-editeur app-table-card" *ngIf="brouillon">
+        <div class="editeur-entete">
+          <div class="row">
+            <div class="col-md-6 form-group">
+              <label for="role-nom">Nom du rôle</label>
+              <input id="role-nom" class="form-control" [(ngModel)]="brouillon.nom" maxlength="60"
+                     placeholder="ex : Caissier, Magasinier" [disabled]="brouillon.systeme">
+            </div>
+            <div class="col-md-6 form-group">
+              <label for="role-desc">Description <span class="text-muted">(facultatif)</span></label>
+              <input id="role-desc" class="form-control" [(ngModel)]="brouillon.description" maxlength="255"
+                     placeholder="ex : encaisse les ventes" [disabled]="brouillon.systeme">
+            </div>
+          </div>
+
+          <div class="base-choix" role="radiogroup" aria-label="Rôle de base" *ngIf="!brouillon.systeme">
+            <span class="base-label">Ce rôle est basé sur :</span>
+            <button type="button" class="base-option" role="radio" [attr.aria-checked]="brouillon.roleBase === 'VENDEUR'"
+                    [class.actif]="brouillon.roleBase === 'VENDEUR'" (click)="changerBase('VENDEUR')">
+              <i class="fa fa-user" aria-hidden="true"></i> Vendeur
+            </button>
+            <button type="button" class="base-option" role="radio" [attr.aria-checked]="brouillon.roleBase === 'ADMIN'"
+                    [class.actif]="brouillon.roleBase === 'ADMIN'" (click)="changerBase('ADMIN')">
+              <i class="fa fa-user-tie" aria-hidden="true"></i> Gérant
+            </button>
+          </div>
+
+          <p class="editeur-aide" *ngIf="brouillon.verrouille">
+            <i class="fa fa-lock" aria-hidden="true"></i>
+            Le rôle Gérant garde toujours tous les droits, pour que la boutique ne puisse jamais se bloquer elle-même.
+          </p>
+          <p class="editeur-aide" *ngIf="!brouillon.verrouille">
+            <i class="fa fa-circle-info" aria-hidden="true"></i>
+            <ng-container *ngIf="brouillon.roleBase === 'VENDEUR'">Un rôle basé sur Vendeur ne dépasse jamais les droits d'un vendeur : on peut seulement en retirer.</ng-container>
+            <ng-container *ngIf="brouillon.roleBase === 'ADMIN'">Un rôle basé sur Gérant donne accès aux pages de gestion : ne cochez que le nécessaire.</ng-container>
+          </p>
+        </div>
+
+        <div class="matrice-outils" *ngIf="!brouillon.verrouille">
+          <span class="app-table-count">{{ nombreDroits }} droit(s) coché(s)</span>
+          <div>
+            <button type="button" class="btn btn-sm btn-light mr-2" (click)="toutCocher(true)">Tout cocher</button>
+            <button type="button" class="btn btn-sm btn-light" (click)="toutCocher(false)">Tout décocher</button>
+          </div>
+        </div>
+
+        <!-- Tableau des droits (bureau) / cartes (téléphone) -->
+        <div class="matrice" role="table" aria-label="Droits du rôle">
+          <div class="matrice-ligne matrice-titres" role="row">
+            <span role="columnheader">Partie de l'application</span>
+            <span role="columnheader" *ngFor="let a of actions" class="text-center">{{ libellesActions[a] }}</span>
+          </div>
+          <div class="matrice-ligne" role="row" *ngFor="let m of modulesAffiches" [class.vide]="!coche(m, 'VOIR')">
+            <span role="rowheader" class="matrice-module">
+              <button type="button" class="matrice-module-btn" (click)="basculerLigne(m)" [disabled]="brouillon.verrouille"
+                      [attr.aria-label]="(ligneComplete(m) ? 'Tout retirer pour ' : 'Tout donner pour ') + m.libelle">
+                {{ m.libelle }}
+              </button>
+            </span>
+            <span role="cell" *ngFor="let a of actions" class="matrice-case">
+              <label *ngIf="aAction(m, a)" class="case" [class.coche]="coche(m, a)" [class.bloque]="brouillon.verrouille">
+                <input type="checkbox" [checked]="coche(m, a)" (change)="basculer(m, a)" [disabled]="brouillon.verrouille"
+                       [attr.aria-label]="libellesActions[a] + ' — ' + m.libelle">
+                <span class="case-visuel" aria-hidden="true"><i class="fa fa-check"></i></span>
+                <span class="case-texte">{{ libellesActions[a] }}</span>
+              </label>
+              <span *ngIf="!aAction(m, a)" class="case-na" title="Consultation uniquement">—</span>
+            </span>
+          </div>
+        </div>
+
+        <div class="editeur-actions" *ngIf="!brouillon.verrouille">
+          <button type="button" class="btn btn-outline-danger" *ngIf="brouillon.id && !brouillon.systeme" (click)="supprimer()">
+            <i class="fa fa-trash mr-1" aria-hidden="true"></i> Supprimer
+          </button>
+          <span class="flex-spacer"></span>
+          <button type="button" class="btn btn-light" (click)="annuler()">Annuler</button>
+          <button type="button" class="btn btn-primary" (click)="enregistrer()" [disabled]="enregistrement">
+            <span *ngIf="enregistrement" class="spinner-border spinner-border-sm mr-1"></span>
+            Enregistrer le rôle
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <!-- Attribution -->
+    <section class="app-table-card mt-4">
+      <div class="app-table-header">
+        <h2 class="app-table-title">Qui a quel rôle ?</h2>
+        <span class="app-table-count">{{ personnes.length }} personne(s)</span>
+      </div>
+      <div class="app-empty-state text-center py-4 text-muted" *ngIf="!personnes.length">
+        Aucune autre personne dans la boutique pour le moment.
+      </div>
+      <ul class="personnes" *ngIf="personnes.length">
+        <li *ngFor="let p of personnes" class="personne">
+          <span class="personne-avatar" aria-hidden="true">{{ (p.nomComplet || p.username).charAt(0) | uppercase }}</span>
+          <span class="personne-texte">
+            <span class="personne-nom">{{ p.nomComplet }}</span>
+            <span class="personne-meta">{{ p.username }}<ng-container *ngIf="!p.actif"> · compte gelé</ng-container></span>
+          </span>
+          <span class="personne-role">
+            <label class="sr-only" [attr.for]="'role-' + p.id">Rôle de {{ p.nomComplet }}</label>
+            <select class="form-control form-control-sm" [id]="'role-' + p.id" [ngModel]="roleDe(p)"
+                    (ngModelChange)="attribuer(p, $event)" [disabled]="attributionEnCours === p.id">
+              <option *ngFor="let r of roles" [ngValue]="r.id">{{ r.nom }}</option>
+            </select>
+          </span>
+        </li>
+      </ul>
+      <p class="personnes-note">Votre propre rôle ne peut pas être changé ici. Le changement s'applique dès la prochaine action de la personne.</p>
+    </section>
+  </ng-container>
+</div>

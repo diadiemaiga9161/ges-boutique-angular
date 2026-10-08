@@ -6,7 +6,8 @@ import { filter } from 'rxjs/operators';
 import {
   VitrineInfoDto,
   VitrineProduitDto,
-  VitrineService
+  VitrineService,
+  VitrineSuivi
 } from '../../../shared/services/vitrine.service';
 import { COUNTRY_CODES, construireNumeroComplet, validatePhoneForCountry } from '../../../shared/utils/telephone.util';
 
@@ -14,6 +15,25 @@ interface LignePanier {
   produit: VitrineProduitDto;
   quantite: number;
 }
+
+/** Coordonnées gardées sur l'appareil du client (rien sur le serveur). */
+interface ClientMemorise {
+  nom: string;
+  prenom: string;
+  countryCode: string;
+  telephoneLocal: string;
+  adresseLivraison: string;
+}
+
+/** Commande à suivre : son numéro + le téléphone utilisé (le serveur vérifie les deux). */
+interface CommandeMemorisee {
+  numero: string;
+  telephone: string;
+}
+
+const CLE_CLIENT = 'vitrine_client';
+const CLE_COMMANDES = 'vitrine_commandes';
+const MAX_COMMANDES_SUIVIES = 20;
 
 @Component({
   selector: 'app-vitrine',
@@ -50,6 +70,24 @@ export class VitrineComponent implements OnInit, OnDestroy {
   // ── Confirmation ────────────────────────────────────────────────────────
   commandeConfirmee: string | null = null;
 
+  // ── Photos des produits (si la boutique les a activées) ─────────────────
+  photoAgrandie: VitrineProduitDto | null = null;
+
+  urlPhoto(p: VitrineProduitDto, taille: 'mini' | 'grande' = 'mini'): string | null {
+    return p.imageVersion ? `/api/public/produits/${p.id}/image?taille=${taille}&v=${p.imageVersion}` : null;
+  }
+
+  agrandirPhoto(p: VitrineProduitDto): void { if (p.imageVersion) this.photoAgrandie = p; }
+  fermerPhoto(): void { this.photoAgrandie = null; }
+
+  // ── Client mémorisé + « Mes commandes » (sans compte) ───────────────────
+  clientMemorise = false;
+  commandesMemorisees: CommandeMemorisee[] = [];
+  mesCommandesOuvert = false;
+  chargementSuivi = false;
+  erreurSuivi = '';
+  suivi: VitrineSuivi[] = [];
+
   // ── Installation sur l'écran d'accueil ─────────────────────────────────
   peutInstaller = false;
   estInstalle = false;
@@ -66,6 +104,8 @@ export class VitrineComponent implements OnInit, OnDestroy {
   constructor(private vitrineService: VitrineService, private swUpdate: SwUpdate) {}
 
   ngOnInit(): void {
+    this.lireClientMemorise();
+    this.commandesMemorisees = this.lireStockage<CommandeMemorisee[]>(CLE_COMMANDES) || [];
     this.chargerInfos();
     this.chargerProduits();
     this.rechargerSiNouvelleVersion();
@@ -391,8 +431,12 @@ export class VitrineComponent implements OnInit, OnDestroy {
         this.formulaireOuvert = false;
         this.commandeConfirmee = rep.numeroCommande || 'envoyée';
         this.panier = [];
-        this.form = { nom: '', prenom: '', telephone: '', notes: '', adresseLivraison: '' };
-        this.telephoneLocal = '';
+        this.memoriserClient();
+        if (rep.numeroCommande) {
+          this.memoriserCommande(rep.numeroCommande, construireNumeroComplet(this.selectedCountryCode, this.telephoneLocal));
+        }
+        // Coordonnées gardées pour la prochaine fois ; seule la remarque est vidée.
+        this.form.notes = '';
       },
       error: (e) => {
         this.envoiEnCours = false;
@@ -402,4 +446,114 @@ export class VitrineComponent implements OnInit, OnDestroy {
   }
 
   fermerConfirmation(): void { this.commandeConfirmee = null; }
+
+  // ── Client mémorisé (sur l'appareil seulement) ──────────────────────────
+
+  private lireClientMemorise(): void {
+    const c = this.lireStockage<ClientMemorise>(CLE_CLIENT);
+    if (!c) return;
+    this.form.nom = c.nom || '';
+    this.form.prenom = c.prenom || '';
+    this.form.adresseLivraison = c.adresseLivraison || '';
+    if (c.countryCode) this.selectedCountryCode = c.countryCode;
+    this.telephoneLocal = c.telephoneLocal || '';
+    this.clientMemorise = true;
+  }
+
+  private memoriserClient(): void {
+    this.ecrireStockage<ClientMemorise>(CLE_CLIENT, {
+      nom: this.form.nom.trim(),
+      prenom: this.form.prenom.trim(),
+      countryCode: this.selectedCountryCode,
+      telephoneLocal: this.telephoneLocal.trim(),
+      adresseLivraison: this.form.adresseLivraison.trim()
+    });
+    this.clientMemorise = true;
+  }
+
+  /** Téléphone partagé : efface les coordonnées ET la liste des commandes de l'appareil. */
+  oublierClient(): void {
+    this.supprimerStockage(CLE_CLIENT);
+    this.supprimerStockage(CLE_COMMANDES);
+    this.form = { nom: '', prenom: '', telephone: '', notes: this.form.notes, adresseLivraison: '' };
+    this.telephoneLocal = '';
+    this.clientMemorise = false;
+    this.commandesMemorisees = [];
+    this.suivi = [];
+    this.mesCommandesOuvert = false;
+  }
+
+  private memoriserCommande(numero: string, telephone: string): void {
+    this.commandesMemorisees = [{ numero, telephone }, ...this.commandesMemorisees.filter(c => c.numero !== numero)]
+      .slice(0, MAX_COMMANDES_SUIVIES);
+    this.ecrireStockage(CLE_COMMANDES, this.commandesMemorisees);
+  }
+
+  // ── « Mes commandes » ───────────────────────────────────────────────────
+
+  ouvrirMesCommandes(): void {
+    this.commandeConfirmee = null;
+    this.mesCommandesOuvert = true;
+    this.chargerSuivi();
+  }
+
+  fermerMesCommandes(): void { this.mesCommandesOuvert = false; }
+
+  chargerSuivi(): void {
+    if (!this.commandesMemorisees.length) { this.suivi = []; return; }
+    // Une demande par téléphone utilisé (en général un seul).
+    const parTelephone = new Map<string, string[]>();
+    for (const c of this.commandesMemorisees) {
+      parTelephone.set(c.telephone, [...(parTelephone.get(c.telephone) || []), c.numero]);
+    }
+    this.chargementSuivi = true;
+    this.erreurSuivi = '';
+    const resultats: VitrineSuivi[] = [];
+    let restant = parTelephone.size;
+    const fin = () => {
+      if (--restant > 0) return;
+      this.suivi = resultats.sort((x, y) => (y.dateCommande || '').localeCompare(x.dateCommande || ''));
+      this.chargementSuivi = false;
+    };
+    parTelephone.forEach((numeros, telephone) => {
+      this.vitrineService.suivreCommandes(telephone, numeros).subscribe({
+        next: liste => resultats.push(...liste),
+        error: e => { this.erreurSuivi = e?.message || 'Impossible de charger vos commandes.'; fin(); },
+        complete: () => fin()
+      });
+    });
+  }
+
+  /** Étape affichée au client : Reçue → Confirmée → Prête → Livrée (ou Annulée). */
+  etatSuivi(c: VitrineSuivi): string {
+    if (c.statut === 'VALIDEE' && c.etapeLivraison) return c.etapeLivraison;
+    return c.statut;
+  }
+
+  libelleStatut(c: VitrineSuivi): string {
+    switch (this.etatSuivi(c)) {
+      case 'LIVREE': return 'Livrée';
+      case 'PRETE': return 'Prête';
+      case 'VALIDEE': return 'Confirmée par la boutique';
+      case 'ANNULEE': return 'Annulée';
+      default: return 'Reçue — en attente de la boutique';
+    }
+  }
+
+  // ── Stockage sur l'appareil (peut être bloqué : navigation privée…) ─────
+
+  private lireStockage<T>(cle: string): T | null {
+    try {
+      const brut = localStorage.getItem(cle);
+      return brut ? JSON.parse(brut) as T : null;
+    } catch { return null; }
+  }
+
+  private ecrireStockage<T>(cle: string, valeur: T): void {
+    try { localStorage.setItem(cle, JSON.stringify(valeur)); } catch { /* stockage indisponible */ }
+  }
+
+  private supprimerStockage(cle: string): void {
+    try { localStorage.removeItem(cle); } catch { /* stockage indisponible */ }
+  }
 }

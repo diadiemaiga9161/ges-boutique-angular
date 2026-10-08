@@ -28,18 +28,22 @@ import { DesignFacture, FactureDesignService } from '../../../shared/services/fa
 import { ProduitNiveau, ProduitNiveauService } from '../../../shared/services/produit-niveau.service';
 import { UniteVente, UniteVenteService } from '../../../shared/services/unite-vente.service';
 import { BoutiqueService } from '../../../shared/services/boutique.service';
+import { TutorielDemarrageService } from '../../../shared/services/tutoriel-demarrage.service';
 import { OfflineService } from '../../../shared/services/offline.service';
 import { FideliteService, ParametresFidelite, SoldeFidelite } from '../../../shared/services/fidelite.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { annoncerMontantVente } from '../../../shared/utils/confirmation-vocale.util';
 import { MontantInputDirective } from '../../../shared/directives/montant-input.directive';
+import { PeseeModalComponent } from '../../../shared/components/pesee/pesee-modal.component';
+import { ProduitImageService } from '../../../shared/services/produit-image.service';
+import { infoMesure, lireNombre, prixAffiche, prixStocke, qteAffichee, qteDoc, qteStockee, texteQte } from '../../../shared/utils/mesure.util';
 
 @Component({
   selector: 'app-ventes',
   templateUrl: './ventes.component.html',
   styleUrls: ['./ventes.component.scss'],
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule, MontantInputDirective]
+  imports: [CommonModule, FormsModule, TranslateModule, MontantInputDirective, PeseeModalComponent]
 })
 export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('modalBackdrop') modalBackdrop!: ElementRef;
@@ -197,6 +201,7 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
     prixUnitaire: number;
     quantite: number;
     ancienProduitId?: number;
+    modeMesure?: string | null;
   }> = [];
   modificationMotif: string = '';
   isModificationLoading: boolean = false;
@@ -212,6 +217,7 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
     quantiteMax: number;
     quantiteRetournee: number;
     selected: boolean;
+    modeMesure?: string | null;
   }[] = [];
   retourVenteMotif: string = '';
 
@@ -253,7 +259,161 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
     niveauPrixAchat?: number;
     niveauFacteurTotal?: number;
     niveauStockMax?: number;
+    /** Vente à la mesure : 'KG' | 'L' | 'M' (quantite en g/ml/cm, prix par g/ml/cm). */
+    modeMesure?: string | null;
   }> = [];
+
+  // ==================== VENTE À LA MESURE (kg, L, m) ====================
+  // Produit vendu au poids/volume/longueur : la fenêtre de pesée remplace le +1 habituel.
+  peseeProduit: Produit | null = null;
+  peseeIndex = -1;
+
+  /** Photo d'une ligne du panier (la ligne ne garde que l'id : on cherche le produit). */
+  photoPanier(ligne: { id: number }): string | null {
+    const p = this.produits.find(x => x.id === ligne.id) || (this as any).tousProduits?.find((x: any) => x.id === ligne.id);
+    return this.photos.url(p);
+  }
+
+  estMesure(p: { modeMesure?: string | null } | null | undefined): boolean {
+    return !!infoMesure(p);
+  }
+
+  uniteMesure(p: { modeMesure?: string | null } | null | undefined): string {
+    return infoMesure(p)?.unite || '';
+  }
+
+  /** "1,25 kg" pour un produit à la mesure, sinon le nombre tel quel. */
+  texteQuantite(p: { modeMesure?: string | null } | null | undefined, quantite: number): string {
+    return texteQte(p, quantite);
+  }
+
+  /** Prix catalogue lisible : "600 F/kg" pour la mesure. */
+  prixCatalogue(p: Produit): string {
+    const info = infoMesure(p as any);
+    return info ? `${this.formatPrice(prixAffiche(p as any, p.prixVente))}/${info.unite}` : this.formatPrice(p.prixVente);
+  }
+
+  /** Stock lisible dans la liste des produits à vendre. */
+  stockCatalogue(p: Produit): string {
+    return infoMesure(p as any) ? texteQte(p as any, this.getStockAfficheProduit(p)) : String(this.getStockAfficheProduit(p));
+  }
+
+  private ouvrirPesee(produit: Produit): void {
+    this.peseeIndex = this.produitsPanier.findIndex(p => p.id === produit.id && !p.niveauId);
+    this.peseeProduit = produit;
+    this.cdr.detectChanges();
+  }
+
+  /** Bouton "1,25 kg ✎" d'une ligne du panier. */
+  modifierPesee(index: number): void {
+    const ligne = this.produitsPanier[index];
+    if (!ligne) return;
+    const produit = this.produits.find(p => p.id === ligne.id)
+      || ({ id: ligne.id, nom: ligne.nom, prixVente: ligne.prixVente, quantite: ligne.quantiteDisponible, modeMesure: ligne.modeMesure } as any);
+    this.peseeIndex = index;
+    this.peseeProduit = produit;
+    this.cdr.detectChanges();
+  }
+
+  get peseeQuantiteInitiale(): number | null {
+    return this.peseeIndex >= 0 ? (this.getActiveLignes()[this.peseeIndex]?.quantite ?? null) : null;
+  }
+
+  get peseeMaximum(): number | null {
+    return this.peseeIndex >= 0 ? this.getMaxQuantite(this.peseeIndex) : null;
+  }
+
+  validerPesee(resultat: { quantite: number; montant: number | null }): void {
+    const produit = this.peseeProduit;
+    if (!produit) return;
+    const quantite = resultat.quantite;
+    // "Pour 500 F" : le poids est arrondi au gramme, on ajuste donc le prix au gramme pour
+    // que la ligne fasse exactement la somme demandée par le client.
+    const prix = resultat.montant && quantite > 0 ? resultat.montant / quantite : null;
+    if (this.peseeIndex >= 0) {
+      this.updateQuantite(this.peseeIndex, quantite);
+      if (prix != null) this.updatePrixUnitaire(this.peseeIndex, prix);
+    } else {
+      const prixLigne = prix ?? produit.prixVente;
+      this.venteForm.lignes.push({ produitId: produit.id, quantite, prixUnitaire: prixLigne });
+      this.creditForm.lignes.push({ produitId: produit.id, quantite, prixUnitaire: prixLigne });
+      this.produitsPanier.push({
+        id: produit.id,
+        nom: produit.nom,
+        prixAchat: produit.prixAchat || 0,
+        prixVente: produit.prixVente,
+        prixModifie: prixLigne,
+        quantite,
+        quantiteDisponible: produit.quantite,
+        codeBarre: produit.codeBarre,
+        modifierPrix: false,
+        categorie: produit.categorie,
+        modeMesure: (produit as any).modeMesure
+      });
+    }
+    this.fermerPesee();
+    this.searchProduit = '';
+  }
+
+  fermerPesee(): void {
+    this.peseeProduit = null;
+    this.peseeIndex = -1;
+    this.cdr.detectChanges();
+  }
+
+  /** Prix unitaire affiché dans le panier (au kg pour la mesure). */
+  prixPanierAffiche(index: number): number {
+    return prixAffiche(this.produitsPanier[index], this.getPrixUnitaireActuel(index));
+  }
+
+  /** Mode de mesure d'une ligne de vente déjà enregistrée (DTO ou entité). */
+  private mesureLigne(l: any): { modeMesure?: string | null } {
+    return { modeMesure: l?.modeMesure ?? l?.produit?.modeMesure ?? null };
+  }
+
+  /** Quantité lisible d'une ligne de vente enregistrée ("1,25 kg" ou "3"). */
+  qteLigne(l: any): string {
+    return texteQte(this.mesureLigne(l), l?.quantite);
+  }
+
+  /** Prix unitaire lisible d'une ligne enregistrée ("600 F/kg" ou "900 F"). */
+  puLigne(l: any, prix?: number): string {
+    const m = this.mesureLigne(l);
+    const info = infoMesure(m);
+    const p = prix ?? l?.prixUnitaire ?? 0;
+    return info ? `${this.formatPrice(prixAffiche(m, p))}/${info.unite}` : this.formatPrice(p);
+  }
+
+  /** Retour d'une ligne à la mesure : saisie en kg, stockée en g. */
+  qteRetourAffichee(ligne: any): number {
+    return qteAffichee(ligne, ligne.quantiteRetournee);
+  }
+
+  majQteRetour(ligne: any, valeur: any): void {
+    ligne.quantiteRetournee = Math.min(ligne.quantiteMax, qteStockee(ligne, lireNombre(valeur)));
+  }
+
+  /** Correction d'une vente : ligne à la mesure saisie en kg et prix au kg. */
+  majQteModification(ligne: any, valeur: any): void {
+    ligne.quantite = qteStockee(ligne, lireNombre(valeur));
+  }
+
+  majPrixModification(ligne: any, valeur: any): void {
+    ligne.prixUnitaire = prixStocke(ligne, lireNombre(valeur));
+  }
+
+  qteAfficheeLigne(ligne: any): number {
+    return qteAffichee(ligne, ligne.quantite);
+  }
+
+  prixAfficheLigne(ligne: any): number {
+    return Math.round(prixAffiche(ligne, ligne.prixUnitaire) * 100) / 100;
+  }
+
+  onPrixMesureChange(index: number, event: Event): void {
+    const v = parseFloat((event.target as HTMLInputElement).value);
+    this.updatePrixUnitaire(index, prixStocke(this.produitsPanier[index], isNaN(v) ? 0 : v));
+  }
 
   // Conditionnement niveaux
   showNiveauModal: boolean = false;
@@ -317,10 +477,12 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
 
   // ==================== CHARGEMENT PROGRESSIF (perf) ====================
   // Par défaut on ne charge que les ventes du jour (endpoint dédié, rapide).
-  // Dès que l'utilisateur touche un filtre (recherche, date, semaine, mois...)
-  // on charge une seule fois l'historique complet puis on filtre côté client
-  // comme avant — évite de tout charger à chaque ouverture de page.
-  donneesCompletesChargees: boolean = false;
+  // Dès que l'utilisateur touche un filtre de date/période, on charge UNIQUEMENT
+  // cette période précise (/ventes/periode) — jamais tout l'historique d'un coup
+  // (règle explicite, 22/09/2026). La recherche texte / mode paiement / type de
+  // vente / heure filtrent ensuite côté client, mais seulement à l'intérieur de
+  // la période déjà chargée : voir filteredVentes ci-dessous.
+  private periodeChargee: string = '';
 
   constructor(
     private venteService: VenteService,
@@ -336,8 +498,33 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
     private boutiqueService: BoutiqueService,
     private offlineService: OfflineService,
     private fideliteService: FideliteService,
-    private translate: TranslateService
+    private translate: TranslateService,
+    private tutorielDemarrage: TutorielDemarrageService,
+    public photos: ProduitImageService
   ) {}
+
+  // Étape 2 du tuto de démarrage : boutique avec des produits mais aucune vente
+  // encore faite — jamais bloquant, fermable, disparaît dès la première vraie vente.
+  private readonly CLE_TUTO_VENTE_FERME = 'tuto_demarrage_vente_ferme';
+  tutoVenteFerme = (() => {
+    try { return localStorage.getItem(this.CLE_TUTO_VENTE_FERME) === '1'; } catch { return false; }
+  })();
+  boutiqueADesVentes = true; // optimiste par défaut, corrigé après vérification (évite un flash)
+  venteDemoEnCours = false; // vraie que si la vente en cours vient du bouton du tuto — jamais déclenché sur une vente normale
+
+  get afficherTutoPremiereVente(): boolean {
+    return this.allProduits.length > 0 && !this.boutiqueADesVentes && !this.tutoVenteFerme;
+  }
+
+  fermerTutoPremiereVente(): void {
+    this.tutoVenteFerme = true;
+    try { localStorage.setItem(this.CLE_TUTO_VENTE_FERME, '1'); } catch { /* sans conséquence */ }
+  }
+
+  demarrerVenteDemo(): void {
+    this.venteDemoEnCours = true;
+    this.openNewVenteModal();
+  }
 
   ngOnInit(): void {
     this.design = this.designService.getDesign();
@@ -347,6 +534,11 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
     this.loadClients();
     this.subscribeToUser();
     this.loadVentesAnnulees();
+
+    this.tutorielDemarrage.verifierSiVentesExistantes().subscribe(aDesVentes => {
+      this.boutiqueADesVentes = aDesVentes;
+      this.cdr.detectChanges();
+    });
 
     // Temps réel : rafraîchir automatiquement à chaque nouvelle vente / règlement
     const wsSub = this.ws.subscribeTopic('/topic/ventes').subscribe(() => {
@@ -479,10 +671,10 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
     this.errorMessage = '';
 
     // Par défaut, ne charger que les ventes du jour pour ne pas ralentir
-    // l'ouverture de la page — voir applyFilters()/chargerToutSiBesoin()
-    // pour le chargement complet à la demande dès qu'un filtre est utilisé.
+    // l'ouverture de la page — voir applyFilters()/chargerPeriodeSiBesoin()
+    // pour le chargement (borné à la période demandée) dès qu'un filtre est utilisé.
     this.showTodayOnly = true;
-    this.donneesCompletesChargees = false;
+    this.periodeChargee = '';
     this.dateDebut = this.today;
     this.dateFin = this.today;
     this.loadVentesDuJour();
@@ -511,44 +703,30 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
     });
   }
 
-  loadAllVentes(): void {
-    this.venteService.getVentesParType().subscribe({
-      next: (response: VentesParTypeResponse) => {
-        this.ventes = response.toutes || [];
-        this.ventesComptant = response.comptant || [];
-        this.ventesCredit = response.credit || [];
-        this.donneesCompletesChargees = true;
-        this.calculerRevenus();
-        this.isLoading = false;
-        this.cdr.detectChanges();
-      },
-      error: (error: Error) => {
-        this.errorMessage = error.message;
-        this.isLoading = false;
-        this.cdr.detectChanges();
-      }
-    });
-  }
-
   /**
-   * Charge l'historique complet une seule fois (mis en cache via
-   * donneesCompletesChargees) puis exécute `after`. Utilisé par tous les
-   * filtres (recherche, date, semaine, mois...) car le chargement par défaut
-   * ne contient que les ventes du jour.
+   * Charge UNIQUEMENT la période demandée (dateDebut/dateFin) puis exécute
+   * `after`. Utilisé par tous les filtres (recherche, date, semaine, mois...).
+   * Ne recharge le serveur que si la période a changé depuis le dernier appel —
+   * taper dans la recherche ou changer le mode de paiement ne redemande rien
+   * au serveur, ça filtre juste `this.ventes` déjà en mémoire (voir
+   * filteredVentes). Aucune voie ne charge plus tout l'historique d'un coup
+   * (règle explicite, 22/09/2026) : une période reste toujours une vraie borne
+   * de dates, choisie via Aujourd'hui/Semaine/Mois ou un champ de date.
    */
-  private chargerToutSiBesoin(after: () => void): void {
-    if (this.donneesCompletesChargees) {
+  private chargerPeriodeSiBesoin(after: () => void): void {
+    if (!this.dateDebut || !this.dateFin) { after(); return; }
+    const cle = `${this.dateDebut}_${this.dateFin}`;
+    if (cle === this.periodeChargee) {
       after();
       return;
     }
     this.isLoading = true;
     this.cdr.detectChanges();
-    this.venteService.getVentesParType().subscribe({
-      next: (response: VentesParTypeResponse) => {
-        this.ventes = response.toutes || [];
-        this.ventesComptant = response.comptant || [];
-        this.ventesCredit = response.credit || [];
-        this.donneesCompletesChargees = true;
+    this.venteService.getVentesParPeriode(this.dateDebut, this.dateFin).subscribe({
+      next: (ventes: VenteMap[]) => {
+        this.ventes = ventes || [];
+        this.periodeChargee = cle;
+        this.separerVentesParType();
         this.calculerRevenus();
         this.isLoading = false;
         after();
@@ -1297,7 +1475,7 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
             }
           }
           
-          console.log(`✅ Stock mis à jour: ${produit.nom} -> ${ancienStock} → ${produit.quantite}`);
+          console.log(`✅ Stock mis à jour: ${produit.nom} -> ${ancienStock} → ${qteDoc(produit)}`);
         }
         
         // Mettre à jour dans allProduits (tous les produits)
@@ -1486,6 +1664,12 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
       this.errorMessage = `❌ Stock épuisé pour ${produit.nom}`;
       this.cdr.detectChanges();
       setTimeout(() => this.errorMessage = '', 3000);
+      return;
+    }
+
+    // Vente à la mesure : on demande le poids (ou le montant) au lieu d'ajouter 1.
+    if (infoMesure(produit as any)) {
+      this.ouvrirPesee(produit);
       return;
     }
 
@@ -2098,6 +2282,38 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
     this.isLoading = false;
     this.cdr.detectChanges();
 
+    // Étape 2 du tuto de démarrage : cette vente était la vente de démonstration
+    // (déclenchée uniquement via demarrerVenteDemo()) — on l'annule tout de suite
+    // pour qu'elle n'apparaisse jamais dans la caisse/bénéfices/rapports réels,
+    // et on saute l'annonce vocale + le téléchargement PDF qui n'ont pas de sens ici.
+    if (this.venteDemoEnCours) {
+      this.venteDemoEnCours = false;
+      this.tutorielDemarrage.marquerBoutiqueADesVentes();
+      this.boutiqueADesVentes = true;
+      this.venteService.annulerVente(vente.id, 'Vente de démonstration — tutoriel').subscribe({
+        next: () => {
+          this.loadData();
+          this.loadVentesAnnulees();
+          Swal.fire({
+            icon: 'success',
+            title: 'Tuto terminé !',
+            text: 'Cette vente était un exemple : elle vient d\'être annulée automatiquement et ne compte pas dans ta caisse. Tu peux maintenant faire tes vraies ventes.',
+            confirmButtonColor: '#198754'
+          });
+        },
+        error: () => {
+          // La vente démo reste visible mais annulable manuellement — ne bloque jamais le tuto.
+          Swal.fire({
+            icon: 'success',
+            title: 'Vente enregistrée',
+            text: 'Vente de démonstration enregistrée. Si besoin, annule-la depuis la liste des ventes.',
+            confirmButtonColor: '#198754'
+          });
+        }
+      });
+      return;
+    }
+
     Swal.fire({
       icon: 'success',
       title: 'Vente enregistrée',
@@ -2391,6 +2607,16 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
     return filtered;
   }
 
+  /** true si la liste est vide À CAUSE d'un filtre (recherche, mode, type, heure)
+   *  qui ne trouve rien dans la période chargée — plutôt qu'une vraie journée sans
+   *  vente. La recherche ne porte que sur la période affichée (jamais sur tout
+   *  l'historique) : on guide donc vers l'élargissement de la période au lieu de
+   *  laisser un écran vide sans explication. */
+  get rienTrouveDansLaPeriode(): boolean {
+    return this.filteredVentes.length === 0 && this.ventes.length > 0
+      && !!(this.searchTerm || this.modePaiementFilter || this.typeVenteFilter || this.heureDebut || this.heureFin);
+  }
+
   get paginatedVentes(): VenteMap[] {
     const start = (this.currentPage - 1) * this.itemsPerPage;
     return this.filteredVentes.slice(start, start + this.itemsPerPage);
@@ -2419,8 +2645,9 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
 
   applyFilters(): void {
     // Le chargement par défaut ne contient que les ventes du jour ; dès qu'un
-    // filtre est utilisé on charge l'historique complet une seule fois.
-    this.chargerToutSiBesoin(() => {
+    // filtre de date est utilisé, on ne charge que CETTE période (jamais tout
+    // l'historique — voir chargerPeriodeSiBesoin ci-dessus).
+    this.chargerPeriodeSiBesoin(() => {
       this.currentPage = 1;
       this.cdr.detectChanges();
     });
@@ -2796,7 +3023,7 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
   getProduitsList(vente: VenteMap): string {
     if (!vente.produits || vente.produits.length === 0) return '-';
     return vente.produits.map((p: any) =>
-      `${p.quantite}x ${p.produitNom || 'Produit'}`
+      `${qteDoc(p)} × ${p.produitNom || 'Produit'}`
     ).join(', ');
   }
 
@@ -3297,7 +3524,8 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
       produitNom: l.produitNom,
       prixUnitaire: l.prixUnitaire,
       quantite: l.quantite,
-      ancienProduitId: l.produitId
+      ancienProduitId: l.produitId,
+      modeMesure: (l as any).modeMesure ?? (this.produits.find(p => p.id === l.produitId) as any)?.modeMesure ?? null
     }));
     this.showModificationLignesModal = true;
     this.cdr.detectChanges();
@@ -3321,6 +3549,7 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
       this.modificationLignes[index].produitId = produit.id;
       this.modificationLignes[index].produitNom = produit.nom;
       this.modificationLignes[index].prixUnitaire = produit.prixVente || produit.prixAchat || 0;
+      this.modificationLignes[index].modeMesure = (produit as any).modeMesure ?? null;
     }
   }
 
@@ -3628,7 +3857,8 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
           quantiteDisponible: quantiteDisponible,
           codeBarre: produitComplet?.codeBarre || '',
           modifierPrix: prixUnitaire !== prixCatalogue,
-          categorie: produitComplet?.categorie
+          categorie: produitComplet?.categorie,
+          modeMesure: (produitComplet as any)?.modeMesure ?? produit.produit?.modeMesure ?? produit.modeMesure ?? null
         };
 
         this.produitsPanier.push(nouveauProduitPanier);
@@ -3789,7 +4019,8 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
       prixUnitaire: p.prixApresRemise || p.prixUnitaire || p.prixVente || 0,
       quantiteMax: p.quantite || 1,
       quantiteRetournee: p.quantite || 1,
-      selected: false
+      selected: false,
+      modeMesure: p.modeMesure ?? p.produit?.modeMesure ?? null
     }));
     this.showRetourVenteModal = true;
   }

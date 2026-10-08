@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../shared/services/auth.service';
 import { TutorielVendeurService } from '../../../shared/services/tutoriel-vendeur.service';
+import { TransfertService } from '../../../shared/services/transfert.service';
 import { TranslateModule } from '@ngx-translate/core';
 
 export const COUNTRY_CODES = [
@@ -75,11 +76,13 @@ export class ProfilComponent implements OnInit {
   constructor(
     public authService: AuthService,
     private router: Router,
-    private tutorielVendeurService: TutorielVendeurService
+    private tutorielVendeurService: TutorielVendeurService,
+    private transfertService: TransfertService
   ) {}
 
   ngOnInit(): void {
     this.loadProfile();
+    this.chargerAutresBoutiques();
   }
 
   loadProfile(): void {
@@ -316,6 +319,34 @@ export class ProfilComponent implements OnInit {
 
   logout(): void {
     this.authService.signout();
+  }
+
+  // Liste des autres boutiques (même source que Ionic/React Native) — pour un admin
+  // qui gère plusieurs boutiques. Vient de "Boutiques partenaires" (gérée par
+  // l'utilisateur lui-même depuis Transferts, pas figée dans le code) : ajouter/retirer
+  // une boutique ne demande plus aucun redéploiement. Chaque boutique est un déploiement
+  // séparé : ce n'est pas une bascule instantanée comme sur mobile, juste une vraie
+  // navigation vers l'adresse web de l'autre boutique (l'utilisateur s'y reconnecte normalement).
+  autresBoutiques: { nom: string; url: string }[] = [];
+  showBoutiqueList = false;
+
+  private chargerAutresBoutiques(): void {
+    this.transfertService.getPartenaires().subscribe({
+      next: (partenaires) => {
+        this.autresBoutiques = partenaires
+          .filter(p => p.actif)
+          .map(p => ({ nom: p.nom, url: p.url }));
+      },
+      error: () => { /* silencieux : le bouton reste juste vide, jamais bloquant */ }
+    });
+  }
+
+  toggleBoutiqueList(): void {
+    this.showBoutiqueList = !this.showBoutiqueList;
+  }
+
+  allerVersBoutique(url: string): void {
+    window.location.href = url;
   }
 
   /** Rouvre l'overlay du tutoriel d'accueil vendeur (sans effacer la clé locale "vu"). */

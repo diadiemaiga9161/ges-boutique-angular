@@ -86,6 +86,35 @@
         </div>
       </div>
     </div>
+
+    <!-- Adresse email recevant les sauvegardes — indépendante du toggle ci-dessus, pour
+         pouvoir la préparer avant d'activer ENVOI_SAUVEGARDES_EMAIL. -->
+    <div class="d-flex align-items-center mb-3 mt-5">
+      <i class="fas fa-envelope fa-lg me-2 text-primary"></i>
+      <h4 class="mb-0">Email des sauvegardes</h4>
+    </div>
+    <p class="text-muted mb-4">
+      Adresse qui reçoit une copie de chaque sauvegarde automatique, si "Recevoir les
+      sauvegardes par email" est activée ci-dessus pour cette boutique.
+    </p>
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <div class="row g-2 align-items-end">
+          <div class="col-sm-8">
+            <label class="form-label small text-muted" for="emailSauvegardeInput">Adresse email</label>
+            <input type="email" class="form-control" id="emailSauvegardeInput"
+                   placeholder="proprietaire@exemple.com"
+                   [(ngModel)]="emailSauvegarde" name="emailSauvegarde">
+          </div>
+          <div class="col-sm-4">
+            <button class="btn btn-primary w-100" (click)="enregistrerEmailSauvegarde()" [disabled]="isSavingEmailSauvegarde">
+              <span *ngIf="isSavingEmailSauvegarde" class="spinner-border spinner-border-sm me-1"></span>
+              Enregistrer
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
 </div>

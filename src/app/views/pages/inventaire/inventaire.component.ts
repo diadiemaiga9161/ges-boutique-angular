@@ -8,18 +8,22 @@ import { WebSocketService } from '../../../shared/services/websocket.service';
 import Swal from 'sweetalert2';
 import { InventaireService, MouvementStock, ProduitStock, StatistiquesInventaire, TypeMouvement, TypeSortie, MouvementRequest, AjustementRequest } from '../../../shared/services/inventaire.service';
 import { ProductService, Produit, Categorie } from '../../../shared/services/product.service';
+import { RoleService } from '../../../shared/services/role.service';
 import { AuthService } from '../../../shared/services/auth.service';
 import { ProduitNiveau, ProduitNiveauService } from '../../../shared/services/produit-niveau.service';
 import * as XLSX from 'xlsx';
 import { TranslateModule } from '@ngx-translate/core';
 import { MontantInputDirective } from '../../../shared/directives/montant-input.directive';
 
+import { infoMesure, qteAffichee, qteStockee, texteQte } from '../../../shared/utils/mesure.util';
+import { MesureQtePipe } from '../../../shared/pipes/mesure.pipe';
+
 @Component({
   selector: 'app-inventaire',
   templateUrl: './inventaire.component.html',
   styleUrls: ['./inventaire.component.scss'],
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, TranslateModule, MontantInputDirective]
+  imports: [CommonModule, FormsModule, RouterModule, TranslateModule, MontantInputDirective, MesureQtePipe]
 })
 export class InventaireComponent implements OnInit {
   // Données
@@ -152,8 +156,44 @@ export class InventaireComponent implements OnInit {
     private productService: ProductService,
     private authService: AuthService,
     private ws: WebSocketService,
-    private niveauService: ProduitNiveauService
+    private niveauService: ProduitNiveauService,
+    private roleService: RoleService
   ) {}
+
+  // ---------------------------------------------------------------- vente à la mesure
+  // Produit vendu au kg/L/m : stock gardé en g/ml/cm. Les formulaires se remplissent en
+  // kg ; on convertit seulement au moment de l'envoi.
+  private produitDe(id: number): any {
+    return this.produits.find(p => p.id === id);
+  }
+
+  /** "48,75 kg" pour la mesure, sinon le nombre. */
+  stockTexte(p: any): string {
+    return texteQte(p, p?.quantite);
+  }
+
+  /** Unité des champs de saisie : "kg" ou "unités". */
+  uniteSaisie(id: number): string {
+    return infoMesure(this.produitDe(id))?.unite || 'unités';
+  }
+
+  /** Variation de l'ajustement en cours, en unité stockée (g pour la mesure). */
+  get variationAjustement(): number {
+    const p: any = this.selectedProduit;
+    if (!p) return 0;
+    return qteStockee(p, this.ajustementForm.nouvelleQuantite) - (p.quantite || 0);
+  }
+
+  get variationAjustementTexte(): string {
+    const v = this.variationAjustement;
+    const p: any = this.selectedProduit;
+    const t = infoMesure(p) ? texteQte(p, v) : `${v} unités`;
+    return v > 0 ? '+' + t : t;
+  }
+
+  estMesureId(id: number): boolean {
+    return !!infoMesure(this.produitDe(id));
+  }
 
   ngOnInit(): void {
     this.loadData();
@@ -350,30 +390,10 @@ export class InventaireComponent implements OnInit {
   selectionnerProduitAjustement(produit: Produit): void {
     this.ajustementForm.produitId = produit.id;
     this.rechercheProduitAjustement = produit.nom;
-    this.ajustementForm.nouvelleQuantite = produit.quantite;
+    this.ajustementForm.nouvelleQuantite = qteAffichee(produit as any, produit.quantite);
     this.selectedProduit = produit;
     this.produitsFiltresAjustement = [];
     this.categorieAjustementFilter = null;
-  }
-
-  /**
-   * Charger tous les mouvements (sans filtre de date)
-   */
-  loadTousMouvements(): void {
-    this.isLoading = true;
-    this.errorMessage = '';
-    this.inventaireService.obtenirTousMouvements().subscribe({
-      next: (mouvements) => {
-        this.mouvements = mouvements;
-        this.appliquerFiltres();
-        this.currentPage = 1;
-        this.isLoading = false;
-      },
-      error: (err) => {
-        console.error('Erreur chargement mouvements:', err);
-        this.chargerParPeriode('mois');
-      }
-    });
   }
 
   /**
@@ -621,9 +641,9 @@ export class InventaireComponent implements OnInit {
       title: 'Confirmation',
       html: `Voulez-vous enregistrer cette entrée de stock ?<br><br>
              <strong>Produit :</strong> ${produit?.nom}<br>
-             <strong>Quantité :</strong> ${this.entreeForm.quantite} unités<br>
+             <strong>Quantité :</strong> ${this.entreeForm.quantite} ${this.uniteSaisie(this.entreeForm.produitId)}<br>
              <strong>Motif :</strong> ${this.entreeForm.motif}<br>
-             <strong>Nouveau stock :</strong> ${(produit?.quantite || 0) + this.entreeForm.quantite} unités`,
+             <strong>Nouveau stock :</strong> ${texteQte(produit, (produit?.quantite || 0) + qteStockee(produit, this.entreeForm.quantite))}`,
       icon: 'question',
       showCancelButton: true,
       confirmButtonText: 'Oui, enregistrer',
@@ -633,7 +653,7 @@ export class InventaireComponent implements OnInit {
     }).then((result) => {
       if (result.isConfirmed) {
         this.isLoading = true;
-        this.inventaireService.entreeStock(this.entreeForm).subscribe({
+        this.inventaireService.entreeStock({ ...this.entreeForm, quantite: qteStockee(produit, this.entreeForm.quantite) }).subscribe({
           next: () => {
             this.showEntreeModal = false;
             this.loadData();
@@ -671,8 +691,8 @@ export class InventaireComponent implements OnInit {
     }
 
     const produit = this.produits.find(p => p.id === this.sortieForm.produitId);
-    if (produit && produit.quantite < this.sortieForm.quantite) {
-      Swal.fire('Erreur', `Stock insuffisant. Disponible: ${produit.quantite}, Demandé: ${this.sortieForm.quantite}`, 'error');
+    if (produit && produit.quantite < qteStockee(produit, this.sortieForm.quantite)) {
+      Swal.fire('Erreur', `Stock insuffisant. Disponible: ${texteQte(produit, produit.quantite)}, Demandé: ${this.sortieForm.quantite} ${this.uniteSaisie(produit.id)}`, 'error');
       return;
     }
 
@@ -680,9 +700,9 @@ export class InventaireComponent implements OnInit {
       title: 'Confirmation',
       html: `Voulez-vous enregistrer cette sortie de stock ?<br><br>
              <strong>Produit :</strong> ${produit?.nom}<br>
-             <strong>Quantité :</strong> ${this.sortieForm.quantite} unités<br>
+             <strong>Quantité :</strong> ${this.sortieForm.quantite} ${this.uniteSaisie(this.sortieForm.produitId)}<br>
              <strong>Motif :</strong> ${this.sortieForm.motif}<br>
-             <strong>Nouveau stock :</strong> ${(produit?.quantite || 0) - this.sortieForm.quantite} unités`,
+             <strong>Nouveau stock :</strong> ${texteQte(produit, (produit?.quantite || 0) - qteStockee(produit, this.sortieForm.quantite))}`,
       icon: 'question',
       showCancelButton: true,
       confirmButtonText: 'Oui, enregistrer',
@@ -693,7 +713,7 @@ export class InventaireComponent implements OnInit {
       if (result.isConfirmed) {
         this.isLoading = true;
         this.sortieForm.typeSortie = this.typeSortieSortie;
-        this.inventaireService.sortieStock(this.sortieForm).subscribe({
+        this.inventaireService.sortieStock({ ...this.sortieForm, quantite: qteStockee(produit, this.sortieForm.quantite) }).subscribe({
           next: () => {
             this.showSortieModal = false;
             this.loadData();
@@ -731,16 +751,17 @@ export class InventaireComponent implements OnInit {
     }
 
     const produit = this.produits.find(p => p.id === this.ajustementForm.produitId);
-    const variation = this.ajustementForm.nouvelleQuantite - (produit?.quantite || 0);
+    const nouveauStocke = qteStockee(produit, this.ajustementForm.nouvelleQuantite);
+    const variation = nouveauStocke - (produit?.quantite || 0);
     const typeVariation = variation > 0 ? 'augmentation' : variation < 0 ? 'diminution' : 'aucun changement';
 
     Swal.fire({
       title: 'Confirmation',
       html: `Voulez-vous ajuster le stock ?<br><br>
              <strong>Produit :</strong> ${produit?.nom}<br>
-             <strong>Stock actuel :</strong> ${produit?.quantite} unités<br>
-             <strong>Nouveau stock :</strong> ${this.ajustementForm.nouvelleQuantite} unités<br>
-             <strong>Variation :</strong> ${variation > 0 ? '+' : ''}${variation} unités (${typeVariation})<br>
+             <strong>Stock actuel :</strong> ${texteQte(produit, produit?.quantite)}<br>
+             <strong>Nouveau stock :</strong> ${texteQte(produit, nouveauStocke)}<br>
+             <strong>Variation :</strong> ${variation > 0 ? '+' : ''}${texteQte(produit, variation)} (${typeVariation})<br>
              <strong>Motif :</strong> ${this.ajustementForm.motif}`,
       icon: 'question',
       showCancelButton: true,
@@ -751,7 +772,7 @@ export class InventaireComponent implements OnInit {
     }).then((result) => {
       if (result.isConfirmed) {
         this.isLoading = true;
-        this.inventaireService.ajusterStock(this.ajustementForm).subscribe({
+        this.inventaireService.ajusterStock({ ...this.ajustementForm, nouvelleQuantite: nouveauStocke }).subscribe({
           next: () => {
             this.showAjustementModal = false;
             this.loadData();
@@ -1112,7 +1133,9 @@ export class InventaireComponent implements OnInit {
 
   getVariation(mouvement: MouvementStock): string {
     const variation = mouvement.quantiteApres - mouvement.quantiteAvant;
-    return variation > 0 ? `+${variation}` : variation.toString();
+    // Vente à la mesure : "+1,8 kg" au lieu de "+1800"
+    const texte = texteQte(mouvement as any, variation);
+    return variation > 0 ? `+${texte}` : texte;
   }
 
   getTypeSortieLabel(type: string): string {
@@ -1137,6 +1160,14 @@ export class InventaireComponent implements OnInit {
 
   get isAdmin(): boolean {
     return this.authService.isAdmin();
+  }
+
+  /** Entrée / sortie / ajustement : le gérant (si son rôle a « Inventaire » Modifier), ou un
+   *  vendeur dont le rôle a « Inventaire » sur Modifier ou Tout (rôles personnalisés activés).
+   *  Même règle que le serveur (InventaireController.MOUVEMENT_AUTORISE). */
+  get peutMouvementer(): boolean {
+    const droit = this.roleService.peut('STOCK', 'GERER');
+    return this.isAdmin ? droit : (this.roleService.rolesActifs && droit);
   }
 
   chargerParPeriode(periode: 'jour' | 'semaine' | 'mois' | 'annee'): void {

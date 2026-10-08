@@ -104,7 +104,7 @@
         <div class="col-12 col-md-5">
           <select class="form-select form-select-sm" [(ngModel)]="l.produitId" (change)="onProduitChange(i)">
             <option [value]="0" disabled>Choisir un produit…</option>
-            <option *ngFor="let p of produits" [value]="p.id">{{ p.nom }} (stock: {{ p.quantite }})</option>
+            <option *ngFor="let p of produits" [value]="p.id">{{ p.nom }} (stock: {{ p | mesureQte }})</option>
           </select>
         </div>
         <div class="col-6 col-md-2">
@@ -288,7 +288,7 @@
         <tbody>
           <tr *ngFor="let l of transfertDetail.lignes">
             <td>{{ l.produitNom }}</td>
-            <td class="text-end">{{ l.quantite }}</td>
+            <td class="text-end">{{ l | mesureQte }}</td>
             <td class="text-end">{{ l.prixUnitaire ? fmt(l.prixUnitaire) : '—' }}</td>
             <td class="text-end">{{ l.prixUnitaire ? fmt(l.prixUnitaire * l.quantite) : '—' }}</td>
           </tr>

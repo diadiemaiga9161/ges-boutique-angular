@@ -9,12 +9,16 @@ export interface VitrineProduitDto {
   nom: string;
   categorieNom: string;
   prixVente: number;
+  /** Vente à la mesure : prix exprimé par cette unité (kg, L, m), sinon absent. */
+  unite?: string | null;
   disponible: boolean;
   /** DISPONIBLE / STOCK_FAIBLE / RUPTURE */
   statutStock: 'DISPONIBLE' | 'STOCK_FAIBLE' | 'RUPTURE';
   enPromotion: boolean;
   promotionTitre: string | null;
   promotionReduction: string | null;
+  /** Version de la photo (absente = pas de photo). */
+  imageVersion?: number | null;
 }
 
 export interface VitrineInfoDto {
@@ -41,6 +45,18 @@ export interface VitrineCommandeRequest {
   lignes: VitrineCommandeLigne[];
 }
 
+/** État d'une commande vue par le client (suivi sans compte : numéro + téléphone). */
+export interface VitrineSuivi {
+  numero: string;
+  /** BROUILLON = reçue, en attente de la boutique. */
+  statut: 'BROUILLON' | 'VALIDEE' | 'ANNULEE';
+  /** Après confirmation : PRETE puis LIVREE. */
+  etapeLivraison?: 'PRETE' | 'LIVREE' | null;
+  dateCommande: string;
+  montantTotal: number;
+  lignes: { nom: string; quantite: number }[];
+}
+
 export interface VitrineCommandeReponse {
   success: boolean;
   numeroCommande?: string;
@@ -63,6 +79,12 @@ export class VitrineService {
   getInfos(): Observable<VitrineInfoDto> {
     return this.http.get<VitrineInfoDto>(`${this.apiUrl}/infos`).pipe(
       catchError(e => throwError(() => new Error(e?.error?.message || 'Erreur chargement des informations')))
+    );
+  }
+
+  suivreCommandes(telephone: string, numeros: string[]): Observable<VitrineSuivi[]> {
+    return this.http.post<VitrineSuivi[]>(`${this.apiUrl}/suivi`, { telephone, numeros }).pipe(
+      catchError(e => throwError(() => new Error(e?.error?.message || 'Impossible de charger vos commandes')))
     );
   }
 

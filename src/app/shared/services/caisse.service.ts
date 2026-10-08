@@ -7,6 +7,7 @@ import { catchError, map, tap } from 'rxjs/operators';
 import { AuthService } from './auth.service';
 import { BoutiqueService } from './boutique.service';
 import { environment } from '../../../environments/environment';
+import { qteDoc, puDoc } from '../utils/mesure.util';
 
 // src/app/shared/services/caisse.service.ts
 
@@ -279,10 +280,10 @@ export interface ReconciliationVendeursResponse {
 export class CaisseService {
   private apiUrl = `${environment.apiUrl}/caisse`;
 
-  private readonly BOUTIQUE_NOM = 'Boutique Alimentation Ndjim Et Frères';
-  private readonly BOUTIQUE_TELEPHONE = '76 96 21 20/66 43 66 03';
-  private readonly BOUTIQUE_EMAIL = 'ndjim@yahoo.fr';
-  private readonly BOUTIQUE_ADRESSE = 'Misa bougou';
+  private readonly BOUTIQUE_NOM = 'Ma Boutique';
+  private readonly BOUTIQUE_TELEPHONE = '';
+  private readonly BOUTIQUE_EMAIL = '';
+  private readonly BOUTIQUE_ADRESSE = '';
 
   constructor(
     private http: HttpClient,
@@ -1012,7 +1013,16 @@ export class CaisseService {
     
     const statutClass = this.getStatutClass(facture.statut);
     const statutText = this.getStatutText(facture.statut);
-    
+    // Coordonnées facultatives : une ligne "icône vide" si le champ n'est pas
+    // renseigné (ex: boutique.adresse absent ET BOUTIQUE_ADRESSE neutre) serait
+    // affichée sur la facture — on ne l'inclut donc que si elle a un contenu.
+    const adr = boutique.adresse || this.BOUTIQUE_ADRESSE;
+    const tel = boutique.telephone || this.BOUTIQUE_TELEPHONE;
+    const mail = boutique.email || this.BOUTIQUE_EMAIL;
+    const ligneAdresse = adr ? `<div class="shop-info">📍 ${adr}</div>` : '';
+    const ligneTelephone = tel ? `<div class="shop-info">📞 ${tel}</div>` : '';
+    const ligneEmail = mail ? `<div class="shop-info">✉️ ${mail}</div>` : '';
+
     const html = `
       <!DOCTYPE html>
       <html lang="fr">
@@ -1025,9 +1035,9 @@ export class CaisseService {
         <div class="invoice-container">
           <div class="invoice-header">
             <div class="shop-name">${boutique.nom || this.BOUTIQUE_NOM}</div>
-            <div class="shop-info">📍 ${boutique.adresse || this.BOUTIQUE_ADRESSE}</div>
-            <div class="shop-info">📞 ${boutique.telephone || this.BOUTIQUE_TELEPHONE}</div>
-            <div class="shop-info">✉️ ${boutique.email || this.BOUTIQUE_EMAIL}</div>
+            ${ligneAdresse}
+            ${ligneTelephone}
+            ${ligneEmail}
             <div class="shop-info">Facture N° ${facture.numeroFacture || 'N°' + facture.id}</div>
             <div class="shop-info">Date: ${date}</div>
           </div>
@@ -1051,8 +1061,8 @@ export class CaisseService {
                   return `
                     <tr>
                       <td>${ligne.designation || ligne.produitNom || 'Produit'}</td>
-                      <td class="text-center">${ligne.quantite}</td>
-                      <td class="text-right">${this.formatPrice(ligne.prixUnitaire)}</td>
+                      <td class="text-center">${qteDoc(ligne)}</td>
+                      <td class="text-right">${puDoc(ligne, v => this.formatPrice(v))}</td>
                       <td class="text-right">${remise > 0 ? (ligne.remisePourcentage ? remise + '%' : this.formatPrice(remise)) : '-'}</td>
                       <td class="text-right">${this.formatPrice(totalLigne)}</td>
                     </tr>

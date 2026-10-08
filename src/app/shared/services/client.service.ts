@@ -2,7 +2,7 @@
 
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { AuthService } from './auth.service';
@@ -110,6 +110,17 @@ export class ClientService {
     if (response.clients) return response.clients as T;
     if (response.data) return response.data as T;
     return response as T;
+  }
+
+  /** Ids des clients ayant déjà commandé depuis le portail (badge « En ligne »).
+   *  Jamais bloquant : en cas d'erreur, liste vide (la liste Clients s'affiche quand même). */
+  getPortailIds(): Observable<number[]> {
+    return this.http.get<any>(`${this.apiUrl}/portail-ids`, {
+      headers: this.getAuthHeaders()
+    }).pipe(
+      map(response => (response?.clientIds || []) as number[]),
+      catchError(() => of([]))
+    );
   }
 
   getAll(): Observable<Client[]> {

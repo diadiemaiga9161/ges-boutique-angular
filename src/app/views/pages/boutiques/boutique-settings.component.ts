@@ -346,8 +346,9 @@ export class BoutiqueSettingsComponent implements OnInit {
       this.errorMessage = 'Veuillez sélectionner une image (PNG, JPG, SVG...)';
       return;
     }
-    if (file.size > 2 * 1024 * 1024) {
-      this.errorMessage = 'Le logo ne doit pas dépasser 2 Mo';
+    // Réduit avant l'envoi (BoutiqueService.uploadLogo) : une photo de téléphone passe.
+    if (file.size > 15 * 1024 * 1024) {
+      this.errorMessage = 'Le logo ne doit pas dépasser 15 Mo';
       return;
     }
     this.selectedLogoFile = file;

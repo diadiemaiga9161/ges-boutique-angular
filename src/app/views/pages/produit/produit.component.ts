@@ -36,6 +36,9 @@ import Swal from 'sweetalert2';
 import { TranslateModule } from '@ngx-translate/core';
 import { MontantInputDirective } from '../../../shared/directives/montant-input.directive';
 
+import { ProduitImageService } from '../../../shared/services/produit-image.service';
+import { MESURES, contenanceDepuisNom, infoMesure, lireNombre, prixAffiche, prixStocke, puDoc, qteAffichee, qteDoc, qteStockee, texteQte } from '../../../shared/utils/mesure.util';
+
 @Component({
   selector: 'app-produit',
   templateUrl: './produit.component.html',
@@ -258,8 +261,231 @@ export class ProduitComponent implements OnInit, OnDestroy {
     private factureService: FactureService,
     private boutiqueService: BoutiqueService,
     private uniteVenteService: UniteVenteService,
-    private elementRef: ElementRef
+    private elementRef: ElementRef,
+    public photos: ProduitImageService
   ) {}
+
+  // ---------------------------------------------------------------- vente à la mesure
+  // Fonctionnalité VENTE_A_LA_MESURE : produit vendu au kg / L / m, choisi produit par
+  // produit. Le formulaire affiche des kg et des prix au kg ; on convertit en g et en
+  // prix au g seulement à l'envoi (voir requeteProduit), comme le serveur les garde.
+  mesureActif = false;
+  readonly mesures = MESURES;
+  /** Mode du formulaire ouvert : null = à l'unité. */
+  modeMesureForm: string | null = null;
+  /** Bascule d'un produit existant (fenêtre Modifier). */
+  nouveauModeMesure: string = 'KG';
+  changementModeEnCours = false;
+
+  get infoMesureForm() {
+    return infoMesure({ modeMesure: this.modeMesureForm });
+  }
+
+  /** Suffixe des libellés du formulaire : " / kg" pour la mesure. */
+  get suffixeMesure(): string {
+    const info = this.infoMesureForm;
+    return info ? ` / ${info.unite}` : '';
+  }
+
+  estMesure(p: any): boolean {
+    return !!infoMesure(p);
+  }
+
+  stockTexte(p: any): string {
+    return infoMesure(p) ? texteQte(p, p.quantite) : `${qteDoc(p)} ${p.uniteMesure || 'pcs'}`;
+  }
+
+  prixTexte(p: any, prix: number | null | undefined): string {
+    const info = infoMesure(p);
+    return info ? `${this.formatPrice(prixAffiche(p, prix))}/${info.unite}` : this.formatPrice(prix || 0);
+  }
+
+  /** Produit choisi dans la ligne d'achat en cours, s'il est vendu à la mesure. */
+  get produitAchatMesure(): any {
+    const id = this.tempLigneAchat?.produitId;
+    if (!id) return null;
+    const p: any = [...(this.tousLesProduits || []), ...(this.produits || [])].find((x: any) => x.id === +id);
+    return infoMesure(p) ? p : null;
+  }
+
+  qteLigneAchat(l: any): string {
+    return texteQte(l, l.quantite);
+  }
+
+  /** Corps envoyé au serveur : kg -> g et prix au kg -> prix au g pour la mesure. */
+  private requeteProduit(creation: boolean): any {
+    const f: any = { ...this.productForm };
+    const m = { modeMesure: this.modeMesureForm };
+    if (infoMesure(m)) {
+      f.prixAchat = prixStocke(m, f.prixAchat);
+      f.prixVente = prixStocke(m, f.prixVente);
+      f.quantite = qteStockee(m, f.quantite);
+      f.seuilAlerte = f.seuilAlerte != null ? qteStockee(m, f.seuilAlerte) : f.seuilAlerte;
+      f.uniteBase = infoMesure(m)!.petiteUnite;
+      if (creation) f.modeMesure = this.modeMesureForm;
+    }
+    return f;
+  }
+
+  /** Fenêtre Modifier d'un produit déjà vendu à la mesure : valeurs en kg / prix au kg. */
+  private convertirFormulairePourAffichage(produit: any): void {
+    if (!infoMesure(produit)) return;
+    this.productForm.prixAchat = Math.round(prixAffiche(produit, produit.prixAchat) * 100) / 100;
+    this.productForm.prixVente = Math.round(prixAffiche(produit, produit.prixVente) * 100) / 100;
+    this.productForm.quantite = qteAffichee(produit, produit.quantite);
+    this.productForm.seuilAlerte = qteAffichee(produit, produit.seuilAlerte);
+  }
+
+  /** Passer un produit existant au kg/L/m (ou le remettre à l'unité), stock et prix convertis.
+   *  On demande combien de kg (L, m) contient UNE unité du produit : un sac de 50 kg -> 50. */
+  changerModeMesure(mode: string | null): void {
+    const produit: any = this.selectedProduct;
+    if (!produit) return;
+    const info = infoMesure({ modeMesure: mode });
+    const infoActuelle = infoMesure(produit);
+    const unite = (info || infoActuelle)!.unite;
+    const proposition = info ? contenanceDepuisNom(produit.nom, mode) : contenanceDepuisNom(produit.nom, produit.modeMesure);
+    const fmt = (v: number) => (Math.round(v * 1000) / 1000).toLocaleString('fr-FR', { maximumFractionDigits: 3 });
+
+    // Aperçu de la conversion pour une contenance donnée.
+    const apercu = (c: number): string => {
+      if (!(c > 0)) return '<span class="text-danger">Indiquez un nombre supérieur à 0.</span>';
+      if (info) {
+        return `<b>${qteDoc(produit)}</b> en stock → <b>${fmt(produit.quantite * c)} ${unite}</b><br>
+                Prix d'achat ${this.formatPrice(produit.prixAchat)} → <b>${this.formatPrice(produit.prixAchat / c)} / ${unite}</b><br>
+                Prix de vente ${this.formatPrice(produit.prixVente)} → <b>${this.formatPrice(produit.prixVente / c)} / ${unite}</b>`;
+      }
+      const kg = qteAffichee(produit, produit.quantite);
+      return `<b>${fmt(kg)} ${unite}</b> en stock → <b>${Math.round(kg / c)} unité(s)</b><br>
+              Prix de vente ${this.formatPrice(prixAffiche(produit, produit.prixVente))} / ${unite} → <b>${this.formatPrice(prixAffiche(produit, produit.prixVente) * c)}</b> l'unité`;
+    };
+
+    Swal.fire({
+      title: info ? `Vendre ${produit.nom} ${info.libelle.toLowerCase()}` : `Remettre ${produit.nom} à l'unité`,
+      html: `<p class="mb-2">Combien de <b>${unite}</b> dans <b>1 unité</b> de ce produit ?<br>
+             <small class="text-muted">Ex : 50 pour un sac de 50 ${unite}, 1 pour un paquet de 1 ${unite}.</small></p>
+             <div id="apercu-contenance" class="small text-start border rounded p-2 mt-2"></div>`,
+      input: 'text',
+      inputValue: fmt(proposition),
+      inputAttributes: { inputmode: 'decimal', 'aria-label': `Nombre de ${unite} dans une unité` },
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Convertir',
+      cancelButtonText: 'Annuler',
+      confirmButtonColor: '#2563eb',
+      didOpen: () => {
+        const champ = Swal.getInput();
+        const zone = document.getElementById('apercu-contenance');
+        const maj = () => { if (zone) zone.innerHTML = apercu(lireNombre(champ?.value)); };
+        champ?.addEventListener('input', maj);
+        maj();
+      },
+      inputValidator: v => (lireNombre(v) > 0 ? null : 'Indiquez un nombre supérieur à 0.')
+    }).then(r => {
+      if (!r.isConfirmed) return;
+      const contenance = lireNombre(r.value);
+      this.changementModeEnCours = true;
+      this.http.put<any>(`${environment.apiUrl}/produits/${produit.id}/mode-mesure`, { modeMesure: mode, contenance }).subscribe({
+        next: () => {
+          this.changementModeEnCours = false;
+          this.closeAllModals();
+          this.loadData();
+          Swal.fire({ icon: 'success', title: info ? `${produit.nom} est vendu au ${info.unite}` : `${produit.nom} est vendu à l'unité`,
+            text: 'Vérifiez le prix de vente : vous pouvez le modifier si vous vendez plus cher au détail.', confirmButtonColor: '#2563eb' });
+        },
+        error: err => {
+          this.changementModeEnCours = false;
+          Swal.fire({ icon: 'error', title: 'Changement impossible', text: err?.error?.message || 'Réessayez.', confirmButtonColor: '#2563eb' });
+        }
+      });
+    });
+  }
+
+  // ---------------------------------------------------------------- photo du produit
+  // Fonctionnalité IMAGES_PRODUITS (activée par le super admin) : facultative, rien ne
+  // change pour les boutiques qui ne l'ont pas.
+  photoEnvoiEnCours = false;
+  /** Photo choisie dans "Ajouter un produit", envoyée juste après la création. */
+  photoEnAttente: File | null = null;
+  photoApercu: string | null = null;
+
+  urlPhoto(p: any, taille: 'mini' | 'grande' = 'mini'): string | null {
+    return this.photos.url(p, taille);
+  }
+
+  choisirPhotoNouveau(event: Event): void {
+    const fichier = (event.target as HTMLInputElement).files?.[0];
+    (event.target as HTMLInputElement).value = '';
+    if (!fichier) return;
+    if (!fichier.type.startsWith('image/')) {
+      Swal.fire({ icon: 'warning', title: "Ce fichier n'est pas une photo", confirmButtonColor: '#2563eb' });
+      return;
+    }
+    this.oublierPhotoEnAttente();
+    this.photoEnAttente = fichier;
+    this.photoApercu = URL.createObjectURL(fichier);
+  }
+
+  oublierPhotoEnAttente(): void {
+    if (this.photoApercu) URL.revokeObjectURL(this.photoApercu);
+    this.photoEnAttente = null;
+    this.photoApercu = null;
+  }
+
+  /** Remplace la photo d'un produit existant (envoi immédiat). */
+  choisirPhotoExistant(event: Event): void {
+    const fichier = (event.target as HTMLInputElement).files?.[0];
+    (event.target as HTMLInputElement).value = '';
+    const produit = this.selectedProduct as any;
+    if (!fichier || !produit) return;
+    if (!fichier.type.startsWith('image/')) {
+      Swal.fire({ icon: 'warning', title: "Ce fichier n'est pas une photo", confirmButtonColor: '#2563eb' });
+      return;
+    }
+    this.envoyerPhoto(produit, fichier);
+  }
+
+  private envoyerPhoto(produit: any, fichier: File, apres?: () => void): void {
+    this.photoEnvoiEnCours = true;
+    this.photos.envoyer(produit.id, fichier).subscribe({
+      next: version => {
+        this.photoEnvoiEnCours = false;
+        this.majVersionPhoto(produit.id, version);
+        apres?.();
+      },
+      error: err => {
+        this.photoEnvoiEnCours = false;
+        Swal.fire({ icon: 'error', title: 'Photo non enregistrée', text: err?.error?.message || err?.message || 'Réessayez.', confirmButtonColor: '#2563eb' });
+        apres?.();
+      }
+    });
+  }
+
+  retirerPhoto(): void {
+    const produit = this.selectedProduct as any;
+    if (!produit) return;
+    Swal.fire({
+      icon: 'question', title: 'Retirer la photo ?', showCancelButton: true,
+      confirmButtonText: 'Retirer', cancelButtonText: 'Annuler', confirmButtonColor: '#dc2626'
+    }).then(r => {
+      if (!r.isConfirmed) return;
+      this.photoEnvoiEnCours = true;
+      this.photos.supprimer(produit.id).subscribe({
+        next: () => { this.photoEnvoiEnCours = false; this.majVersionPhoto(produit.id, null); },
+        error: err => {
+          this.photoEnvoiEnCours = false;
+          Swal.fire({ icon: 'error', title: 'Impossible', text: err?.error?.message || 'Réessayez.' });
+        }
+      });
+    });
+  }
+
+  /** Met à jour la photo affichée partout sans recharger toute la liste. */
+  private majVersionPhoto(id: number, version: number | null): void {
+    const maj = (p: any) => { if (p && p.id === id) p.imageVersion = version; };
+    maj(this.selectedProduct);
+    [...this.produits, ...this.tousLesProduits, ...this.filteredProducts].forEach(maj);
+  }
 
   toggleGestionDropdown(): void {
     this.showGestionDropdown = !this.showGestionDropdown;
@@ -289,6 +515,7 @@ export class ProduitComponent implements OnInit, OnDestroy {
     // par le super admin (même mécanisme que Dépôt garde / Comptes bancaires).
     const featureSub = this.boutiqueService.fonctionnalitesAvancees$.subscribe(liste => {
       this.venteGrosDetailActif = liste.find(f => f.cle === 'VENTE_GROS_DETAIL')?.actif === true;
+      this.mesureActif = liste.find(f => f.cle === 'VENTE_A_LA_MESURE')?.actif === true;
     });
     this.wsSubs.push(featureSub);
   }
@@ -442,6 +669,7 @@ export class ProduitComponent implements OnInit, OnDestroy {
 
   openAddModal(): void {
     this.resetProductForm();
+    this.oublierPhotoEnAttente();
     this.showAddModal = true;
   }
 
@@ -467,6 +695,9 @@ export class ProduitComponent implements OnInit, OnDestroy {
       origine: produit.origine || '',
       uniteBase: produit.uniteBase || 'Unité'
     };
+    this.modeMesureForm = (produit as any).modeMesure ?? null;
+    this.nouveauModeMesure = 'KG';
+    this.convertirFormulairePourAffichage(produit);
     this.showEditModal = true;
     this.resetUniteVenteForm();
     if (this.venteGrosDetailActif) {
@@ -490,7 +721,7 @@ export class ProduitComponent implements OnInit, OnDestroy {
     this.selectedProduct = produit;
     Swal.fire({
       title: '⚠️ Supprimer ce produit ?',
-      html: `<b>${produit.nom}</b> sera supprimé définitivement.<br><br>📦 Stock actuel: <strong>${produit.quantite}</strong><br>💰 Prix vente: <strong>${this.formatPrice(produit.prixVente)}</strong>`,
+      html: `<b>${produit.nom}</b> sera supprimé définitivement.<br><br>📦 Stock actuel: <strong>${qteDoc(produit)}</strong><br>💰 Prix vente: <strong>${this.formatPrice(produit.prixVente)}</strong>`,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonText: 'Oui, supprimer',
@@ -547,11 +778,17 @@ export class ProduitComponent implements OnInit, OnDestroy {
       
       this.isLoading = true;
       this.errorMessage = '';
-      this.productService.createProduct(this.productForm).subscribe({
+      this.productService.createProduct(this.requeteProduit(true)).subscribe({
         next: (produit) => {
           this.showAddModal = false;
-          this.loadData();
           this.isLoading = false;
+          if (this.photoEnAttente && this.photos.estActif && (produit as any)?.id) {
+            const fichier = this.photoEnAttente;
+            this.oublierPhotoEnAttente();
+            this.envoyerPhoto(produit, fichier, () => this.loadData());
+          } else {
+            this.loadData();
+          }
           Swal.fire({ icon: 'success', title: 'Produit créé', text: `"${produit.nom}" ajouté avec succès`, timer: 2000, timerProgressBar: true, confirmButtonColor: '#198754' });
         },
         error: (error) => {
@@ -606,7 +843,7 @@ export class ProduitComponent implements OnInit, OnDestroy {
       
       this.isLoading = true;
       this.errorMessage = '';
-      this.productService.updateProduct(this.selectedProduct.id, this.productForm).subscribe({
+      this.productService.updateProduct(this.selectedProduct.id, this.requeteProduit(false)).subscribe({
         next: (produit) => {
           this.showEditModal = false;
           this.selectedProduct = null;
@@ -1081,6 +1318,7 @@ export class ProduitComponent implements OnInit, OnDestroy {
       origine: '',
       uniteBase: 'Unité'
     };
+    this.modeMesureForm = null;
   }
 
   private resetFournisseurForm(): void {
@@ -1292,6 +1530,22 @@ export class ProduitComponent implements OnInit, OnDestroy {
     return this.authService.isAdmin();
   }
 
+  // Étape 1 du tuto de démarrage : boutique sans aucun produit — jamais bloquant,
+  // fermable, et disparaît tout seul dès qu'un vrai produit existe.
+  private readonly CLE_TUTO_PRODUIT_FERME = 'tuto_demarrage_produit_ferme';
+  tutoProduitFerme = (() => {
+    try { return localStorage.getItem(this.CLE_TUTO_PRODUIT_FERME) === '1'; } catch { return false; }
+  })();
+
+  get afficherTutoPremierProduit(): boolean {
+    return this.isAdmin && this.tousLesProduits.length === 0 && !this.tutoProduitFerme;
+  }
+
+  fermerTutoPremierProduit(): void {
+    this.tutoProduitFerme = true;
+    try { localStorage.setItem(this.CLE_TUTO_PRODUIT_FERME, '1'); } catch { /* sans conséquence */ }
+  }
+
   get isVendeur(): boolean {
     return this.authService.isVendeur();
   }
@@ -1433,7 +1687,8 @@ export class ProduitComponent implements OnInit, OnDestroy {
       const produit = this.produitsDropdown.find(p => p.id === +produitId);
       if (produit) {
         this.tempLigneAchat.produitNom = produit.nom;
-        this.tempLigneAchat.prixAchatUnitaire = produit.prixAchat;
+        // prix au kg pour un produit vendu à la mesure
+        this.tempLigneAchat.prixAchatUnitaire = Math.round(prixAffiche(produit as any, produit.prixAchat) * 100) / 100;
       }
     }
   }
@@ -1447,10 +1702,13 @@ export class ProduitComponent implements OnInit, OnDestroy {
       Swal.fire('Erreur', 'Prix d\'achat unitaire invalide', 'error');
       return;
     }
+    // Vente à la mesure : saisie en kg et prix au kg, envoyée en g et prix au g.
+    const mesure: any = this.produitAchatMesure;
     const nouvelleLigne: LigneAchatRequest = {
-      quantite: this.tempLigneAchat.quantite,
-      prixAchatUnitaire: this.tempLigneAchat.prixAchatUnitaire
+      quantite: mesure ? qteStockee(mesure, this.tempLigneAchat.quantite) : this.tempLigneAchat.quantite,
+      prixAchatUnitaire: mesure ? prixStocke(mesure, this.tempLigneAchat.prixAchatUnitaire) : this.tempLigneAchat.prixAchatUnitaire
     };
+    if (mesure) (nouvelleLigne as any).modeMesure = mesure.modeMesure;
     if (this.tempLigneAchat.produitId) {
       nouvelleLigne.produitId = this.tempLigneAchat.produitId;
     }
@@ -1544,7 +1802,7 @@ export class ProduitComponent implements OnInit, OnDestroy {
         ? prixEntree
         : (stockActuel * ancienPrix + quantiteEntree * prixEntree) / (stockActuel + quantiteEntree);
 
-      propositions.push({ ligne, produitNom: produit.nom, stockActuel, ancienPrix, quantiteEntree, prixEntree, nouveauPrix });
+      propositions.push({ ligne, produitNom: produit.nom, stockActuel, ancienPrix, quantiteEntree, prixEntree, nouveauPrix, mesure: produit } as any);
     }
 
     return propositions;
@@ -1556,10 +1814,10 @@ export class ProduitComponent implements OnInit, OnDestroy {
     const lignesHtml = propositions.map(p => `
       <div style="text-align:left;border:1px solid #e5e7eb;border-radius:6px;padding:10px;margin-bottom:8px;">
         <strong>${escapeHtml(p.produitNom)}</strong><br>
-        Stock actuel: ${p.stockActuel} × ${this.formatPrice(p.ancienPrix)} = <strong>${this.formatPrice(p.stockActuel * p.ancienPrix)}</strong><br>
-        Entrée: ${p.quantiteEntree} × ${this.formatPrice(p.prixEntree)} = <strong>${this.formatPrice(p.quantiteEntree * p.prixEntree)}</strong><br>
-        <span style="color:#6b7280;font-size:0.85em;">Formule: (${p.stockActuel} × ${this.formatPrice(p.ancienPrix)} + ${p.quantiteEntree} × ${this.formatPrice(p.prixEntree)}) / (${p.stockActuel} + ${p.quantiteEntree})</span><br>
-        <span style="color:#198754;">➜ Nouveau prix d'achat proposé: <strong>${this.formatPrice(p.nouveauPrix)}</strong></span>
+        Stock actuel: ${qteDoc((p as any).mesure, p.stockActuel)} × ${puDoc((p as any).mesure, v => this.formatPrice(v), p.ancienPrix)} = <strong>${this.formatPrice(p.stockActuel * p.ancienPrix)}</strong><br>
+        Entrée: ${qteDoc((p as any).mesure, p.quantiteEntree)} × ${puDoc((p as any).mesure, v => this.formatPrice(v), p.prixEntree)} = <strong>${this.formatPrice(p.quantiteEntree * p.prixEntree)}</strong><br>
+        <span style="color:#6b7280;font-size:0.85em;${(p as any).mesure?.modeMesure ? 'display:none;' : ''}">Formule: (${p.stockActuel} × ${this.formatPrice(p.ancienPrix)} + ${p.quantiteEntree} × ${this.formatPrice(p.prixEntree)}) / (${p.stockActuel} + ${p.quantiteEntree})</span><br>
+        <span style="color:#198754;">➜ Nouveau prix d'achat proposé: <strong>${puDoc((p as any).mesure, v => this.formatPrice(v), p.nouveauPrix)}</strong></span>
       </div>
     `).join('');
 

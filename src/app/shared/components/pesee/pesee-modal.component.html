@@ -1,0 +1,62 @@
+<div class="gl-overlay pesee-overlay" (click)="annuler.emit()">
+  <div class="gl-modal gl-modal-petit" role="dialog" aria-modal="true" aria-labelledby="pesee-titre" (click)="$event.stopPropagation()">
+    <header class="gl-modal-entete">
+      <div>
+        <h2 id="pesee-titre">{{ produit.nom }}</h2>
+        <span class="pesee-prix">{{ fmtPrix(prixParUnite) }} / {{ info.unite }} · stock {{ stockAffiche }}</span>
+      </div>
+      <button type="button" class="gl-fermer" (click)="annuler.emit()" aria-label="Fermer"><i class="fa fa-xmark" aria-hidden="true"></i></button>
+    </header>
+
+    <div class="gl-modal-corps">
+      <div class="pesee-segment" role="radiogroup" aria-label="Façon de vendre">
+        <button type="button" role="radio" [attr.aria-checked]="mode === 'poids'" [class.actif]="mode === 'poids'" (click)="mode = 'poids'; erreur = ''">
+          Par quantité ({{ info.unite }})
+        </button>
+        <button type="button" role="radio" [attr.aria-checked]="mode === 'montant'" [class.actif]="mode === 'montant'" (click)="mode = 'montant'; erreur = ''">
+          Par montant (F)
+        </button>
+      </div>
+
+      <ng-container *ngIf="mode === 'poids'">
+        <label class="pesee-label" for="pesee-poids">Quantité vendue</label>
+        <div class="pesee-champ">
+          <input id="pesee-poids" type="text" inputmode="decimal" autocomplete="off" [(ngModel)]="saisiePoids"
+                 (ngModelChange)="erreur = ''" (keydown.enter)="confirmer()" placeholder="ex : 1,25" autofocus>
+          <span>{{ info.unite }}</span>
+        </div>
+        <div class="pesee-rapides" role="group" aria-label="Quantités rapides">
+          <button type="button" *ngFor="let r of info.rapides" (click)="rapide(r)">{{ formater(r) }} {{ info.unite }}</button>
+        </div>
+      </ng-container>
+
+      <ng-container *ngIf="mode === 'montant'">
+        <label class="pesee-label" for="pesee-montant">Le client demande pour</label>
+        <div class="pesee-champ">
+          <input id="pesee-montant" type="text" inputmode="numeric" autocomplete="off" [(ngModel)]="saisieMontant"
+                 (ngModelChange)="erreur = ''" (keydown.enter)="confirmer()" placeholder="ex : 500" autofocus>
+          <span>F</span>
+        </div>
+      </ng-container>
+
+      <div class="pesee-resultat" aria-live="polite">
+        <div>
+          <span class="pesee-resultat__label">{{ mode === 'poids' ? 'À payer' : 'À servir' }}</span>
+          <strong>{{ mode === 'poids' ? fmtPrix(montant) : poidsTexte }}</strong>
+        </div>
+        <div class="pesee-resultat__detail" *ngIf="quantite > 0">
+          {{ poidsTexte }} × {{ fmtPrix(prixParUnite) }}/{{ info.unite }} = {{ fmtPrix(montant) }}
+        </div>
+      </div>
+
+      <p class="pesee-erreur" *ngIf="erreur" role="alert"><i class="fa fa-circle-exclamation" aria-hidden="true"></i> {{ erreur }}</p>
+    </div>
+
+    <footer class="gl-modal-pied">
+      <button type="button" class="btn btn-outline-secondary" (click)="annuler.emit()">Annuler</button>
+      <button type="button" class="btn btn-primary" (click)="confirmer()">
+        {{ quantiteInitiale ? 'Modifier' : 'Ajouter au panier' }}
+      </button>
+    </footer>
+  </div>
+</div>

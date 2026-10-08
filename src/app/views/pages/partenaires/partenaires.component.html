@@ -996,8 +996,8 @@
             <tbody>
               <tr *ngFor="let p of selectedVenteDetail.produits; let i = index" [class.fd-row-even]="i % 2 === 0">
                 <td>{{ p.produitNom }}</td>
-                <td class="fd-center">{{ p.quantite }}</td>
-                <td class="fd-right">{{ formatPrice(p.prixUnitaire) }}</td>
+                <td class="fd-center">{{ p | mesureQte }}</td>
+                <td class="fd-right">{{ formatPrice((p | mesurePu)) }}{{ p | mesureSuffixe }}</td>
                 <td class="fd-right fd-bold">{{ formatPrice(p.sousTotal) }}</td>
               </tr>
             </tbody>
@@ -1017,12 +1017,12 @@
           <div class="fd-meta--modern">
             <div class="fd-meta-block">
               <div class="fd-meta-block-title">DATE</div>
-              <div class="fd-meta-block-val" style="color:#e2e8f0">{{ formatDateTime(selectedVenteDetail.dateVente) }}</div>
+              <div class="fd-meta-block-val">{{ formatDateTime(selectedVenteDetail.dateVente) }}</div>
               <div class="fd-meta-block-sub">{{ getVenteTypeLabel(selectedVenteDetail) }}</div>
             </div>
             <div class="fd-meta-block fd-meta-block--right">
               <div class="fd-meta-block-title">VENDEUR</div>
-              <div class="fd-meta-block-val" style="color:#e2e8f0">{{ selectedVenteDetail.vendeurNom }}</div>
+              <div class="fd-meta-block-val">{{ selectedVenteDetail.vendeurNom }}</div>
               <div class="fd-meta-block-sub">{{ getModePaiementLabel(selectedVenteDetail.modePaiement) }}</div>
             </div>
           </div>
@@ -1034,10 +1034,11 @@
             </thead>
             <tbody>
               <tr *ngFor="let p of selectedVenteDetail.produits; let i = index" [class.fd-row-even]="i % 2 === 0">
-                <td style="color:#e2e8f0">{{ p.produitNom }}</td>
-                <td class="fd-center" style="color:#94a3b8">{{ p.quantite }}</td>
-                <td class="fd-right" style="color:#94a3b8">{{ formatPrice(p.prixUnitaire) }}</td>
-                <td class="fd-right fd-bold" style="color:#f59e0b">{{ formatPrice(p.sousTotal) }}</td>
+                <!-- Fond clair (.facture-doc--modern) : couleurs foncées lisibles, l'ancien gris très clair y était invisible. -->
+                <td style="color:#1e293b">{{ p.produitNom }}</td>
+                <td class="fd-center" style="color:#475569">{{ p | mesureQte }}</td>
+                <td class="fd-right" style="color:#475569">{{ formatPrice((p | mesurePu)) }}{{ p | mesureSuffixe }}</td>
+                <td class="fd-right fd-bold fd-gold-text">{{ formatPrice(p.sousTotal) }}</td>
               </tr>
             </tbody>
           </table>
@@ -1075,8 +1076,8 @@
             <tbody>
               <tr *ngFor="let p of selectedVenteDetail.produits">
                 <td>{{ p.produitNom }}</td>
-                <td class="fd-center">{{ p.quantite }}</td>
-                <td class="fd-right">{{ formatPrice(p.prixUnitaire) }}</td>
+                <td class="fd-center">{{ p | mesureQte }}</td>
+                <td class="fd-right">{{ formatPrice((p | mesurePu)) }}{{ p | mesureSuffixe }}</td>
                 <td class="fd-right fd-bold">{{ formatPrice(p.sousTotal) }}</td>
               </tr>
             </tbody>

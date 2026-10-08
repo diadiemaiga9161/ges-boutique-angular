@@ -10,6 +10,7 @@ import { VenteService, VenteMap } from './vente.service';
 import { CaisseService, CreditInfo, SituationCredits } from './caisse.service';
 import { BoutiqueService } from './boutique.service';
 import { environment } from '../../../environments/environment';
+import { infoMesure, qteAffichee, qteDoc } from '../utils/mesure.util';
 
 // =====================================================
 // INTERFACES
@@ -212,6 +213,8 @@ export interface StatistiquesGenerales {
     nom: string;
     categorie: string;
     quantiteVendue: number;
+    /** Vente à la mesure : "1,8 kg" ; absent pour un produit à l'unité. */
+    quantiteTexte?: string;
     chiffreAffaire: number;
     prixVente: number;
   }>;
@@ -299,8 +302,8 @@ export class RapportService {
 
   // ============= MÉTHODES DE CALCUL =============
 
-  private calculerTopProduits(ventes: VenteMap[], produits: Produit[]): Array<{nom: string, quantite: number, chiffreAffaire: number, categorie?: string}> {
-    const map = new Map<string, {quantite: number, chiffreAffaire: number, categorie?: string}>();
+  private calculerTopProduits(ventes: VenteMap[], produits: Produit[]): Array<{nom: string, quantite: number, chiffreAffaire: number, categorie?: string, quantiteTexte?: string}> {
+    const map = new Map<string, {quantite: number, chiffreAffaire: number, categorie?: string, modeMesure?: string | null}>();
 
     for (const vente of ventes) {
       if (vente.produits) {
@@ -311,20 +314,28 @@ export class RapportService {
           const produit = produits.find(prod => prod.id === produitId);
           const nom = p.produitNom || produit?.nom || 'Produit';
           const categorie = produit?.categorie?.nom;
+          // Vente à la mesure : on additionne des kg (pas des g) ; le CA reste quantité x prix bruts.
+          const modeMesure = (p as any).modeMesure ?? (produit as any)?.modeMesure ?? null;
+          const qteAff = qteAffichee({ modeMesure }, quantite);
 
           if (map.has(nom)) {
             const existing = map.get(nom)!;
-            existing.quantite += quantite;
+            existing.quantite += qteAff;
             existing.chiffreAffaire += quantite * prix;
           } else {
-            map.set(nom, { quantite, chiffreAffaire: quantite * prix, categorie });
+            map.set(nom, { quantite: qteAff, chiffreAffaire: quantite * prix, categorie, modeMesure });
           }
         }
       }
     }
 
     return Array.from(map.entries())
-      .map(([nom, data]) => ({ nom, quantite: data.quantite, chiffreAffaire: data.chiffreAffaire, categorie: data.categorie }))
+      .map(([nom, data]) => ({
+        nom, quantite: data.quantite, chiffreAffaire: data.chiffreAffaire, categorie: data.categorie,
+        quantiteTexte: infoMesure({ modeMesure: data.modeMesure })
+          ? `${(Math.round(data.quantite * 1000) / 1000).toLocaleString('fr-FR', { maximumFractionDigits: 3 })} ${infoMesure({ modeMesure: data.modeMesure })!.unite}`
+          : undefined
+      }))
       .sort((a, b) => b.quantite - a.quantite);
   }
 
@@ -826,6 +837,7 @@ export class RapportService {
           nom: p.nom,
           categorie: p.categorie || 'Non catégorisé',
           quantiteVendue: p.quantite,
+          quantiteTexte: p.quantiteTexte,
           chiffreAffaire: p.chiffreAffaire,
           prixVente: 0
         }));
@@ -1099,7 +1111,7 @@ export class RapportService {
         <td>${i + 1}</td>
         <td>${p.nom}</td>
         <td>${p.categorie || '-'}</td>
-        <td class="text-right">${p.quantite}</td>
+        <td class="text-right">${qteDoc(p)}</td>
         ${avecCA ? `<td class="text-right">${this.formaterPrixFCFA(p.chiffreAffaire || 0)}</td>` : ''}
       </tr>`).join('');
     return `

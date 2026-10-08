@@ -461,6 +461,9 @@ button.ghost {
 
   h3 {
     margin: 0;
+    // Le thème colore tous les h1-h6 en bleu terne (_typography.scss) : sur ce fond bleu, le titre
+    // devenait illisible, car une couleur héritée perd toujours face à une règle directe.
+    color: #fff;
     font-size: 1.15rem;
     display: flex;
     align-items: center;
@@ -1099,3 +1102,56 @@ body.dark-mode .client-detail-tab.active {
   background: var(--surface, #fff);
   border-radius: 0 0 20px 20px;
 }
+// Situation client : détail des ventes réglées par un versement (un paiement groupé reste UNE ligne)
+.situation-designation { min-width: 14rem; }
+.situation-reglees {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+
+  li { display: flex; flex-wrap: wrap; column-gap: 8px; row-gap: 1px; }
+}
+.situation-reglees__montant { font-weight: 600; font-variant-numeric: tabular-nums; color: #166534; }
+.situation-reglees__produits { flex-basis: 100%; color: #334155; }
+// Pas de variante sombre : les lignes du tableau gardent leur fond clair (table-success) en mode sombre.
+
+// Bouton "Voir les N ventes" d'un paiement groupé (ligne courte par défaut)
+.situation-reglees-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border: 1px solid #93c5fd;
+  border-radius: 999px;
+  background: #fff;
+  color: #1d4ed8;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.15s ease-out, border-color 0.15s ease-out;
+
+  i { font-size: 0.7rem; }
+  &:hover { background: #eff6ff; border-color: #60a5fa; }
+  &:focus-visible { outline: 2px solid #1d4ed8; outline-offset: 2px; }
+}
+.situation-reglees-toggle + .situation-reglees { margin-top: 8px; }
+
+// Client ayant commandé depuis le portail en ligne (badge de la liste)
+.badge-portail {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  vertical-align: middle;
+  background: rgba(5, 150, 105, .12);
+  color: #047857;
+}
+
+:host-context(body.dark-mode) .badge-portail { color: #34d399; }

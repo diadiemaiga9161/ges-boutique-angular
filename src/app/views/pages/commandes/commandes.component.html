@@ -204,13 +204,14 @@
             <td>
               <span class="badge"
                 [class.bg-secondary]="c.statut === StatutCommande.BROUILLON"
-                [class.bg-success]="c.statut === StatutCommande.VALIDEE"
+                [class.bg-success]="c.statut === StatutCommande.VALIDEE && c.etapeLivraison !== 'PRETE'"
+                [class.bg-info]="c.statut === StatutCommande.VALIDEE && c.etapeLivraison === 'PRETE'"
                 [class.bg-danger]="c.statut === StatutCommande.ANNULEE">
                 <i class="bi me-1"
                   [class.bi-pencil]="c.statut === StatutCommande.BROUILLON"
                   [class.bi-check-circle]="c.statut === StatutCommande.VALIDEE"
                   [class.bi-x-circle]="c.statut === StatutCommande.ANNULEE"></i>
-                {{ c.statut === StatutCommande.VALIDEE ? 'Validée' : (c.statut === StatutCommande.ANNULEE ? 'Annulée' : 'Brouillon') }}
+                {{ libelleStatut(c) }}
               </span>
             </td>
             <td class="small text-muted">{{ formatDate(c.dateCommande) }}</td>
@@ -226,6 +227,14 @@
                 <button class="btn btn-sm btn-success" (click)="valider(c)"
                   *ngIf="c.statut === StatutCommande.BROUILLON" title="Valider">
                   <i class="bi bi-check-lg"></i> Valider
+                </button>
+                <button class="btn btn-sm btn-info text-white" (click)="marquerEtape(c, 'PRETE')"
+                  *ngIf="c.statut === StatutCommande.VALIDEE && !c.etapeLivraison" title="Marquer la commande prête">
+                  <i class="bi bi-box-seam"></i> Prête
+                </button>
+                <button class="btn btn-sm btn-success" (click)="marquerEtape(c, 'LIVREE')"
+                  *ngIf="c.statut === StatutCommande.VALIDEE && c.etapeLivraison === 'PRETE'" title="Marquer la commande livrée">
+                  <i class="bi bi-truck"></i> Livrée
                 </button>
                 <button class="btn btn-sm btn-warning" (click)="ouvrirReglementIndividuel(c)"
                   *ngIf="c.estCredit && c.montantRestant > 0" title="Régler">
@@ -301,7 +310,7 @@
             <div class="dropdown-menu show w-100" *ngIf="showProduitDropdown && produitsFiltres.length" style="max-height:220px;overflow-y:auto">
               <button class="dropdown-item" *ngFor="let p of produitsFiltres" (mousedown)="selectionnerProduit(p)">
                 <strong>{{ p.nom }}</strong>
-                <small class="text-muted ms-2">Stock : {{ p.quantite }} · {{ formatMontant(p.prixVente) }}</small>
+                <small class="text-muted ms-2">Stock : {{ p | mesureQte }} · {{ formatMontant(p.prixVente) }}</small>
               </button>
             </div>
           </div>

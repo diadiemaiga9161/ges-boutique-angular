@@ -188,6 +188,20 @@
             </span>
           </button>
 
+          <div class="boutique-switch" *ngIf="autresBoutiques.length">
+            <button class="btn btn-outline-secondary"
+                    type="button"
+                    (click)="toggleBoutiqueList()">
+              <i class="fas fa-store me-2"></i>
+              Changer de boutique
+            </button>
+            <ul *ngIf="showBoutiqueList" class="boutique-switch-list">
+              <li *ngFor="let b of autresBoutiques">
+                <button type="button" (click)="allerVersBoutique(b.url)">{{ b.nom }}</button>
+              </li>
+            </ul>
+          </div>
+
           <button class="btn btn-outline-danger"
                   type="button"
                   (click)="logout()">

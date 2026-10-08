@@ -19,10 +19,12 @@ interface LigneForm {
   quantite: number;
 }
 
+import { MesurePuPipe, MesureQtePipe, MesureSuffixePipe } from '../../../shared/pipes/mesure.pipe';
+
 @Component({
   selector: 'app-commandes',
   standalone: true,
-  imports: [CommonModule, FormsModule, MontantInputDirective],
+  imports: [CommonModule, FormsModule, MontantInputDirective, MesureQtePipe, MesurePuPipe, MesureSuffixePipe],
   templateUrl: './commandes.component.html',
   styleUrl: './commandes.component.scss'
 })
@@ -457,6 +459,40 @@ export class CommandesComponent implements OnInit {
           envoyerWhatsAppDirect(commande.chauffeurTelephone, messageChauffeur);
         });
       }
+    });
+  }
+
+  // ─── Livraison : Prête → Livrée (commande confirmée) + message WhatsApp au client ──
+
+  libelleStatut(c: Commande): string {
+    if (c.statut === StatutCommande.VALIDEE) {
+      if (c.etapeLivraison === 'LIVREE') return 'Livrée';
+      if (c.etapeLivraison === 'PRETE') return 'Prête';
+      return 'Validée';
+    }
+    return c.statut === StatutCommande.ANNULEE ? 'Annulée' : 'Brouillon';
+  }
+
+  marquerEtape(c: Commande, etape: 'PRETE' | 'LIVREE'): void {
+    this.commandeService.changerEtapeLivraison(c.id!, etape).subscribe({
+      next: () => {
+        c.etapeLivraison = etape;
+        const nom = (c.clientPrenom || c.clientNom || '').trim();
+        const message = etape === 'PRETE'
+          ? [`Bonjour ${nom},`.replace(' ,', ','), `Votre commande N°${c.numeroCommande} est prête.`, `Merci de votre confiance !`].join('\n')
+          : [`Bonjour ${nom},`.replace(' ,', ','), `Votre commande N°${c.numeroCommande} a été livrée.`, `Merci et à bientôt !`].join('\n');
+        Swal.fire({
+          icon: 'success',
+          title: etape === 'PRETE' ? 'Commande prête' : 'Commande livrée',
+          html: c.clientTelephone
+            ? `<p>Prévenir le client ?</p><button id="wa-etape-btn" class="swal2-styled" style="background:#25D366;color:#fff;border:none">💬 WhatsApp au client</button>`
+            : '<p>Aucun numéro de téléphone pour ce client.</p>',
+          confirmButtonText: 'Fermer',
+          didOpen: () => document.getElementById('wa-etape-btn')
+            ?.addEventListener('click', () => envoyerWhatsAppDirect(c.clientTelephone, message))
+        });
+      },
+      error: (e) => Swal.fire('Erreur', e?.error?.message || "Impossible de changer l'étape de la commande", 'error')
     });
   }
 

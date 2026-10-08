@@ -1126,6 +1126,68 @@ h1.h3, h1.h4 {
   margin-bottom: 16px;
 }
 
+/* Tuto de démarrage (étapes 1/2 : premier produit, première vente) —
+   même carte/gradient que .app-page-header, pour rester cohérent visuellement. */
+.tuto-demarrage {
+  position: relative;
+  background: linear-gradient(135deg, var(--gl-blue-50), #ffffff);
+  border: 1.5px solid var(--gl-blue-100);
+  border-radius: var(--edu-radius);
+  padding: 24px 28px;
+  margin-bottom: 24px;
+  box-shadow: var(--edu-shadow);
+}
+
+.tuto-demarrage-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.tuto-demarrage-close:hover {
+  background: #ffffff;
+  color: var(--text);
+}
+
+.tuto-demarrage-badge {
+  display: inline-block;
+  background: var(--gl-blue-600);
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: 20px;
+  margin-bottom: 12px;
+}
+
+.tuto-demarrage-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text);
+  margin: 0 0 8px;
+}
+
+.tuto-demarrage-text {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  max-width: 640px;
+  margin: 0 0 18px;
+  line-height: 1.5;
+}
+
 /* ======================================================
    RESPONSIVE PAGE HEADER
    ====================================================== */
@@ -2067,3 +2129,74 @@ body.dark-mode .fin-journee-msg { background: #111827; color: #9ca3af; }
 .badge-stock-bas { background: #fef3c7; color: #92400e; border-radius: 20px; padding: 3px 10px; font-size: 11px; font-weight: 600; }
 .badge-stock-rupture { background: #fee2e2; color: #991b1b; border-radius: 20px; padding: 3px 10px; font-size: 11px; font-weight: 600; }
 
+
+/* ======================================================
+   GL MODAL — modale centrée standard (design-premium) :
+   overlay fixe plein écran, contenu 85vh max avec défilement
+   interne, en-tête et pied collants, entrée fondu + léger zoom.
+   ====================================================== */
+.gl-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1060;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(15, 23, 42, .55);
+  animation: gl-fondu .18s ease-out;
+}
+.gl-modal {
+  width: 100%;
+  max-width: 640px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 18px;
+  box-shadow: 0 30px 70px rgba(15, 23, 42, .25);
+  animation: gl-zoom .2s cubic-bezier(.2, .8, .2, 1);
+  overflow: hidden;
+}
+.gl-modal-petit { max-width: 440px; }
+.gl-modal-entete,
+.gl-modal-pied {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 20px;
+  background: var(--surface);
+}
+.gl-modal-entete { justify-content: space-between; border-bottom: 1px solid var(--border); }
+.gl-modal-entete h2 { margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--text); }
+.gl-modal-pied { justify-content: flex-end; border-top: 1px solid var(--border); flex-wrap: wrap; }
+.gl-modal-corps { padding: 20px; overflow-y: auto; }
+.gl-fermer {
+  width: 40px; height: 40px;
+  border: none; border-radius: 10px;
+  background: transparent; color: var(--text-muted);
+  font-size: 1.1rem; cursor: pointer;
+}
+.gl-fermer:hover { background: var(--surface-strong); color: var(--text); }
+.gl-fermer:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+@keyframes gl-fondu { from { opacity: 0; } to { opacity: 1; } }
+@keyframes gl-zoom { from { opacity: 0; transform: scale(.96); } to { opacity: 1; transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) {
+  .gl-overlay, .gl-modal { animation: none; }
+}
+
+/* Mode sombre : boutons de période des cartes de filtre (fond clair figé + texte
+   clair = illisible sur Primes, Rapports...). */
+body.dark-mode .app-filter-card .btn-period {
+  border-color: var(--border) !important;
+  color: var(--text-muted);
+  background: transparent;
+}
+body.dark-mode .app-filter-card .btn-period.active,
+body.dark-mode .app-filter-card .btn-period:hover {
+  background: rgba(37, 99, 235, .18) !important;
+  border-color: var(--primary) !important;
+  color: #93c5fd !important;
+}

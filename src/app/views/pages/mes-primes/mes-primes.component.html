@@ -1,0 +1,109 @@
+<div class="container-fluid py-4 app-page">
+  <div class="app-page-header mb-4">
+    <div class="app-page-header-left">
+      <div class="app-page-icon"><i class="fa fa-gift" aria-hidden="true"></i></div>
+      <div>
+        <h1 class="app-page-title">Mes primes</h1>
+        <p class="app-page-subtitle">Ce que vous gagnez en vendant les produits choisis par la boutique</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-filter-card periode" role="group" aria-label="Période">
+    <button type="button" class="btn btn-sm btn-period" [class.active]="periode === 'mois'" (click)="choisir('mois')">Ce mois</button>
+    <button type="button" class="btn btn-sm btn-period" [class.active]="periode === 'mois-dernier'" (click)="choisir('mois-dernier')">Mois dernier</button>
+    <button type="button" class="btn btn-sm btn-period" [class.active]="periode === 'annee'" (click)="choisir('annee')">Cette année</button>
+  </div>
+
+  <div class="etat" *ngIf="chargement"><div class="spinner-border text-primary" role="status"></div><p>Chargement…</p></div>
+  <div class="etat" *ngIf="!chargement && erreur">
+    <i class="fa fa-triangle-exclamation text-danger" aria-hidden="true"></i><p>{{ erreur }}</p>
+    <button type="button" class="btn btn-outline-primary btn-sm" (click)="choisir(periode)">Réessayer</button>
+  </div>
+
+  <ng-container *ngIf="!chargement && !erreur && donnees">
+    <div class="row mb-4">
+      <div class="col-12 col-md-4 mb-3">
+        <div class="app-stat-card">
+          <div class="app-stat-icon green"><i class="fa fa-sack-dollar" aria-hidden="true"></i></div>
+          <div class="app-stat-body">
+            <div class="app-stat-label">Gagné sur la période</div>
+            <div class="app-stat-value">{{ cs.fmt(donnees.resume?.primePeriode) }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 mb-3">
+        <div class="app-stat-card">
+          <div class="app-stat-icon orange"><i class="fa fa-hourglass-half" aria-hidden="true"></i></div>
+          <div class="app-stat-body">
+            <div class="app-stat-label">À recevoir</div>
+            <div class="app-stat-value">{{ cs.fmt(donnees.resume?.resteAPayer) }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 mb-3">
+        <div class="app-stat-card">
+          <div class="app-stat-icon blue"><i class="fa fa-wallet" aria-hidden="true"></i></div>
+          <div class="app-stat-body">
+            <div class="app-stat-label">Déjà reçu</div>
+            <div class="app-stat-value">{{ cs.fmt(donnees.resume?.payeTotal) }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ce qui rapporte en ce moment -->
+    <h2 class="section-titre">Ce qui vous rapporte en ce moment</h2>
+    <div class="etat petit" *ngIf="!donnees.reglesEnCours.length">
+      <p>Aucune prime en cours pour le moment. Le gérant peut en ajouter à tout moment.</p>
+    </div>
+    <div class="cartes">
+      <article class="carte" *ngFor="let r of donnees.reglesEnCours">
+        <div class="carte-entete">
+          <span class="carte-icone" aria-hidden="true">
+            <i class="fa" [ngClass]="r.type === 'OBJECTIF' ? 'fa-bullseye' : r.type === 'POURCENTAGE' ? 'fa-percent' : 'fa-coins'"></i>
+          </span>
+          <div class="carte-texte">
+            <strong>{{ cible(r) }}</strong>
+            <span>{{ cs.decrire(r) }}</span>
+          </div>
+        </div>
+        <ng-container *ngIf="r.type === 'OBJECTIF'">
+          <div class="barre" role="progressbar" [attr.aria-valuenow]="progression(r)" aria-valuemin="0" aria-valuemax="100"
+               [attr.aria-label]="'Progression : ' + progression(r) + ' %'">
+            <div class="barre-remplie" [class.atteint]="r.objectifAtteint" [style.transform]="'scaleX(' + progression(r) / 100 + ')'"></div>
+          </div>
+          <div class="carte-pied">
+            <span>{{ r.quantiteVendue | number:'1.0-0' }} / {{ r.quantiteObjectif }} {{ (r.uniteBase || 'unité') | lowercase }}(s)</span>
+            <span *ngIf="r.objectifAtteint" class="bravo"><i class="fa fa-trophy" aria-hidden="true"></i> Objectif atteint ! Prime comptée le {{ r.dateFin | date:'dd/MM' }}</span>
+            <span *ngIf="!r.objectifAtteint">encore {{ reste(r) | number:'1.0-0' }} avant le {{ r.dateFin | date:'dd/MM' }}</span>
+          </div>
+        </ng-container>
+        <div class="carte-pied" *ngIf="r.type !== 'OBJECTIF'">
+          <span>{{ r.dateFin ? ('Jusqu\'au ' + (r.dateFin | date:'dd/MM/yyyy')) : 'Sans date de fin' }}</span>
+        </div>
+      </article>
+    </div>
+
+    <!-- Détail de la période -->
+    <section class="app-table-card mt-4" *ngIf="donnees.resume?.details?.length">
+      <div class="app-table-header"><h2 class="app-table-title">Détail de la période</h2></div>
+      <div class="detail" *ngFor="let d of donnees.resume!.details">
+        <div class="detail-texte"><strong>{{ cible(d) }}</strong><span class="text-muted">{{ cs.decrire(d) }}</span></div>
+        <div class="detail-qte">{{ d.quantiteVendue | number:'1.0-0' }} vendu(s)</div>
+        <div class="detail-prime">{{ cs.fmt(d.prime) }}</div>
+      </div>
+    </section>
+
+    <!-- Paiements reçus -->
+    <section class="app-table-card mt-4">
+      <div class="app-table-header"><h2 class="app-table-title">Primes reçues</h2></div>
+      <div class="etat petit" *ngIf="!donnees.paiements.length"><p>Aucun paiement reçu pour l'instant.</p></div>
+      <div class="detail" *ngFor="let p of donnees.paiements">
+        <div class="detail-texte"><strong>{{ p.datePaiement | date:'dd/MM/yyyy' }}</strong><span class="text-muted">{{ p.note || 'Paiement de prime' }}</span></div>
+        <div></div>
+        <div class="detail-prime">{{ cs.fmt(p.montant) }}</div>
+      </div>
+    </section>
+  </ng-container>
+</div>

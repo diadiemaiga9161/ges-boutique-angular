@@ -103,6 +103,24 @@
     </div>
   </div>
 
+  <!-- Tuto de démarrage — étape 2 : première vente. Disparaît dès qu'une vraie
+       vente existe, jamais bloquant (fermable). -->
+  <div class="tuto-demarrage" *ngIf="afficherTutoPremiereVente">
+    <button type="button" class="tuto-demarrage-close" (click)="fermerTutoPremiereVente()" aria-label="Fermer">
+      <i class="fa fa-times"></i>
+    </button>
+    <div class="tuto-demarrage-badge">Étape 2 sur 2</div>
+    <h3 class="tuto-demarrage-title"><i class="fa fa-shopping-cart me-2"></i>Fais ta première vente (exemple)</h3>
+    <p class="tuto-demarrage-text">
+      Essaie le processus de vente avec un produit que tu viens d'ajouter. C'est juste un
+      exemple pour t'entraîner : la vente sera annulée automatiquement et ne comptera pas
+      dans ta caisse.
+    </p>
+    <button class="btn btn-primary" type="button" (click)="demarrerVenteDemo()">
+      <i class="fa fa-play me-1"></i> Essayer une vente
+    </button>
+  </div>
+
   <!-- Messages d'alerte -->
   <div *ngIf="errorMessage" class="alert alert-danger alert-dismissible fade show" role="alert">
     <i class="fa fa-exclamation-triangle me-2"></i>
@@ -358,12 +376,27 @@
               </div>
             </td>
           </tr>
-          <tr *ngIf="filteredVentes.length === 0">
+          <tr *ngIf="filteredVentes.length === 0 && !rienTrouveDansLaPeriode">
             <td colspan="10" class="text-center py-5">
               <div class="app-empty-state">
                 <i class="fa fa-shopping-cart fa-3x mb-3"></i>
                 <p>{{ 'PROMO.EMPTY' | translate }}</p>
                 <button class="btn btn-primary" (click)="openNewVenteModal()"><i class="fa fa-plus me-1"></i> {{ 'SALES.NEW' | translate }}</button>
+              </div>
+            </td>
+          </tr>
+          <!-- La recherche/le filtre ne portent que sur la période affichée (jamais sur
+               tout l'historique) : si rien n'est trouvé, on guide vers l'élargissement
+               de la période plutôt que de laisser croire à un bug ou à une absence de
+               résultat définitive. -->
+          <tr *ngIf="rienTrouveDansLaPeriode">
+            <td colspan="10" class="text-center py-5">
+              <div class="app-empty-state">
+                <i class="fa fa-search fa-3x mb-3"></i>
+                <p>Rien trouvé sur la période affichée ({{ dateDebut }} → {{ dateFin }})</p>
+                <p class="text-muted small mb-3">La recherche ne porte que sur cette période. Élargis-la pour chercher plus loin.</p>
+                <button class="btn btn-outline-primary btn-sm me-2" (click)="filterWeek()">Chercher sur la semaine</button>
+                <button class="btn btn-outline-primary btn-sm" (click)="filterMonth()">Chercher sur le mois</button>
               </div>
             </td>
           </tr>
@@ -773,11 +806,17 @@
 
             <div class="produits-list border rounded" style="max-height: 350px; overflow-y: auto;">
               <div *ngFor="let produit of filteredProduits" class="d-flex justify-content-between align-items-center p-2 border-bottom">
-                <div>
+                <div class="d-flex align-items-center vente-produit">
+                  <span class="vente-vignette" *ngIf="photos.estActif" aria-hidden="true">
+                    <img *ngIf="photos.url(produit) as src" [src]="src" alt="" loading="lazy" width="40" height="40">
+                    <i *ngIf="!photos.url(produit)" class="fa fa-image"></i>
+                  </span>
+                  <div>
                   <strong>{{ produit.nom }}</strong>
                   <div class="small text-muted">
-                    {{ formatPrice(produit.prixVente) }} | Stock: {{ getStockAfficheProduit(produit) }}
+                    {{ prixCatalogue(produit) }} | Stock: {{ stockCatalogue(produit) }}
                     <span class="badge bg-secondary ms-1" *ngIf="produit.categorie?.nom">{{ produit.categorie?.nom }}</span>
+                  </div>
                   </div>
                 </div>
                 <button class="btn btn-sm btn-outline-primary" (click)="addProduitToVente(produit)" [disabled]="isProduitSansStock(produit)">
@@ -807,10 +846,20 @@
                   <div *ngFor="let produit of produitsPanier; let i = index" class="p-2 border-bottom">
                     <div class="d-flex justify-content-between align-items-start">
                       <div>
+                        <span class="vente-vignette vente-vignette--panier" *ngIf="photos.estActif && photoPanier(produit) as src" aria-hidden="true">
+                          <img [src]="src" alt="" loading="lazy" width="32" height="32">
+                        </span>
                         <strong>{{ produit.nom }}</strong>
                         <span *ngIf="produit.niveauNom" class="badge bg-primary ms-2" style="font-size:0.7rem">{{ produit.niveauNom }}</span>
                         <div class="d-flex gap-2 mt-1">
-                          <div class="input-group input-group-sm" style="width: 150px;">
+                          <div class="input-group input-group-sm" style="width: 150px;" *ngIf="estMesure(produit)">
+                            <span class="input-group-text">Prix/{{ uniteMesure(produit) }}</span>
+                            <input type="number" class="form-control"
+                                   [value]="prixPanierAffiche(i)"
+                                   (input)="onPrixMesureChange(i, $event)"
+                                   step="50" min="0">
+                          </div>
+                          <div class="input-group input-group-sm" style="width: 150px;" *ngIf="!estMesure(produit)">
                             <span class="input-group-text">Prix</span>
                             <input type="number" class="form-control"
                                    [value]="getPrixUnitaireActuel(i)"
@@ -830,7 +879,12 @@
                       </button>
                     </div>
                     <div class="d-flex justify-content-between align-items-center mt-2">
-                      <div class="input-group input-group-sm w-auto">
+                      <button type="button" class="btn btn-sm btn-outline-primary fw-bold" *ngIf="estMesure(produit)" (click)="modifierPesee(i)"
+                              title="Changer la quantité">
+                        <i class="fa fa-scale-balanced me-1" aria-hidden="true"></i>{{ texteQuantite(produit, produit.quantite) }}
+                        <i class="fa fa-pen ms-1" aria-hidden="true"></i>
+                      </button>
+                      <div class="input-group input-group-sm w-auto" *ngIf="!estMesure(produit)">
                         <button class="btn btn-outline-secondary" (click)="updateQuantite(i, produit.quantite - 1)">-</button>
                         <input type="number" class="form-control text-center" style="width: 60px;" [value]="produit.quantite" (change)="onQuantiteChange(i, $event)" min="1">
                         <button class="btn btn-outline-secondary" (click)="updateQuantite(i, produit.quantite + 1)">+</button>
@@ -840,13 +894,13 @@
                     <div class="small mt-1" [ngClass]="getBeneficeProduitColor(i)">
                       {{ getBeneficeProduitLabel(i) }}: {{ formatPrice(Math.abs(getBeneficeProduit(i))) }}
                       <span class="text-muted" *ngIf="produit.prixAchat > 0">
-                        | Prix d'achat: {{ formatPrice(produit.prixAchat) }}
+                        | Prix d'achat: {{ estMesure(produit) ? puLigne({ modeMesure: produit.modeMesure }, produit.prixAchat) : formatPrice(produit.prixAchat) }}
                       </span>
                     </div>
                     <div class="small text-danger mt-1" *ngIf="isProduitPanierEnPerte(i)">
                       Prix saisi inferieur au prix d'achat.
                     </div>
-                    <div class="mt-1">
+                    <div class="mt-1" *ngIf="!estMesure(produit)">
                       <button class="btn btn-sm btn-outline-warning" (click)="toggleRemiseLigne(i)">
                         <i class="fa fa-tag"></i> {{ lignesAvecRemise.has(i) ? 'Supprimer remise' : 'Ajouter remise' }}
                       </button>
@@ -1110,7 +1164,7 @@
                     <div class="small mt-1" [ngClass]="getBeneficeProduitColor(i)">
                       {{ getBeneficeProduitLabel(i) }}: {{ formatPrice(Math.abs(getBeneficeProduit(i))) }}
                       <span class="text-muted" *ngIf="produit.prixAchat > 0">
-                        | Prix d'achat: {{ formatPrice(produit.prixAchat) }}
+                        | Prix d'achat: {{ estMesure(produit) ? puLigne({ modeMesure: produit.modeMesure }, produit.prixAchat) : formatPrice(produit.prixAchat) }}
                       </span>
                     </div>
                     <div class="small text-danger mt-1" *ngIf="isProduitPanierEnPerte(i)">
@@ -1365,7 +1419,7 @@ MODALE NOUVELLE VENTE À CRÉDIT (ancienne)
                     <div class="small mt-1" [ngClass]="getBeneficeProduitColor(i)">
                       {{ getBeneficeProduitLabel(i) }}: {{ formatPrice(Math.abs(getBeneficeProduit(i))) }}
                       <span class="text-muted" *ngIf="produit.prixAchat > 0">
-                        | Prix d'achat: {{ formatPrice(produit.prixAchat) }}
+                        | Prix d'achat: {{ estMesure(produit) ? puLigne({ modeMesure: produit.modeMesure }, produit.prixAchat) : formatPrice(produit.prixAchat) }}
                       </span>
                     </div>
                     <div class="small text-danger mt-1" *ngIf="isProduitPanierEnPerte(i)">
@@ -1587,8 +1641,8 @@ MODALE NOUVELLE VENTE À CRÉDIT (ancienne)
               <tbody>
                 <tr *ngFor="let p of selectedVente.produits || []; let i = index" [class.fd-row-even]="i % 2 === 0">
                   <td>{{ p.produitNom }}</td>
-                  <td class="fd-center">{{ p.quantite }}</td>
-                  <td class="fd-right">{{ formatPrice(p.prixUnitaire || 0) }}</td>
+                  <td class="fd-center">{{ qteLigne(p) }}</td>
+                  <td class="fd-right">{{ puLigne(p) }}</td>
                   <td class="fd-right fd-bold">{{ formatPrice(p.sousTotal) }}</td>
                 </tr>
               </tbody>
@@ -1630,10 +1684,11 @@ MODALE NOUVELLE VENTE À CRÉDIT (ancienne)
               </tr></thead>
               <tbody>
                 <tr *ngFor="let p of selectedVente.produits || []; let i = index" [class.fd-row-even]="i % 2 === 0">
-                  <td style="color:#e2e8f0">{{ p.produitNom }}</td>
-                  <td class="fd-center" style="color:#94a3b8">{{ p.quantite }}</td>
-                  <td class="fd-right" style="color:#94a3b8">{{ formatPrice(p.prixUnitaire || 0) }}</td>
-                  <td class="fd-right fd-bold" style="color:#f59e0b">{{ formatPrice(p.sousTotal) }}</td>
+                  <!-- Fond clair (.facture-doc--modern) : couleurs foncées lisibles, l'ancien gris très clair y était invisible. -->
+                  <td style="color:#1e293b">{{ p.produitNom }}</td>
+                  <td class="fd-center" style="color:#475569">{{ qteLigne(p) }}</td>
+                  <td class="fd-right" style="color:#475569">{{ puLigne(p) }}</td>
+                  <td class="fd-right fd-bold fd-gold-text">{{ formatPrice(p.sousTotal) }}</td>
                 </tr>
               </tbody>
             </table>
@@ -1678,8 +1733,8 @@ MODALE NOUVELLE VENTE À CRÉDIT (ancienne)
               <tbody>
                 <tr *ngFor="let p of selectedVente.produits || []">
                   <td>{{ p.produitNom }}</td>
-                  <td class="fd-center">{{ p.quantite }}</td>
-                  <td class="fd-right">{{ formatPrice(p.prixUnitaire || 0) }}</td>
+                  <td class="fd-center">{{ qteLigne(p) }}</td>
+                  <td class="fd-right">{{ puLigne(p) }}</td>
                   <td class="fd-right fd-bold">{{ formatPrice(p.sousTotal) }}</td>
                 </tr>
               </tbody>
@@ -1837,7 +1892,11 @@ MODALE NOUVELLE VENTE À CRÉDIT (ancienne)
                     <div class="flex-grow-1">
                       <h6 class="mb-1">{{ produit.nom }}</h6>
                       <div class="d-flex align-items-center mb-2">
-                        <div class="input-group input-group-sm w-auto">
+                        <button type="button" class="btn btn-sm btn-outline-primary fw-bold" *ngIf="estMesure(produit)" (click)="modifierPesee(i)">
+                          <i class="fa fa-scale-balanced me-1" aria-hidden="true"></i>{{ texteQuantite(produit, produit.quantite) }}
+                          <i class="fa fa-pen ms-1" aria-hidden="true"></i>
+                        </button>
+                        <div class="input-group input-group-sm w-auto" *ngIf="!estMesure(produit)">
                           <button class="btn btn-outline-secondary" (click)="updateQuantite(i, produit.quantite - 1)"
                             [disabled]="produit.quantite <= 1">-</button>
                           <input type="number" class="form-control text-center" style="width: 60px;"
@@ -1846,7 +1905,7 @@ MODALE NOUVELLE VENTE À CRÉDIT (ancienne)
                           <button class="btn btn-outline-secondary" (click)="updateQuantite(i, produit.quantite + 1)"
                             [disabled]="produit.quantite >= getMaxQuantite(i)">+</button>
                         </div>
-                        <span class="ms-3">{{ formatPrice(produit.prixVente) }}</span>
+                        <span class="ms-3">{{ estMesure(produit) ? formatPrice(prixPanierAffiche(i)) + '/' + uniteMesure(produit) : formatPrice(produit.prixVente) }}</span>
                       </div>
 
                       <div class="mt-2" *ngIf="lignesAvecRemise.has(i)">
@@ -1874,7 +1933,7 @@ MODALE NOUVELLE VENTE À CRÉDIT (ancienne)
                       </button>
                     </div>
                   </div>
-                  <div class="d-flex justify-content-end mt-2">
+                  <div class="d-flex justify-content-end mt-2" *ngIf="!estMesure(produit)">
                     <button class="btn btn-sm btn-outline-warning" (click)="toggleRemiseLigne(i)">
                       <i class="fa fa-tag me-1"></i>
                       {{ lignesAvecRemise.has(i) ? 'Supprimer remise' : 'Ajouter remise' }}
@@ -2180,14 +2239,21 @@ MODALE NOUVELLE VENTE À CRÉDIT (ancienne)
                   <input type="checkbox" class="form-check-input" [(ngModel)]="ligne.selected">
                 </td>
                 <td>{{ ligne.produitNom }}</td>
-                <td class="text-center text-muted">{{ ligne.quantiteMax }}</td>
+                <td class="text-center text-muted">{{ qteLigne({ modeMesure: ligne.modeMesure, quantite: ligne.quantiteMax }) }}</td>
                 <td>
-                  <input type="number" class="form-control form-control-sm text-center"
+                  <input *ngIf="!ligne.modeMesure" type="number" class="form-control form-control-sm text-center"
                          [(ngModel)]="ligne.quantiteRetournee"
                          [disabled]="!ligne.selected"
                          min="1" [max]="ligne.quantiteMax" step="1">
+                  <!-- Vente à la mesure : saisie en kg/L/m, gardée en g/ml/cm -->
+                  <div *ngIf="ligne.modeMesure" class="input-group input-group-sm">
+                    <input type="text" inputmode="decimal" class="form-control text-center"
+                           [ngModel]="qteRetourAffichee(ligne)" (ngModelChange)="majQteRetour(ligne, $event)"
+                           [disabled]="!ligne.selected">
+                    <span class="input-group-text">{{ uniteMesure(ligne) }}</span>
+                  </div>
                 </td>
-                <td class="text-end">{{ formatPrice(ligne.prixUnitaire) }}</td>
+                <td class="text-end">{{ puLigne(ligne) }}</td>
                 <td class="text-end fw-bold">
                   {{ ligne.selected && ligne.quantiteRetournee > 0 ? formatPrice(ligne.quantiteRetournee * ligne.prixUnitaire) : '-' }}
                 </td>
@@ -2377,8 +2443,8 @@ MODALE NOUVELLE VENTE À CRÉDIT (ancienne)
               <tbody>
                 <tr *ngFor="let l of (vente.produits || vente.lignes || [])">
                   <td>{{ l.produitNom }}</td>
-                  <td class="text-center">{{ l.quantite }}</td>
-                  <td class="text-end">{{ formatPrice(l.prixUnitaire) }}</td>
+                  <td class="text-center">{{ qteLigne(l) }}</td>
+                  <td class="text-end">{{ puLigne(l) }}</td>
                   <td class="text-end fw-bold">{{ formatPrice(l.sousTotal) }}</td>
                 </tr>
                 <tr *ngIf="(vente.produits || vente.lignes || []).length === 0">
@@ -2469,7 +2535,7 @@ MODALE NOUVELLE VENTE À CRÉDIT (ancienne)
             <tbody>
               <tr *ngFor="let l of (selectedCredit.produits || selectedCredit.lignes || [])">
                 <td>{{ l.produitNom }}</td>
-                <td class="text-center">{{ l.quantite }}</td>
+                <td class="text-center">{{ qteLigne(l) }}</td>
                 <td class="text-end">{{ formatPrice(l.sousTotal) }}</td>
               </tr>
             </tbody>
@@ -2611,7 +2677,7 @@ MODALE NOUVELLE VENTE À CRÉDIT (ancienne)
                           (ngModelChange)="changerProduitLigne(i, $event)">
                     <option [value]="0">— Choisir un produit —</option>
                     <option *ngFor="let p of produits" [value]="p.id">
-                      {{ p.nom }} — {{ p.prixVente | currency:'':'':'1.0-0' }} FCFA
+                      {{ p.nom }} — {{ prixCatalogue(p) }}
                     </option>
                   </select>
                   <small *ngIf="ligne.ancienProduitId && ligne.ancienProduitId !== ligne.produitId"
@@ -2619,13 +2685,28 @@ MODALE NOUVELLE VENTE À CRÉDIT (ancienne)
                     <i class="fa fa-exchange-alt me-1"></i> Produit changé
                   </small>
                 </td>
-                <td>
+                <td *ngIf="!ligne.modeMesure">
                   <input type="number" class="form-control form-control-sm text-center"
                          [(ngModel)]="ligne.quantite" min="1" step="1" />
                 </td>
-                <td>
+                <td *ngIf="!ligne.modeMesure">
                   <input type="text" inputmode="numeric" class="form-control form-control-sm text-right" appMontantInput
                          [(ngModel)]="ligne.prixUnitaire" />
+                </td>
+                <!-- Vente à la mesure : quantité en kg/L/m et prix par kg/L/m -->
+                <td *ngIf="ligne.modeMesure">
+                  <div class="input-group input-group-sm">
+                    <input type="text" inputmode="decimal" class="form-control text-center"
+                           [ngModel]="qteAfficheeLigne(ligne)" (ngModelChange)="majQteModification(ligne, $event)" />
+                    <span class="input-group-text">{{ uniteMesure(ligne) }}</span>
+                  </div>
+                </td>
+                <td *ngIf="ligne.modeMesure">
+                  <div class="input-group input-group-sm">
+                    <input type="text" inputmode="decimal" class="form-control text-right"
+                           [ngModel]="prixAfficheLigne(ligne)" (ngModelChange)="majPrixModification(ligne, $event)" />
+                    <span class="input-group-text">/{{ uniteMesure(ligne) }}</span>
+                  </div>
                 </td>
                 <td class="text-end fw-bold">
                   {{ ligne.prixUnitaire * ligne.quantite | currency:'':'':'1.0-0' }} FCFA
@@ -2675,3 +2756,7 @@ MODALE NOUVELLE VENTE À CRÉDIT (ancienne)
     </div>
   </div>
 </div>
+
+<!-- Vente à la mesure : fenêtre de pesée (kg, L, m) -->
+<app-pesee-modal *ngIf="peseeProduit" [produit]="$any(peseeProduit)" [quantiteInitiale]="peseeQuantiteInitiale"
+                 [maximum]="peseeMaximum" (valider)="validerPesee($event)" (annuler)="fermerPesee()"></app-pesee-modal>

@@ -19,6 +19,9 @@
         </div>
 
         <div class="vitrine-header-actions">
+          <button class="btn-header-action" *ngIf="commandesMemorisees.length" (click)="ouvrirMesCommandes()">
+            <i class="fa fa-receipt"></i> Mes commandes
+          </button>
           <button class="btn-header-action" *ngIf="peutInstaller" (click)="installerApplication()">
             <i class="fa fa-download"></i> Installer
           </button>
@@ -106,7 +109,11 @@
         <div class="produit-card" *ngFor="let p of produitsPagines" [class.produit-card--rupture]="p.statutStock === 'RUPTURE'">
 
           <div class="produit-visuel" [class]="'produit-visuel--' + getCategorieVisuel(p.categorieNom).couleur">
-            <i class="fa" [ngClass]="getCategorieVisuel(p.categorieNom).icone"></i>
+            <button type="button" class="produit-photo" *ngIf="urlPhoto(p) as src" (click)="agrandirPhoto(p)"
+                    [attr.aria-label]="'Voir la photo de ' + p.nom">
+              <img [src]="src" [alt]="p.nom" loading="lazy" decoding="async" width="200" height="200">
+            </button>
+            <i class="fa" *ngIf="!urlPhoto(p)" [ngClass]="getCategorieVisuel(p.categorieNom).icone"></i>
             <span class="badge-promo" *ngIf="p.enPromotion">
               <i class="fa fa-tag"></i> Promo
             </span>
@@ -123,7 +130,7 @@
             <h3 class="produit-nom">{{ p.nom }}</h3>
 
             <div class="produit-prix-row">
-              <div class="produit-prix">{{ formatPrix(p.prixVente) }}</div>
+              <div class="produit-prix">{{ formatPrix(p.prixVente) }}<span *ngIf="p.unite"> / {{ p.unite }}</span></div>
               <div class="produit-promo-details" *ngIf="p.enPromotion">
                 <span class="promo-reduction" *ngIf="p.promotionReduction">-{{ p.promotionReduction }}</span>
               </div>
@@ -190,7 +197,7 @@
       <div class="panier-ligne" *ngFor="let l of panier">
         <div class="panier-ligne-info">
           <p class="panier-ligne-nom">{{ l.produit.nom }}</p>
-          <p class="panier-ligne-prix">{{ formatPrix(l.produit.prixVente) }} / unité</p>
+          <p class="panier-ligne-prix">{{ formatPrix(l.produit.prixVente) }} / {{ l.produit.unite || 'unité' }}</p>
         </div>
         <div class="stepper stepper--sm">
           <button (click)="retirerDuPanier(l.produit)">–</button>
@@ -224,6 +231,12 @@
     <div class="modal-commande-body">
       <p class="modal-commande-sub">
         La boutique vous contactera pour confirmer votre commande ({{ nombreArticles }} article{{ nombreArticles > 1 ? 's' : '' }}, {{ formatPrix(totalPanier) }}). Paiement à la remise.
+      </p>
+
+      <p class="memo-client" *ngIf="clientMemorise">
+        <i class="fa fa-mobile-screen-button" aria-hidden="true"></i>
+        <span>Vos informations sont gardées sur ce téléphone.</span>
+        <button type="button" class="lien-effacer" (click)="oublierClient()">Effacer</button>
       </p>
 
       <label class="champ">
@@ -282,6 +295,52 @@
     <p>Référence : <strong>{{ commandeConfirmee }}</strong></p>
     <p class="modal-confirmation-sub">La boutique va préparer votre commande et vous contactera bientôt.</p>
     <button class="btn-envoyer" (click)="fermerConfirmation()">D'accord</button>
+    <button type="button" class="btn-secondaire" *ngIf="commandesMemorisees.length" (click)="ouvrirMesCommandes()">
+      <i class="fa fa-receipt" aria-hidden="true"></i> Suivre ma commande
+    </button>
+  </div>
+
+  <!-- ==================== PHOTO AGRANDIE ==================== -->
+  <div class="overlay overlay--photo" *ngIf="photoAgrandie" (click)="fermerPhoto()"></div>
+  <div class="photo-grande" *ngIf="photoAgrandie" role="dialog" aria-modal="true" [attr.aria-label]="photoAgrandie.nom"
+       (document:keydown.escape)="fermerPhoto()">
+    <button class="btn-fermer" (click)="fermerPhoto()" aria-label="Fermer"><i class="fa fa-times"></i></button>
+    <img [src]="urlPhoto(photoAgrandie, 'grande')" [alt]="photoAgrandie.nom">
+    <p class="photo-grande__nom">{{ photoAgrandie.nom }} · <strong>{{ formatPrix(photoAgrandie.prixVente) }}</strong></p>
+  </div>
+
+  <!-- ==================== MES COMMANDES (suivi sans compte) ==================== -->
+  <div class="overlay" *ngIf="mesCommandesOuvert" (click)="fermerMesCommandes()"></div>
+  <div class="modal-commande" *ngIf="mesCommandesOuvert" role="dialog" aria-modal="true" aria-labelledby="titre-mes-commandes"
+       (document:keydown.escape)="fermerMesCommandes()">
+    <div class="modal-commande-header">
+      <h2 id="titre-mes-commandes"><i class="fa fa-receipt" aria-hidden="true"></i> Mes commandes</h2>
+      <button class="btn-fermer" (click)="fermerMesCommandes()" aria-label="Fermer"><i class="fa fa-times"></i></button>
+    </div>
+    <div class="modal-commande-body">
+      <p class="modal-commande-sub">Les commandes passées depuis ce téléphone.</p>
+
+      <p class="suivi-etat" *ngIf="chargementSuivi">Chargement...</p>
+      <p class="modal-commande-erreur" *ngIf="!chargementSuivi && erreurSuivi">{{ erreurSuivi }}</p>
+      <p class="suivi-etat" *ngIf="!chargementSuivi && !erreurSuivi && !suivi.length">Aucune commande trouvée.</p>
+
+      <ul class="suivi-liste" *ngIf="!chargementSuivi && suivi.length">
+        <li class="suivi-carte" *ngFor="let c of suivi">
+          <div class="suivi-haut">
+            <strong class="suivi-numero">{{ c.numero }}</strong>
+            <span class="suivi-statut" [ngClass]="'suivi-statut--' + etatSuivi(c)">{{ libelleStatut(c) }}</span>
+          </div>
+          <p class="suivi-date">{{ c.dateCommande | date:'dd/MM/yyyy à HH:mm' }} · <strong>{{ formatPrix(c.montantTotal) }}</strong></p>
+          <ul class="suivi-lignes">
+            <li *ngFor="let l of c.lignes">{{ l.quantite }} × {{ l.nom }}</li>
+          </ul>
+        </li>
+      </ul>
+
+      <button class="btn-envoyer" (click)="chargerSuivi()" [disabled]="chargementSuivi">
+        <i class="fa fa-rotate-right" aria-hidden="true"></i> Actualiser
+      </button>
+    </div>
   </div>
 
 </div>

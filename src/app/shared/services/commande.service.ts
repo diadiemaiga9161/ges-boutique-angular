@@ -7,6 +7,7 @@ import { AuthService } from './auth.service';
 import { BoutiqueService } from './boutique.service';
 import { FactureService } from './facture.service';
 import { formaterMessageWhatsApp } from '../utils/whatsapp.util';
+import { qteDoc, puDoc } from '../utils/mesure.util';
 
 export enum StatutCommande {
   BROUILLON = 'BROUILLON',
@@ -54,6 +55,9 @@ export interface Commande {
   fraisLivraison?: number;
   chauffeurNom?: string;
   chauffeurTelephone?: string;
+  /** Après confirmation : PRETE puis LIVREE (absent = pas encore prête). */
+  etapeLivraison?: 'PRETE' | 'LIVREE' | null;
+  dateEtapeLivraison?: string | null;
 }
 
 export interface CommandeRequest {
@@ -114,6 +118,11 @@ export class CommandeService {
     return this.http.patch<any>(`${this.apiUrl}/${id}/payer-credit`, { montant }, this.headers);
   }
 
+  /** Commande confirmée → Prête → Livrée (null = revenir à « confirmée »). */
+  changerEtapeLivraison(id: number, etape: 'PRETE' | 'LIVREE' | null): Observable<any> {
+    return this.http.patch<any>(`${this.apiUrl}/${id}/livraison`, { etape }, this.headers);
+  }
+
   payerCreditsGroupes(ids: number[], montantTotal: number): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/payer-credits-groupes`, { ids, montantTotal }, this.headers);
   }
@@ -143,8 +152,8 @@ export class CommandeService {
     const lignes = commande.lignes.map((l, i) => [
       String(i + 1),
       l.produit?.nom || l.produitNom || 'Produit',
-      String(l.quantite),
-      this.formatMontant(l.prixUnitaire),
+      qteDoc(l),
+      puDoc(l, v => this.formatMontant(v)),
       this.formatMontant(l.sousTotal ?? l.prixUnitaire * l.quantite)
     ]);
 
@@ -160,7 +169,7 @@ export class CommandeService {
     }
 
     const lignesDetailWa = commande.lignes.map(l =>
-      `${l.produit?.nom || l.produitNom || 'Produit'} ×${l.quantite} — ${this.formatMontant(l.sousTotal ?? l.prixUnitaire * l.quantite)}`
+      `${l.produit?.nom || l.produitNom || 'Produit'} ×${qteDoc(l)} — ${this.formatMontant(l.sousTotal ?? l.prixUnitaire * l.quantite)}`
     );
     const telephone = commande.clientTelephone || commande.client?.numeroTelephone;
 

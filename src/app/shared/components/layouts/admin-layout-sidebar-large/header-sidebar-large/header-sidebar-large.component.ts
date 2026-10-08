@@ -12,6 +12,7 @@ import { HttpClient } from '@angular/common/http';
 import { WebSocketService } from 'src/app/shared/services/websocket.service';
 import { environment } from 'src/environments/environment';
 import Swal from 'sweetalert2';
+import { RoleService } from 'src/app/shared/services/role.service';
 
 // Topbar sticky façon edumanager. Le state-machine sidenav/childnav de
 // l'ancien fly-out a disparu avec lui : ouvrir/fermer la sidebar est
@@ -54,7 +55,8 @@ export class HeaderSidebarLargeComponent implements OnInit, OnDestroy {
       public langService: LanguageService,
       private elRef: ElementRef,
       private http: HttpClient,
-      private wsService: WebSocketService
+      private wsService: WebSocketService,
+      private roleService: RoleService
     ) { }
 
     toggelSidebar() {
@@ -99,7 +101,8 @@ export class HeaderSidebarLargeComponent implements OnInit, OnDestroy {
   }
 
   get currentUserRole(): string {
-    return this.authService.getFormattedRole() || '';
+    // Rôles personnalisés actifs : nom réel du rôle (ex: CAISSIER) plutôt que la base technique.
+    return this.roleService.nomRoleAffiche.toUpperCase() || this.authService.getFormattedRole() || '';
   }
 
   logout(): void {

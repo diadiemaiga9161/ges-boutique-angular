@@ -290,7 +290,7 @@
           <tbody>
             <tr *ngFor="let item of resumeMensuelProduits">
               <td>{{ item.nom }}</td>
-              <td class="text-center">{{ item.quantite }}</td>
+              <td class="text-center">{{ item | mesureQte }}</td>
               <td class="text-right font-weight-bold">{{ fmt(item.total) }}</td>
             </tr>
           </tbody>
@@ -320,7 +320,7 @@
               <td>
                 <div class="produits-list">
                   <span class="produit-chip" *ngFor="let l of (achat.lignes || [])">
-                    {{ l.produit?.nom }} ×{{ l.quantite }}
+                    {{ l.produit?.nom }} ×{{ l | mesureQte }}
                   </span>
                 </div>
               </td>
@@ -370,7 +370,7 @@
                     <tbody>
                       <tr *ngFor="let ligne of achatDetail.ligneAchats">
                         <td>{{ ligne.nomProduit || ligne.produit?.nom || '—' }}</td>
-                        <td class="text-center">{{ ligne.quantite }} {{ ligne.uniteMesure || '' }}</td>
+                        <td class="text-center">{{ ligne | mesureQte }} {{ ligne.uniteMesure || '' }}</td>
                         <td class="text-right">{{ ligne.prixAchatUnitaire | number:'1.0-0' }} F</td>
                         <td class="text-right font-weight-bold">{{ (ligne.total || ligne.sousTotal || (ligne.quantite * ligne.prixAchatUnitaire)) | number:'1.0-0' }} F</td>
                       </tr>
@@ -604,7 +604,7 @@
                   <td>
                     <div class="produits-list">
                       <span class="produit-chip" *ngFor="let l of (a.lignes || [])">
-                        {{ l.produit?.nom }} ×{{ l.quantite }}
+                        {{ l.produit?.nom }} ×{{ l | mesureQte }}
                       </span>
                     </div>
                   </td>
@@ -849,11 +849,13 @@
       <div class="form-row align-items-end">
         <div class="form-group col-md-4">
           <label>Quantité <span class="text-danger">*</span></label>
-          <input type="number" class="form-control" [(ngModel)]="tempLigneAchat.quantite" min="1" />
+          <input type="number" class="form-control" [(ngModel)]="tempLigneAchat.quantite" min="0" [step]="produitAchatMesure ? 'any' : 1" />
+          <small class="text-muted" *ngIf="produitAchatMesure">En {{ produitAchatMesure.modeMesure === 'KG' ? 'kg' : produitAchatMesure.modeMesure === 'L' ? 'L' : 'm' }} (ex : 50)</small>
         </div>
         <div class="form-group col-md-4">
           <label>Prix achat unitaire <span class="text-danger">*</span></label>
           <input type="text" inputmode="numeric" class="form-control" appMontantInput [(ngModel)]="tempLigneAchat.prixAchatUnitaire" />
+          <small class="text-muted" *ngIf="produitAchatMesure">Prix par {{ produitAchatMesure.modeMesure === 'KG' ? 'kg' : produitAchatMesure.modeMesure === 'L' ? 'L' : 'm' }}</small>
         </div>
         <div class="form-group col-md-4">
           <button class="btn btn-sm btn-success w-100" (click)="ajouterLigneAchat()">
@@ -884,8 +886,8 @@
                 {{ nomProduitLigne(ligne) }}
                 <span class="badge badge-info ml-1" *ngIf="!ligne.produitId">nouveau</span>
               </td>
-              <td class="text-center">{{ ligne.quantite }}</td>
-              <td class="text-right">{{ fmt(ligne.prixAchatUnitaire) }}</td>
+              <td class="text-center">{{ ligne | mesureQte }}</td>
+              <td class="text-right">{{ fmt(ligne | mesurePu: ligne.prixAchatUnitaire) }}{{ ligne | mesureSuffixe }}</td>
               <td class="text-right font-weight-bold">{{ fmt(ligne.quantite * ligne.prixAchatUnitaire) }}</td>
               <td class="text-center">
                 <button class="btn btn-xs btn-outline-danger" (click)="supprimerLigneAchat(i)" title="Retirer">

@@ -769,8 +769,8 @@
             <tbody>
               <tr *ngFor="let ligne of detailsLignes">
                 <td><strong>{{ ligne.produitNom }}</strong></td>
-                <td class="text-center">{{ ligne.quantite }}</td>
-                <td class="text-end">{{ formatPrice(ligne.prixUnitaire) }}</td>
+                <td class="text-center">{{ ligne | mesureQte }}</td>
+                <td class="text-end">{{ formatPrice((ligne | mesurePu)) }}{{ ligne | mesureSuffixe }}</td>
                 <td class="text-end fw-bold">{{ formatPrice(ligne.sousTotal || ligne.quantite * ligne.prixUnitaire) }}</td>
               </tr>
             </tbody>

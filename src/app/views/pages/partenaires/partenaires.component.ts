@@ -25,10 +25,13 @@ interface HistoriquePaiementEntry {
   vendeur: string;
 }
 
+import { MesurePuPipe, MesureQtePipe, MesureSuffixePipe } from '../../../shared/pipes/mesure.pipe';
+import { qteDoc } from '../../../shared/utils/mesure.util';
+
 @Component({
   selector: 'app-partenaires',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule, MontantInputDirective],
+  imports: [CommonModule, FormsModule, TranslateModule, MontantInputDirective, MesureQtePipe, MesurePuPipe, MesureSuffixePipe],
   templateUrl: './partenaires.component.html',
   styleUrls: ['../clients/clients.component.scss', './partenaires.component.scss']
 })
@@ -716,7 +719,7 @@ export class PartenairesComponent implements OnInit {
 
   getProduitsList(vente: VenteMap): string {
     if (!vente.produits || vente.produits.length === 0) return '-';
-    return vente.produits.map(p => `${p.quantite}x ${p.produitNom || 'Produit'}`).join(', ');
+    return vente.produits.map(p => `${qteDoc(p)} × ${p.produitNom || 'Produit'}`).join(', ');
   }
 
   telechargerFacture(venteId: number): void {

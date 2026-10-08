@@ -95,7 +95,38 @@
     dateMouvement: string;
   }
 
-  @Injectable({
+  
+/** Comptage d'inventaire (voir ComptageInventaireController côté serveur). */
+export interface LigneComptage {
+  produitId: number;
+  produitNom: string;
+  quantiteComptee: number;
+  stockAuComptage: number;
+  ecart: number;
+  valeurEcart: number;
+  comptePar?: string;
+  dateComptage: string;
+}
+
+export interface Comptage {
+  id: number;
+  statut: 'EN_COURS' | 'VALIDE' | 'ABANDONNE';
+  categorieId?: number | null;
+  categorieNom?: string | null;
+  commencePar?: string;
+  dateDebut: string;
+  terminePar?: string | null;
+  dateFin?: string | null;
+  lignes?: LigneComptage[];
+  nbComptes: number;
+  nbEcarts: number;
+  valeurManquants?: number;
+  valeurSurplus?: number;
+  valeurNette: number;
+  nbProduitsACompter?: number;
+}
+
+@Injectable({
     providedIn: 'root'
   })
   export class InventaireService {
@@ -109,6 +140,35 @@
     /**
      * Obtenir les headers avec le token JWT
      */
+    // ---------------------------------------------------------------- comptage d'inventaire
+
+    /** Comptage en cours (null s'il n'y en a pas). */
+    comptageEnCours(): Observable<Comptage | null> {
+      return this.http.get<Comptage>(`${this.apiUrl}/comptages/en-cours`, { headers: this.getAuthHeaders(), observe: 'response' })
+        .pipe(map(r => r.status === 204 ? null : r.body));
+    }
+
+    historiqueComptages(): Observable<Comptage[]> {
+      return this.http.get<Comptage[]>(`${this.apiUrl}/comptages`, { headers: this.getAuthHeaders() });
+    }
+
+    demarrerComptage(categorieId: number | null): Observable<Comptage> {
+      return this.http.post<Comptage>(`${this.apiUrl}/comptages`, categorieId ? { categorieId } : {}, { headers: this.getAuthHeaders() });
+    }
+
+    /** Quantité dans l'unité de stock (pièces, ou g/ml/cm). null = retirer le produit du comptage. */
+    compterProduit(comptageId: number, produitId: number, quantite: number | null): Observable<Comptage> {
+      return this.http.put<Comptage>(`${this.apiUrl}/comptages/${comptageId}/lignes`, { produitId, quantite }, { headers: this.getAuthHeaders() });
+    }
+
+    validerComptage(comptageId: number): Observable<Comptage> {
+      return this.http.post<Comptage>(`${this.apiUrl}/comptages/${comptageId}/valider`, {}, { headers: this.getAuthHeaders() });
+    }
+
+    abandonnerComptage(comptageId: number): Observable<Comptage> {
+      return this.http.post<Comptage>(`${this.apiUrl}/comptages/${comptageId}/abandonner`, {}, { headers: this.getAuthHeaders() });
+    }
+
     private getAuthHeaders() {
       const token = this.authService.getToken();
       if (!token) {

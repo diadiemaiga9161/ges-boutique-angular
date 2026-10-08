@@ -34,10 +34,12 @@ interface GroupeClient {
   total: number;
 }
 
+import { MesurePuPipe, MesureQtePipe, MesureSuffixePipe } from '../../../shared/pipes/mesure.pipe';
+
 @Component({
   selector: 'app-reglement-credits',
   standalone: true,
-  imports: [CommonModule, FormsModule, MontantInputDirective],
+  imports: [CommonModule, FormsModule, MontantInputDirective, MesureQtePipe, MesurePuPipe, MesureSuffixePipe],
   templateUrl: './reglement-credits.component.html',
   styleUrl: './reglement-credits.component.scss'
 })

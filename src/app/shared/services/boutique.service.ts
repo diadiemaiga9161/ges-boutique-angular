@@ -2,10 +2,10 @@
 
 import { Injectable } from '@angular/core';
 import { environment } from '../../../environments/environment';
-import { BehaviorSubject, Observable, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, from, throwError } from 'rxjs';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { AuthService } from './auth.service';
-import { catchError, map, tap } from 'rxjs/operators';
+import { catchError, map, switchMap, tap } from 'rxjs/operators';
 
 export interface FonctionnaliteAvancee {
   cle: string;
@@ -40,6 +40,8 @@ export interface BoutiqueInfo {
   /** Activables/désactivables par le super admin (Boutique > Paramètres), vérifiés côté serveur. */
   featureTransfertsActif?: boolean;
   featureVitrineActif?: boolean;
+  /** Défini uniquement par le super admin — voir feature.ENVOI_SAUVEGARDES_EMAIL. */
+  emailSauvegarde?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -90,12 +92,12 @@ export class BoutiqueService {
 
   private defaultInfo(): BoutiqueInfo {
     return {
-      nom: 'Boutique Alimentaire Ndjim Et Frères',
-      adresse: 'Misa bougou',
+      nom: 'Ma Boutique',
+      adresse: '',
       numeroRc: 'RC-XXXX',
       numeroIfu: 'IFU-XXXX',
-      telephone: '76 96 21 20/66 43 66 03',
-      email: 'ndjim@yahoo.fr',
+      telephone: '',
+      email: '',
       ville: 'Bamako',
       pays: 'Mali',
       logoPath: 'assets/images/logo.png',
@@ -170,7 +172,8 @@ export class BoutiqueService {
       createdAt: data.createdAt,
       updatedAt: data.updatedAt,
       featureTransfertsActif: data.featureTransfertsActif ?? fallback.featureTransfertsActif,
-      featureVitrineActif: data.featureVitrineActif ?? fallback.featureVitrineActif
+      featureVitrineActif: data.featureVitrineActif ?? fallback.featureVitrineActif,
+      emailSauvegarde: data.emailSauvegarde ?? undefined
     };
   }
 
@@ -248,10 +251,13 @@ export class BoutiqueService {
   uploadLogo(file: File): Observable<string> {
     const token = this.authService.getToken();
     if (!token) return throwError(() => new Error('Token non disponible'));
-    const formData = new FormData();
-    formData.append('logo', file, file.name);
     const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
-    return this.http.post<any>(`${this.apiUrl}/upload-logo`, formData, { headers }).pipe(
+    return from(this.reduireLogo(file)).pipe(
+      switchMap(blob => {
+        const formData = new FormData();
+        formData.append('logo', blob, file.name);
+        return this.http.post<any>(`${this.apiUrl}/upload-logo`, formData, { headers });
+      }),
       map(response => {
         const logo = response.logo as string;
         this.info = { ...this.info, logo };
@@ -264,6 +270,32 @@ export class BoutiqueService {
         return throwError(() => new Error(error?.error?.message || 'Impossible d\'uploader le logo'));
       })
     );
+  }
+
+  /** Réduit le logo (côté le plus long : 512 px) avant l'envoi : une photo de téléphone
+   *  (3-5 Mo) dépasse la limite du serveur (2 Mo), et le logo est rechargé partout.
+   *  PNG/WebP restent en PNG (transparence gardée) ; le SVG part tel quel. */
+  private reduireLogo(fichier: File): Promise<Blob> {
+    if (fichier.type === 'image/svg+xml') return Promise.resolve(fichier);
+    return new Promise(resolve => {
+      const img = new Image();
+      const lien = URL.createObjectURL(fichier);
+      img.onload = () => {
+        URL.revokeObjectURL(lien);
+        const ratio = Math.min(1, 512 / Math.max(img.width, img.height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(img.width * ratio));
+        canvas.height = Math.max(1, Math.round(img.height * ratio));
+        const ctx = canvas.getContext('2d');
+        if (!ctx) { resolve(fichier); return; }
+        const png = fichier.type === 'image/png' || fichier.type === 'image/webp';
+        if (!png) { ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height); }
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(b => resolve(b || fichier), png ? 'image/png' : 'image/jpeg', 0.88);
+      };
+      img.onerror = () => { URL.revokeObjectURL(lien); resolve(fichier); };
+      img.src = lien;
+    });
   }
 
   setInfo(partial: Partial<BoutiqueInfo>): void {
@@ -295,6 +327,27 @@ export class BoutiqueService {
       catchError(error => {
         console.error('Erreur lors de la mise à jour des fonctionnalités:', error);
         return throwError(() => new Error(error?.error?.error || 'Impossible de mettre à jour les fonctionnalités'));
+      })
+    );
+  }
+
+  /** Réservé au super admin — voir AuthService.isSuperAdmin(). Le serveur revérifie
+   *  systématiquement le privilège (403 sinon), cette méthode ne fait aucun contrôle
+   *  d'accès côté client. */
+  definirEmailSauvegarde(emailSauvegarde: string): Observable<BoutiqueInfo> {
+    const headers = this.getAuthHeaders();
+    if (!headers) {
+      return throwError(() => new Error('Token non disponible'));
+    }
+    return this.http.put<any>(`${this.apiUrl}/email-sauvegarde`, { emailSauvegarde }, { headers }).pipe(
+      map(response => {
+        const updated = this.normalizeBoutique(response);
+        this.setCurrentInfo(updated);
+        return updated;
+      }),
+      catchError(error => {
+        console.error('Erreur lors de la mise à jour de l\'email de sauvegarde:', error);
+        return throwError(() => new Error(error?.error?.message || error?.error?.error || 'Impossible de mettre à jour l\'adresse email'));
       })
     );
   }

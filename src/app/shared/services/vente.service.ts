@@ -9,6 +9,7 @@ import { environment } from '../../../environments/environment';
 import { AuthService } from './auth.service';
 import { FactureService } from './facture.service';
 import { creerBoutonWhatsApp, formaterMessageWhatsApp, envoyerWhatsAppDirect } from '../utils/whatsapp.util';
+import { qteDoc, puDoc } from '../utils/mesure.util';
 
 // =====================================================
 // ENUMS
@@ -106,6 +107,8 @@ export interface LigneVenteDto {
   prixApresRemise: number;
   sousTotal: number;
   montantRemise: number;
+  /** Vente à la mesure : 'KG' | 'L' | 'M', sinon absent. */
+  modeMesure?: string | null;
 }
 
 export interface VenteDto {
@@ -239,6 +242,16 @@ export interface ReleveClientLigne {
   resteAPayerApres: number | null;
   modePaiement: string | null;
   utilisateurNom: string | null;
+  /** Uniquement pour VERSEMENT : ventes réglées (plusieurs = paiement groupé) avec leurs produits. */
+  ventesReglees?: ReleveVenteReglee[] | null;
+}
+
+export interface ReleveVenteReglee {
+  venteId: number;
+  numeroVente: string | null;
+  dateVente: string | null;
+  montantApplique: number;
+  produits: { produitNom: string | null; quantite: number | null; prixUnitaire: number | null }[];
 }
 
 export interface ReleveClientInfo {
@@ -320,10 +333,10 @@ export class VenteService {
   private apiUrl = `${environment.apiUrl}/ventes`;
   private clientApiUrl = `${environment.apiUrl}/clients`;
 
-  private readonly BOUTIQUE_NOM = 'Boutique Alimentation Ndjim Et Frères';
-  private readonly BOUTIQUE_TELEPHONE = '76 96 21 20/66 43 66 03';
-  private readonly BOUTIQUE_EMAIL = 'ndjim@yahoo.fr';
-  private readonly BOUTIQUE_ADRESSE = 'Misa bougou';
+  private readonly BOUTIQUE_NOM = 'Ma Boutique';
+  private readonly BOUTIQUE_TELEPHONE = '';
+  private readonly BOUTIQUE_EMAIL = '';
+  private readonly BOUTIQUE_ADRESSE = '';
   private get LOGO_PATH(): string { return this.boutiqueService.getLogoPath(); }
 
   getModePaiementPlaceholder: any;
@@ -495,6 +508,8 @@ export class VenteService {
         produitId,
         produitNom: ligne.produitNom || ligne.nomProduit || ligne.designation || produit.nom || produit.libelle || ligne.nom || 'Produit',
         quantite,
+        // Vente à la mesure : indispensable pour afficher "1,25 kg" au lieu de 1250.
+        modeMesure: ligne.modeMesure ?? produit.modeMesure ?? null,
         prixUnitaire,
         prixAchat: this.toNumber(ligne.prixAchat ?? produit.prixAchat ?? 0),
         benefice: this.toNumber(ligne.benefice ?? 0),
@@ -618,6 +633,17 @@ export class VenteService {
       params
     }).pipe(
       catchError(error => this.handleError(error, 'récupérer le relevé du client'))
+    );
+  }
+
+  /** PDF "Situation client" généré par le serveur : le même document que sur Ionic et React Native. */
+  getSituationClientPdf(clientId: number, dateDebut?: string, dateFin?: string, type?: string): Observable<Blob> {
+    let params = new HttpParams();
+    if (dateDebut) params = params.set('dateDebut', dateDebut);
+    if (dateFin) params = params.set('dateFin', dateFin);
+    if (type) params = params.set('type', type);
+    return this.http.get(`${this.clientApiUrl}/${clientId}/releve-pdf`, { params, responseType: 'blob' }).pipe(
+      catchError(error => this.handleError(error, 'générer le PDF de la situation client'))
     );
   }
 
@@ -1124,7 +1150,7 @@ export class VenteService {
       personneLabel: 'Client',
       personneNom: nomClient,
       date,
-      lignes: lignesVente.map(l => `${l.produitNom} ×${l.quantite} — ${this.formatPlainNumber(l.sousTotal || l.quantite * l.prixUnitaire)} FCFA`),
+      lignes: lignesVente.map(l => `${l.produitNom} ×${qteDoc(l)} — ${this.formatPlainNumber(l.sousTotal || l.quantite * l.prixUnitaire)} FCFA`),
       totaux
     });
   }
@@ -1314,8 +1340,8 @@ export class VenteService {
     const lignesHtml = vente.produits.map(p => `
       <tr>
         <td><strong>${this.escapeHtml(p.produitNom || 'Produit')}</strong></td>
-        <td class="text-center">${p.quantite}</td>
-        <td class="text-right">${this.formatPrice(p.prixUnitaire)}</td>
+        <td class="text-center">${qteDoc(p)}</td>
+        <td class="text-right">${puDoc(p, v => this.formatPrice(v))}</td>
         <td class="text-center">${p.remisePourcentage ? p.remisePourcentage + '%' : (p.remiseMontant ? this.formatPrice(p.remiseMontant) : '-')}</td>
         <td class="text-right"><strong>${this.formatPrice(p.sousTotal)}</strong></td>
       </tr>
@@ -1330,6 +1356,17 @@ export class VenteService {
         venteQrBlock = `<div style="margin-top:10px;text-align:center"><img src="${qrBase64}" width="90" height="90" alt="QR" style="border-radius:6px"><div style="font-size:9pt;color:#94a3b8;margin-top:4px">Scanner pour voir la facture</div></div>`;
       }
     }
+
+    // Coordonnées facultatives : ne pas laisser une ligne "icône vide" sur le
+    // reçu si le champ n'est pas renseigné (adresse/téléphone/email absents).
+    const adrLignes: string[] = [];
+    const adr = boutique.adresse || this.BOUTIQUE_ADRESSE;
+    const tel = boutique.telephone || this.BOUTIQUE_TELEPHONE;
+    const mail = boutique.email || this.BOUTIQUE_EMAIL;
+    if (adr) adrLignes.push(`📍 ${this.escapeHtml(adr)}`);
+    if (tel) adrLignes.push(`📞 ${this.escapeHtml(tel)}`);
+    if (mail) adrLignes.push(`✉️ ${this.escapeHtml(mail)}`);
+    const blocCoordonnees = adrLignes.join('<br>\n              ');
 
     const html = `
       <!DOCTYPE html>
@@ -1346,11 +1383,9 @@ export class VenteService {
               <img src="${logoSrc}" alt="Logo" class="logo-img" onerror="this.style.display='none'">
             </div>
             <div class="shop-name">${this.escapeHtml(boutique.nom || this.BOUTIQUE_NOM)}</div>
-            <div class="shop-info">
-              📍 ${this.escapeHtml(boutique.adresse || this.BOUTIQUE_ADRESSE)}<br>
-              📞 ${this.escapeHtml(boutique.telephone || this.BOUTIQUE_TELEPHONE)}<br>
-              ✉️ ${this.escapeHtml(boutique.email || this.BOUTIQUE_EMAIL)}
-            </div>
+            ${blocCoordonnees ? `<div class="shop-info">
+              ${blocCoordonnees}
+            </div>` : ''}
           </div>
           
           <div class="facture-title">

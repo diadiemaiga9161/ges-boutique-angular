@@ -9,6 +9,7 @@ import { VendeurComponent } from './vendeur/vendeur.component';
 import { CaisseGesComponent } from './caisse-ges/caisse-ges.component';
 
 import { BoutiqueSettingsComponent } from './boutiques/boutique-settings.component';
+import { ComptageInventaireComponent } from './comptage-inventaire/comptage-inventaire.component';
 import { ClientsComponent } from './clients/clients.component';
 import { FacturesComponent } from './factures/factures.component';
 import { DettesAnciennesComponent } from './dettes-anciennes/dettes-anciennes.component';
@@ -40,6 +41,9 @@ import { JournalAuditComponent } from './journal-audit/journal-audit.component';
 import { ExportDonneesComponent } from './export-donnees/export-donnees.component';
 import { SauvegardesComponent } from './sauvegardes/sauvegardes.component';
 import { SuperAdminFonctionnalitesComponent } from './super-admin/super-admin-fonctionnalites.component';
+import { RolesComponent } from './roles/roles.component';
+import { PrimesProduitsComponent } from './primes-produits/primes-produits.component';
+import { MesPrimesComponent } from './mes-primes/mes-primes.component';
 
 const routes: Routes = [
     {
@@ -58,6 +62,10 @@ const routes: Routes = [
      {
         path: 'inventaire',
         component: InventaireComponent
+    },
+    {
+        path: 'inventaire-comptage',
+        component: ComptageInventaireComponent
     }, 
     {
         path: 'rapport',
@@ -78,6 +86,18 @@ const routes: Routes = [
     {
         path: 'super-admin/fonctionnalites',
         component: SuperAdminFonctionnalitesComponent
+    },
+    {
+        path: 'roles',
+        component: RolesComponent
+    },
+    {
+        path: 'primes-produits',
+        component: PrimesProduitsComponent
+    },
+    {
+        path: 'mes-primes',
+        component: MesPrimesComponent
     },
     {
         path: 'client',

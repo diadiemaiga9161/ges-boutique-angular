@@ -31,6 +31,11 @@ export class SuperAdminFonctionnalitesComponent implements OnInit {
   isLoadingAvancees = false;
   clesEnCours = new Set<string>();
 
+  // Adresse recevant une copie des sauvegardes — utile seulement si ENVOI_SAUVEGARDES_EMAIL
+  // est activée ci-dessus, mais modifiable indépendamment pour pouvoir la préparer avant.
+  emailSauvegarde = '';
+  isSavingEmailSauvegarde = false;
+
   constructor(
     public authService: AuthService,
     private boutiqueService: BoutiqueService
@@ -47,6 +52,7 @@ export class SuperAdminFonctionnalitesComponent implements OnInit {
       next: (info) => {
         this.featureTransfertsActif = info.featureTransfertsActif !== false;
         this.featureVitrineActif = info.featureVitrineActif !== false;
+        this.emailSauvegarde = info.emailSauvegarde || '';
         this.isLoading = false;
       },
       error: () => { this.isLoading = false; }
@@ -73,6 +79,20 @@ export class SuperAdminFonctionnalitesComponent implements OnInit {
     });
   }
 
+  enregistrerEmailSauvegarde(): void {
+    this.isSavingEmailSauvegarde = true;
+    this.boutiqueService.definirEmailSauvegarde(this.emailSauvegarde.trim()).subscribe({
+      next: () => {
+        this.isSavingEmailSauvegarde = false;
+        Swal.fire({ icon: 'success', title: 'Adresse enregistrée', timer: 1800, showConfirmButton: false });
+      },
+      error: (err) => {
+        this.isSavingEmailSauvegarde = false;
+        Swal.fire({ icon: 'error', title: 'Erreur', text: err.message || 'Impossible d\'enregistrer l\'adresse' });
+      }
+    });
+  }
+
   private readonly icones: Record<string, string> = {
     DEPOT_GARDE: 'fa-vault',
     DETTES_ANCIENNES: 'fa-file-invoice-dollar',
@@ -85,7 +105,9 @@ export class SuperAdminFonctionnalitesComponent implements OnInit {
     RAPPORTS: 'fa-chart-line',
     IA: 'fa-robot',
     RESULTAT_NET: 'fa-calculator',
-    VENTE_GROS_DETAIL: 'fa-boxes-stacked'
+    VENTE_GROS_DETAIL: 'fa-boxes-stacked',
+    VOIR_PERSONNES_EN_LIGNE: 'fa-circle-user',
+    ENVOI_SAUVEGARDES_EMAIL: 'fa-envelope'
   };
 
   private readonly descriptions: Record<string, string> = {
@@ -100,7 +122,9 @@ export class SuperAdminFonctionnalitesComponent implements OnInit {
     RAPPORTS: 'Page de rapports et statistiques analytiques.',
     IA: 'Assistant et recommandations intelligentes.',
     RESULTAT_NET: 'Calcul du résultat net (bénéfice/perte).',
-    VENTE_GROS_DETAIL: "Vente en gros et au détail : unités de vente alternatives (carton, cartouche...) avec conversion automatique vers l'unité de base, sur le stock unique du produit."
+    VENTE_GROS_DETAIL: "Vente en gros et au détail : unités de vente alternatives (carton, cartouche...) avec conversion automatique vers l'unité de base, sur le stock unique du produit.",
+    VOIR_PERSONNES_EN_LIGNE: "Permet à l'admin de cette boutique de voir quels membres de son équipe sont actuellement connectés.",
+    ENVOI_SAUVEGARDES_EMAIL: "Envoie une copie de chaque sauvegarde automatique à l'adresse email définie ci-dessous."
   };
 
   getIcone(cle: string): string {

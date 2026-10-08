@@ -12,13 +12,16 @@
       <button class="btn btn-info text-white" (click)="openExportModal()">
         <i class="fa fa-download me-1"></i> {{ 'COMMON.DOWNLOAD' | translate }}
       </button>
-      <button class="btn btn-success" (click)="openEntreeModal()" *ngIf="isAdmin">
+      <a class="btn btn-primary" routerLink="/inventaire-comptage" *ngIf="peutMouvementer">
+        <i class="fa fa-clipboard-list me-1"></i> Comptage
+      </a>
+      <button class="btn btn-success" (click)="openEntreeModal()" *ngIf="peutMouvementer">
         <i class="fa fa-plus-circle me-1"></i> {{ 'INVENTORY.IN' | translate }}
       </button>
-      <button class="btn btn-danger" (click)="openSortieModal()" *ngIf="isAdmin">
+      <button class="btn btn-danger" (click)="openSortieModal()" *ngIf="peutMouvementer">
         <i class="fa fa-minus-circle me-1"></i> {{ 'INVENTORY.OUT' | translate }}
       </button>
-      <button class="btn btn-warning text-white" (click)="openAjustementModal()" *ngIf="isAdmin">
+      <button class="btn btn-warning text-white" (click)="openAjustementModal()" *ngIf="peutMouvementer">
         <i class="fa fa-adjust me-1"></i> {{ 'INVENTORY.CORRECTION' | translate }}
       </button>
     </div>
@@ -28,9 +31,6 @@
   <div class="row mb-3 align-items-center">
     <div class="col-12 d-flex flex-wrap gap-2 align-items-center justify-content-between">
       <div class="btn-group flex-wrap" role="group">
-        <button type="button" class="btn btn-secondary" (click)="loadTousMouvements()">
-          <i class="fa fa-list me-1"></i> {{ 'COMMON.ALL' | translate }}
-        </button>
         <button type="button" class="btn btn-outline-primary" (click)="chargerParPeriode('jour')">
           <i class="fa fa-calendar-day me-1"></i> {{ 'SALES.TODAY' | translate }}
         </button>
@@ -44,7 +44,9 @@
           <i class="fa fa-calendar-year me-1"></i> {{ 'BENEFITS.DAILY' | translate }} / Année
         </button>
       </div>
-      <button type="button" class="btn btn-outline-success" (click)="loadTousMouvements()" [title]="'COMMON.REFRESH' | translate">
+      <!-- Réactualise la période actuellement affichée (pas "tout l'historique",
+           qui n'a plus de bouton dédié — règle explicite, 22/09/2026). -->
+      <button type="button" class="btn btn-outline-success" (click)="rechercherMouvements()" [title]="'COMMON.REFRESH' | translate">
         <i class="fa fa-sync-alt me-1"></i> {{ 'COMMON.REFRESH' | translate }}
       </button>
     </div>
@@ -192,7 +194,7 @@
                       <small class="text-muted">{{ produit.codeBarre || 'N/A' }}</small>
                     </td>
                     <td class="text-center">{{ produit.categorie?.nom || 'N/A' }}</td>
-                    <td class="text-end fw-bold">{{ produit.quantite }}</td>
+                    <td class="text-end fw-bold">{{ stockTexte(produit) }}</td>
                     <td class="text-end">{{ produit.seuilAlerte }}</td>
                     <td class="text-center">
                       <span class="badge bg-warning">
@@ -201,7 +203,7 @@
                     </td>
                     <td class="text-center">
                       <div class="d-flex gap-1 justify-content-center flex-wrap btn-group-icons">
-                        <button class="btn btn-sm btn-outline-success" *ngIf="isAdmin"
+                        <button class="btn btn-sm btn-outline-success" *ngIf="peutMouvementer"
                                 [title]="'INVENTORY.IN' | translate"
                                 (click)="openEntreeModal(produit)">
                           <i class="fa fa-plus"></i> {{ 'INVENTORY.IN' | translate }}
@@ -211,7 +213,7 @@
                                 (click)="openHistoriqueModal(produit)">
                           <i class="fa fa-history"></i> {{ 'INVENTORY.HISTORY' | translate }}
                         </button>
-                        <button class="btn btn-sm btn-outline-warning" *ngIf="isAdmin"
+                        <button class="btn btn-sm btn-outline-warning" *ngIf="peutMouvementer"
                                 [title]="'INVENTORY.CORRECTION' | translate"
                                 (click)="openAjustementModal(produit)">
                           <i class="fa fa-adjust"></i> {{ 'INVENTORY.CORRECTION' | translate }}
@@ -287,7 +289,7 @@
             <select class="form-select" [(ngModel)]="selectedProduitId" (change)="onProduitChange()">
               <option [value]="null">{{ 'COMMON.ALL' | translate }}</option>
               <option *ngFor="let produit of produits" [value]="produit.id">
-                {{ produit.nom }} (Stock: {{ produit.quantite }})
+                {{ produit.nom }} (Stock: {{ stockTexte(produit) }})
               </option>
             </select>
           </div>
@@ -398,9 +400,9 @@
                   </span>
                   <span *ngIf="!mouvement.typeSortie" class="text-muted">—</span>
                 </td>
-                <td class="text-end fw-bold">{{ mouvement.quantite }}</td>
-                <td class="text-end">{{ mouvement.quantiteAvant }}</td>
-                <td class="text-end">{{ mouvement.quantiteApres }}</td>
+                <td class="text-end fw-bold">{{ mouvement | mesureQte }}</td>
+                <td class="text-end">{{ mouvement | mesureQte: mouvement.quantiteAvant }}</td>
+                <td class="text-end">{{ mouvement | mesureQte: mouvement.quantiteApres }}</td>
                 <td class="text-end">
                   <span [class]="getVariationClass(mouvement)">
                     <i [class]="getVariation(mouvement) > 0 ? 'fa fa-arrow-up' : getVariation(mouvement) < 0 ? 'fa fa-arrow-down' : 'fa fa-minus'"></i>
@@ -541,7 +543,7 @@
                 </div>
                 <div class="text-end">
                   <span class="badge" [class]="getStockStatusClass(produit.quantite, produit.seuilAlerte)">
-                    Stock: {{ produit.quantite }}
+                    Stock: {{ stockTexte(produit) }}
                   </span>
                 </div>
               </div>
@@ -560,7 +562,8 @@
         <div class="mb-3">
           <label class="form-label fw-semibold">Quantité <span class="text-danger">*</span></label>
           <div class="input-group">
-            <input type="number" class="form-control" [(ngModel)]="entreeForm.quantite" required min="1" step="1">
+            <input type="number" class="form-control" [(ngModel)]="entreeForm.quantite" required min="0" [step]="estMesureId(entreeForm.produitId) ? 'any' : 1">
+            <small class="text-muted" *ngIf="estMesureId(entreeForm.produitId)">En {{ uniteSaisie(entreeForm.produitId) }} (ex : 12,5)</small>
             <span class="input-group-text">unités</span>
           </div>
           <small class="text-muted">Nombre d'unités à ajouter au stock</small>
@@ -651,7 +654,7 @@
                 </div>
                 <div class="text-end">
                   <span class="badge" [class]="getStockStatusClass(produit.quantite, produit.seuilAlerte)">
-                    Stock: {{ produit.quantite }}
+                    Stock: {{ stockTexte(produit) }}
                   </span>
                 </div>
               </div>
@@ -670,7 +673,8 @@
         <div class="mb-3">
           <label class="form-label fw-semibold">Quantité <span class="text-danger">*</span></label>
           <div class="input-group">
-            <input type="number" class="form-control" [(ngModel)]="sortieForm.quantite" required min="1" step="1">
+            <input type="number" class="form-control" [(ngModel)]="sortieForm.quantite" required min="0" [step]="estMesureId(sortieForm.produitId) ? 'any' : 1">
+            <small class="text-muted" *ngIf="estMesureId(sortieForm.produitId)">En {{ uniteSaisie(sortieForm.produitId) }} (ex : 1,5)</small>
             <span class="input-group-text">unités</span>
           </div>
           <small class="text-muted">Nombre d'unités à retirer du stock</small>
@@ -757,7 +761,7 @@
                 </div>
                 <div class="text-end">
                   <span class="badge" [class]="getStockStatusClass(produit.quantite, produit.seuilAlerte)">
-                    Stock: {{ produit.quantite }}
+                    Stock: {{ stockTexte(produit) }}
                   </span>
                 </div>
               </div>
@@ -775,7 +779,7 @@
           <div class="row">
             <div class="col-6">
               <small class="text-muted">Stock actuel</small>
-              <h5 class="mb-0">{{ selectedProduit.quantite }} unités</h5>
+              <h5 class="mb-0">{{ estMesureId(selectedProduit.id) ? stockTexte(selectedProduit) : selectedProduit.quantite + ' unités' }}</h5>
             </div>
             <div class="col-6">
               <small class="text-muted">Seuil d'alerte</small>
@@ -787,8 +791,8 @@
         <div class="mb-3">
           <label class="form-label fw-semibold">Nouvelle quantité <span class="text-danger">*</span></label>
           <div class="input-group">
-            <input type="number" class="form-control" [(ngModel)]="ajustementForm.nouvelleQuantite" required min="0" step="1">
-            <span class="input-group-text">unités</span>
+            <input type="number" class="form-control" [(ngModel)]="ajustementForm.nouvelleQuantite" required min="0" [step]="estMesureId(ajustementForm.produitId) ? 'any' : 1">
+            <span class="input-group-text">{{ uniteSaisie(ajustementForm.produitId) }}</span>
           </div>
           <small class="text-muted">
             La différence avec le stock actuel sera enregistrée comme entrée ou sortie
@@ -798,17 +802,11 @@
         <div class="mb-3" *ngIf="selectedProduit">
           <label class="form-label fw-semibold">Variation</label>
           <div class="input-group">
-            <span class="input-group-text" [class.text-success]="(ajustementForm.nouvelleQuantite - selectedProduit.quantite) > 0"
-                  [class.text-danger]="(ajustementForm.nouvelleQuantite - selectedProduit.quantite) < 0">
-              <i [class]="(ajustementForm.nouvelleQuantite - selectedProduit.quantite) > 0 ? 'fa fa-arrow-up' : 
-                         (ajustementForm.nouvelleQuantite - selectedProduit.quantite) < 0 ? 'fa fa-arrow-down' : 'fa fa-minus'"></i>
+            <span class="input-group-text" [class.text-success]="variationAjustement > 0"
+                  [class.text-danger]="variationAjustement < 0">
+              <i [class]="variationAjustement > 0 ? 'fa fa-arrow-up' : variationAjustement < 0 ? 'fa fa-arrow-down' : 'fa fa-minus'"></i>
             </span>
-            <input type="text" class="form-control" 
-                   [value]="(ajustementForm.nouvelleQuantite - selectedProduit.quantite) > 0 ? 
-                            '+' + (ajustementForm.nouvelleQuantite - selectedProduit.quantite) : 
-                            ajustementForm.nouvelleQuantite - selectedProduit.quantite"
-                   readonly>
-            <span class="input-group-text">unités</span>
+            <input type="text" class="form-control" [value]="variationAjustementTexte" readonly>
           </div>
         </div>
         
@@ -923,7 +921,7 @@
         <div class="row g-3 mb-4 p-3 bg-light rounded">
           <div class="col-md-4">
             <small class="text-muted d-block">Stock actuel</small>
-            <h5 class="mb-0">{{ selectedProduit.quantite }} unités</h5>
+            <h5 class="mb-0">{{ estMesureId(selectedProduit.id) ? stockTexte(selectedProduit) : selectedProduit.quantite + ' unités' }}</h5>
           </div>
           <div class="col-md-4">
             <small class="text-muted d-block">Seuil d'alerte</small>
@@ -985,9 +983,9 @@
                     </span>
                     <span *ngIf="!mouvement.niveauNom" class="text-muted">—</span>
                   </td>
-                  <td class="text-end fw-bold">{{ mouvement.quantite }}</td>
-                  <td class="text-end">{{ mouvement.quantiteAvant }}</td>
-                  <td class="text-end">{{ mouvement.quantiteApres }}</td>
+                  <td class="text-end fw-bold">{{ mouvement | mesureQte }}</td>
+                  <td class="text-end">{{ mouvement | mesureQte: mouvement.quantiteAvant }}</td>
+                  <td class="text-end">{{ mouvement | mesureQte: mouvement.quantiteApres }}</td>
                   <td>
                     <i class="fa fa-user me-1 text-muted"></i>
                     <small>{{ mouvement.utilisateur?.nomComplet || 'Système' }}</small>
@@ -1029,7 +1027,7 @@
            style="cursor:pointer" (click)="toggleNiveaux(produit)">
         <div>
           <strong>{{ produit.nom }}</strong>
-          <span class="badge bg-secondary ms-2">Stock: {{ produit.quantite }}</span>
+          <span class="badge bg-secondary ms-2">Stock: {{ stockTexte(produit) }}</span>
         </div>
         <i class="i-Arrow-Down-2" [style.transform]="expandedProduitId === produit.id ? 'rotate(180deg)' : ''"></i>
       </div>

@@ -2498,3 +2498,21 @@ a[title]:hover::after,
 .btn {
   overflow: hidden !important;
 }
+
+/* Photo du produit (IMAGES_PRODUITS) dans la liste de vente et le panier */
+.vente-produit { gap: 10px; }
+.vente-vignette {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--surface-strong);
+  color: #94a3b8;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  img { width: 100%; height: 100%; object-fit: cover; display: block; }
+}
+.vente-vignette--panier { width: 32px; height: 32px; border-radius: 8px; margin-right: 8px; }

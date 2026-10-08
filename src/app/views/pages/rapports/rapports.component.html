@@ -136,7 +136,7 @@
  </thead>
  <tbody>
  <tr *ngFor="let p of rapportActif.topProduits.slice(0,5)">
- <td>{{ p.nom }}</td><td>{{ p.quantite }} unités</td><td class="text-success" *ngIf="!isVendeur">{{ formatPrice(p.chiffreAffaire) }}</td>
+ <td>{{ p.nom }}</td><td>{{ p.quantiteTexte || (p.quantite + ' unités') }}</td><td class="text-success" *ngIf="!isVendeur">{{ formatPrice(p.chiffreAffaire) }}</td>
  </tr>
  </tbody>
  </table>
@@ -267,7 +267,7 @@
  <td><span class="badge bg-primary">{{ i + 1 }}</span></td>
  <td class="fw-bold">{{ produit.nom }}</td>
  <td>{{ produit.categorie }}</td>
- <td>{{ produit.quantiteVendue }} unités</td>
+ <td>{{ produit.quantiteTexte || (produit.quantiteVendue + ' unités') }}</td>
  <td class="text-success" *ngIf="!isVendeur">{{ formatPrice(produit.chiffreAffaire) }}</td>
  </tr>
  </tbody>
@@ -387,7 +387,7 @@
      <div *ngFor="let p of topProduits" style="margin-bottom:6px">
        <div style="display:flex;justify-content:space-between;font-size:.8rem;margin-bottom:2px">
          <span>{{ p.produitNom }}</span>
-         <span class="text-muted">{{ p.quantiteVendue }} vendus</span>
+         <span class="text-muted">{{ p.quantiteTexte || p.quantiteVendue }} vendus</span>
        </div>
        <div style="background:#e5e7eb;border-radius:4px;height:8px">
          <div [style.width.%]="pct(p.quantiteVendue, maxQte)"

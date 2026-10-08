@@ -1,0 +1,117 @@
+// Comptage d'inventaire (site) — mêmes couleurs que le reste du site (variables globales).
+
+.cp-carte {
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, .06);
+  padding: 20px;
+}
+
+.cp-info {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  i { font-size: 1.4rem; color: #d97706; }
+  p { margin: 0; color: var(--text, #0f172a); }
+}
+
+.cp-titre { font-size: 1.1rem; font-weight: 700; color: var(--text, #0f172a); margin: 0 0 12px; }
+.cp-meta { margin: -6px 0 14px; font-size: .85rem; color: var(--text-muted, #64748b); }
+.cp-note { font-size: .85rem; color: var(--text-muted, #64748b); }
+
+.cp-etapes {
+  padding-left: 20px;
+  margin-bottom: 16px;
+  color: var(--text-muted, #64748b);
+  line-height: 1.6;
+}
+
+.cp-grille {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 1200px;
+
+  @media (min-width: 992px) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+// Saisie à gauche (étroite), liste à droite (large)
+.cp-grille--travail {
+  @media (min-width: 992px) {
+    grid-template-columns: minmax(320px, 400px) minmax(0, 1fr);
+  }
+}
+
+.cp-hist {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border, #e2e8f0);
+  &:last-child { border-bottom: none; }
+}
+
+.cp-hist__texte {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  strong { color: var(--text, #0f172a); font-size: .92rem; }
+  span { color: var(--text-muted, #64748b); font-size: .82rem; }
+}
+
+.cp-kpis {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-width: 1200px;
+  @media (min-width: 992px) { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+.cp-kpi {
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  span { font-size: .8rem; font-weight: 600; color: var(--text-muted, #64748b); text-transform: uppercase; letter-spacing: .03em; }
+  strong { font-size: 1.35rem; color: var(--text, #0f172a); font-variant-numeric: tabular-nums; }
+  small { color: var(--text-muted, #64748b); }
+
+  &--bad strong { color: #dc2626; }
+  &--ok strong { color: #059669; }
+}
+
+.cp-resultats {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 5;
+  max-height: 280px;
+  overflow-y: auto;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, .15);
+}
+
+.cp-choisi {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(37, 99, 235, .08);
+  > div { flex: 1; display: flex; flex-direction: column; }
+  strong { color: var(--text, #0f172a); }
+  span { color: var(--text-muted, #64748b); font-size: .88rem; }
+}
+
+tr.cp-gros > td { background: rgba(220, 38, 38, .06); }
+
+:host-context(body.dark-mode) {
+  .cp-kpi--bad strong, tr.cp-gros .text-danger { color: #f87171; }
+  .cp-kpi--ok strong { color: #34d399; }
+}

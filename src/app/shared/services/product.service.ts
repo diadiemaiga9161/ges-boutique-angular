@@ -87,6 +87,10 @@ export interface CategorieDto {
 export interface Produit {
   id: number;
   nom: string;
+  /** Vente à la mesure : 'KG' | 'L' | 'M' (quantite en g/ml/cm, prix par g/ml/cm), sinon absent. */
+  modeMesure?: string | null;
+  /** Photo du produit (IMAGES_PRODUITS) : numéro de version, absent si pas de photo. */
+  imageVersion?: number | null;
   description: string;
   categorie: Categorie;
   fournisseur?: Fournisseur;

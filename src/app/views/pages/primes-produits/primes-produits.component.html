@@ -1,0 +1,362 @@
+<div class="container-fluid py-4 app-page primes-page">
+  <div class="app-page-header mb-4">
+    <div class="app-page-header-left">
+      <div class="app-page-icon"><i class="fa fa-medal" aria-hidden="true"></i></div>
+      <div>
+        <h1 class="app-page-title">Primes sur produits</h1>
+        <p class="app-page-subtitle">Récompensez vos vendeurs quand ils vendent les produits que vous choisissez</p>
+      </div>
+    </div>
+    <div class="app-page-header-actions">
+      <button type="button" class="btn btn-light mr-2" (click)="ouvrirReglages()" title="Types de primes utilisés">
+        <i class="fa fa-sliders mr-1" aria-hidden="true"></i> Réglages
+      </button>
+      <button type="button" class="btn btn-primary-action" (click)="nouvelleRegle()">
+        <i class="fa fa-plus mr-1" aria-hidden="true"></i> Nouvelle condition
+      </button>
+    </div>
+  </div>
+
+  <!-- Période -->
+  <div class="app-filter-card periode">
+    <div class="periode-boutons" role="group" aria-label="Période">
+      <button type="button" class="btn btn-sm btn-period" [class.active]="periode === 'mois'" (click)="choisirPeriode('mois')">Ce mois</button>
+      <button type="button" class="btn btn-sm btn-period" [class.active]="periode === 'mois-dernier'" (click)="choisirPeriode('mois-dernier')">Mois dernier</button>
+      <button type="button" class="btn btn-sm btn-period" [class.active]="periode === 'annee'" (click)="choisirPeriode('annee')">Cette année</button>
+    </div>
+    <div class="periode-dates">
+      <label for="p-debut">Du</label>
+      <input id="p-debut" type="date" class="form-control form-control-sm" [(ngModel)]="debut" (change)="changerDates()">
+      <label for="p-fin">au</label>
+      <input id="p-fin" type="date" class="form-control form-control-sm" [(ngModel)]="fin" (change)="changerDates()">
+    </div>
+  </div>
+
+  <!-- Chiffres clés -->
+  <div class="row g-3 mb-4">
+    <div class="col-12 col-md-4 mb-3 mb-md-0">
+      <div class="app-stat-card">
+        <div class="app-stat-icon green"><i class="fa fa-sack-dollar" aria-hidden="true"></i></div>
+        <div class="app-stat-body">
+          <div class="app-stat-label">Primes gagnées (période)</div>
+          <div class="app-stat-value">{{ cs.fmt(calcul?.totalPeriode) }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-4">
+      <div class="app-stat-card">
+        <div class="app-stat-icon orange"><i class="fa fa-hourglass-half" aria-hidden="true"></i></div>
+        <div class="app-stat-body">
+          <div class="app-stat-label">Reste à payer</div>
+          <div class="app-stat-value">{{ cs.fmt(calcul?.totalResteAPayer) }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-4">
+      <div class="app-stat-card">
+        <div class="app-stat-icon blue"><i class="fa fa-list-check" aria-hidden="true"></i></div>
+        <div class="app-stat-body">
+          <div class="app-stat-label">Conditions en cours</div>
+          <div class="app-stat-value">{{ reglesEnCours }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Onglets -->
+  <div class="onglets" role="tablist">
+    <button type="button" role="tab" [attr.aria-selected]="onglet === 'vendeurs'" [class.actif]="onglet === 'vendeurs'" (click)="onglet = 'vendeurs'">
+      Primes des vendeurs
+    </button>
+    <button type="button" role="tab" [attr.aria-selected]="onglet === 'regles'" [class.actif]="onglet === 'regles'" (click)="onglet = 'regles'">
+      Conditions <span class="onglet-compteur">{{ regles.length }}</span>
+    </button>
+    <button type="button" role="tab" [attr.aria-selected]="onglet === 'paiements'" [class.actif]="onglet === 'paiements'" (click)="onglet = 'paiements'">
+      Paiements
+    </button>
+  </div>
+
+  <!-- ===================== Primes des vendeurs ===================== -->
+  <section class="app-table-card" *ngIf="onglet === 'vendeurs'">
+    <div class="etat" *ngIf="chargementCalcul"><div class="spinner-border text-primary" role="status"></div><p>Calcul des primes…</p></div>
+    <div class="etat" *ngIf="!chargementCalcul && erreur">
+      <i class="fa fa-triangle-exclamation text-danger" aria-hidden="true"></i><p>{{ erreur }}</p>
+      <button type="button" class="btn btn-outline-primary btn-sm" (click)="chargerCalcul()">Réessayer</button>
+    </div>
+    <div class="etat" *ngIf="!chargementCalcul && !erreur && !calcul?.vendeurs?.length">
+      <i class="fa fa-medal" aria-hidden="true"></i>
+      <p *ngIf="!regles.length">Aucune condition de prime pour le moment.</p>
+      <p *ngIf="regles.length">Aucune prime gagnée sur cette période.</p>
+      <button type="button" class="btn btn-primary btn-sm" *ngIf="!regles.length" (click)="nouvelleRegle()">Créer la première condition</button>
+    </div>
+
+    <ul class="vendeurs" *ngIf="!chargementCalcul && !erreur && calcul?.vendeurs?.length">
+      <li *ngFor="let v of calcul!.vendeurs" class="vendeur">
+        <div class="vendeur-ligne">
+          <button type="button" class="vendeur-nom" (click)="basculerDetail(v)" [attr.aria-expanded]="ouvert === v.vendeurId">
+            <i class="fa" [ngClass]="ouvert === v.vendeurId ? 'fa-chevron-down' : 'fa-chevron-right'" aria-hidden="true"></i>
+            <span class="avatar" aria-hidden="true">{{ v.vendeurNom.charAt(0) | uppercase }}</span>
+            <span>{{ v.vendeurNom }}</span>
+          </button>
+          <div class="vendeur-chiffre">
+            <span class="chiffre-label">Gagné (période)</span>
+            <span class="chiffre-valeur text-success">{{ cs.fmt(v.primePeriode) }}</span>
+          </div>
+          <div class="vendeur-chiffre">
+            <span class="chiffre-label">Déjà payé</span>
+            <span class="chiffre-valeur">{{ cs.fmt(v.payeTotal) }}</span>
+          </div>
+          <div class="vendeur-chiffre">
+            <span class="chiffre-label">Reste à payer</span>
+            <span class="chiffre-valeur" [class.text-warning-fort]="v.resteAPayer > 0">{{ cs.fmt(v.resteAPayer) }}</span>
+          </div>
+          <div class="vendeur-action">
+            <button type="button" class="btn btn-sm btn-primary" (click)="ouvrirPaiement(v)" [disabled]="v.resteAPayer <= 0">
+              <i class="fa fa-hand-holding-dollar mr-1" aria-hidden="true"></i> Payer
+            </button>
+          </div>
+        </div>
+        <div class="vendeur-detail" *ngIf="ouvert === v.vendeurId">
+          <p class="text-muted small mb-2" *ngIf="!v.details.length">Rien de vendu sur les produits concernés pendant cette période.</p>
+          <div class="detail" *ngFor="let d of v.details">
+            <div class="detail-texte">
+              <strong>{{ cible(d) }}</strong>
+              <span class="text-muted">{{ cs.decrire(d) }}</span>
+            </div>
+            <div class="detail-qte">
+              {{ d.quantiteVendue | number:'1.0-0' }} {{ (d.uniteBase || 'unité') | lowercase }}(s)
+              <ng-container *ngIf="d.type === 'OBJECTIF'"> / {{ d.quantiteObjectif }}</ng-container>
+              <span *ngIf="d.type === 'OBJECTIF'" class="badge-objectif" [class.atteint]="d.objectifAtteint">
+                {{ d.objectifAtteint ? 'Objectif atteint' : 'Pas encore atteint' }}
+              </span>
+            </div>
+            <div class="detail-prime" *ngIf="!(d.type === 'OBJECTIF' && d.objectifAtteint && !d.prime)">{{ cs.fmt(d.prime) }}</div>
+            <div class="detail-prime attente" *ngIf="d.type === 'OBJECTIF' && d.objectifAtteint && !d.prime">
+              {{ cs.fmt(d.valeur) }}<small>comptée le {{ d.dateFin | date:'dd/MM/yyyy' }}</small>
+            </div>
+          </div>
+          <p class="text-muted small mb-0 mt-2"><i class="fa fa-circle-info mr-1" aria-hidden="true"></i>
+            Une prime sur objectif est comptée à la date de fin de sa période. Ventes annulées et retours ne comptent pas.</p>
+        </div>
+      </li>
+    </ul>
+  </section>
+
+  <!-- ===================== Conditions ===================== -->
+  <section class="app-table-card" *ngIf="onglet === 'regles'">
+    <div class="etat" *ngIf="chargementRegles"><div class="spinner-border text-primary" role="status"></div></div>
+    <div class="etat" *ngIf="!chargementRegles && !regles.length">
+      <i class="fa fa-list-check" aria-hidden="true"></i>
+      <p>Aucune condition. Exemple : « 100 FCFA pour chaque carton de lait vendu ».</p>
+      <button type="button" class="btn btn-primary btn-sm" (click)="nouvelleRegle()">Créer une condition</button>
+    </div>
+    <div class="table-responsive" *ngIf="!chargementRegles && regles.length">
+      <table class="table table-hover mb-0 regles-table">
+        <thead>
+          <tr>
+            <th>Produit</th>
+            <th>Condition</th>
+            <th>Vendeurs</th>
+            <th>Période</th>
+            <th>Statut</th>
+            <th class="text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let r of regles">
+            <td><strong>{{ cible(r) }}</strong><div class="small text-muted">{{ r.nom }}</div></td>
+            <td>{{ cs.decrire(r) }}</td>
+            <td>{{ r.vendeurNom || 'Tous' }}</td>
+            <td class="text-nowrap">{{ r.dateDebut | date:'dd/MM/yyyy' }} → {{ r.dateFin ? (r.dateFin | date:'dd/MM/yyyy') : 'sans fin' }}</td>
+            <td>
+              <span class="statut" [ngClass]="'statut-' + r.statut">
+                {{ r.statut === 'EN_COURS' ? 'En cours' : r.statut === 'A_VENIR' ? 'À venir' : 'Terminée' }}
+              </span>
+            </td>
+            <td class="text-right">
+              <div class="btn-group btn-group-icons justify-content-end">
+                <button type="button" class="btn btn-sm btn-outline-primary" (click)="modifierRegle(r)"><i class="fa fa-pen" aria-hidden="true"></i> Modifier</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" *ngIf="r.statut !== 'TERMINEE'" (click)="arreterRegle(r)"><i class="fa fa-stop" aria-hidden="true"></i> Arrêter</button>
+                <button type="button" class="btn btn-sm btn-outline-danger" (click)="supprimerRegle(r)"><i class="fa fa-trash" aria-hidden="true"></i> Supprimer</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===================== Paiements ===================== -->
+  <section class="app-table-card" *ngIf="onglet === 'paiements'">
+    <div class="etat" *ngIf="!paiements.length">
+      <i class="fa fa-receipt" aria-hidden="true"></i>
+      <p>Aucun paiement de prime enregistré.</p>
+    </div>
+    <div class="table-responsive" *ngIf="paiements.length">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr><th>Date</th><th>Vendeur</th><th>Montant</th><th>Note</th><th>Enregistré par</th><th class="text-right">Action</th></tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let p of paiements">
+            <td class="text-nowrap">{{ p.datePaiement | date:'dd/MM/yyyy HH:mm' }}</td>
+            <td>{{ p.vendeurNom }}</td>
+            <td class="font-weight-bold">{{ cs.fmt(p.montant) }}</td>
+            <td>{{ p.note || '—' }}</td>
+            <td>{{ p.enregistrePar || '—' }}</td>
+            <td class="text-right">
+              <button type="button" class="btn btn-sm btn-outline-danger" (click)="supprimerPaiement(p)"><i class="fa fa-trash" aria-hidden="true"></i> Supprimer</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<!-- ===================== Modale : condition ===================== -->
+<div class="gl-overlay" *ngIf="formRegle" (click)="formRegle = null">
+  <div class="gl-modal" role="dialog" aria-modal="true" aria-labelledby="titre-regle" (click)="$event.stopPropagation()">
+    <header class="gl-modal-entete">
+      <h2 id="titre-regle">{{ formRegle.id ? 'Modifier la condition' : 'Nouvelle condition de prime' }}</h2>
+      <button type="button" class="gl-fermer" (click)="formRegle = null" aria-label="Fermer"><i class="fa fa-xmark" aria-hidden="true"></i></button>
+    </header>
+    <div class="gl-modal-corps">
+      <fieldset class="mb-3">
+        <legend class="champ-label">Type de prime</legend>
+        <div class="types">
+          <button type="button" *ngFor="let t of typesActifs" class="type-carte" [class.actif]="formRegle.type === t.type"
+                  (click)="choisirType(t.type)" [attr.aria-pressed]="formRegle.type === t.type">
+            <i class="fa" [ngClass]="libellesTypes[t.type].icone" aria-hidden="true"></i>
+            <span class="type-titre">{{ libellesTypes[t.type].titre }}</span>
+            <span class="type-exemple">{{ libellesTypes[t.type].exemple }}</span>
+          </button>
+        </div>
+      </fieldset>
+
+      <fieldset class="mb-3">
+        <legend class="champ-label">Sur quoi ?</legend>
+        <div class="segment mb-2" role="radiogroup">
+          <button type="button" role="radio" [attr.aria-checked]="formRegle.cible === 'produit'" [class.actif]="formRegle.cible === 'produit'" (click)="formRegle.cible = 'produit'">Un produit</button>
+          <button type="button" role="radio" [attr.aria-checked]="formRegle.cible === 'categorie'" [class.actif]="formRegle.cible === 'categorie'" (click)="formRegle.cible = 'categorie'">Toute une catégorie</button>
+        </div>
+        <ng-container *ngIf="formRegle.cible === 'produit'">
+          <input type="search" class="form-control mb-2" [(ngModel)]="rechercheProduit" placeholder="Rechercher un produit…" aria-label="Rechercher un produit">
+          <select class="form-control" [(ngModel)]="formRegle.produitId" aria-label="Produit">
+            <option [ngValue]="null">— Choisir le produit —</option>
+            <option *ngFor="let p of produitsFiltres" [ngValue]="p.id">{{ p.nom }}</option>
+          </select>
+        </ng-container>
+        <select *ngIf="formRegle.cible === 'categorie'" class="form-control" [(ngModel)]="formRegle.categorieId" aria-label="Catégorie">
+          <option [ngValue]="null">— Choisir la catégorie —</option>
+          <option *ngFor="let c of categories" [ngValue]="c.id">{{ c.nom }}</option>
+        </select>
+      </fieldset>
+
+      <div class="row">
+        <div class="col-md-6 form-group" *ngIf="formRegle.type === 'OBJECTIF'">
+          <label class="champ-label" for="r-qte">Quantité à vendre</label>
+          <div class="input-group">
+            <input id="r-qte" type="number" min="1" class="form-control" [(ngModel)]="formRegle.quantiteObjectif" placeholder="ex : 50">
+            <div class="input-group-append"><span class="input-group-text">{{ formRegle.cible === 'produit' ? uniteChoisie : 'unités' }}</span></div>
+          </div>
+        </div>
+        <div class="col-md-6 form-group">
+          <label class="champ-label" for="r-valeur">
+            {{ formRegle.type === 'MONTANT_FIXE' ? 'Montant gagné par ' + (formRegle.cible === 'produit' ? uniteChoisie : 'unité') + ' vendue'
+               : formRegle.type === 'POURCENTAGE' ? 'Pourcentage du montant vendu' : 'Prime si l\'objectif est atteint' }}
+          </label>
+          <div class="input-group">
+            <input *ngIf="formRegle.type !== 'POURCENTAGE'" id="r-valeur" type="text" inputmode="numeric" class="form-control"
+                   appMontantInput [(ngModel)]="formRegle.valeur" placeholder="ex : 100">
+            <input *ngIf="formRegle.type === 'POURCENTAGE'" id="r-valeur" type="number" min="0.1" max="100" step="0.5"
+                   class="form-control" [(ngModel)]="formRegle.valeur" placeholder="ex : 5">
+            <div class="input-group-append"><span class="input-group-text">{{ formRegle.type === 'POURCENTAGE' ? '%' : 'FCFA' }}</span></div>
+          </div>
+        </div>
+        <div class="col-md-6 form-group">
+          <label class="champ-label" for="r-debut">À partir du</label>
+          <input id="r-debut" type="date" class="form-control" [(ngModel)]="formRegle.dateDebut">
+        </div>
+        <div class="col-md-6 form-group">
+          <label class="champ-label" for="r-fin">Jusqu'au <span class="text-muted" *ngIf="formRegle.type !== 'OBJECTIF'">(vide = sans fin)</span></label>
+          <input id="r-fin" type="date" class="form-control" [(ngModel)]="formRegle.dateFin">
+        </div>
+        <div class="col-md-6 form-group">
+          <label class="champ-label" for="r-vendeur">Pour quel vendeur ?</label>
+          <select id="r-vendeur" class="form-control" [(ngModel)]="formRegle.vendeurId">
+            <option [ngValue]="null">Tous les vendeurs</option>
+            <option *ngFor="let v of vendeurs" [ngValue]="v.id">{{ v.nomComplet }}</option>
+          </select>
+        </div>
+        <div class="col-md-6 form-group">
+          <label class="champ-label" for="r-nom">Nom <span class="text-muted">(facultatif)</span></label>
+          <input id="r-nom" class="form-control" [(ngModel)]="formRegle.nom" maxlength="120" placeholder="ex : Challenge riz de juin">
+        </div>
+      </div>
+    </div>
+    <footer class="gl-modal-pied">
+      <button type="button" class="btn btn-outline-secondary" (click)="formRegle = null">Annuler</button>
+      <button type="button" class="btn btn-primary" (click)="enregistrerRegle()" [disabled]="enregistrement">
+        <span *ngIf="enregistrement" class="spinner-border spinner-border-sm mr-1"></span>
+        {{ formRegle.id ? 'Enregistrer' : 'Créer la condition' }}
+      </button>
+    </footer>
+  </div>
+</div>
+
+<!-- ===================== Modale : paiement ===================== -->
+<div class="gl-overlay" *ngIf="paiement" (click)="paiement = null">
+  <div class="gl-modal gl-modal-petit" role="dialog" aria-modal="true" aria-labelledby="titre-paiement" (click)="$event.stopPropagation()">
+    <header class="gl-modal-entete">
+      <h2 id="titre-paiement">Payer la prime</h2>
+      <button type="button" class="gl-fermer" (click)="paiement = null" aria-label="Fermer"><i class="fa fa-xmark" aria-hidden="true"></i></button>
+    </header>
+    <div class="gl-modal-corps">
+      <div class="resume-paiement">
+        <span class="pastille"><i class="fa fa-hand-holding-dollar" aria-hidden="true"></i></span>
+        <div>
+          <strong>{{ paiement.vendeur.vendeurNom }}</strong>
+          <div class="text-muted small">Reste à payer : {{ cs.fmt(paiement.vendeur.resteAPayer) }}</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="champ-label" for="pay-montant">Montant versé</label>
+        <div class="input-group">
+          <input id="pay-montant" type="text" inputmode="numeric" class="form-control" appMontantInput [(ngModel)]="paiement.montant">
+          <div class="input-group-append"><span class="input-group-text">FCFA</span></div>
+        </div>
+      </div>
+      <div class="form-group mb-0">
+        <label class="champ-label" for="pay-note">Note <span class="text-muted">(facultatif)</span></label>
+        <input id="pay-note" class="form-control" [(ngModel)]="paiement.note" maxlength="255" placeholder="ex : payé en espèces">
+      </div>
+    </div>
+    <footer class="gl-modal-pied">
+      <button type="button" class="btn btn-outline-secondary" (click)="paiement = null">Annuler</button>
+      <button type="button" class="btn btn-primary" (click)="enregistrerPaiement()" [disabled]="enregistrement">Confirmer le paiement</button>
+    </footer>
+  </div>
+</div>
+
+<!-- ===================== Modale : réglages ===================== -->
+<div class="gl-overlay" *ngIf="reglagesOuverts" (click)="reglagesOuverts = false">
+  <div class="gl-modal gl-modal-petit" role="dialog" aria-modal="true" aria-labelledby="titre-reglages" (click)="$event.stopPropagation()">
+    <header class="gl-modal-entete">
+      <h2 id="titre-reglages">Types de primes utilisés</h2>
+      <button type="button" class="gl-fermer" (click)="reglagesOuverts = false" aria-label="Fermer"><i class="fa fa-xmark" aria-hidden="true"></i></button>
+    </header>
+    <div class="gl-modal-corps">
+      <p class="text-muted small">Cochez seulement ce dont la boutique a besoin. Les conditions d'un type décoché ne comptent plus.</p>
+      <label class="reglage" *ngFor="let t of types">
+        <input type="checkbox" [(ngModel)]="typesBrouillon[t.type]">
+        <i class="fa" [ngClass]="libellesTypes[t.type].icone" aria-hidden="true"></i>
+        <span><strong>{{ libellesTypes[t.type].titre }}</strong><br><span class="text-muted small">{{ libellesTypes[t.type].exemple }}</span></span>
+      </label>
+    </div>
+    <footer class="gl-modal-pied">
+      <button type="button" class="btn btn-outline-secondary" (click)="reglagesOuverts = false">Annuler</button>
+      <button type="button" class="btn btn-primary" (click)="enregistrerReglages()">Enregistrer</button>
+    </footer>
+  </div>
+</div>

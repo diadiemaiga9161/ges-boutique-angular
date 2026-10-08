@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { AuthService } from './auth.service';
 import { BoutiqueService } from './boutique.service';
+import { RoleService } from './role.service';
 
 export interface IMenuItem {
     id?: string;
@@ -85,6 +86,7 @@ export class NavigationService {
         {
             name: 'Compte', type: 'dropDown', icon: 'i-Administrator', sub: [
                 { name: 'PROFILE_MENU.TITLE',  type: 'link', icon: 'i-Administrator',               state: '/profile' },
+                { name: 'Mes primes',          type: 'link', icon: 'i-Gift-Box',                    state: '/mes-primes' },
                 { name: 'En savoir plus',      type: 'link', icon: 'i-Information',                 state: '/ressources' },
             ]
         },
@@ -138,6 +140,7 @@ export class NavigationService {
                 { name: 'EMPLOYEE_PAY.TITLE',  type: 'link', icon: 'i-Money-Bag',                   state: '/paiement-employe' },
                 { name: 'SELLERS_MENU.TITLE',  type: 'link', icon: 'i-Administrator',               state: '/vendeur' },
                 { name: 'SELLER_BONUS.TITLE',  type: 'link', icon: 'i-Gift-Box',                    state: '/objectifs-vendeur' },
+                { name: 'Primes sur produits', type: 'link', icon: 'i-Medal-2',                     state: '/primes-produits' },
             ]
         },
         {
@@ -146,6 +149,7 @@ export class NavigationService {
                 { name: 'INVOICE_DESIGN.TITLE',type: 'link', icon: 'i-Pen-2',                       state: '/facture-design' },
                 { name: 'Annulation paiements',type: 'link', icon: 'i-Remove',                      state: '/annulation-paiements' },
                 { name: 'Paramètres',          type: 'link', icon: 'i-Gear',                        state: '/parametres' },
+                { name: 'Rôles et permissions', type: 'link', icon: 'i-Lock-2',                     state: '/roles' },
                 { name: 'JOURNAL_AUDIT.TITLE', type: 'link', icon: 'i-Data-Shield',                 state: '/journal-audit' },
                 { name: 'EXPORT.TITLE',        type: 'link', icon: 'i-File-Download',               state: '/export-donnees' },
                 { name: 'BACKUP.TITLE',        type: 'link', icon: 'i-Data-Backup',                 state: '/sauvegardes' },
@@ -158,6 +162,7 @@ export class NavigationService {
         {
             name: 'Compte', type: 'dropDown', icon: 'i-Administrator', sub: [
                 { name: 'PROFILE_MENU.TITLE',  type: 'link', icon: 'i-Administrator',               state: '/profile' },
+                { name: 'Mes primes',          type: 'link', icon: 'i-Gift-Box',                    state: '/mes-primes' },
                 { name: 'En savoir plus',      type: 'link', icon: 'i-Information',                 state: '/ressources' },
             ]
         },
@@ -173,7 +178,7 @@ export class NavigationService {
 
     // Fonctionnalités avancées (système séparé, voir FonctionnaliteAvancee côté
     // backend) — associe chaque clé à l'état de menu correspondant.
-    private readonly etatParCleAvancee: Record<string, string> = {
+    private readonly etatParCleAvancee: Record<string, string | string[]> = {
         DEPOT_GARDE: '/depot-garde',
         DETTES_ANCIENNES: '/dettes',
         COMPTES_BANCAIRES: '/comptes',
@@ -184,7 +189,9 @@ export class NavigationService {
         OBJECTIFS_VENDEUR: '/objectifs-vendeur',
         RAPPORTS: '/rapport',
         IA: '/ia',
-        RESULTAT_NET: '/resultat-net'
+        RESULTAT_NET: '/resultat-net',
+        ROLES_PERSONNALISES: '/roles',
+        PRIMES_PRODUITS: ['/primes-produits', '/mes-primes']
     };
     private etatsAvancesDesactives = new Set<string>();
 
@@ -193,7 +200,10 @@ export class NavigationService {
     // clé existe : INVENTAIRE_LECTURE (accès lecture seule du VENDEUR à /inventaire).
     private permissionInventaireLectureActive = false;
 
-    constructor(private authService: AuthService, private boutiqueService: BoutiqueService) {
+    constructor(private authService: AuthService, private boutiqueService: BoutiqueService,
+                private roleService: RoleService) {
+        // Rôles personnalisés (Caissier...) : masque les pages que le rôle ne peut pas voir.
+        this.roleService.mesPermissions$.subscribe(() => this.publishNavigationForCurrentUser());
         this.authService.currentUser$.subscribe(() => {
             this.publishNavigationForCurrentUser();
         });
@@ -203,7 +213,7 @@ export class NavigationService {
         });
         this.boutiqueService.fonctionnalitesAvancees$.subscribe(liste => {
             this.etatsAvancesDesactives = new Set(
-                liste.filter(f => !f.actif).map(f => this.etatParCleAvancee[f.cle]).filter((s): s is string => !!s)
+                liste.filter(f => !f.actif).flatMap(f => ([] as string[]).concat(this.etatParCleAvancee[f.cle] || []))
             );
             this.publishNavigationForCurrentUser();
         });
@@ -235,11 +245,24 @@ export class NavigationService {
      *  permission INVENTAIRE_LECTURE (système séparé de filtrerFonctionnalites ci-dessus). */
     private appliquerPermissionInventaire(menu: IMenuItem[]): IMenuItem[] {
         if (this.permissionInventaireLectureActive) return menu;
+        // Vendeur dont le rôle fait les entrées/sorties de stock : il voit aussi l'inventaire.
+        if (this.roleService?.rolesActifs && this.roleService.peut('STOCK', 'GERER')) return menu;
         return menu
             .map(item => item.sub
                 ? { ...item, sub: item.sub.filter(s => s.state !== '/inventaire') }
                 : item)
             .filter(item => item.state !== '/inventaire');
+    }
+
+    /** Retire les pages que le rôle personnalisé de la personne ne permet pas de voir. */
+    private appliquerRole(menu: IMenuItem[]): IMenuItem[] {
+        if (!this.roleService) return menu;
+        return menu
+            .map(item => item.sub
+                ? { ...item, sub: item.sub.filter(s => this.roleService.peutVoirPage(s.state || '')) }
+                : item)
+            .filter(item => !(item.state && !this.roleService.peutVoirPage(item.state)))
+            .filter(item => !item.sub || item.sub.length > 0);
     }
 
     publishNavigationForCurrentUser() {
@@ -251,14 +274,14 @@ export class NavigationService {
         }
 
         if (this.authService.isAdmin()) {
-            this.menuItems.next(this.filtrerFonctionnalites(this.adminMenu));
+            this.menuItems.next(this.appliquerRole(this.filtrerFonctionnalites(this.adminMenu)));
             return;
         }
 
         if (this.authService.isVendeur()) {
             let menu = this.filtrerFonctionnalites(this.vendeurMenu);
             menu = this.appliquerPermissionInventaire(menu);
-            this.menuItems.next(menu);
+            this.menuItems.next(this.appliquerRole(menu));
             return;
         }
 

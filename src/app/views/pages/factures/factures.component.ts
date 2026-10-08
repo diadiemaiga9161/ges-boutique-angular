@@ -14,10 +14,12 @@ import { FactureDesignService, DesignFacture } from '../../../shared/services/fa
 import { TranslateModule } from '@ngx-translate/core';
 import { MontantInputDirective } from '../../../shared/directives/montant-input.directive';
 
+import { MesurePuPipe, MesureQtePipe, MesureSuffixePipe } from '../../../shared/pipes/mesure.pipe';
+
 @Component({
   selector: 'app-factures',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule, MontantInputDirective],
+  imports: [CommonModule, FormsModule, TranslateModule, MontantInputDirective, MesureQtePipe, MesurePuPipe, MesureSuffixePipe],
   templateUrl: './factures.component.html',
   styleUrls: ['./factures.component.scss']
 })
@@ -146,7 +148,11 @@ export class FacturesComponent implements OnInit, OnDestroy {
 
   loadData(): void {
     this.isLoading = true;
-    if (this.dateDebut && this.dateFin && this.dateDebut !== this.dateFin) {
+    // initDates() renseigne toujours dateDebut/dateFin (1er du mois -> aujourd'hui)
+    // avant le premier appel : le cas "dateDebut === dateFin" (le 1er jour du mois)
+    // tombait à tort dans loadAll() et chargeait tout l'historique au lieu du seul
+    // mois en cours. loadByPeriod() gère très bien une période d'un seul jour.
+    if (this.dateDebut && this.dateFin) {
       this.loadByPeriod();
     } else if (this.statutFilter) {
       this.loadByStatus();

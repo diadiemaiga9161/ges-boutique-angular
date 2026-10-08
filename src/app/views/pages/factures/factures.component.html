@@ -209,8 +209,8 @@
           <thead class="table-primary"><tr><th>Désignation</th><th class="text-center">Qté</th><th class="text-end">P.U</th><th class="text-end">Total</th></tr></thead>
           <tbody>
             <tr *ngFor="let l of selectedFacture.lignes">
-              <td>{{ l.designation }}</td><td class="text-center">{{ l.quantite }}</td>
-              <td class="text-end">{{ formatPrice(l.prixUnitaire) }}</td>
+              <td>{{ l.designation }}</td><td class="text-center">{{ l | mesureQte }}</td>
+              <td class="text-end">{{ formatPrice((l | mesurePu)) }}{{ l | mesureSuffixe }}</td>
               <td class="text-end fw-bold">{{ formatPrice(l.sousTotal ?? 0) }}</td>
             </tr>
           </tbody>
@@ -260,8 +260,8 @@
           <thead style="background:#0f172a;color:#fff"><tr><th>Désignation</th><th class="text-center">Qté</th><th class="text-end">P.U</th><th class="text-end">Total</th></tr></thead>
           <tbody>
             <tr *ngFor="let l of selectedFacture.lignes">
-              <td>{{ l.designation }}</td><td class="text-center">{{ l.quantite }}</td>
-              <td class="text-end">{{ formatPrice(l.prixUnitaire) }}</td>
+              <td>{{ l.designation }}</td><td class="text-center">{{ l | mesureQte }}</td>
+              <td class="text-end">{{ formatPrice((l | mesurePu)) }}{{ l | mesureSuffixe }}</td>
               <td class="text-end fw-bold" style="color:#b45309">{{ formatPrice(l.sousTotal ?? 0) }}</td>
             </tr>
           </tbody>
@@ -302,8 +302,8 @@
           <thead><tr style="border-bottom:2px solid #18181b"><th>Désignation</th><th class="text-center">Qté</th><th class="text-end">P.U</th><th class="text-end">Total</th></tr></thead>
           <tbody>
             <tr *ngFor="let l of selectedFacture.lignes" style="border-bottom:1px solid #f4f4f5">
-              <td>{{ l.designation }}</td><td class="text-center">{{ l.quantite }}</td>
-              <td class="text-end">{{ formatPrice(l.prixUnitaire) }}</td>
+              <td>{{ l.designation }}</td><td class="text-center">{{ l | mesureQte }}</td>
+              <td class="text-end">{{ formatPrice((l | mesurePu)) }}{{ l | mesureSuffixe }}</td>
               <td class="text-end fw-bold">{{ formatPrice(l.sousTotal ?? 0) }}</td>
             </tr>
           </tbody>
@@ -416,7 +416,7 @@
                 <input type="text" class="form-control" placeholder="Nom ou code-barre..." [(ngModel)]="productSearchTerm" (input)="searchProduits()" (focus)="showProductSearch = true" [ngModelOptions]="{standalone: true}">
                 <ul class="search-results" *ngIf="showProductSearch && filteredProduits.length">
                   <li *ngFor="let p of filteredProduits" (click)="selectProduit(p)">
-                    <i class="fa fa-cube"></i> <strong>{{ p.nom }}</strong> <small>Prix: {{ formatPrice(p.prixVente) }} | Stock: {{ p.quantite }}</small>
+                    <i class="fa fa-cube"></i> <strong>{{ p.nom }}</strong> <small>Prix: {{ formatPrice(p.prixVente) }} | Stock: {{ p | mesureQte }}</small>
                   </li>
                 </ul>
               </div>
@@ -424,7 +424,7 @@
             <div *ngIf="selectedProduit" class="selected-product">
               <div class="product-info">
                 <i class="fa fa-check-circle text-success"></i> <strong>{{ selectedProduit.nom }}</strong>
-                <span>Prix: {{ formatPrice(selectedProduit.prixVente) }}</span> <span>Stock: {{ selectedProduit.quantite }}</span>
+                <span>Prix: {{ formatPrice(selectedProduit.prixVente) }}</span> <span>Stock: {{ selectedProduit | mesureQte }}</span>
               </div>
               <button type="button" class="btn-sm btn-outline" (click)="selectedProduit = null; newLine.produitId = 0"><i class="fa fa-refresh"></i> Changer</button>
             </div>
@@ -452,8 +452,8 @@
             <div class="lines-header"><span>Désignation</span><span>Qté</span><span>Prix U.</span><span>Remise</span><span>Total</span><span></span></div>
             <div *ngFor="let ligne of factureForm.lignes; let i=index" class="line-item">
               <span class="line-designation">{{ ligne.designation }}</span>
-              <span class="line-quantite">{{ ligne.quantite }}</span>
-              <span class="line-prix">{{ formatPrice(ligne.prixUnitaire) }}</span>
+              <span class="line-quantite">{{ ligne | mesureQte }}</span>
+              <span class="line-prix">{{ formatPrice((ligne | mesurePu)) }}{{ ligne | mesureSuffixe }}</span>
               <span class="line-remise">{{ ligne.remisePourcentage ? ligne.remisePourcentage + '%' : (ligne.remiseMontant ? formatPrice(ligne.remiseMontant) : '-') }}</span>
               <span class="line-total">{{ formatPrice(ligne.prixUnitaire * ligne.quantite) }}</span>
               <span class="line-actions"><button type="button" class="danger" (click)="removeLine(i)"><i class="fa fa-trash"></i></button></span>

@@ -355,6 +355,49 @@ label.btn-photo { cursor: pointer; }
     border: 1.5px solid rgba(239, 68, 68, 0.35);
     &:hover { background: $danger; color: #fff; border-color: $danger; }
   }
+
+  &.btn-outline-secondary {
+    background: transparent;
+    color: $primary-start;
+    border: 1.5px solid rgba(26, 86, 219, 0.25);
+    &:hover { background: rgba(26, 86, 219, 0.08); border-color: $primary-start; }
+  }
+}
+
+// ─── Changer de boutique ───
+.boutique-switch {
+  position: relative;
+}
+
+.boutique-switch-list {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 20;
+  min-width: 220px;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+
+  li button {
+    display: block;
+    width: 100%;
+    padding: 9px 12px;
+    text-align: left;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary, #374151);
+    cursor: pointer;
+
+    &:hover { background: rgba(26, 86, 219, 0.08); color: $primary-start; }
+  }
 }
 
 // ─── Grille (row/col déjà utilisés dans le template) ───

@@ -1,13 +1,17 @@
 // vendeur.component.ts - Version mise à jour avec modales et confirmations
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UserService, User, UserUpdate } from '../../../shared/services/user.service';
+import { BoutiqueService } from '../../../shared/services/boutique.service';
 import { TranslateModule } from '@ngx-translate/core';
 
 import { AuthService } from '../../../shared/services/auth.service';
 import { Router } from '@angular/router';
+import { Observable, Subscription, of, timer } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 import Swal from 'sweetalert2';
+import { RoleBoutique, RoleService } from '../../../shared/services/role.service';
 import { COUNTRY_CODES, validatePhoneForCountry, construireNumeroComplet, separerIndicatif } from '../../../shared/utils/telephone.util';
 import { MontantInputDirective } from '../../../shared/directives/montant-input.directive';
 
@@ -17,7 +21,7 @@ import { MontantInputDirective } from '../../../shared/directives/montant-input.
   styleUrls: ['./vendeur.component.scss'],
   imports: [CommonModule, FormsModule, TranslateModule, MontantInputDirective]
 })
-export class VendeurComponent implements OnInit {
+export class VendeurComponent implements OnInit, OnDestroy {
   // Liste des utilisateurs
   users: User[] = [];
   filteredUsers: User[] = [];
@@ -85,14 +89,86 @@ export class VendeurComponent implements OnInit {
   showDeleteModal: boolean = false;
   userToDelete: User | null = null;
 
+  // "Qui est en ligne" — visible seulement si le super admin a activé
+  // feature.VOIR_PERSONNES_EN_LIGNE pour cette boutique (voir BoutiqueService).
+  voirPersonnesEnLigneActif = false;
+  usernamesEnLigne = new Set<string>();
+  private enLigneSub?: Subscription;
+  private fonctionnalitesSub?: Subscription;
+
   constructor(
     private userService: UserService,
     private authService: AuthService,
-    private router: Router
+    private boutiqueService: BoutiqueService,
+    private router: Router,
+    private roleService: RoleService
   ) {}
+
+  // ── Rôle d'une personne : tous les rôles (Gérant, Vendeur + rôles créés) quand les
+  //    rôles personnalisés sont activés ; sinon le choix d'origine Vendeur/Administrateur.
+  rolesBoutique: RoleBoutique[] = [];
+  private rolesSub?: Subscription;
+  roleChoisiId: number | null = null;
+  private roleInitialId: number | null = null;
+
+  private roleIdDe(u: User): number | null {
+    if (u.roleBoutiqueId) return u.roleBoutiqueId;
+    return this.rolesBoutique.find(r => r.systeme && r.roleBase === u.role)?.id ?? null;
+  }
+
+  /** Nom du rôle affiché sur la carte (rôle créé si la personne en a un). */
+  nomRole(u: User): string {
+    const cree = u.roleBoutiqueId ? this.rolesBoutique.find(r => r.id === u.roleBoutiqueId) : undefined;
+    return cree ? cree.nom : (u.role === 'ADMIN' ? 'Administrateur' : 'Vendeur');
+  }
+
+  choisirRole(id: number | null): void {
+    this.roleChoisiId = id;
+    const r = this.rolesBoutique.find(x => x.id === id);
+    if (r) this.editedUser.role = r.roleBase;
+  }
 
   ngOnInit(): void {
     this.loadUsers();
+    // Les permissions arrivent un peu après l'ouverture de la page : on attend de savoir
+    // si les rôles personnalisés sont activés avant de charger la liste des rôles.
+    this.rolesSub = this.roleService.mesPermissions$.subscribe(p => {
+      if (p.actif && this.authService.isAdmin() && !this.rolesBoutique.length) {
+        this.roleService.lister().subscribe({ next: roles => this.rolesBoutique = roles, error: () => this.rolesBoutique = [] });
+      }
+    });
+
+    this.fonctionnalitesSub = this.boutiqueService.fonctionnalitesAvancees$.subscribe(liste => {
+      const actif = liste.find(f => f.cle === 'VOIR_PERSONNES_EN_LIGNE')?.actif === true;
+      if (actif && !this.voirPersonnesEnLigneActif) {
+        this.demarrerSuiviPresence();
+      } else if (!actif && this.voirPersonnesEnLigneActif) {
+        this.enLigneSub?.unsubscribe();
+        this.usernamesEnLigne = new Set();
+      }
+      this.voirPersonnesEnLigneActif = actif;
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.enLigneSub?.unsubscribe();
+    this.fonctionnalitesSub?.unsubscribe();
+    this.rolesSub?.unsubscribe();
+  }
+
+  private demarrerSuiviPresence(): void {
+    const token = this.authService.getToken();
+    if (!token) return;
+    // Premier appel immédiat, puis toutes les 30s tant que la page est ouverte.
+    this.enLigneSub = timer(0, 30000).pipe(
+      switchMap(() => this.userService.getUtilisateursEnLigne(token))
+    ).subscribe(usernames => {
+      this.usernamesEnLigne = new Set(usernames);
+    });
+  }
+
+  estEnLigne(user: User): boolean {
+    return this.usernamesEnLigne.has(user.username);
   }
 
   voirHistoriqueVentes(): void {
@@ -216,6 +292,7 @@ export class VendeurComponent implements OnInit {
       telephone: user.telephone,
       role: user.role
     };
+    this.roleChoisiId = this.roleInitialId = this.roleIdDe(user);
     const sep = separerIndicatif(user.telephone);
     this.editSelectedCountryCode = sep.code;
     this.editTelephoneLocal = sep.local;
@@ -307,7 +384,14 @@ export class VendeurComponent implements OnInit {
             delete updateData.password;
           }
 
-          this.userService.updateUser(this.modalUser!.id, updateData, token).subscribe({
+          // Rôle créé choisi (ou changé) : attribué d'abord (il fixe aussi Gérant/Vendeur).
+          const roleChange = this.rolesBoutique.length > 0 && this.roleChoisiId != null && this.roleChoisiId !== this.roleInitialId;
+          const attribution: Observable<unknown> = roleChange
+            ? this.roleService.attribuer(this.modalUser!.id, this.roleChoisiId)
+            : of(null);
+          attribution.pipe(
+            switchMap(() => this.userService.updateUser(this.modalUser!.id, updateData, token))
+          ).subscribe({
             next: (updatedUser) => {
               const applyUpdate = (finalUser: User) => {
                 const index = this.users.findIndex(u => u.id === finalUser.id);

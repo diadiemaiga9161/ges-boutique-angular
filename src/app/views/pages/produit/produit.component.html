@@ -36,6 +36,24 @@
     </div>
   </div>
 
+  <!-- Tuto de démarrage — étape 1 : premier produit. Disparaît dès qu'un vrai
+       produit existe, jamais bloquant (fermable). -->
+  <div class="tuto-demarrage" *ngIf="afficherTutoPremierProduit">
+    <button type="button" class="tuto-demarrage-close" (click)="fermerTutoPremierProduit()" aria-label="Fermer">
+      <i class="fa fa-times"></i>
+    </button>
+    <div class="tuto-demarrage-badge">Étape 1 sur 2</div>
+    <h3 class="tuto-demarrage-title"><i class="fa fa-box me-2"></i>Ajoute ton premier produit</h3>
+    <p class="tuto-demarrage-text">
+      Ta boutique est toute neuve — commence par ajouter un vrai article que tu vends,
+      comme un sac de riz ou une caisse de Coca. Juste le prix et la quantité pour démarrer,
+      tu pourras compléter le reste plus tard.
+    </p>
+    <button class="btn btn-primary" type="button" (click)="openAddModal()">
+      <i class="fa fa-plus me-1"></i> Ajouter mon premier produit
+    </button>
+  </div>
+
   <!-- Messages d'alerte -->
   <div *ngIf="errorMessage" class="alert alert-danger alert-dismissible fade show" role="alert">
     <i class="fa fa-exclamation-triangle me-2"></i> {{ errorMessage }}
@@ -200,23 +218,29 @@
             <tbody>
               <tr *ngFor="let produit of paginatedProducts" [class.table-warning]="produit.stockFaible && !produit.perime" [class.table-danger]="produit.perime">
                 <td>
+                  <div class="d-flex align-items-center produit-cellule">
+                  <span class="produit-vignette" *ngIf="photos.estActif" aria-hidden="true">
+                    <img *ngIf="urlPhoto(produit) as src" [src]="src" alt="" loading="lazy" width="44" height="44">
+                    <i *ngIf="!urlPhoto(produit)" class="fa fa-image"></i>
+                  </span>
                   <div class="d-flex flex-column">
                     <strong>{{ produit.nom }}</strong>
                     <small class="text-muted">{{ produit.description || "Aucune description" | slice:0:50 }}{{ produit.description?.length > 50 ? "..." : "" }}</small>
                     <small class="text-muted"><i class="fa fa-barcode me-1"></i>{{ produit.codeBarre || "N/A" }} <span *ngIf="produit.lotNumber" class="ms-2">Lot: {{ produit.lotNumber }}</span></small>
                   </div>
+                  </div>
                 </td>
                 <td class="text-center"><span class="badge bg-secondary">{{ produit.categorie.nom }}</span></td>
                 <td class="text-center"><span class="badge bg-info">{{ produit.fournisseur?.nom || "N/A" }}</span></td>
-                <td class="text-end">{{ formatPrice(produit.prixAchat) }}</td>
-                <td class="text-end">{{ formatPrice(produit.prixVente) }}</td>
-                <td class="text-center"><span [class]="'badge ' + getStockStatusClass(produit)">{{ produit.quantite }} {{ produit.uniteMesure || "pcs" }}</span></td>
+                <td class="text-end">{{ prixTexte(produit, produit.prixAchat) }}</td>
+                <td class="text-end">{{ prixTexte(produit, produit.prixVente) }}</td>
+                <td class="text-center"><span [class]="'badge ' + getStockStatusClass(produit)">{{ stockTexte(produit) }}</span></td>
                 <td class="text-center"><span *ngIf="produit.datePeremption" [class]="'badge ' + getPeremptionStatusClass(produit)">{{ formatDate(produit.datePeremption) }} <small *ngIf="produit.joursAvantPeremption">({{ produit.joursAvantPeremption }}j)</small></span><span *ngIf="!produit.datePeremption" class="text-muted">-</span></td>
                 <td class="text-center"><i class="fa" [class.fa-check-circle]="produit.bio" [class.fa-circle-o]="!produit.bio" [class.text-success]="produit.bio" [class.text-muted]="!produit.bio"></i></td>
                 <td class="text-end">
                   <div class="d-flex flex-column align-items-end">
                     <span [class]="produit.tauxMarge > 20 ? 'text-success fw-bold' : produit.tauxMarge > 0 ? 'text-primary fw-bold' : 'text-danger fw-bold'">{{ (produit.tauxMarge || 0).toFixed(1) }}%</span>
-                    <small class="text-muted">{{ formatPrice(produit.marge || 0) }}</small>
+                    <small class="text-muted">{{ prixTexte(produit, produit.marge || 0) }}</small>
                   </div>
                 </td>
                 <td class="text-center" *ngIf="isAdmin">
@@ -379,6 +403,25 @@
       <div class="modal-body">
         <form #addForm="ngForm">
           <div class="row g-3">
+            <div class="col-12" *ngIf="photos.estActif">
+              <div class="photo-zone">
+                <div class="photo-cadre">
+                  <img *ngIf="photoApercu" [src]="photoApercu" alt="Aperçu de la photo">
+                  <i *ngIf="!photoApercu" class="fa fa-image" aria-hidden="true"></i>
+                </div>
+                <div class="photo-texte">
+                  <strong>Photo du produit</strong><span class="text-muted ms-1">(facultatif)</span>
+                  <small class="text-muted d-block">Elle est réduite automatiquement pour rester légère.</small>
+                  <div class="mt-2">
+                    <label class="btn btn-sm btn-outline-primary mb-0">
+                      <i class="fa fa-camera me-1" aria-hidden="true"></i> {{ photoApercu ? 'Changer' : 'Choisir une photo' }}
+                      <input type="file" accept="image/*" hidden (change)="choisirPhotoNouveau($event)">
+                    </label>
+                    <button type="button" class="btn btn-sm btn-link text-danger" *ngIf="photoApercu" (click)="oublierPhotoEnAttente()">Retirer</button>
+                  </div>
+                </div>
+              </div>
+            </div>
             <div class="col-md-8">
               <label class="form-label">Nom du produit <span class="text-danger">*</span></label>
               <input type="text" class="form-control" [(ngModel)]="productForm.nom" name="nom" required minlength="2">
@@ -407,21 +450,35 @@
                 <option *ngFor="let f of fournisseurs" [ngValue]="f.id">{{ f.nom }}</option>
               </select>
             </div>
+            <div class="col-12" *ngIf="mesureActif">
+              <label class="form-label">Façon de vendre ce produit</label>
+              <div class="mesure-choix" role="radiogroup" aria-label="Façon de vendre">
+                <button type="button" role="radio" [attr.aria-checked]="!modeMesureForm" [class.actif]="!modeMesureForm" (click)="modeMesureForm = null">
+                  <i class="fa fa-cube" aria-hidden="true"></i> À l'unité
+                </button>
+                <button type="button" role="radio" *ngFor="let m of ['KG','L','M']" [attr.aria-checked]="modeMesureForm === m"
+                        [class.actif]="modeMesureForm === m" (click)="modeMesureForm = m">
+                  <i class="fa" [ngClass]="m === 'KG' ? 'fa-scale-balanced' : m === 'L' ? 'fa-bottle-water' : 'fa-ruler'" aria-hidden="true"></i>
+                  {{ $any(mesures)[m].libelle }}
+                </button>
+              </div>
+              <small class="text-muted" *ngIf="modeMesureForm">Prix et stock se saisissent {{ $any(mesures)[modeMesureForm].libelle.toLowerCase() }} : ex. 600 F le {{ $any(mesures)[modeMesureForm].unite }}, stock 25,5 {{ $any(mesures)[modeMesureForm].unite }}.</small>
+            </div>
             <div class="col-md-3">
-              <label class="form-label">Prix achat (XOF) <span class="text-danger">*</span></label>
+              <label class="form-label">Prix achat (XOF{{ suffixeMesure }}) <span class="text-danger">*</span></label>
               <input type="text" inputmode="numeric" class="form-control" appMontantInput [(ngModel)]="productForm.prixAchat" name="prixAchat" required>
             </div>
             <div class="col-md-3">
-              <label class="form-label">Prix vente (XOF) <span class="text-danger">*</span></label>
+              <label class="form-label">Prix vente (XOF{{ suffixeMesure }}) <span class="text-danger">*</span></label>
               <input type="text" inputmode="numeric" class="form-control" appMontantInput [(ngModel)]="productForm.prixVente" name="prixVente" required>
             </div>
             <div class="col-md-3">
-              <label class="form-label">Quantité <span class="text-danger">*</span></label>
-              <input type="number" class="form-control" [(ngModel)]="productForm.quantite" name="quantite" required min="0">
+              <label class="form-label">Quantité{{ infoMesureForm ? ' (' + infoMesureForm.unite + ')' : '' }} <span class="text-danger">*</span></label>
+              <input type="number" class="form-control" [(ngModel)]="productForm.quantite" name="quantite" required min="0" [step]="infoMesureForm ? 'any' : 1">
             </div>
             <div class="col-md-3">
-              <label class="form-label">Seuil d'alerte</label>
-              <input type="number" class="form-control" [(ngModel)]="productForm.seuilAlerte" name="seuilAlerte" min="0" value="10">
+              <label class="form-label">Seuil d'alerte{{ infoMesureForm ? ' (' + infoMesureForm.unite + ')' : '' }}</label>
+              <input type="number" class="form-control" [(ngModel)]="productForm.seuilAlerte" name="seuilAlerte" min="0" value="10" [step]="infoMesureForm ? 'any' : 1">
             </div>
             <div class="col-12"><hr><h6 class="mb-3">Informations spécifiques (produit alimentaire)</h6></div>
             <div class="col-md-3"><label class="form-label">Date de création</label><input type="date" class="form-control" [(ngModel)]="productForm.dateCreation" name="dateCreation"></div>
@@ -471,15 +528,56 @@
       <div class="modal-body">
         <form #editForm="ngForm">
           <div class="row g-3">
+            <div class="col-12" *ngIf="photos.estActif">
+              <div class="photo-zone">
+                <div class="photo-cadre">
+                  <img *ngIf="urlPhoto(selectedProduct, 'grande') as src" [src]="src" alt="Photo de {{ selectedProduct?.nom }}">
+                  <i *ngIf="!urlPhoto(selectedProduct)" class="fa fa-image" aria-hidden="true"></i>
+                  <span class="photo-chargement" *ngIf="photoEnvoiEnCours"><span class="spinner-border spinner-border-sm"></span></span>
+                </div>
+                <div class="photo-texte">
+                  <strong>Photo du produit</strong><span class="text-muted ms-1">(facultatif)</span>
+                  <small class="text-muted d-block">Enregistrée tout de suite, réduite automatiquement.</small>
+                  <div class="mt-2">
+                    <label class="btn btn-sm btn-outline-primary mb-0" [class.disabled]="photoEnvoiEnCours">
+                      <i class="fa fa-camera me-1" aria-hidden="true"></i> {{ urlPhoto(selectedProduct) ? 'Changer la photo' : 'Ajouter une photo' }}
+                      <input type="file" accept="image/*" hidden (change)="choisirPhotoExistant($event)" [disabled]="photoEnvoiEnCours">
+                    </label>
+                    <button type="button" class="btn btn-sm btn-link text-danger" *ngIf="urlPhoto(selectedProduct)" (click)="retirerPhoto()" [disabled]="photoEnvoiEnCours">Retirer</button>
+                  </div>
+                </div>
+              </div>
+            </div>
             <div class="col-md-8"><label class="form-label">Nom du produit <span class="text-danger">*</span></label><input type="text" class="form-control" [(ngModel)]="productForm.nom" name="nom" required></div>
             <div class="col-md-4"><label class="form-label">Code barre</label><input type="text" class="form-control" [(ngModel)]="productForm.codeBarre" name="codeBarre"></div>
             <div class="col-12"><label class="form-label">Description</label><textarea class="form-control" rows="2" [(ngModel)]="productForm.description" name="description"></textarea></div>
             <div class="col-md-6"><label class="form-label">Catégorie <span class="text-danger">*</span></label><select class="form-select" [(ngModel)]="productForm.categorieId" name="categorieId" required><option [ngValue]="0">Sélectionnez une catégorie</option><option *ngFor="let cat of categories" [ngValue]="cat.id">{{ cat.nom }}</option></select></div>
             <div class="col-md-6"><label class="form-label">Fournisseur</label><select class="form-select" [(ngModel)]="productForm.fournisseurId" name="fournisseurId"><option [ngValue]="null">Aucun fournisseur</option><option *ngFor="let f of fournisseurs" [ngValue]="f.id">{{ f.nom }}</option></select></div>
-            <div class="col-md-3"><label class="form-label">Prix achat (XOF)</label><input type="text" inputmode="numeric" class="form-control" appMontantInput [(ngModel)]="productForm.prixAchat" name="prixAchat" required></div>
-            <div class="col-md-3"><label class="form-label">Prix vente (XOF)</label><input type="text" inputmode="numeric" class="form-control" appMontantInput [(ngModel)]="productForm.prixVente" name="prixVente" required></div>
-            <div class="col-md-3"><label class="form-label">Quantité</label><input type="number" class="form-control" [(ngModel)]="productForm.quantite" name="quantite" required min="0"></div>
-            <div class="col-md-3"><label class="form-label">Seuil alerte</label><input type="number" class="form-control" [(ngModel)]="productForm.seuilAlerte" name="seuilAlerte" min="0"></div>
+            <div class="col-12" *ngIf="mesureActif || modeMesureForm">
+              <div class="mesure-bascule">
+                <div>
+                  <strong>Façon de vendre :</strong>
+                  {{ modeMesureForm ? $any(mesures)[modeMesureForm].libelle : "À l'unité" }}
+                </div>
+                <div class="d-flex flex-wrap gap-2 align-items-center" *ngIf="mesureActif">
+                  <ng-container *ngIf="!modeMesureForm">
+                    <select class="form-select form-select-sm w-auto" [(ngModel)]="nouveauModeMesure" name="nouveauModeMesure" aria-label="Nouvelle façon de vendre">
+                      <option *ngFor="let m of ['KG','L','M']" [value]="m">{{ $any(mesures)[m].libelle }}</option>
+                    </select>
+                    <button type="button" class="btn btn-sm btn-outline-primary" (click)="changerModeMesure(nouveauModeMesure)" [disabled]="changementModeEnCours">
+                      Vendre de cette façon
+                    </button>
+                  </ng-container>
+                  <button type="button" class="btn btn-sm btn-outline-secondary" *ngIf="modeMesureForm" (click)="changerModeMesure(null)" [disabled]="changementModeEnCours">
+                    Remettre à l'unité
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3"><label class="form-label">Prix achat (XOF{{ suffixeMesure }})</label><input type="text" inputmode="numeric" class="form-control" appMontantInput [(ngModel)]="productForm.prixAchat" name="prixAchat" required></div>
+            <div class="col-md-3"><label class="form-label">Prix vente (XOF{{ suffixeMesure }})</label><input type="text" inputmode="numeric" class="form-control" appMontantInput [(ngModel)]="productForm.prixVente" name="prixVente" required></div>
+            <div class="col-md-3"><label class="form-label">Quantité{{ infoMesureForm ? ' (' + infoMesureForm.unite + ')' : '' }}</label><input type="number" class="form-control" [(ngModel)]="productForm.quantite" name="quantite" required min="0" [step]="infoMesureForm ? 'any' : 1"></div>
+            <div class="col-md-3"><label class="form-label">Seuil alerte{{ infoMesureForm ? ' (' + infoMesureForm.unite + ')' : '' }}</label><input type="number" class="form-control" [(ngModel)]="productForm.seuilAlerte" name="seuilAlerte" min="0" [step]="infoMesureForm ? 'any' : 1"></div>
             <div class="col-12"><hr></div>
             <div class="col-md-3"><label class="form-label">Date création</label><input type="date" class="form-control" [(ngModel)]="productForm.dateCreation" name="dateCreation"></div>
             <div class="col-md-3"><label class="form-label">Date péremption</label><input type="date" class="form-control" [(ngModel)]="productForm.datePeremption" name="datePeremption"></div>
@@ -600,8 +698,8 @@
           <div class="row mb-3"><div class="col-6"><strong>Nom:</strong> {{ selectedProduct.nom }}</div><div class="col-6"><strong>Code barre:</strong> {{ selectedProduct.codeBarre || "N/A" }}</div></div>
           <div class="mb-3"><strong>Description:</strong><p>{{ selectedProduct.description || "Aucune description" }}</p></div>
           <div class="row mb-3"><div class="col-6"><strong>Catégorie:</strong> {{ selectedProduct.categorie.nom }}</div><div class="col-6"><strong>Fournisseur:</strong> {{ selectedProduct.fournisseur?.nom || "Aucun" }}</div></div>
-          <div class="row mb-3"><div class="col-6"><strong>Prix achat:</strong> {{ formatPrice(selectedProduct.prixAchat) }}</div><div class="col-6"><strong>Prix vente:</strong> {{ formatPrice(selectedProduct.prixVente) }}</div></div>
-          <div class="row mb-3"><div class="col-6"><strong>Marge:</strong> {{ formatPrice(selectedProduct.marge || 0) }} ({{ (selectedProduct.tauxMarge || 0).toFixed(1) }}%)</div><div class="col-6"><strong>Quantité:</strong> {{ selectedProduct.quantite }} {{ selectedProduct.uniteMesure || "pcs" }}</div></div>
+          <div class="row mb-3"><div class="col-6"><strong>Prix achat:</strong> {{ prixTexte(selectedProduct, selectedProduct.prixAchat) }}</div><div class="col-6"><strong>Prix vente:</strong> {{ prixTexte(selectedProduct, selectedProduct.prixVente) }}</div></div>
+          <div class="row mb-3"><div class="col-6"><strong>Marge:</strong> {{ prixTexte(selectedProduct, selectedProduct.marge || 0) }} ({{ (selectedProduct.tauxMarge || 0).toFixed(1) }}%)</div><div class="col-6"><strong>Quantité:</strong> {{ stockTexte(selectedProduct) }}</div></div>
           <div class="row mb-3"><div class="col-6"><strong>Date création:</strong> {{ formatDate(selectedProduct.dateCreation) }}</div><div class="col-6"><strong>Date péremption:</strong> <span [class.text-danger]="selectedProduct.perime" [class.text-warning]="selectedProduct.prochePeremption">{{ formatDate(selectedProduct.datePeremption) || "N/A" }}<span *ngIf="selectedProduct.joursAvantPeremption"> ({{ selectedProduct.joursAvantPeremption }}j)</span></span></div></div>
           <div class="row mb-3"><div class="col-6"><strong>Lot:</strong> {{ selectedProduct.lotNumber || "N/A" }}</div><div class="col-6"><strong>Stockage:</strong> {{ selectedProduct.conditionsStockage || "N/A" }}</div></div>
           <div class="row mb-3"><div class="col-6"><strong>Poids/Volume:</strong> {{ selectedProduct.poidsVolume ? selectedProduct.poidsVolume + " " + (selectedProduct.uniteMesure || "") : "N/A" }}</div><div class="col-6"><strong>Origine:</strong> {{ selectedProduct.origine || "N/A" }}</div></div>
@@ -875,12 +973,12 @@
               <div class="col-md-12"><div class="form-check"><input class="form-check-input" type="checkbox" [(ngModel)]="tempLigneAchat.bio" id="bioCheckAchat"><label class="form-check-label small" for="bioCheckAchat">Produit Bio</label></div></div>
             </div>
             <div class="row g-2 mb-3">
-              <div class="col-md-3"><label class="form-label small">Quantité <span class="text-danger">*</span></label><input type="number" class="form-control form-control-sm" [(ngModel)]="tempLigneAchat.quantite" min="1"></div>
-              <div class="col-md-3"><label class="form-label small">Prix achat unitaire <span class="text-danger">*</span></label><input type="text" inputmode="numeric" class="form-control form-control-sm" appMontantInput [(ngModel)]="tempLigneAchat.prixAchatUnitaire"></div>
+              <div class="col-md-3"><label class="form-label small">Quantité{{ produitAchatMesure ? ' (' + $any(mesures)[produitAchatMesure.modeMesure].unite + ')' : '' }} <span class="text-danger">*</span></label><input type="number" class="form-control form-control-sm" [step]="produitAchatMesure ? 'any' : 1" [(ngModel)]="tempLigneAchat.quantite" min="1"></div>
+              <div class="col-md-3"><label class="form-label small">Prix achat {{ produitAchatMesure ? 'par ' + $any(mesures)[produitAchatMesure.modeMesure].unite : 'unitaire' }} <span class="text-danger">*</span></label><input type="text" inputmode="numeric" class="form-control form-control-sm" appMontantInput [(ngModel)]="tempLigneAchat.prixAchatUnitaire"></div>
               <div class="col-md-3 d-flex align-items-end"><button class="btn btn-sm btn-success w-100" (click)="ajouterLigneAchat()"><i class="fa fa-plus me-1"></i> Ajouter</button></div>
             </div>
             <hr><h6>Produits de l'achat</h6>
-            <div class="table-responsive"><table class="table table-sm table-bordered"><thead><tr><th>Produit</th><th>Qté</th><th>Prix unitaire</th><th>Sous-total</th><th></th></tr></thead><tbody><tr *ngFor="let ligne of achatForm.lignes; let i = index"><td><span *ngIf="ligne.produitId">Produit sélectionné</span><span *ngIf="!ligne.produitId && ligne.nouveauProduitNom"><strong>{{ ligne.nouveauProduitNom }}</strong> (nouveau)</span></td><td class="text-center">{{ ligne.quantite }}</td><td class="text-end">{{ formatPrice(ligne.prixAchatUnitaire) }}</td><td class="text-end">{{ formatPrice(ligne.quantite * ligne.prixAchatUnitaire) }}</td><td class="text-center"><button class="btn btn-sm btn-danger" (click)="supprimerLigneAchat(i)"><i class="fa fa-trash"></i></button></td></tr><tr *ngIf="achatForm.lignes.length === 0"><td colspan="5" class="text-center text-muted py-3"><i class="fa fa-info-circle me-1"></i> Aucun produit ajouté</td></tr></tbody><tfoot><tr class="table-active"><th colspan="3" class="text-end">Total :</th><th colspan="2">{{ formatPrice(calculerTotalAchat()) }}</th></tr></tfoot></table></div>
+            <div class="table-responsive"><table class="table table-sm table-bordered"><thead><tr><th>Produit</th><th>Qté</th><th>Prix unitaire</th><th>Sous-total</th><th></th></tr></thead><tbody><tr *ngFor="let ligne of achatForm.lignes; let i = index"><td><span *ngIf="ligne.produitId">Produit sélectionné</span><span *ngIf="!ligne.produitId && ligne.nouveauProduitNom"><strong>{{ ligne.nouveauProduitNom }}</strong> (nouveau)</span></td><td class="text-center">{{ qteLigneAchat(ligne) }}</td><td class="text-end">{{ prixTexte(ligne, ligne.prixAchatUnitaire) }}</td><td class="text-end">{{ formatPrice(ligne.quantite * ligne.prixAchatUnitaire) }}</td><td class="text-center"><button class="btn btn-sm btn-danger" (click)="supprimerLigneAchat(i)"><i class="fa fa-trash"></i></button></td></tr><tr *ngIf="achatForm.lignes.length === 0"><td colspan="5" class="text-center text-muted py-3"><i class="fa fa-info-circle me-1"></i> Aucun produit ajouté</td></tr></tbody><tfoot><tr class="table-active"><th colspan="3" class="text-end">Total :</th><th colspan="2">{{ formatPrice(calculerTotalAchat()) }}</th></tr></tfoot></table></div>
           </div>
           <div class="col-md-5">
             <div class="card bg-light">

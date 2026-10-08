@@ -10,12 +10,15 @@ import { FactureService } from '../../../shared/services/facture.service';
 import { TranslateModule } from '@ngx-translate/core';
 import { MontantInputDirective } from '../../../shared/directives/montant-input.directive';
 
+import { MesurePuPipe, MesureQtePipe, MesureSuffixePipe } from '../../../shared/pipes/mesure.pipe';
+import { qteDoc, puDoc } from '../../../shared/utils/mesure.util';
+
 @Component({
   selector: 'app-transferts',
   templateUrl: './transferts.component.html',
   styleUrls: ['./transferts.component.scss'],
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule, MontantInputDirective]
+  imports: [CommonModule, FormsModule, TranslateModule, MontantInputDirective, MesureQtePipe, MesurePuPipe, MesureSuffixePipe]
 })
 export class TransfertsComponent implements OnInit {
 
@@ -282,8 +285,8 @@ export class TransfertsComponent implements OnInit {
     if (!this.transfertDetail) return;
     const t = this.transfertDetail;
     const lignesHtml = t.lignes.map(l =>
-      `<tr><td>${l.produitNom}</td><td style="text-align:right">${l.quantite}</td>
-       <td style="text-align:right">${l.prixUnitaire ? this.fmt(l.prixUnitaire) : '—'}</td>
+      `<tr><td>${l.produitNom}</td><td style="text-align:right">${qteDoc(l)}</td>
+       <td style="text-align:right">${l.prixUnitaire ? puDoc(l, v => this.fmt(v)) : '—'}</td>
        <td style="text-align:right">${l.prixUnitaire ? this.fmt(l.prixUnitaire * l.quantite) : '—'}</td></tr>`
     ).join('');
 

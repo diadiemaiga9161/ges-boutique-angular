@@ -9,6 +9,7 @@ import { environment } from '../../../environments/environment';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { creerBoutonWhatsApp, formaterMessageWhatsApp } from '../utils/whatsapp.util';
+import { qteDoc, puDoc } from '../utils/mesure.util';
 
 export enum FactureStatut {
   BROUILLON = 'BROUILLON',
@@ -104,10 +105,10 @@ export interface StatistiquesFactures {
 @Injectable({ providedIn: 'root' })
 export class FactureService {
   private apiUrl = `${environment.apiUrl}/caisse/factures`;
-  private readonly BOUTIQUE_NOM = 'Boutique Alimentation Ndjim Et Frères';
-  private readonly BOUTIQUE_TELEPHONE = '76 96 21 20/66 43 66 03';
-  private readonly BOUTIQUE_EMAIL = 'ndjim@yahoo.fr';
-  private readonly BOUTIQUE_ADRESSE = 'Misa bougou';
+  private readonly BOUTIQUE_NOM = 'Ma Boutique';
+  private readonly BOUTIQUE_TELEPHONE = '';
+  private readonly BOUTIQUE_EMAIL = '';
+  private readonly BOUTIQUE_ADRESSE = '';
   private get LOGO_BASE64(): string { return this.boutiqueService.getLogoPath(); }
 
   constructor(
@@ -288,7 +289,7 @@ export class FactureService {
         personneNom: nomClient,
         date: new Date(facture.dateCreation).toLocaleDateString('fr-FR'),
         lignes: (facture.lignes || []).map(l =>
-          `${l.designation || l.produitNom || 'Produit'} ×${l.quantite} — ${this.formatPlainNumber(l.sousTotal || l.quantite * l.prixUnitaire)} FCFA`
+          `${l.designation || l.produitNom || 'Produit'} ×${qteDoc(l)} — ${this.formatPlainNumber(l.sousTotal || l.quantite * l.prixUnitaire)} FCFA`
         ),
         totaux
       })
@@ -555,7 +556,7 @@ function dl(){
       doc.text(`Client : ${facture.clientNom || 'Client divers'} ${facture.clientPrenom || ''}`, 15, 65);
       if (facture.clientTelephone) doc.text(`Tél : ${facture.clientTelephone}`, 15, 71);
       if (facture.utilisateurNom) doc.text(`Vendeur : ${facture.utilisateurNom}`, W - 15, 65, { align: 'right' });
-      const tableData = facture.lignes.map(l => [l.designation || 'Produit', l.quantite.toString(), this.formatPlainNumber(l.prixUnitaire) + ' F', l.remisePourcentage ? l.remisePourcentage + '%' : (l.remiseMontant ? this.formatPlainNumber(l.remiseMontant) + ' F' : '-'), this.formatPlainNumber(l.sousTotal || l.quantite * l.prixUnitaire) + ' F']);
+      const tableData = facture.lignes.map(l => [l.designation || 'Produit', qteDoc(l), puDoc(l, v => this.formatPlainNumber(v) + ' F'), l.remisePourcentage ? l.remisePourcentage + '%' : (l.remiseMontant ? this.formatPlainNumber(l.remiseMontant) + ' F' : '-'), this.formatPlainNumber(l.sousTotal || l.quantite * l.prixUnitaire) + ' F']);
       autoTable(doc, { startY: 77, head: [['Désignation', 'Qté', 'Prix U.', 'Remise', 'Total']], body: tableData, theme: 'striped', styles: { fontSize: 8, cellPadding: 2 }, headStyles: { fillColor: [30, 64, 175], textColor: 255, fontStyle: 'bold' }, columnStyles: { 1: { halign: 'center' }, 2: { halign: 'right' }, 3: { halign: 'right' }, 4: { halign: 'right' } } });
       let fy = (doc as any).lastAutoTable.finalY + 6;
       doc.setFontSize(9); doc.setTextColor(0);
@@ -591,7 +592,7 @@ function dl(){
       doc.text(`Client : ${facture.clientNom || 'Client divers'} ${facture.clientPrenom || ''}`, 15, 56);
       if (facture.clientTelephone) doc.text(`Tél : ${facture.clientTelephone}`, 15, 62);
       if (facture.utilisateurNom) doc.text(`Vendeur : ${facture.utilisateurNom}`, W - 15, 56, { align: 'right' });
-      const tableData2 = facture.lignes.map(l => [l.designation || 'Produit', l.quantite.toString(), this.formatPlainNumber(l.prixUnitaire) + ' F', l.remisePourcentage ? l.remisePourcentage + '%' : (l.remiseMontant ? this.formatPlainNumber(l.remiseMontant) + ' F' : '-'), this.formatPlainNumber(l.sousTotal || l.quantite * l.prixUnitaire) + ' F']);
+      const tableData2 = facture.lignes.map(l => [l.designation || 'Produit', qteDoc(l), puDoc(l, v => this.formatPlainNumber(v) + ' F'), l.remisePourcentage ? l.remisePourcentage + '%' : (l.remiseMontant ? this.formatPlainNumber(l.remiseMontant) + ' F' : '-'), this.formatPlainNumber(l.sousTotal || l.quantite * l.prixUnitaire) + ' F']);
       autoTable(doc, { startY: 68, head: [['Désignation', 'Qté', 'Prix U.', 'Remise', 'Total']], body: tableData2, theme: 'plain', styles: { fontSize: 8, cellPadding: 2.5, textColor: [255, 255, 255] }, headStyles: { fillColor: [30, 41, 59], textColor: [245, 158, 11], fontStyle: 'bold' }, alternateRowStyles: { fillColor: [30, 41, 59] }, bodyStyles: { fillColor: [15, 23, 42] }, columnStyles: { 1: { halign: 'center' }, 2: { halign: 'right' }, 3: { halign: 'right' }, 4: { halign: 'right' } } });
       let fy2 = (doc as any).lastAutoTable.finalY + 6;
       doc.setTextColor(148, 163, 184); doc.setFontSize(9);
@@ -624,7 +625,7 @@ function dl(){
       doc.text(`Client : ${facture.clientNom || 'Client divers'} ${facture.clientPrenom || ''}`, 15, 55);
       if (facture.clientTelephone) doc.text(`Tél : ${facture.clientTelephone}`, 15, 61);
       if (facture.utilisateurNom) doc.text(`Vendeur : ${facture.utilisateurNom}`, W - 15, 55, { align: 'right' });
-      const tableData3 = facture.lignes.map(l => [l.designation || 'Produit', l.quantite.toString(), this.formatPlainNumber(l.prixUnitaire) + ' F', l.remisePourcentage ? l.remisePourcentage + '%' : (l.remiseMontant ? this.formatPlainNumber(l.remiseMontant) + ' F' : '-'), this.formatPlainNumber(l.sousTotal || l.quantite * l.prixUnitaire) + ' F']);
+      const tableData3 = facture.lignes.map(l => [l.designation || 'Produit', qteDoc(l), puDoc(l, v => this.formatPlainNumber(v) + ' F'), l.remisePourcentage ? l.remisePourcentage + '%' : (l.remiseMontant ? this.formatPlainNumber(l.remiseMontant) + ' F' : '-'), this.formatPlainNumber(l.sousTotal || l.quantite * l.prixUnitaire) + ' F']);
       autoTable(doc, { startY: 66, head: [['Désignation', 'Qté', 'Prix U.', 'Remise', 'Total']], body: tableData3, theme: 'grid', styles: { fontSize: 8, cellPadding: 2, textColor: [24, 24, 27] }, headStyles: { fillColor: [24, 24, 27], textColor: [255, 255, 255], fontStyle: 'bold' }, alternateRowStyles: { fillColor: [248, 248, 248] }, columnStyles: { 1: { halign: 'center' }, 2: { halign: 'right' }, 3: { halign: 'right' }, 4: { halign: 'right' } } });
       let fy3 = (doc as any).lastAutoTable.finalY + 6;
       doc.setFontSize(9); doc.setTextColor(80);
@@ -873,8 +874,8 @@ function dl(){
         : l.remiseMontant ? `${this.formatPlainNumber(l.remiseMontant)} FCFA` : '—';
       return `<tr class="${i % 2 === 0 ? 'even' : ''}">
         <td class="td-name">${l.designation || 'Produit'}</td>
-        <td class="td-center">${l.quantite}</td>
-        <td class="td-right">${this.formatPlainNumber(l.prixUnitaire)} FCFA</td>
+        <td class="td-center">${qteDoc(l)}</td>
+        <td class="td-right">${puDoc(l, v => this.formatPlainNumber(v) + ' FCFA')}</td>
         <td class="td-center td-remise">${remise}</td>
         <td class="td-right td-bold">${this.formatPlainNumber(l.sousTotal || l.quantite * l.prixUnitaire)} FCFA</td>
       </tr>`;

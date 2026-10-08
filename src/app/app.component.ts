@@ -31,8 +31,9 @@ export class AppComponent implements OnInit {
       if (info.nom) {
         this.titleService.setTitle(info.nom);
       }
-      const logoUrl = this.boutiqueService.getLogoPath();
-      this.updateFavicon(logoUrl);
+      // Le favicon (icône d'onglet) reste volontairement le logo GesLafia défini dans
+      // index.html — il identifie le logiciel, pas la boutique. Ne jamais le remplacer
+      // par le logo uploadé par une boutique ici (voir sidebar/header/footer pour ça).
     });
     // Connexion WebSocket globale dès le démarrage de l'app
     this.ws.connect();
@@ -45,16 +46,5 @@ export class AppComponent implements OnInit {
     if (this.authService.isAuthenticated()) {
       this.authService.getCurrentProfile().subscribe({ error: () => {} });
     }
-  }
-
-  private updateFavicon(logoUrl: string): void {
-    if (!logoUrl) return;
-    const link: HTMLLinkElement =
-      (document.querySelector("link[rel*='icon']") as HTMLLinkElement) ||
-      document.createElement('link');
-    link.type = 'image/png';
-    link.rel = 'icon';
-    link.href = logoUrl;
-    document.head.appendChild(link);
   }
 }

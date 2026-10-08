@@ -5,7 +5,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ClientService, Client, AvanceClient, AvanceClientRequest, HistoriqueAvanceResponse } from '../../../shared/services/client.service';
 import { AuthService } from '../../../shared/services/auth.service';
-import { VenteService, VenteMap, ReleveClientLigne, ReleveClientResponse } from '../../../shared/services/vente.service';
+import { VenteService, VenteMap, ReleveClientLigne, ReleveClientResponse, ReleveVenteReglee } from '../../../shared/services/vente.service';
 import { CaisseService } from '../../../shared/services/caisse.service';
 import { DesignFacture, FactureDesignService } from '../../../shared/services/facture-design.service';
 import { FactureService } from '../../../shared/services/facture.service';
@@ -13,7 +13,7 @@ import { ProductService } from '../../../shared/services/product.service';
 import { BoutiqueService } from '../../../shared/services/boutique.service';
 import { FideliteService, SoldeFidelite, MouvementFidelite } from '../../../shared/services/fidelite.service';
 import { formaterMessageWhatsApp, envoyerWhatsAppDirect } from '../../../shared/utils/whatsapp.util';
-import { forkJoin, firstValueFrom } from 'rxjs';
+import { forkJoin } from 'rxjs';
 import { map } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -32,16 +32,13 @@ interface HistoriquePaiementEntry {
 
 type SituationTypeFilter = '' | 'VENTE' | 'VERSEMENT';
 
-/** Ligne de situation client, éventuellement le résultat du regroupement de plusieurs
- *  opérations de même type sur une même date (nbOperations > 1 dans ce cas). */
-interface LigneSituationAffichee extends ReleveClientLigne {
-  nbOperations?: number;
-}
+import { MesurePuPipe, MesureQtePipe, MesureSuffixePipe } from '../../../shared/pipes/mesure.pipe';
+import { qteDoc } from '../../../shared/utils/mesure.util';
 
 @Component({
   selector: 'app-clients',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule, MontantInputDirective],
+  imports: [CommonModule, FormsModule, TranslateModule, MontantInputDirective, MesureQtePipe, MesurePuPipe, MesureSuffixePipe],
   templateUrl: './clients.component.html',
   styleUrls: ['./clients.component.scss']
 })
@@ -55,13 +52,31 @@ export class ClientsComponent implements OnInit {
   currentPage: number = 1;
   itemsPerPage: number = 10;
 
+  // Clients ayant commandé depuis le portail : badge « En ligne » + filtre (affichage seul,
+  // les totaux et statistiques restent calculés sur tous les clients).
+  portailIds = new Set<number>();
+  filtrePortail = false;
+
+  estClientPortail(client: Client): boolean {
+    return client.id != null && this.portailIds.has(client.id);
+  }
+
+  get clientsAffiches(): Client[] {
+    return this.filtrePortail ? this.clients.filter(c => this.estClientPortail(c)) : this.clients;
+  }
+
+  basculerFiltrePortail(): void {
+    this.filtrePortail = !this.filtrePortail;
+    this.currentPage = 1;
+  }
+
   get paginatedClients(): Client[] {
     const start = (this.currentPage - 1) * this.itemsPerPage;
-    return this.clients.slice(start, start + this.itemsPerPage);
+    return this.clientsAffiches.slice(start, start + this.itemsPerPage);
   }
 
   get totalPages(): number {
-    return Math.ceil(this.clients.length / this.itemsPerPage);
+    return Math.ceil(this.clientsAffiches.length / this.itemsPerPage);
   }
 
   get totalAvanceDisponible(): number {
@@ -144,13 +159,16 @@ export class ClientsComponent implements OnInit {
   isLoadingSituation: boolean = false;
   clientPourSituation: Client | null = null;
   releveClient: ReleveClientResponse | null = null;
-  situationLignes: LigneSituationAffichee[] = [];
+  situationLignes: ReleveClientLigne[] = [];
   situationPreset: 'jour' | 'hier' | 'semaine' | 'mois' | 'annee' | 'personnalise' | 'tout' = 'tout';
   situationDateDebut: string = '';
   situationDateFin: string = '';
   situationTypeFilter: SituationTypeFilter = '';
   situationPage: number = 0;
   situationSize: number = 20;
+  isGeneratingSituationPdf = false;
+  /** Paiements groupés dont l'utilisateur a déplié la liste des ventes réglées. */
+  private ventesRegleesOuvertes = new Set<ReleveClientLigne>();
 
   // ==================== AVANCES CLIENT ====================
   showAvanceModal: boolean = false;
@@ -214,6 +232,7 @@ export class ClientsComponent implements OnInit {
   loadClients(): void {
     this.isLoading = true;
     this.errorMessage = '';
+    this.clientService.getPortailIds().subscribe(ids => this.portailIds = new Set(ids));
     this.clientService.getAll().subscribe({
       next: (clients) => {
         this.clients = clients;
@@ -864,7 +883,7 @@ export class ClientsComponent implements OnInit {
 
   getProduitsList(vente: VenteMap): string {
     if (!vente.produits || vente.produits.length === 0) return '-';
-    return vente.produits.map(p => `${p.quantite}x ${p.produitNom || 'Produit'}`).join(', ');
+    return vente.produits.map(p => `${qteDoc(p)} × ${p.produitNom || 'Produit'}`).join(', ');
   }
 
   telechargerFacture(venteId: number): void {
@@ -1258,7 +1277,10 @@ export class ClientsComponent implements OnInit {
     ).subscribe({
       next: (res) => {
         this.releveClient = res;
-        this.situationLignes = this.grouperLignesParDate(res.lignes || []);
+        // Une ligne par opération (aucun regroupement par jour) : le serveur fusionne déjà
+        // un paiement groupé en une seule ligne.
+        this.situationLignes = res.lignes || [];
+        this.ventesRegleesOuvertes.clear();
         this.isLoadingSituation = false;
       },
       error: () => {
@@ -1369,45 +1391,28 @@ export class ClientsComponent implements OnInit {
     return 'Versement';
   }
 
-  getSituationLigneReference(ligne: LigneSituationAffichee): string {
-    if (ligne.nbOperations && ligne.nbOperations > 1) return `${ligne.nbOperations} opérations`;
+  getSituationLigneReference(ligne: ReleveClientLigne): string {
     return ligne.referenceVente || ligne.referenceReglement || '—';
   }
 
-  /** Regroupe les ventes et les versements d'une même date en une seule ligne (montants
-   *  additionnés), pour un tableau plus lisible — les retours restent affichés individuellement. */
-  private grouperLignesParDate(lignes: ReleveClientLigne[]): LigneSituationAffichee[] {
-    const groupes = new Map<string, LigneSituationAffichee>();
-    const resultat: LigneSituationAffichee[] = [];
+  /** Produits d'une vente réglée par un versement, ex. "Coca-Cola 1.5L ×8, Eau minérale ×1". */
+  produitsVenteReglee(vente: ReleveVenteReglee): string {
+    const produits = (vente.produits || [])
+      .map(p => `${p.produitNom || 'Produit'}${p.quantite != null ? ' ×' + p.quantite : ''}`);
+    return produits.length ? produits.join(', ') : '—';
+  }
 
-    for (const ligne of lignes) {
-      if (ligne.type !== 'VENTE' && ligne.type !== 'VERSEMENT') {
-        resultat.push(ligne);
-        continue;
-      }
-      const jour = (ligne.date || '').slice(0, 10);
-      const cle = `${jour}_${ligne.type}`;
-      const existant = groupes.get(cle);
-      if (!existant) {
-        const copie: LigneSituationAffichee = { ...ligne, nbOperations: 1 };
-        groupes.set(cle, copie);
-        resultat.push(copie);
-      } else {
-        existant.nbOperations = (existant.nbOperations || 1) + 1;
-        existant.montantVente = (existant.montantVente || 0) + (ligne.montantVente || 0);
-        existant.montantVersement = (existant.montantVersement || 0) + (ligne.montantVersement || 0);
-        existant.resteAPayerApres = ligne.resteAPayerApres;
-        existant.produitNom = null;
-        existant.quantite = null;
-        existant.prixUnitaire = null;
-        existant.referenceVente = null;
-        existant.referenceReglement = null;
-        if (existant.utilisateurNom && ligne.utilisateurNom && existant.utilisateurNom !== ligne.utilisateurNom) {
-          existant.utilisateurNom = 'Plusieurs';
-        }
-      }
+  /** Paiement groupé : liste des ventes réglées masquée par défaut (ligne courte), dépliable. */
+  basculerVentesReglees(ligne: ReleveClientLigne): void {
+    if (this.ventesRegleesOuvertes.has(ligne)) {
+      this.ventesRegleesOuvertes.delete(ligne);
+    } else {
+      this.ventesRegleesOuvertes.add(ligne);
     }
-    return resultat;
+  }
+
+  estVentesRegleesOuvert(ligne: ReleveClientLigne): boolean {
+    return this.ventesRegleesOuvertes.has(ligne);
   }
 
   /** Message WhatsApp complet pour la situation d'un client : boutique, client, période, totaux. */
@@ -1442,59 +1447,39 @@ export class ClientsComponent implements OnInit {
     }
   }
 
-  async imprimerSituationClient(): Promise<void> {
-    if (!this.clientPourSituation || !this.releveClient) return;
+  /** Ouvre dans un nouvel onglet le PDF de la situation généré par le serveur : même document que
+   *  sur Ionic et React Native (A4 paysage, toute la période filtrée), donc une mise en page qui ne
+   *  bouge plus à l'impression, contrairement à l'ancien aperçu HTML. */
+  imprimerSituationClient(): void {
     const client = this.clientPourSituation;
+    if (!client?.id || this.isGeneratingSituationPdf) return;
 
-    // L'impression doit couvrir TOUTES les opérations de la période, pas seulement
-    // la page actuellement affichée à l'écran (situationLignes est paginé par 20).
-    const totalElements = this.releveClient.totalElements || this.situationLignes.length;
-    let lignesCompletes = this.situationLignes;
-    if (totalElements > this.situationLignes.length && client.id) {
-      try {
-        const releveComplet = await firstValueFrom(this.venteService.getReleveClient(
-          client.id,
-          0,
-          totalElements,
-          this.situationDateDebut || undefined,
-          this.situationDateFin || undefined,
-          this.situationTypeFilter || undefined
-        ));
-        lignesCompletes = releveComplet.lignes || lignesCompletes;
-      } catch {
-        // En cas d'échec, on imprime au moins la page actuellement chargée plutôt que rien.
+    // Onglet ouvert pendant le clic : ouvert après le chargement, le navigateur le bloquerait.
+    const onglet = window.open('', '_blank');
+    onglet?.document.write('<p style="font-family:system-ui,sans-serif;padding:24px;color:#334155">Préparation du PDF de la situation…</p>');
+    this.isGeneratingSituationPdf = true;
+
+    this.venteService.getSituationClientPdf(
+      client.id,
+      this.situationDateDebut || undefined,
+      this.situationDateFin || undefined,
+      this.situationTypeFilter || undefined
+    ).subscribe({
+      next: (pdf) => {
+        this.isGeneratingSituationPdf = false;
+        const url = URL.createObjectURL(new Blob([pdf], { type: 'application/pdf' }));
+        if (onglet) {
+          onglet.location.href = url;
+        } else {
+          window.open(url, '_blank');
+        }
+        setTimeout(() => URL.revokeObjectURL(url), 5 * 60 * 1000);
+      },
+      error: () => {
+        this.isGeneratingSituationPdf = false;
+        onglet?.close();
+        Swal.fire({ icon: 'error', title: 'PDF indisponible', text: 'Le PDF de la situation n\'a pas pu être généré. Réessayez dans un instant.' });
       }
-    }
-
-    // Ventes et versements d'une même date regroupés en une seule ligne (montants additionnés).
-    const lignesGroupees = this.grouperLignesParDate(lignesCompletes);
-
-    const lignes = lignesGroupees.map(e => [
-      this.formatDate(e.date),
-      this.getSituationLigneTypeLabel(e),
-      this.getSituationLigneReference(e),
-      e.produitNom || '—',
-      e.quantite ?? '—',
-      e.prixUnitaire ? this.formatPrice(e.prixUnitaire) : '—',
-      e.montantVente ? this.formatPrice(e.montantVente) : '—',
-      e.montantVersement ? this.formatPrice(e.montantVersement) : '—',
-      e.resteAPayerApres !== null && e.resteAPayerApres !== undefined ? this.formatPrice(e.resteAPayerApres) : '—',
-      e.utilisateurNom || '—'
-    ]);
-
-    this.factureService.ouvrirDocumentPDF({
-      titre: 'Situation Client',
-      sousTitre: `${client.nom} ${client.prenom || ''} — ${client.numeroTelephone || client.telephone || '—'}`.trim(),
-      colonnes: ['Date', 'Type', 'Référence', 'Désignation', 'Qté', 'P.U.', 'Vente', 'Versement', 'Reste à payer', 'Utilisateur'],
-      lignes,
-      totaux: [
-        { label: 'Total des ventes', valeur: this.formatPrice(this.totalVentesSituation) },
-        { label: 'Total des versements', valeur: this.formatPrice(this.totalVersementsSituation) },
-        { label: 'Solde actuel', valeur: this.formatPrice(this.resteAPayerSituation) }
-      ],
-      pied: `Période : ${this.situationPeriodeLabel} — ${lignesCompletes.length} opération(s), ${lignes.length} ligne(s)`,
-      paysage: true,
-      whatsapp: this.whatsAppSituationClient() || undefined
     });
   }
 
