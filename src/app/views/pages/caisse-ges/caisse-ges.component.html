@@ -104,38 +104,45 @@
           <div class="d-flex align-items-center mb-2">
             <i class="bi bi-safe2-fill fs-3 me-3 opacity-75"></i>
             <div>
-              <div class="text-uppercase fw-semibold small opacity-75 mb-1">{{ 'CAISSE.BALANCE' | translate }}</div>
+              <div class="text-uppercase fw-semibold small opacity-75 mb-1">Argent dans la caisse maintenant</div>
               <div class="fs-2 fw-bold">{{ formatPrice(soldeActuel) }}</div>
             </div>
           </div>
-          <div class="d-flex justify-content-between mt-3 pt-2 border-top border-white border-opacity-25 small">
-            <span>Solde initial: <strong>{{ formatPrice(caisse?.soldeInitial || 0) }}</strong></span>
+          <div class="d-flex justify-content-between flex-wrap gap-2 mt-3 pt-2 border-top border-white border-opacity-25 small">
+            <span>À l'ouverture : <strong>{{ formatPrice(caisse?.soldeInitial || 0) }}</strong></span>
             <span [class.text-warning]="ecart !== 0" [class.text-white]="ecart === 0">
-              Écart: {{ getEcartSign(ecart) }}{{ formatPrice(Math.abs(ecart)) }}
+              {{ ecart === 0 ? 'Caisse juste' : formatPrice(Math.abs(ecart)) + (ecart > 0 ? ' de plus que prévu' : ' de moins que prévu') }}
             </span>
           </div>
         </div>
       </div>
     </div>
-    <div class="col-lg-4 mb-3">
-      <div class="card border-0 h-100"
-        style="background: linear-gradient(135deg,#0e9f6e 0%,#057a55 100%); border-radius: 14px;">
-        <div class="card-body text-white p-4">
-          <div class="d-flex align-items-center mb-2">
-            <i class="bi bi-calendar-check-fill fs-3 me-3 opacity-75"></i>
-            <div>
-              <div class="text-uppercase fw-semibold small opacity-75 mb-1">Caisse du Jour</div>
-              <div class="fs-2 fw-bold">{{ formatPrice(statistiquesJour?.soldeNetPeriode || 0) }}</div>
-            </div>
+    <!-- Argent entré et sorti, avec la période écrite en toutes lettres -->
+    <div class="col-lg-8 mb-3">
+      <div class="card h-100 caisse-periodes">
+        <div class="card-body p-4">
+          <div class="text-uppercase fw-semibold small text-muted mb-2">Argent entré et sorti de la caisse</div>
+          <div class="table-responsive">
+            <table class="table table-sm align-middle mb-2 caisse-periodes__table">
+              <thead>
+                <tr>
+                  <th scope="col"><span class="visually-hidden">Période</span></th>
+                  <th scope="col" class="text-end">Entré</th>
+                  <th scope="col" class="text-end">Sorti</th>
+                  <th scope="col" class="text-end">Différence</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let l of lignesPeriodes">
+                  <th scope="row" class="fw-semibold">{{ l.libelle }}</th>
+                  <td class="text-end text-success">{{ l.stats ? formatPrice(l.stats.totalEntrees || 0) : '…' }}</td>
+                  <td class="text-end text-danger">{{ l.stats ? formatPrice(l.stats.totalSorties || 0) : '…' }}</td>
+                  <td class="text-end fw-bold">{{ l.stats ? formatPrice(l.stats.soldeNetPeriode || 0) : '…' }}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-          <div class="d-flex justify-content-between mt-3 pt-2 border-top border-white border-opacity-25 small">
-            <span>
-              <i class="bi bi-arrow-up me-1"></i>Entrées: <strong>{{ formatPrice(totalEntreesAujourdhui) }}</strong>
-            </span>
-            <span>
-              <i class="bi bi-arrow-down me-1"></i>Sorties: <strong>{{ formatPrice(totalSortiesAujourdhui) }}</strong>
-            </span>
-          </div>
+          <div class="small text-muted">« Différence » = de combien l'argent de la caisse a vraiment augmenté (ou baissé) sur la période. Les dépôts à la banque ne comptent pas. Ce n'est pas le bénéfice.</div>
         </div>
       </div>
     </div>
@@ -231,9 +238,9 @@
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-start">
             <div>
-              <h6 class="card-title mb-2"> Crédits clients</h6>
-              <h3 class="mb-0">{{ nombreCreditsEnCours }}</h3>
-              <small>Reste à payer: {{ formatPrice(montantTotalCredits) }}</small>
+              <h6 class="card-title mb-2"> Crédits pas encore payés</h6>
+              <h3 class="mb-0">{{ nombreCreditsEnCours }} crédit(s)</h3>
+              <small>Argent à récupérer : {{ formatPrice(montantTotalCredits) }}</small>
             </div>
             <i class="bi bi-credit-card-2-front fs-1 opacity-50"></i>
           </div>
@@ -666,11 +673,11 @@
       </div>
       <div class="modal-body">
         <div class="mb-3">
-          <label class="form-label"> Solde système</label>
+          <label class="form-label"> Argent prévu par l'appli</label>
           <input class="form-control" [value]="formatPrice(soldeSysteme)" readonly>
         </div>
         <div class="mb-3">
-          <label class="form-label"> Solde réel *</label>
+          <label class="form-label"> Argent compté dans la caisse *</label>
           <input type="text" inputmode="numeric" class="form-control" appMontantInput [(ngModel)]="verificationForm.soldeReelSaisi">
         </div>
         <div class="mb-3">
@@ -680,8 +687,7 @@
         </div>
         <div *ngIf="verificationForm.soldeReelSaisi !== soldeSysteme" class="alert alert-warning">
           <i class="bi bi-exclamation-triangle me-2"></i>
-          Écart: {{ getEcartSign(verificationForm.soldeReelSaisi - soldeSysteme) }}{{
-          formatPrice(Math.abs(verificationForm.soldeReelSaisi - soldeSysteme)) }}
+          {{ formatPrice(Math.abs(verificationForm.soldeReelSaisi - soldeSysteme)) }} {{ verificationForm.soldeReelSaisi > soldeSysteme ? 'de plus' : 'de moins' }} que prévu
         </div>
       </div>
       <div class="modal-footer">
@@ -1101,7 +1107,7 @@
             <div class="col-md-3">
               <div class="card bg-success text-white">
                 <div class="card-body text-center">
-                  <h6>Solde net</h6>
+                  <h6>Différence</h6>
                   <h4>{{ formatPrice(statistiquesPeriode.soldeNetPeriode) }}</h4>
                 </div>
               </div>
@@ -1182,7 +1188,7 @@
   <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-header bg-success text-white">
-        <h5 class="modal-title"><i class="bi bi-pie-chart me-2"></i> Revenus et Pertes</h5>
+        <h5 class="modal-title"><i class="bi bi-pie-chart me-2"></i> Argent entré et sorti</h5>
         <button type="button" class="btn-close btn-close-white" (click)="closeAllModals()"></button>
       </div>
       <div class="modal-body">
@@ -1211,7 +1217,7 @@
             <div class="col-md-6">
               <div class="card bg-success text-white">
                 <div class="card-body text-center">
-                  <h6><i class="bi bi-arrow-up"></i> REVENUS</h6>
+                  <h6><i class="bi bi-arrow-up"></i> ARGENT ENTRÉ</h6>
                   <h3>{{ formatPrice(revenusPertes.totalRevenus) }}</h3><small>Total de ce qui est rentré</small>
                 </div>
               </div>
@@ -1219,7 +1225,7 @@
             <div class="col-md-6">
               <div class="card bg-danger text-white">
                 <div class="card-body text-center">
-                  <h6><i class="bi bi-arrow-down"></i> PERTES</h6>
+                  <h6><i class="bi bi-arrow-down"></i> ARGENT SORTI</h6>
                   <h3>{{ formatPrice(revenusPertes.totalPertes) }}</h3><small>Total de ce qui est sorti</small>
                 </div>
               </div>
@@ -1230,9 +1236,8 @@
               <div class="card" [class.bg-success]="revenusPertes.soldeNet >= 0"
                 [class.bg-danger]="revenusPertes.soldeNet < 0" [class.text-white]="true">
                 <div class="card-body text-center">
-                  <h6><i class="bi bi-calculator"></i> BILAN NET</h6>
-                  <h3>{{ formatPrice(revenusPertes.soldeNet) }}</h3><small>Revenus - Pertes = Ce que vous avez vraiment
-                    gagné</small>
+                  <h6><i class="bi bi-calculator"></i> DIFFÉRENCE</h6>
+                  <h3>{{ formatPrice(revenusPertes.soldeNet) }}</h3><small>Argent entré moins argent sorti (ce n'est pas le bénéfice)</small>
                 </div>
               </div>
             </div>

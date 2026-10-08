@@ -59,6 +59,9 @@ export class CaisseGesComponent implements OnInit, OnDestroy {
   statistiquesJour: StatistiquesCaisse | null = null;
   statistiquesMois: StatistiquesCaisse | null = null;
   moisAffiche: Date | null = null; // dernier mois clôturé affiché par la carte "Bénéfice net"
+  /** Cette semaine (depuis lundi) et ce mois-ci (depuis le 1er), jusqu'à aujourd'hui. */
+  statistiquesSemaine: StatistiquesCaisse | null = null;
+  statistiquesMoisCourant: StatistiquesCaisse | null = null;
   statistiquesPeriode: StatistiquesCaisse | null = null;
   revenusPertes: RevenusPertes | null = null;
   isLoading: boolean = false;
@@ -253,6 +256,7 @@ export class CaisseGesComponent implements OnInit, OnDestroy {
     this.loadCredits();
     this.loadStatistiquesJour();
     this.loadStatistiquesMois();
+    this.loadStatistiquesSemaineEtMoisCourant();
   }
 
   loadCaisse(): void {
@@ -387,6 +391,33 @@ export class CaisseGesComponent implements OnInit, OnDestroy {
   // le DERNIER MOIS CLÔTURÉ (le mois précédent, entièrement terminé), dont
   // toutes les entrées ET sorties sont connues — un chiffre fiable, pas une
   // photo à moitié prise.
+  loadStatistiquesSemaineEtMoisCourant(): void {
+    const aujourdhui = new Date();
+    const lundi = new Date(aujourdhui);
+    lundi.setDate(aujourdhui.getDate() - ((aujourdhui.getDay() + 6) % 7));
+    const premierDuMois = new Date(aujourdhui.getFullYear(), aujourdhui.getMonth(), 1);
+    const fmt = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    this.caisseService.getStatistiquesParPeriode(fmt(lundi), fmt(aujourdhui)).subscribe({
+      next: (stats) => { this.statistiquesSemaine = stats; },
+      error: () => {}
+    });
+    this.caisseService.getStatistiquesParPeriode(fmt(premierDuMois), fmt(aujourdhui)).subscribe({
+      next: (stats) => { this.statistiquesMoisCourant = stats; },
+      error: () => {}
+    });
+  }
+
+  /** Lignes du tableau « Argent entré et sorti » : la période est écrite en toutes lettres. */
+  get lignesPeriodes(): Array<{ libelle: string; stats: StatistiquesCaisse | null }> {
+    const mois = (d: Date) => d.toLocaleDateString('fr-FR', { month: 'long' });
+    return [
+      { libelle: "Aujourd'hui", stats: this.statistiquesJour },
+      { libelle: 'Cette semaine', stats: this.statistiquesSemaine },
+      { libelle: `Ce mois-ci (${mois(new Date())})`, stats: this.statistiquesMoisCourant },
+      { libelle: `Mois dernier (${mois(this.moisAffiche || new Date())})`, stats: this.statistiquesMois }
+    ];
+  }
+
   loadStatistiquesMois(): void {
     const aujourdhui = new Date();
     const finMoisPrecedent = new Date(aujourdhui.getFullYear(), aujourdhui.getMonth(), 0);
