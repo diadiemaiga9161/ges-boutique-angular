@@ -25,10 +25,11 @@ interface ClientMemorise {
   adresseLivraison: string;
 }
 
-/** Commande à suivre : son numéro + le téléphone utilisé (le serveur vérifie les deux). */
+/** Commande à suivre : son numéro + son code secret (le serveur vérifie les deux).
+ *  Les anciennes commandes gardées sans code ne sont plus suivies. */
 interface CommandeMemorisee {
   numero: string;
-  telephone: string;
+  code?: string;
 }
 
 const CLE_CLIENT = 'vitrine_client';
@@ -105,7 +106,7 @@ export class VitrineComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.lireClientMemorise();
-    this.commandesMemorisees = this.lireStockage<CommandeMemorisee[]>(CLE_COMMANDES) || [];
+    this.commandesMemorisees = (this.lireStockage<CommandeMemorisee[]>(CLE_COMMANDES) || []).filter(c => !!c?.code);
     this.chargerInfos();
     this.chargerProduits();
     this.rechargerSiNouvelleVersion();
@@ -432,8 +433,8 @@ export class VitrineComponent implements OnInit, OnDestroy {
         this.commandeConfirmee = rep.numeroCommande || 'envoyée';
         this.panier = [];
         this.memoriserClient();
-        if (rep.numeroCommande) {
-          this.memoriserCommande(rep.numeroCommande, construireNumeroComplet(this.selectedCountryCode, this.telephoneLocal));
+        if (rep.numeroCommande && rep.codeSuivi) {
+          this.memoriserCommande(rep.numeroCommande, rep.codeSuivi);
         }
         // Coordonnées gardées pour la prochaine fois ; seule la remarque est vidée.
         this.form.notes = '';
@@ -483,8 +484,8 @@ export class VitrineComponent implements OnInit, OnDestroy {
     this.mesCommandesOuvert = false;
   }
 
-  private memoriserCommande(numero: string, telephone: string): void {
-    this.commandesMemorisees = [{ numero, telephone }, ...this.commandesMemorisees.filter(c => c.numero !== numero)]
+  private memoriserCommande(numero: string, code: string): void {
+    this.commandesMemorisees = [{ numero, code }, ...this.commandesMemorisees.filter(c => c.numero !== numero)]
       .slice(0, MAX_COMMANDES_SUIVIES);
     this.ecrireStockage(CLE_COMMANDES, this.commandesMemorisees);
   }
@@ -500,27 +501,22 @@ export class VitrineComponent implements OnInit, OnDestroy {
   fermerMesCommandes(): void { this.mesCommandesOuvert = false; }
 
   chargerSuivi(): void {
-    if (!this.commandesMemorisees.length) { this.suivi = []; return; }
-    // Une demande par téléphone utilisé (en général un seul).
-    const parTelephone = new Map<string, string[]>();
-    for (const c of this.commandesMemorisees) {
-      parTelephone.set(c.telephone, [...(parTelephone.get(c.telephone) || []), c.numero]);
-    }
+    // Seules les commandes passées avec un code secret peuvent être suivies.
+    const commandes = this.commandesMemorisees
+      .filter(c => !!c.code)
+      .map(c => ({ numero: c.numero, code: c.code as string }));
+    if (!commandes.length) { this.suivi = []; return; }
     this.chargementSuivi = true;
     this.erreurSuivi = '';
-    const resultats: VitrineSuivi[] = [];
-    let restant = parTelephone.size;
-    const fin = () => {
-      if (--restant > 0) return;
-      this.suivi = resultats.sort((x, y) => (y.dateCommande || '').localeCompare(x.dateCommande || ''));
-      this.chargementSuivi = false;
-    };
-    parTelephone.forEach((numeros, telephone) => {
-      this.vitrineService.suivreCommandes(telephone, numeros).subscribe({
-        next: liste => resultats.push(...liste),
-        error: e => { this.erreurSuivi = e?.message || 'Impossible de charger vos commandes.'; fin(); },
-        complete: () => fin()
-      });
+    this.vitrineService.suivreCommandes(commandes).subscribe({
+      next: liste => {
+        this.suivi = liste.sort((x, y) => (y.dateCommande || '').localeCompare(x.dateCommande || ''));
+        this.chargementSuivi = false;
+      },
+      error: e => {
+        this.erreurSuivi = e?.message || 'Impossible de charger vos commandes.';
+        this.chargementSuivi = false;
+      }
     });
   }
 

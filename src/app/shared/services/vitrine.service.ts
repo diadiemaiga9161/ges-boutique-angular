@@ -60,6 +60,8 @@ export interface VitrineSuivi {
 export interface VitrineCommandeReponse {
   success: boolean;
   numeroCommande?: string;
+  /** Code secret remis au client : sans lui, la commande ne peut pas être suivie. */
+  codeSuivi?: string;
   message: string;
 }
 
@@ -82,8 +84,8 @@ export class VitrineService {
     );
   }
 
-  suivreCommandes(telephone: string, numeros: string[]): Observable<VitrineSuivi[]> {
-    return this.http.post<VitrineSuivi[]>(`${this.apiUrl}/suivi`, { telephone, numeros }).pipe(
+  suivreCommandes(commandes: { numero: string; code: string }[]): Observable<VitrineSuivi[]> {
+    return this.http.post<VitrineSuivi[]>(`${this.apiUrl}/suivi`, { commandes }).pipe(
       catchError(e => throwError(() => new Error(e?.error?.message || 'Impossible de charger vos commandes')))
     );
   }
