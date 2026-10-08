@@ -1256,7 +1256,7 @@
     <div class="modal-header">
       <h3>
         <i class="fa fa-users me-2"></i>
-        Historique des ventes - Clients divers
+        Ventes des clients divers — {{ libelleMoisDivers }}
       </h3>
       <button type="button" class="close-btn" (click)="closeVentesDiversModal()">&times;</button>
     </div>
@@ -1272,13 +1272,25 @@
   </button>
 </div>
 
+      <!-- Mois affiché : le mois en cours par défaut, un autre mois au choix -->
+      <div class="ventes-filters">
+        <label for="periode-divers-mois" class="me-2">Mois affiché</label>
+        <input
+          id="periode-divers-mois"
+          type="month"
+          [(ngModel)]="periodeDiversMois"
+          (change)="chargerVentesDivers()"
+          class="filter-date"
+        />
+      </div>
+
       <div *ngIf="isLoadingVentes" class="loading">
         <i class="fa fa-spinner fa-spin me-2"></i> Chargement des ventes...
       </div>
       
       <div *ngIf="!isLoadingVentes && ventesClientDivers.length === 0" class="empty-state">
         <i class="fa fa-shopping-cart fa-3x mb-3 opacity-50"></i>
-        <p>Aucune vente pour les clients divers.</p>
+        <p>Aucune vente pour les clients divers en {{ libelleMoisDivers }}.</p>
       </div>
       
       <div *ngIf="!isLoadingVentes && ventesClientDivers.length > 0">

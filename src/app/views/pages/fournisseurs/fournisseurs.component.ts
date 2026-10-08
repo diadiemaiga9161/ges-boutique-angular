@@ -593,35 +593,41 @@ export class FournisseursComponent implements OnInit {
     return propositions;
   }
 
-  /** Popup de confirmation (SweetAlert2) récapitulant le recalcul CUMP proposé. */
+  /** Popup de confirmation (SweetAlert2) : nouveau prix d'achat moyen proposé, sans formule. */
   private demanderConfirmationCUMP(propositions: { produitNom: string; stockActuel: number; ancienPrix: number; quantiteEntree: number; prixEntree: number; nouveauPrix: number; }[]): Promise<boolean> {
     const escapeHtml = (s: string) => (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-    const lignesHtml = propositions.map(p => `
-      <div style="text-align:left;border:1px solid #e5e7eb;border-radius:6px;padding:10px;margin-bottom:8px;">
-        <strong>${escapeHtml(p.produitNom)}</strong><br>
-        Stock actuel: ${qteDoc((p as any).mesure, p.stockActuel)} × ${puDoc((p as any).mesure, v => this.fmt(v), p.ancienPrix)} = <strong>${this.fmt(p.stockActuel * p.ancienPrix)}</strong><br>
-        Entrée: ${qteDoc((p as any).mesure, p.quantiteEntree)} × ${puDoc((p as any).mesure, v => this.fmt(v), p.prixEntree)} = <strong>${this.fmt(p.quantiteEntree * p.prixEntree)}</strong><br>
-        <span style="color:#6b7280;font-size:0.85em;${(p as any).mesure?.modeMesure ? 'display:none;' : ''}">Formule: (${p.stockActuel} × ${this.fmt(p.ancienPrix)} + ${p.quantiteEntree} × ${this.fmt(p.prixEntree)}) / (${p.stockActuel} + ${p.quantiteEntree})</span><br>
-        <span style="color:#198754;">➜ Nouveau prix d'achat proposé: <strong>${puDoc((p as any).mesure, v => this.fmt(v), p.nouveauPrix)}</strong></span>
-      </div>
-    `).join('');
+    const ligne = (libelle: string, valeur: string, fort = false) => `
+      <div style="display:flex;justify-content:space-between;gap:12px;padding:3px 0;${fort ? 'font-weight:700;color:var(--success);' : ''}">
+        <span style="${fort ? '' : 'color:var(--text-muted);'}">${libelle}</span><span>${valeur}</span>
+      </div>`;
+    const fichesHtml = propositions.map(p => {
+      const mesure = (p as any).mesure;
+      const prix = (v: number) => puDoc(mesure, x => this.fmt(x), v);
+      const note = p.stockActuel > 0
+        ? `Le prix moyen tient compte des ${qteDoc(mesure, p.stockActuel)}${mesure?.modeMesure ? '' : ' unité(s)'} déjà en stock.`
+        : 'Aucun stock en boutique : le nouveau prix est celui de cet achat.';
+      return `
+      <div style="text-align:left;border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:10px;">
+        <div style="font-weight:700;margin-bottom:6px;">${escapeHtml(p.produitNom)}</div>
+        ${ligne("Prix d'achat actuel", prix(p.ancienPrix))}
+        ${ligne('Prix de cet achat', prix(p.prixEntree))}
+        ${ligne('Prix moyen proposé', prix(p.nouveauPrix), true)}
+        <div style="color:var(--text-muted);font-size:0.85em;margin-top:6px;">${note}</div>
+      </div>`;
+    }).join('');
 
     return Swal.fire({
-      title: '📈 Prix d\'achat modifié',
+      title: "Prix d'achat modifié",
       html: `
-        <div class="text-start">
-          <p>Le prix d'achat saisi diffère du prix actuel pour ${propositions.length > 1 ? 'ces produits' : 'ce produit'}.
-          Voulez-vous recalculer le prix d'achat (coût) avec le coût moyen pondéré (CUMP) ?</p>
-          ${lignesHtml}
-        </div>
+        <p style="margin-bottom:12px;">Le prix de cet achat est différent du prix enregistré.
+        Mettre à jour le prix d'achat avec le prix moyen ?</p>
+        ${fichesHtml}
       `,
       icon: 'question',
       showCancelButton: true,
-      confirmButtonText: '✅ Oui, recalculer le prix d\'achat',
-      cancelButtonText: '❌ Non, garder le prix actuel',
-      confirmButtonColor: '#198754',
-      cancelButtonColor: '#6c757d',
-      width: 600
+      confirmButtonText: 'Oui, mettre à jour le prix',
+      cancelButtonText: 'Non, garder le prix actuel',
+      width: 520
     }).then(result => result.isConfirmed);
   }
 

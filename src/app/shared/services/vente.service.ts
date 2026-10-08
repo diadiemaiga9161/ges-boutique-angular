@@ -799,8 +799,10 @@ export class VenteService {
     );
   }
 
+  /** Ventes à crédit non annulées, filtrées par le serveur (GET /ventes/credits) au lieu de
+   *  télécharger tout l'historique pour n'en garder que les crédits. */
   getVentesCredit(): Observable<VenteMap[]> {
-    return this.getAllVentes().pipe(
+    return this.getAllCredits().pipe(
       map(ventes => ventes.filter(vente => vente.estCredit))
     );
   }
@@ -872,6 +874,17 @@ export class VenteService {
   }
 
   // ==================== CRÉDITS ====================
+
+  /** Ventes des clients divers d'une période, filtrées par le serveur. */
+  getVentesClientsDivers(dateDebut: string, dateFin: string): Observable<VenteMap[]> {
+    return this.http.get<any>(`${this.apiUrl}/clients-divers`, {
+      headers: this.getAuthHeaders(),
+      params: { dateDebut, dateFin }
+    }).pipe(
+      map(response => Array.isArray(response) ? response.map(v => this.mapVenteResponse(v)) : []),
+      catchError(error => this.handleError(error, 'récupérer les ventes des clients divers'))
+    );
+  }
 
   getAllCredits(): Observable<VenteMap[]> {
     return this.http.get<any>(`${this.apiUrl}/credits`, {

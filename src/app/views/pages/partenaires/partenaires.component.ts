@@ -8,7 +8,7 @@ import { AuthService } from '../../../shared/services/auth.service';
 import { VenteService, VenteMap } from '../../../shared/services/vente.service';
 import { CaisseService } from '../../../shared/services/caisse.service';
 import { DesignFacture, FactureDesignService } from '../../../shared/services/facture-design.service';
-import { forkJoin } from 'rxjs';
+import { forkJoin, Observable, of } from 'rxjs';
 import Swal from 'sweetalert2';
 import { TranslateModule } from '@ngx-translate/core';
 import { MontantInputDirective } from '../../../shared/directives/montant-input.directive';
@@ -314,7 +314,7 @@ export class PartenairesComponent implements OnInit {
     this.filterVenteType = '';
     this.filterVenteMois = '';
 
-    this.venteService.getAllVentes().subscribe({
+    this.chargerVentesPartenaire(client).subscribe({
       next: (ventes) => {
         this.ventesClient = ventes.filter(vente => this.isVenteForClient(vente, client));
         this.ventesClient.sort((a, b) => new Date(b.dateVente).getTime() - new Date(a.dateVente).getTime());
@@ -327,6 +327,13 @@ export class PartenairesComponent implements OnInit {
         this.isLoadingVentes = false;
       }
     });
+  }
+
+  /** Ventes d'un partenaire : filtre serveur quand il est enregistré (jamais tout l'historique). */
+  private chargerVentesPartenaire(client: Client): Observable<VenteMap[]> {
+    return client.id
+      ? this.venteService.getVentesParClientId(client.id)
+      : this.venteService.getAllVentes();
   }
 
   private isVenteForClient(vente: VenteMap, client: Client): boolean {
@@ -746,7 +753,7 @@ export class PartenairesComponent implements OnInit {
     this.ventesClient = [];
     this.ventesClientFiltered = [];
     this.isLoadingVentes = true;
-    this.venteService.getAllVentes().subscribe({
+    this.chargerVentesPartenaire(client).subscribe({
       next: (ventes) => {
         this.ventesClient = ventes.filter(vente => this.isVenteForClient(vente, client));
         this.ventesClient.sort((a, b) => new Date(b.dateVente).getTime() - new Date(a.dateVente).getTime());
@@ -767,7 +774,8 @@ export class PartenairesComponent implements OnInit {
     this.historiquePaiementsFiltres = [];
     this.clientPourHistorique = client;
 
-    this.venteService.getAllVentes().subscribe({
+    // Réutilise les ventes du partenaire que l'appelant vient de charger (plus de 2e téléchargement).
+    of(this.ventesClient).subscribe({
       next: (ventes) => {
         const ventesClient = ventes.filter(v => this.isVenteForClient(v, client) && !v.annulee);
         const entries: HistoriquePaiementEntry[] = [];

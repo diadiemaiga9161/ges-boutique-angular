@@ -11,9 +11,18 @@ import Swal from 'sweetalert2';
 // pendant le court redémarrage du serveur (déploiement d'une nouvelle version).
 let dernierToastServeurIndisponible = 0;
 
-// Même principe pour "fonctionnalité désactivée" — une page peut déclencher
-// plusieurs requêtes vers le même contrôleur désactivé (ex: chargement initial).
-let dernierToastFonctionnaliteDesactivee = 0;
+// "Fonctionnalité désactivée" : le message n'est montré qu'une fois par fonction pendant la
+// session de l'onglet (avant : une fenêtre revenait à chaque ouverture de page).
+const CLE_FONCTIONNALITES_SIGNALEES = 'fonctionnalites-desactivees-signalees';
+const fonctionnalitesDesactiveesSignalees = new Set<string>(lireFonctionnalitesSignalees());
+
+function lireFonctionnalitesSignalees(): string[] {
+  try {
+    return JSON.parse(sessionStorage.getItem(CLE_FONCTIONNALITES_SIGNALEES) || '[]');
+  } catch {
+    return [];
+  }
+}
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
@@ -24,16 +33,11 @@ export class AuthInterceptor implements HttpInterceptor {
   ) {}
 
   intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    console.log('🔄 Interceptor: URL:', request.url);
-    console.log('🔄 Interceptor: Méthode:', request.method);
-    console.log('🔄 Interceptor: Body:', request.body);
-    console.log('🔄 Interceptor: Body est FormData?', request.body instanceof FormData);
     
     const token = this.authService.getToken();
     
     // Pour les routes publiques, on ne met pas le token
     if (this.isPublicRoute(request.url)) {
-      console.log('🔄 Interceptor: Route publique, pas de token');
       return next.handle(request);
     }
 
@@ -49,7 +53,6 @@ export class AuthInterceptor implements HttpInterceptor {
     let clonedRequest: HttpRequest<any>;
     
     if (request.body instanceof FormData) {
-      console.log('✅ Interceptor: FormData détecté - pas de Content-Type');
       // Pour FormData, n'ajoutez PAS Content-Type, seulement Authorization
       clonedRequest = request.clone({
         setHeaders: {
@@ -57,7 +60,6 @@ export class AuthInterceptor implements HttpInterceptor {
         }
       });
     } else {
-      console.log('✅ Interceptor: Requête normale - ajout Content-Type: application/json');
       // Pour les requêtes normales, ajoutez Content-Type
       clonedRequest = request.clone({
         setHeaders: {
@@ -67,11 +69,10 @@ export class AuthInterceptor implements HttpInterceptor {
       });
     }
 
-    console.log('🔄 Interceptor: Headers de la requête clonée:', clonedRequest.headers.keys());
     
     return next.handle(clonedRequest).pipe(
       catchError((error: HttpErrorResponse) => {
-        return this.handleAuthError(error);
+        return this.handleAuthError(error, clonedRequest.method);
       })
     );
   }
@@ -89,7 +90,7 @@ export class AuthInterceptor implements HttpInterceptor {
     return publicRoutes.some(route => url.includes(route));
   }
 
-  private handleAuthError(error: HttpErrorResponse): Observable<never> {
+  private handleAuthError(error: HttpErrorResponse, methode: string): Observable<never> {
     console.error('❌ Interceptor: Erreur HTTP:', error.status, error.message);
 
     if (error.status === 401) {
@@ -110,7 +111,11 @@ export class AuthInterceptor implements HttpInterceptor {
         // Le message détaillé arrive dans "message" (GlobalExceptionHandler) pour la
         // plupart des contrôleurs, mais dans "error" pour ceux qui ont leur propre
         // gestionnaire local (ex: DetteAncienneController) — on vérifie les deux.
-        this.afficherFonctionnaliteDesactivee(error.error?.message || error.error?.error);
+        // Chargement automatique d'une page (GET) : aucun message, la partie reste vide.
+        // Action de la personne (enregistrer, créer...) : petit message, une fois par fonction.
+        if (methode !== 'GET') {
+          this.afficherFonctionnaliteDesactivee(error.error?.message || error.error?.error);
+        }
       }
       return throwError(() => error);
     }
@@ -127,16 +132,23 @@ export class AuthInterceptor implements HttpInterceptor {
   }
 
   private afficherFonctionnaliteDesactivee(message?: string): void {
-    const maintenant = Date.now();
-    if (maintenant - dernierToastFonctionnaliteDesactivee <= 10000) return;
-    dernierToastFonctionnaliteDesactivee = maintenant;
+    const texte = message || "Cette fonctionnalité est désactivée par le super admin de la boutique. Pour plus d'informations, contactez Maiga Consulting.";
+    if (fonctionnalitesDesactiveesSignalees.has(texte)) return;
+    fonctionnalitesDesactiveesSignalees.add(texte);
+    try {
+      sessionStorage.setItem(CLE_FONCTIONNALITES_SIGNALEES, JSON.stringify([...fonctionnalitesDesactiveesSignalees]));
+    } catch { /* stockage indisponible : le message pourra revenir après rechargement */ }
 
     Swal.fire({
-      icon: 'warning',
+      toast: true,
+      position: 'top-end',
+      icon: 'info',
       title: 'Fonctionnalité désactivée',
-      text: message || "Cette fonctionnalité est désactivée par le super admin de la boutique. Pour plus d'informations, contactez Maiga Consulting.",
-      confirmButtonText: 'Compris',
-      confirmButtonColor: '#1a56db'
+      text: texte,
+      showConfirmButton: false,
+      backdrop: false,
+      timer: 6000,
+      timerProgressBar: true
     });
   }
 

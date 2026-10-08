@@ -145,13 +145,19 @@
  </div>
  </div>
 
+ <!-- Période des chiffres ci-dessous (mois en cours par défaut) -->
+ <div *ngIf="statistiquesGenerales?.periode" class="alert alert-info d-flex align-items-center gap-2 fade-in">
+ <i class="fas fa-calendar-alt"></i>
+ <span>Les chiffres de ventes ci-dessous concernent <strong>{{ statistiquesGenerales.periode!.libelle }}</strong>. Pour une autre période, choisissez les dates en haut puis « Voir ».</span>
+ </div>
+
  <!-- 4 GRANDES CARTES - DONNÉES RÉELLES -->
  <div *ngIf="statistiquesGenerales" class="stats-grid fade-in">
  <div class="stat-card bg-success">
  <div class="stat-icon"><i class="fas fa-shopping-cart"></i></div>
  <div class="stat-content">
  <h3>{{ statistiquesGenerales.chiffreAffaire.totalVentes }}</h3>
- <p> Ventes réalisées</p>
+ <p> Ventes réalisées en {{ statistiquesGenerales.periode?.libelle || 'ce mois-ci' }}</p>
  </div>
  </div>
 
@@ -256,7 +262,7 @@
 
  <!-- TOP PRODUITS (DONNÉES RÉELLES) -->
  <div *ngIf="statistiquesGenerales?.produitsPlusVendus?.length" class="section-card fade-in">
- <h4><i class="fas fa-star"></i> ⭐ Vos produits les plus vendus (toute période)</h4>
+ <h4><i class="fas fa-star"></i> ⭐ Vos produits les plus vendus ({{ statistiquesGenerales.periode?.libelle || 'ce mois-ci' }})</h4>
  <div class="table-responsive">
  <table class="table table-hover">
  <thead>
@@ -279,7 +285,7 @@
  <div class="row fade-in">
  <div class="col-lg-6">
  <div class="section-card h-100">
- <h4><i class="fas fa-tags"></i> Ventes par catégorie</h4>
+ <h4><i class="fas fa-tags"></i> Ventes par catégorie ({{ statistiquesGenerales?.periode?.libelle || 'ce mois-ci' }})</h4>
  <div class="table-responsive" *ngIf="statistiquesGenerales?.categoriesStats?.length">
  <table class="table table-sm">
  <thead>
@@ -302,7 +308,7 @@
 
  <div class="col-lg-6">
  <div class="section-card h-100">
- <h4><i class="fas fa-credit-card"></i> Modes de paiement utilisés</h4>
+ <h4><i class="fas fa-credit-card"></i> Modes de paiement utilisés ({{ statistiquesGenerales?.periode?.libelle || 'ce mois-ci' }})</h4>
  <div class="table-responsive" *ngIf="statistiquesGenerales?.modePaiementStats?.length">
  <table class="table table-sm">
  <thead>
@@ -326,7 +332,7 @@
 
  <!-- VENDEURS (DONNÉES RÉELLES) - admin seulement -->
  <div *ngIf="statistiquesGenerales?.vendeurs?.length && !isVendeur" class="section-card fade-in">
- <h4><i class="fas fa-users"></i> Performance de votre équipe</h4>
+ <h4><i class="fas fa-users"></i> Performance de votre équipe ({{ statistiquesGenerales.periode?.libelle || 'ce mois-ci' }})</h4>
  <div class="table-responsive">
  <table class="table table-hover">
  <thead>

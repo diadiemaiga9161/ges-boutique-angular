@@ -137,6 +137,8 @@ export class ClientsComponent implements OnInit {
   filterDiversNumero: string = '';
   filterDiversType: string = '';
   filterDiversDate: string = '';
+  /** Mois affiché dans « Clients divers » (aaaa-mm) : le mois en cours par défaut. */
+  periodeDiversMois: string = this.moisCourant();
   ventesClientDiversFiltered: VenteMap[] = [];
 
   // Modal détails vente
@@ -441,21 +443,25 @@ export class ClientsComponent implements OnInit {
   }
 
   showClientDiversVentes(): void {
-    this.isLoadingVentes = true;
     this.showVentesDiversModal = true;
+    this.periodeDiversMois = this.moisCourant();
+    this.chargerVentesDivers();
+  }
+
+  /** Charge les ventes des clients divers du mois choisi (filtre côté serveur : jamais tout l'historique). */
+  chargerVentesDivers(): void {
+    this.isLoadingVentes = true;
     this.errorMessage = '';
-    
     this.filterDiversNumero = '';
     this.filterDiversType = '';
     this.filterDiversDate = '';
 
-    this.venteService.getAllVentes().subscribe({
+    const mois = this.periodeDiversMois || this.moisCourant();
+    const [annee, m] = mois.split('-').map(Number);
+    const dernierJour = new Date(annee, m, 0).getDate();
+    this.venteService.getVentesClientsDivers(`${mois}-01`, `${mois}-${String(dernierJour).padStart(2, '0')}`).subscribe({
       next: (ventes) => {
-        this.ventesClientDivers = ventes.filter(vente => 
-          vente.clientDivers === true || 
-          vente.clientNom === 'Client divers' ||
-          (vente.clientNom && vente.clientNom.toLowerCase().includes('divers'))
-        );
+        this.ventesClientDivers = ventes;
         this.ventesClientDivers.sort((a, b) => new Date(b.dateVente).getTime() - new Date(a.dateVente).getTime());
         this.ventesClientDiversFiltered = [...this.ventesClientDivers];
         this.isLoadingVentes = false;
@@ -465,6 +471,17 @@ export class ClientsComponent implements OnInit {
         this.isLoadingVentes = false;
       }
     });
+  }
+
+  /** « octobre 2026 » pour le mois choisi dans « Clients divers ». */
+  get libelleMoisDivers(): string {
+    const [annee, m] = (this.periodeDiversMois || this.moisCourant()).split('-').map(Number);
+    return new Date(annee, m - 1, 1).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+  }
+
+  private moisCourant(): string {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
   }
 
   filterVentesClient(): void {

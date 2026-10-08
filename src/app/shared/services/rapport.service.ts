@@ -6,11 +6,10 @@ import { Observable, throwError, forkJoin, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { AuthService } from './auth.service';
 import { ProductService, Produit } from './product.service';
-import { VenteService, VenteMap } from './vente.service';
 import { CaisseService, CreditInfo, SituationCredits } from './caisse.service';
 import { BoutiqueService } from './boutique.service';
 import { environment } from '../../../environments/environment';
-import { infoMesure, qteAffichee, qteDoc } from '../utils/mesure.util';
+import { qteDoc } from '../utils/mesure.util';
 
 // =====================================================
 // INTERFACES
@@ -180,7 +179,27 @@ export interface RapportMensuel {
   };
 }
 
+/** Réponse de GET /api/ventes/statistiques/periode : totaux d'une période calculés par le
+ *  serveur, sans la liste des ventes (léger même sur une année entière). */
+export interface ResumePeriode {
+  dateDebut: string;
+  dateFin: string;
+  nombreVentes: number;
+  chiffreAffaireTotal: number;
+  montantRemisesTotal: number;
+  panierMoyen: number;
+  beneficeTotal: number;
+  beneficeBrut: number;
+  topProduits: Array<{ nom: string; quantite: number; quantiteTexte?: string | null; chiffreAffaire: number; chiffreAffairePrix: number; categorie?: string | null }>;
+  modePaiementStats: Array<{ mode: string; montant: number; nombreVentes: number; pourcentage: number }>;
+  categories: Array<{ nom: string; chiffreAffaire: number; quantiteVendue: number }>;
+  vendeurs: Array<{ id: number; nomComplet: string; nombreVentes: number; chiffreAffaire: number }>;
+  chiffreAffaireParJour: { [date: string]: number };
+}
+
 export interface StatistiquesGenerales {
+  /** Période couverte par les chiffres de ventes (par défaut le mois en cours). */
+  periode?: { dateDebut: string; dateFin: string; libelle: string };
   chiffreAffaire: {
     journalier: number;
     hebdomadaire: number;
@@ -267,7 +286,6 @@ export class RapportService {
     private http: HttpClient,
     private authService: AuthService,
     private productService: ProductService,
-    private venteService: VenteService,
     private caisseService: CaisseService,
     private boutiqueService: BoutiqueService
   ) { }
@@ -301,140 +319,46 @@ export class RapportService {
   }
 
   // ============= MÉTHODES DE CALCUL =============
+  // Les totaux d'une période viennent du serveur (GET /ventes/statistiques/periode) : la liste
+  // des ventes ne voyage plus. Ces fonctions remettent le résumé dans la forme attendue par
+  // l'écran et l'export PDF.
 
-  private calculerTopProduits(ventes: VenteMap[], produits: Produit[]): Array<{nom: string, quantite: number, chiffreAffaire: number, categorie?: string, quantiteTexte?: string}> {
-    const map = new Map<string, {quantite: number, chiffreAffaire: number, categorie?: string, modeMesure?: string | null}>();
-
-    for (const vente of ventes) {
-      if (vente.produits) {
-        for (const p of vente.produits) {
-          const produitId = p.produitId;
-          const quantite = p.quantite || 0;
-          const prix = p.prixApresRemise || p.prixUnitaire || 0;
-          const produit = produits.find(prod => prod.id === produitId);
-          const nom = p.produitNom || produit?.nom || 'Produit';
-          const categorie = produit?.categorie?.nom;
-          // Vente à la mesure : on additionne des kg (pas des g) ; le CA reste quantité x prix bruts.
-          const modeMesure = (p as any).modeMesure ?? (produit as any)?.modeMesure ?? null;
-          const qteAff = qteAffichee({ modeMesure }, quantite);
-
-          if (map.has(nom)) {
-            const existing = map.get(nom)!;
-            existing.quantite += qteAff;
-            existing.chiffreAffaire += quantite * prix;
-          } else {
-            map.set(nom, { quantite: qteAff, chiffreAffaire: quantite * prix, categorie, modeMesure });
-          }
-        }
-      }
-    }
-
-    return Array.from(map.entries())
-      .map(([nom, data]) => ({
-        nom, quantite: data.quantite, chiffreAffaire: data.chiffreAffaire, categorie: data.categorie,
-        quantiteTexte: infoMesure({ modeMesure: data.modeMesure })
-          ? `${(Math.round(data.quantite * 1000) / 1000).toLocaleString('fr-FR', { maximumFractionDigits: 3 })} ${infoMesure({ modeMesure: data.modeMesure })!.unite}`
-          : undefined
-      }))
-      .sort((a, b) => b.quantite - a.quantite);
+  /** Totaux d'une période calculés par le serveur (jamais la liste des ventes). */
+  getResumePeriode(dateDebut: string, dateFin: string, top = 10): Observable<ResumePeriode> {
+    return this.http.get<ResumePeriode>(`${this.baseUrl}/ventes/statistiques/periode`, {
+      params: { dateDebut, dateFin, top: String(top) }
+    });
   }
 
-  private calculerModePaiementStats(ventes: VenteMap[]): Array<{mode: string, montant: number, nombreVentes: number, pourcentage: number}> {
-    const map = new Map<string, {montant: number, nombreVentes: number}>();
-    let totalMontant = 0;
-
-    for (const vente of ventes) {
-      const mode = vente.modePaiement;
-      const montant = vente.montantTotal || 0;
-      totalMontant += montant;
-
-      if (map.has(mode)) {
-        const existing = map.get(mode)!;
-        existing.montant += montant;
-        existing.nombreVentes++;
-      } else {
-        map.set(mode, { montant, nombreVentes: 1 });
-      }
-    }
-
-    return Array.from(map.entries())
-      .map(([mode, data]) => ({
-        mode,
-        montant: data.montant,
-        nombreVentes: data.nombreVentes,
-        pourcentage: totalMontant > 0 ? (data.montant / totalMontant) * 100 : 0
-      }))
-      .sort((a, b) => b.montant - a.montant);
+  private topProduitsDepuisResume(resume: ResumePeriode): Array<{nom: string, quantite: number, chiffreAffaire: number, categorie?: string, quantiteTexte?: string}> {
+    return (resume.topProduits || []).map(p => ({
+      nom: p.nom,
+      quantite: p.quantite,
+      chiffreAffaire: p.chiffreAffairePrix,
+      categorie: p.categorie || undefined,
+      quantiteTexte: p.quantiteTexte || undefined
+    }));
   }
 
-  private calculerStatsCategories(ventes: VenteMap[], produits: Produit[], categories: any[]): Array<{nom: string, nombreProduits: number, chiffreAffaire: number, nombreProduitsVendus: number}> {
-    const map = new Map<string, {nombreProduits: number, chiffreAffaire: number, nombreProduitsVendus: number}>();
-
-    for (const categorie of categories) {
-      map.set(categorie.nom, { nombreProduits: 0, chiffreAffaire: 0, nombreProduitsVendus: 0 });
-    }
-    map.set('Non catégorisé', { nombreProduits: 0, chiffreAffaire: 0, nombreProduitsVendus: 0 });
-
-    for (const produit of produits) {
-      const catNom = produit.categorie?.nom || 'Non catégorisé';
-      if (map.has(catNom)) {
-        const existing = map.get(catNom)!;
-        existing.nombreProduits++;
-      }
-    }
-
-    for (const vente of ventes) {
-      if (vente.produits) {
-        for (const p of vente.produits) {
-          const produitId = p.produitId;
-          const quantite = p.quantite || 0;
-          const prix = p.prixApresRemise || p.prixUnitaire || 0;
-          const produit = produits.find(prod => prod.id === produitId);
-          const catNom = produit?.categorie?.nom || 'Non catégorisé';
-
-          if (map.has(catNom)) {
-            const existing = map.get(catNom)!;
-            existing.chiffreAffaire += quantite * prix;
-            existing.nombreProduitsVendus += quantite;
-          }
-        }
-      }
-    }
-
-    return Array.from(map.entries())
-      .map(([nom, data]) => ({
-        nom,
-        nombreProduits: data.nombreProduits,
-        chiffreAffaire: data.chiffreAffaire,
-        nombreProduitsVendus: data.nombreProduitsVendus
-      }))
-      .filter(c => c.chiffreAffaire > 0)
-      .sort((a, b) => b.chiffreAffaire - a.chiffreAffaire);
+  private modesDepuisResume(resume: ResumePeriode): Array<{mode: string, montant: number, nombreVentes: number, pourcentage: number}> {
+    return (resume.modePaiementStats || []).map(m => ({
+      mode: m.mode,
+      montant: m.montant,
+      nombreVentes: m.nombreVentes,
+      pourcentage: m.pourcentage
+    }));
   }
 
-  private calculerStatsParVendeur(ventes: VenteMap[]): Array<{id: number, nomComplet: string, email: string, telephone: string, nombreVentes: number, chiffreAffaire: number}> {
-    const map = new Map<number, {nomComplet: string, email: string, telephone: string, nombreVentes: number, chiffreAffaire: number}>();
-
-    for (const vente of ventes) {
-      const vendeurId = vente.vendeurId;
-      if (map.has(vendeurId)) {
-        const existing = map.get(vendeurId)!;
-        existing.nombreVentes++;
-        existing.chiffreAffaire += vente.montantTotal || 0;
-      } else {
-        map.set(vendeurId, {
-          nomComplet: vente.vendeurNom || `Vendeur ${vendeurId}`,
-          email: '',
-          telephone: '',
-          nombreVentes: 1,
-          chiffreAffaire: vente.montantTotal || 0
-        });
-      }
-    }
-
-    return Array.from(map.entries())
-      .map(([id, data]) => ({ id, ...data }))
-      .sort((a, b) => b.chiffreAffaire - a.chiffreAffaire);
+  private categoriesDepuisResume(resume: ResumePeriode, produits: Produit[], categories: any[]): Array<{nom: string, nombreProduits: number, chiffreAffaire: number, nombreProduitsVendus: number}> {
+    const connues = new Set<string>([...categories.map(c => c.nom), 'Non catégorisé']);
+    return (resume.categories || [])
+      .filter(c => connues.has(c.nom))
+      .map(c => ({
+        nom: c.nom,
+        nombreProduits: produits.filter(p => (p.categorie?.nom || 'Non catégorisé') === c.nom).length,
+        chiffreAffaire: c.chiffreAffaire,
+        nombreProduitsVendus: c.quantiteVendue
+      }));
   }
 
   private calculerCategoriesLesPlusUtilisees(produits: Produit[], categories: any[]): Array<{nom: string, nombreProduits: number, pourcentage: number}> {
@@ -455,91 +379,57 @@ export class RapportService {
       .sort((a, b) => b.nombreProduits - a.nombreProduits);
   }
 
-  private calculerChiffreParJour(ventes: VenteMap[]): { [key: string]: number } {
-    const result: { [key: string]: number } = {};
-    for (const vente of ventes) {
-      const date = vente.dateVente.split('T')[0];
-      result[date] = (result[date] || 0) + (vente.montantTotal || 0);
-    }
-    return result;
-  }
-
-  private calculerBeneficeBrut(ventes: VenteMap[], produits: Produit[]): number {
-    let benefice = 0;
-    for (const vente of ventes) {
-      if (vente.beneficeTotal) {
-        benefice += vente.beneficeTotal;
-      } else if (vente.produits) {
-        for (const p of vente.produits) {
-          const produitId = p.produitId;
-          const quantite = p.quantite || 0;
-          const prixVente = p.prixApresRemise || p.prixUnitaire || 0;
-          const produit = produits.find(prod => prod.id === produitId);
-          const prixAchat = produit?.prixAchat || p.prixAchat || 0;
-          benefice += (prixVente - prixAchat) * quantite;
-        }
-      }
-    }
-    return benefice;
+  private gainsEtPertes(resume: ResumePeriode, revenusPertes: any): { gains: any; pertes: any; bilanNet: number } {
+    if (!revenusPertes) return { gains: undefined, pertes: undefined, bilanNet: 0 };
+    const totalRevenus = revenusPertes.totalRevenus || 0;
+    return {
+      gains: {
+        totalRevenus,
+        beneficeBrut: resume.beneficeBrut,
+        margeBrute: totalRevenus > 0 ? (resume.beneficeBrut / totalRevenus) * 100 : 0
+      },
+      pertes: { totalPertes: revenusPertes.totalPertes || 0 },
+      bilanNet: totalRevenus - (revenusPertes.totalPertes || 0)
+    };
   }
 
   // ============= MÉTHODES DE RAPPORT =============
 
   genererRapportJournalier(date: string): Observable<RapportJournalier> {
     return forkJoin({
-      ventesJour: this.venteService.getVentesParPeriode(date, date),
+      resume: this.getResumePeriode(date, date),
       produits: this.productService.getProducts(),
       categories: this.productService.getAllCategories(),
       situationCredits: this.caisseService.getSituationCredits().pipe(catchError(() => of(null))),
       revenusPertes: this.caisseService.getRevenusEtPertesParPeriode(date, date).pipe(catchError(() => of(null)))
     }).pipe(
-      map(({ ventesJour, produits, categories, situationCredits, revenusPertes }) => {
-        const totalChiffreAffaire = ventesJour.reduce((sum, v) => sum + (v.montantTotal || 0), 0);
-        const totalRemises = ventesJour.reduce((sum, v) => sum + (v.montantRemiseTotal || 0), 0);
-        const nombreVentes = ventesJour.length;
-
+      map(({ resume, produits, categories, situationCredits, revenusPertes }) => {
         const produitsStockFaible = produits.filter(p => p.quantite <= p.seuilAlerte).length;
         let valeurStockTotale = 0;
         for (const produit of produits) {
           valeurStockTotale += (produit.prixAchat || 0) * produit.quantite;
         }
 
-        const topProduits = this.calculerTopProduits(ventesJour, produits);
-        const modePaiementStats = this.calculerModePaiementStats(ventesJour);
-        const statistiquesCategories = this.calculerStatsCategories(ventesJour, produits, categories);
-
-        let gains = undefined;
-        let pertes = undefined;
-        let bilanNet = 0;
-
-        if (revenusPertes) {
-          gains = {
-            totalRevenus: revenusPertes.totalRevenus || 0,
-            beneficeBrut: this.calculerBeneficeBrut(ventesJour, produits),
-            margeBrute: revenusPertes.totalRevenus > 0 ? (this.calculerBeneficeBrut(ventesJour, produits) / revenusPertes.totalRevenus) * 100 : 0,
-            detailsRevenus: revenusPertes.detailsRevenus || { ventesComptant: 0, reglementsCredit: 0, autresEntrees: 0 }
-          };
-          pertes = {
-            totalPertes: revenusPertes.totalPertes || 0,
-            detailsPertes: revenusPertes.detailsPertes || { annulations: 0, sortiesCaisse: 0, ecartsNegatifs: 0 }
-          };
-          bilanNet = (revenusPertes.totalRevenus || 0) - (revenusPertes.totalPertes || 0);
+        const { gains, pertes, bilanNet } = this.gainsEtPertes(resume, revenusPertes);
+        if (gains && revenusPertes) {
+          gains.detailsRevenus = revenusPertes.detailsRevenus || { ventesComptant: 0, reglementsCredit: 0, autresEntrees: 0 };
+          pertes.detailsPertes = revenusPertes.detailsPertes || { annulations: 0, sortiesCaisse: 0, ecartsNegatifs: 0 };
         }
 
         return {
           date: date,
-          chiffreAffaireTotal: totalChiffreAffaire,
-          montantRemisesTotal: totalRemises,
-          nombreVentes: nombreVentes,
-          ventes: ventesJour,
+          chiffreAffaireTotal: resume.chiffreAffaireTotal,
+          montantRemisesTotal: resume.montantRemisesTotal,
+          nombreVentes: resume.nombreVentes,
+          ventes: [],
           produitsVendus: {},
           chiffreAffaireParProduit: {},
           dateRapport: new Date().toISOString(),
           produitsEnStockFaible: produitsStockFaible,
           valeurStockTotale: valeurStockTotale,
-          topProduits: topProduits.slice(0, 10),
-          modePaiementStats: modePaiementStats,
-          statistiquesCategories: statistiquesCategories,
+          topProduits: this.topProduitsDepuisResume(resume),
+          modePaiementStats: this.modesDepuisResume(resume),
+          statistiquesCategories: this.categoriesDepuisResume(resume, produits, categories),
           credits: {
             nouveauxCredits: 0,
             montantNouveauxCredits: 0,
@@ -558,35 +448,29 @@ export class RapportService {
   }
 
   genererRapportHebdomadaire(): Observable<RapportHebdomadaire> {
-    const aujourdhui = new Date();
     const debutSemaine = this.getDateDebutSemaine();
     const finSemaine = this.getDateFinSemaine();
 
     return forkJoin({
-      ventes: this.venteService.getVentesParPeriode(debutSemaine, finSemaine),
+      resume: this.getResumePeriode(debutSemaine, finSemaine),
       produits: this.productService.getProducts(),
       categories: this.productService.getAllCategories(),
       situationCredits: this.caisseService.getSituationCredits().pipe(catchError(() => of(null))),
       creditsEnRetard: this.caisseService.getCreditsEnRetard().pipe(catchError(() => of([]))),
       revenusPertes: this.caisseService.getRevenusEtPertesParPeriode(debutSemaine, finSemaine).pipe(catchError(() => of(null)))
     }).pipe(
-      map(({ ventes, produits, categories, situationCredits, creditsEnRetard, revenusPertes }) => {
-        const totalChiffreAffaire = ventes.reduce((sum, v) => sum + (v.montantTotal || 0), 0);
-        const totalRemises = ventes.reduce((sum, v) => sum + (v.montantRemiseTotal || 0), 0);
-        const nombreVentes = ventes.length;
-        const moyenneJournaliere = totalChiffreAffaire / 7;
+      map(({ resume, produits, categories, situationCredits, creditsEnRetard, revenusPertes }) => {
+        const totalChiffreAffaire = resume.chiffreAffaireTotal;
+        const nombreVentes = resume.nombreVentes;
 
-        const topProduits = this.calculerTopProduits(ventes, produits).map(p => ({
+        const topProduits = this.topProduitsDepuisResume(resume).map(p => ({
           nom: p.nom,
           quantite: p.quantite,
           categorie: p.categorie,
           chiffreAffaire: p.chiffreAffaire
         }));
-        
-        const modePaiementStats = this.calculerModePaiementStats(ventes);
-        
-        const categoriesStatsRaw = this.calculerStatsCategories(ventes, produits, categories);
-        const statistiquesCategories = categoriesStatsRaw.map(c => ({
+
+        const statistiquesCategories = this.categoriesDepuisResume(resume, produits, categories).map(c => ({
           nom: c.nom,
           nombreProduitsVendus: c.nombreProduitsVendus,
           chiffreAffaire: c.chiffreAffaire
@@ -597,33 +481,19 @@ export class RapportService {
           montantCreditsEnRetard += credit.montantRestant || credit.montantTotal || 0;
         }
 
-        let gains = undefined;
-        let pertes = undefined;
-        let bilanNet = 0;
-
-        if (revenusPertes) {
-          gains = {
-            totalRevenus: revenusPertes.totalRevenus || 0,
-            beneficeBrut: this.calculerBeneficeBrut(ventes, produits),
-            margeBrute: revenusPertes.totalRevenus > 0 ? (this.calculerBeneficeBrut(ventes, produits) / revenusPertes.totalRevenus) * 100 : 0
-          };
-          pertes = {
-            totalPertes: revenusPertes.totalPertes || 0
-          };
-          bilanNet = (revenusPertes.totalRevenus || 0) - (revenusPertes.totalPertes || 0);
-        }
+        const { gains, pertes, bilanNet } = this.gainsEtPertes(resume, revenusPertes);
 
         return {
           debutSemaine: debutSemaine,
           finSemaine: finSemaine,
           chiffreAffaireTotal: totalChiffreAffaire,
-          montantRemisesTotal: totalRemises,
+          montantRemisesTotal: resume.montantRemisesTotal,
           nombreVentes: nombreVentes,
-          moyenneJournaliere: moyenneJournaliere,
+          moyenneJournaliere: totalChiffreAffaire / 7,
           ventesParJour: nombreVentes / 7,
-          chiffreAffaireParJour: this.calculerChiffreParJour(ventes),
-          topProduits: topProduits.slice(0, 10),
-          modePaiementStats: modePaiementStats,
+          chiffreAffaireParJour: resume.chiffreAffaireParJour || {},
+          topProduits: topProduits,
+          modePaiementStats: this.modesDepuisResume(resume),
           statistiquesCategories: statistiquesCategories,
           credits: {
             totalCredits: situationCredits?.nombreCreditsNonRegles || 0,
@@ -646,19 +516,17 @@ export class RapportService {
     const finMois = this.formaterDate(new Date(aujourdhui.getFullYear(), aujourdhui.getMonth() + 1, 0));
 
     return forkJoin({
-      ventes: this.venteService.getVentesParPeriode(debutMois, finMois),
+      resume: this.getResumePeriode(debutMois, finMois),
       produits: this.productService.getProducts(),
       categories: this.productService.getAllCategories(),
       situationCredits: this.caisseService.getSituationCredits().pipe(catchError(() => of(null))),
       creditsEnRetard: this.caisseService.getCreditsEnRetard().pipe(catchError(() => of([]))),
       revenusPertes: this.caisseService.getRevenusEtPertesParPeriode(debutMois, finMois).pipe(catchError(() => of(null)))
     }).pipe(
-      map(({ ventes, produits, categories, situationCredits, creditsEnRetard, revenusPertes }) => {
-        const totalChiffreAffaire = ventes.reduce((sum, v) => sum + (v.montantTotal || 0), 0);
-        const totalRemises = ventes.reduce((sum, v) => sum + (v.montantRemiseTotal || 0), 0);
-        const nombreVentes = ventes.length;
+      map(({ resume, produits, categories, situationCredits, creditsEnRetard, revenusPertes }) => {
+        const totalChiffreAffaire = resume.chiffreAffaireTotal;
+        const nombreVentes = resume.nombreVentes;
         const joursDansMois = new Date(aujourdhui.getFullYear(), aujourdhui.getMonth() + 1, 0).getDate();
-        const moyenneJournaliere = totalChiffreAffaire / joursDansMois;
 
         const produitsStockFaible = produits.filter(p => p.quantite <= p.seuilAlerte).length;
         let valeurStockTotale = 0;
@@ -667,19 +535,11 @@ export class RapportService {
         }
 
         const topProduitsMap: { [key: string]: number } = {};
-        for (const vente of ventes) {
-          if (vente.produits) {
-            for (const p of vente.produits) {
-              const nom = p.produitNom || 'Produit';
-              topProduitsMap[nom] = (topProduitsMap[nom] || 0) + (p.quantite || 0);
-            }
-          }
+        for (const p of resume.topProduits || []) {
+          topProduitsMap[p.nom] = p.quantite;
         }
 
-        const modePaiementStats = this.calculerModePaiementStats(ventes);
-        
-        const categoriesStatsRaw = this.calculerStatsCategories(ventes, produits, categories);
-        const statistiquesCategories = categoriesStatsRaw.map(c => ({
+        const statistiquesCategories = this.categoriesDepuisResume(resume, produits, categories).map(c => ({
           nom: c.nom,
           nombreProduitsVendus: c.nombreProduitsVendus,
           chiffreAffaire: c.chiffreAffaire
@@ -690,21 +550,7 @@ export class RapportService {
           montantCreditsEnRetard += credit.montantRestant || credit.montantTotal || 0;
         }
 
-        let gains = undefined;
-        let pertes = undefined;
-        let bilanNet = 0;
-
-        if (revenusPertes) {
-          gains = {
-            totalRevenus: revenusPertes.totalRevenus || 0,
-            beneficeBrut: this.calculerBeneficeBrut(ventes, produits),
-            margeBrute: revenusPertes.totalRevenus > 0 ? (this.calculerBeneficeBrut(ventes, produits) / revenusPertes.totalRevenus) * 100 : 0
-          };
-          pertes = {
-            totalPertes: revenusPertes.totalPertes || 0
-          };
-          bilanNet = (revenusPertes.totalRevenus || 0) - (revenusPertes.totalPertes || 0);
-        }
+        const { gains, pertes, bilanNet } = this.gainsEtPertes(resume, revenusPertes);
 
         return {
           mois: this.getNomMois(aujourdhui.getMonth()),
@@ -712,14 +558,14 @@ export class RapportService {
           debutMois: debutMois,
           finMois: finMois,
           chiffreAffaireTotal: totalChiffreAffaire,
-          montantRemisesTotal: totalRemises,
+          montantRemisesTotal: resume.montantRemisesTotal,
           nombreVentes: nombreVentes,
-          moyenneJournaliere: moyenneJournaliere,
+          moyenneJournaliere: totalChiffreAffaire / joursDansMois,
           ventesParJour: nombreVentes / joursDansMois,
           topProduits: topProduitsMap,
           produitsEnStockFaible: produitsStockFaible,
           valeurStockTotale: valeurStockTotale,
-          modePaiementStats: modePaiementStats,
+          modePaiementStats: this.modesDepuisResume(resume),
           statistiquesCategories: statistiquesCategories,
           credits: {
             totalCredits: situationCredits?.nombreCreditsNonRegles || 0,
@@ -740,63 +586,43 @@ export class RapportService {
 
   genererRapportPeriodique(dateDebut: string, dateFin: string): Observable<any> {
     return forkJoin({
-      ventes: this.venteService.getVentesParPeriode(dateDebut, dateFin),
+      resume: this.getResumePeriode(dateDebut, dateFin),
       produits: this.productService.getProducts(),
       categories: this.productService.getAllCategories(),
       situationCredits: this.caisseService.getSituationCredits().pipe(catchError(() => of(null))),
       creditsEnRetard: this.caisseService.getCreditsEnRetard().pipe(catchError(() => of([]))),
       revenusPertes: this.caisseService.getRevenusEtPertesParPeriode(dateDebut, dateFin).pipe(catchError(() => of(null)))
     }).pipe(
-      map(({ ventes, produits, categories, situationCredits, creditsEnRetard, revenusPertes }) => {
-        const totalChiffreAffaire = ventes.reduce((sum, v) => sum + (v.montantTotal || 0), 0);
-        const totalRemises = ventes.reduce((sum, v) => sum + (v.montantRemiseTotal || 0), 0);
-        const nombreVentes = ventes.length;
-        const panierMoyen = nombreVentes > 0 ? totalChiffreAffaire / nombreVentes : 0;
-
+      map(({ resume, produits, categories, situationCredits, creditsEnRetard, revenusPertes }) => {
         const produitsStockFaible = produits.filter(p => p.quantite <= p.seuilAlerte).length;
         let valeurStockTotale = 0;
         for (const produit of produits) {
           valeurStockTotale += (produit.prixAchat || 0) * produit.quantite;
         }
 
-        const topProduits = this.calculerTopProduits(ventes, produits);
-        const modePaiementStats = this.calculerModePaiementStats(ventes);
-        const statistiquesCategories = this.calculerStatsCategories(ventes, produits, categories);
-
         let montantCreditsEnRetard = 0;
         for (const credit of creditsEnRetard) {
           montantCreditsEnRetard += credit.montantRestant || credit.montantTotal || 0;
         }
 
-        let gains = undefined;
-        let pertes = undefined;
-        let bilanNet = 0;
-
-        if (revenusPertes) {
-          gains = {
-            totalRevenus: revenusPertes.totalRevenus || 0,
-            beneficeBrut: this.calculerBeneficeBrut(ventes, produits),
-            margeBrute: revenusPertes.totalRevenus > 0 ? (this.calculerBeneficeBrut(ventes, produits) / revenusPertes.totalRevenus) * 100 : 0
-          };
-          pertes = {
-            totalPertes: revenusPertes.totalPertes || 0
-          };
-          bilanNet = (revenusPertes.totalRevenus || 0) - (revenusPertes.totalPertes || 0);
-        }
+        const { gains, pertes, bilanNet } = this.gainsEtPertes(resume, revenusPertes);
 
         return {
           periode: { dateDebut, dateFin },
           resume: {
-            totalChiffreAffaire,
-            totalRemises,
-            nombreVentes,
-            panierMoyen,
+            totalChiffreAffaire: resume.chiffreAffaireTotal,
+            totalRemises: resume.montantRemisesTotal,
+            // Noms lus par l'écran « Détail de la période » (rapports personnalisé et annuel).
+            chiffreAffaireTotal: resume.chiffreAffaireTotal,
+            montantRemisesTotal: resume.montantRemisesTotal,
+            nombreVentes: resume.nombreVentes,
+            panierMoyen: resume.panierMoyen,
             produitsStockFaible,
             valeurStockTotale
           },
-          topProduits: topProduits.slice(0, 10),
-          modePaiementStats: modePaiementStats,
-          statistiquesCategories: statistiquesCategories,
+          topProduits: this.topProduitsDepuisResume(resume),
+          modePaiementStats: this.modesDepuisResume(resume),
+          statistiquesCategories: this.categoriesDepuisResume(resume, produits, categories),
           credits: {
             totalCredits: situationCredits?.nombreCreditsNonRegles || 0,
             montantTotalCredits: situationCredits?.montantTotalCredits || 0,
@@ -812,27 +638,26 @@ export class RapportService {
     );
   }
 
-  obtenirStatistiquesGenerales(): Observable<StatistiquesGenerales> {
+  /** Statistiques générales d'une période (par défaut le mois en cours). Le libellé de la
+   *  période est fourni pour que l'écran dise clairement à quoi correspondent les chiffres. */
+  obtenirStatistiquesGenerales(dateDebut?: string, dateFin?: string): Observable<StatistiquesGenerales> {
     const aujourdhui = new Date();
-    const debutMois = this.formaterDate(new Date(aujourdhui.getFullYear(), aujourdhui.getMonth(), 1));
-    const finMois = this.formaterDate(new Date(aujourdhui.getFullYear(), aujourdhui.getMonth() + 1, 0));
+    const debut = dateDebut || this.formaterDate(new Date(aujourdhui.getFullYear(), aujourdhui.getMonth(), 1));
+    const fin = dateFin || this.formaterDate(aujourdhui);
+    const libelle = dateDebut || dateFin
+      ? `du ${this.formatDateShort(debut)} au ${this.formatDateShort(fin)}`
+      : aujourdhui.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
 
     return forkJoin({
-      ventes: this.venteService.getAllVentes(),
+      resume: this.getResumePeriode(debut, fin),
       produits: this.productService.getProducts(),
       categories: this.productService.getAllCategories(),
       situationCredits: this.caisseService.getSituationCredits().pipe(catchError(() => of(null))),
       creditsEnRetard: this.caisseService.getCreditsEnRetard().pipe(catchError(() => of([]))),
-      revenusPertes: this.caisseService.getRevenusEtPertesParPeriode(debutMois, finMois).pipe(catchError(() => of(null)))
+      revenusPertes: this.caisseService.getRevenusEtPertesParPeriode(debut, fin).pipe(catchError(() => of(null)))
     }).pipe(
-      map(({ ventes, produits, categories, situationCredits, creditsEnRetard, revenusPertes }) => {
-        const totalChiffreAffaire = ventes.reduce((sum, v) => sum + (v.montantTotal || 0), 0);
-        const totalVentes = ventes.length;
-        const panierMoyen = totalVentes > 0 ? totalChiffreAffaire / totalVentes : 0;
-        const totalRemises = ventes.reduce((sum, v) => sum + (v.montantRemiseTotal || 0), 0);
-
-        const rawProduitsPlusVendus = this.calculerTopProduits(ventes, produits);
-        const produitsPlusVendus = rawProduitsPlusVendus.map((p, index) => ({
+      map(({ resume, produits, categories, situationCredits, creditsEnRetard, revenusPertes }) => {
+        const produitsPlusVendus = this.topProduitsDepuisResume(resume).map((p, index) => ({
           id: index + 1,
           nom: p.nom,
           categorie: p.categorie || 'Non catégorisé',
@@ -842,10 +667,17 @@ export class RapportService {
           prixVente: 0
         }));
 
-        const statsParVendeur = this.calculerStatsParVendeur(ventes);
-        const modePaiementStats = this.calculerModePaiementStats(ventes);
-        
-        const categoriesStatsRaw = this.calculerStatsCategories(ventes, produits, categories);
+        const statsParVendeur = (resume.vendeurs || []).map(v => ({
+          id: v.id,
+          nomComplet: v.nomComplet,
+          email: '',
+          telephone: '',
+          nombreVentes: v.nombreVentes,
+          chiffreAffaire: v.chiffreAffaire
+        }));
+        const modePaiementStats = this.modesDepuisResume(resume);
+
+        const categoriesStatsRaw = this.categoriesDepuisResume(resume, produits, categories);
         let totalChiffreAffaireCategories = 0;
         for (const cat of categoriesStatsRaw) {
           totalChiffreAffaireCategories += cat.chiffreAffaire;
@@ -857,7 +689,7 @@ export class RapportService {
           pourcentage: totalChiffreAffaireCategories > 0 ? (c.chiffreAffaire / totalChiffreAffaireCategories) * 100 : 0,
           nombreProduitsVendus: c.nombreProduitsVendus
         }));
-        
+
         const categoriesLesPlusUtilisees = this.calculerCategoriesLesPlusUtilisees(produits, categories);
 
         let valeurStockTotale = 0;
@@ -871,10 +703,9 @@ export class RapportService {
 
         const chiffreAffaireParModePaiement: { [key: string]: number } = {};
         const nombreVentesParModePaiement: { [key: string]: number } = {};
-        for (const vente of ventes) {
-          const mode = vente.modePaiement;
-          chiffreAffaireParModePaiement[mode] = (chiffreAffaireParModePaiement[mode] || 0) + (vente.montantTotal || 0);
-          nombreVentesParModePaiement[mode] = (nombreVentesParModePaiement[mode] || 0) + 1;
+        for (const m of modePaiementStats) {
+          chiffreAffaireParModePaiement[m.mode] = m.montant;
+          nombreVentesParModePaiement[m.mode] = m.nombreVentes;
         }
 
         let montantCreditsEnRetard = 0;
@@ -898,13 +729,14 @@ export class RapportService {
         }
 
         return {
+          periode: { dateDebut: debut, dateFin: fin, libelle },
           chiffreAffaire: {
             journalier: 0,
             hebdomadaire: 0,
-            mensuel: totalChiffreAffaire,
-            totalVentes: totalVentes,
-            panierMoyen: panierMoyen,
-            totalRemises: totalRemises,
+            mensuel: resume.chiffreAffaireTotal,
+            totalVentes: resume.nombreVentes,
+            panierMoyen: resume.panierMoyen,
+            totalRemises: resume.montantRemisesTotal,
             chiffreAffaireParModePaiement: chiffreAffaireParModePaiement,
             nombreVentesParModePaiement: nombreVentesParModePaiement
           },

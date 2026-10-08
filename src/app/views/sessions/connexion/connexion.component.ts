@@ -97,19 +97,21 @@ export class ConnexionComponent implements OnInit, OnDestroy {
     });
   }
 
+  // La page produits s'ouvre tout de suite ; le bienvenue est un petit message qui ne bloque
+  // pas l'écran (avant : 4 s d'attente avant même de charger la page).
   private afficherBienvenue(nom: string, roleLabel: string, boutique: string) {
+    this.router.navigate(['/produit']);
     Swal.fire({
-      title: `Bienvenue, ${nom} !`,
-      html: `<p style="margin:8px 0"><strong>${roleLabel}</strong></p>
-             ${boutique ? `<p style="color:#6c757d;font-size:0.9rem">${boutique}</p>` : ''}`,
+      toast: true,
+      position: 'top-end',
       icon: 'success',
-      confirmButtonText: 'OK',
-      confirmButtonColor: '#2563eb',
-      timer: 4000,
+      title: `Bienvenue, ${nom} !`,
+      text: boutique ? `${roleLabel} · ${boutique}` : roleLabel,
+      showConfirmButton: false,
+      backdrop: false,
+      timer: 3500,
       timerProgressBar: true,
-      showClass: { popup: 'animate__animated animate__fadeInDown' }
-    }).then(() => {
-      this.router.navigate(['/produit']);
+      customClass: { popup: 'bienvenue-toast' }
     });
   }
 
