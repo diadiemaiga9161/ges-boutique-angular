@@ -39,6 +39,7 @@ import { MontantInputDirective } from '../../../shared/directives/montant-input.
 import { ProduitImageService } from '../../../shared/services/produit-image.service';
 import { MESURES, contenanceDepuisNom, infoMesure, lireNombre, prixAffiche, prixStocke, puDoc, qteAffichee, qteDoc, qteStockee, texteQte } from '../../../shared/utils/mesure.util';
 
+import { ActionPermission, RoleService } from '../../../shared/services/role.service';
 @Component({
   selector: 'app-produit',
   templateUrl: './produit.component.html',
@@ -253,6 +254,7 @@ export class ProduitComponent implements OnInit, OnDestroy {
   };
 
   constructor(
+    private roleService: RoleService,
     private productService: ProductService,
     private authService: AuthService,
     private compteService: CompteService,
@@ -264,6 +266,12 @@ export class ProduitComponent implements OnInit, OnDestroy {
     private elementRef: ElementRef,
     public photos: ProduitImageService
   ) {}
+
+  /** Bouton visible seulement si le rôle de la personne permet l'action (rôles personnalisés). */
+  peut(module: string, action: ActionPermission): boolean {
+    return this.roleService.peut(module, action);
+  }
+
 
   // ---------------------------------------------------------------- vente à la mesure
   // Fonctionnalité VENTE_A_LA_MESURE : produit vendu au kg / L / m, choisi produit par

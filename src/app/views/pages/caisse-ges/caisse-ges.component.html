@@ -16,24 +16,24 @@
         <i class="bi bi-credit-card me-1"></i> Ventes crédit
       </button>
       <ng-container *ngIf="!estOuverte">
-        <button class="btn btn-success btn-sm" (click)="openOuvertureModal()" *ngIf="isAdmin">
+        <button [hidden]="!peut('CAISSE', 'GERER')" class="btn btn-success btn-sm" (click)="openOuvertureModal()" *ngIf="isAdmin">
           <i class="bi bi-unlock me-1"></i> Ouvrir la caisse
         </button>
       </ng-container>
       <ng-container *ngIf="estOuverte">
-        <button class="btn btn-success btn-sm" (click)="openEntreeModal()" *ngIf="isAdmin">
+        <button [hidden]="!peut('CAISSE', 'GERER')" class="btn btn-success btn-sm" (click)="openEntreeModal()" *ngIf="isAdmin">
           <i class="bi bi-plus-circle me-1"></i> Entrée d'argent
         </button>
-        <button class="btn btn-danger btn-sm" (click)="openSortieModal()" *ngIf="isAdmin">
+        <button [hidden]="!peut('CAISSE', 'GERER')" class="btn btn-danger btn-sm" (click)="openSortieModal()" *ngIf="isAdmin">
           <i class="bi bi-dash-circle me-1"></i> Sortie d'argent
         </button>
-        <button class="btn btn-info btn-sm" (click)="openVerificationModal()" *ngIf="isAdmin">
+        <button [hidden]="!peut('CAISSE', 'GERER')" class="btn btn-info btn-sm" (click)="openVerificationModal()" *ngIf="isAdmin">
           <i class="bi bi-check-circle me-1"></i> Vérifier
         </button>
-        <button class="btn btn-secondary btn-sm" (click)="openTransfertBanqueModal()" *ngIf="isAdmin">
+        <button [hidden]="!peut('CAISSE', 'GERER')" class="btn btn-secondary btn-sm" (click)="openTransfertBanqueModal()" *ngIf="isAdmin">
           <i class="bi bi-bank2 me-1"></i> → Banque
         </button>
-        <button class="btn btn-secondary btn-sm" (click)="openFermetureModal()" *ngIf="isAdmin">
+        <button [hidden]="!peut('CAISSE', 'GERER')" class="btn btn-secondary btn-sm" (click)="openFermetureModal()" *ngIf="isAdmin">
           <i class="bi bi-lock me-1"></i> Fermer
         </button>
       </ng-container>
@@ -104,7 +104,7 @@
           <div class="d-flex align-items-center mb-2">
             <i class="bi bi-safe2-fill fs-3 me-3 opacity-75"></i>
             <div>
-              <div class="text-uppercase fw-semibold small opacity-75 mb-1">Argent dans la caisse maintenant</div>
+              <div class="text-uppercase fw-semibold small mb-1">Argent dans la caisse maintenant</div>
               <div class="fs-2 fw-bold">{{ formatPrice(soldeActuel) }}</div>
             </div>
           </div>
@@ -627,7 +627,7 @@
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" (click)="closeAllModals()"> Annuler</button>
-        <button class="btn btn-success" (click)="ouvrirCaisse()" [disabled]="isLoading">
+        <button [hidden]="!peut('CAISSE', 'GERER')" class="btn btn-success" (click)="ouvrirCaisse()" [disabled]="isLoading">
           <span *ngIf="isLoading"><i class="bi bi-arrow-repeat spin me-1"></i></span>
           <span *ngIf="!isLoading"><i class="bi bi-unlock me-1"></i> Ouvrir</span>
         </button>
@@ -653,7 +653,7 @@
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" (click)="closeAllModals()"> Annuler</button>
-        <button class="btn btn-danger" (click)="fermerCaisse()" [disabled]="isLoading">
+        <button [hidden]="!peut('CAISSE', 'GERER')" class="btn btn-danger" (click)="fermerCaisse()" [disabled]="isLoading">
           <span *ngIf="isLoading"><i class="bi bi-arrow-repeat spin me-1"></i></span>
           <span *ngIf="!isLoading"><i class="bi bi-lock me-1"></i> Fermer</span>
         </button>
@@ -692,7 +692,7 @@
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" (click)="closeAllModals()"> Annuler</button>
-        <button class="btn btn-info" (click)="verifierCaisse()" [disabled]="isLoading">
+        <button [hidden]="!peut('CAISSE', 'GERER')" class="btn btn-info" (click)="verifierCaisse()" [disabled]="isLoading">
           <span *ngIf="isLoading"><i class="bi bi-arrow-repeat spin me-1"></i></span>
           <span *ngIf="!isLoading"><i class="bi bi-check-lg me-1"></i> Vérifier</span>
         </button>
@@ -738,7 +738,7 @@
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" (click)="closeAllModals()"> Annuler</button>
-        <button class="btn btn-success" (click)="enregistrerEntree()" [disabled]="isLoading">
+        <button [hidden]="!peut('CAISSE', 'GERER')" class="btn btn-success" (click)="enregistrerEntree()" [disabled]="isLoading">
           <span *ngIf="isLoading"><i class="bi bi-arrow-repeat spin me-1"></i></span>
           <span *ngIf="!isLoading"><i class="bi bi-check-lg me-1"></i> Enregistrer</span>
         </button>
@@ -774,7 +774,7 @@
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" (click)="closeAllModals()"> Annuler</button>
-        <button class="btn btn-danger" (click)="enregistrerSortie()" [disabled]="isLoading">
+        <button [hidden]="!peut('CAISSE', 'GERER')" class="btn btn-danger" (click)="enregistrerSortie()" [disabled]="isLoading">
           <span *ngIf="isLoading"><i class="bi bi-arrow-repeat spin me-1"></i></span>
           <span *ngIf="!isLoading"><i class="bi bi-check-lg me-1"></i> Enregistrer</span>
         </button>
@@ -853,7 +853,7 @@
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" (click)="closeAllModals()"> Annuler</button>
-        <button class="btn btn-success" (click)="enregistrerReglementCredit()" [disabled]="isLoading">
+        <button [hidden]="!peut('VENTES', 'GERER')" class="btn btn-success" (click)="enregistrerReglementCredit()" [disabled]="isLoading">
           <span *ngIf="isLoading"><i class="bi bi-arrow-repeat spin me-1"></i></span>
           <span *ngIf="!isLoading"><i class="bi bi-check-lg me-1"></i> Enregistrer</span>
         </button>
@@ -996,7 +996,7 @@
         <button class="btn btn-primary"
           (click)="loadHistoriqueReglementsCredit(selectedCredit); showDetailsCreditModal = false"> Voir
           historique</button>
-        <button class="btn btn-success"
+        <button [hidden]="!peut('VENTES', 'GERER')" class="btn btn-success"
           (click)="openReglementCreditModal(selectedCredit); showDetailsCreditModal = false"
           *ngIf="selectedCredit && selectedCredit.montantRestant > 0"> Enregistrer paiement</button>
       </div>
@@ -1063,7 +1063,7 @@
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" (click)="closeAllModals()"> Fermer</button>
-        <button class="btn btn-success"
+        <button [hidden]="!peut('VENTES', 'GERER')" class="btn btn-success"
           (click)="openReglementCreditModal(selectedCredit); showHistoriqueReglementsModal = false"
           *ngIf="selectedCredit && selectedCredit.montantRestant > 0"><i class="bi bi-plus-circle me-1"></i> Nouveau
           paiement</button>
@@ -1517,7 +1517,7 @@
             class="bi bi-exclamation-triangle me-1"></i>Aucun crédit non réglé trouvé pour ce client.</div>
       </div>
       <div class="modal-footer"><button class="btn btn-secondary"
-          (click)="showPaiementGroupeModal = false">Annuler</button><button class="btn btn-success"
+          (click)="showPaiementGroupeModal = false">Annuler</button><button [hidden]="!peut('VENTES', 'GERER')" class="btn btn-success"
           (click)="confirmerPaiementGroupe()"
           [disabled]="isLoadingPaiementGroupe || montantPaiementGroupe <= 0 || repartitionGroupe.length === 0"><span
             *ngIf="isLoadingPaiementGroupe"><i class="bi bi-arrow-repeat spin me-1"></i> Traitement...</span><span

@@ -35,6 +35,7 @@ type SituationTypeFilter = '' | 'VENTE' | 'VERSEMENT';
 import { MesurePuPipe, MesureQtePipe, MesureSuffixePipe } from '../../../shared/pipes/mesure.pipe';
 import { qteDoc } from '../../../shared/utils/mesure.util';
 
+import { ActionPermission, RoleService } from '../../../shared/services/role.service';
 @Component({
   selector: 'app-clients',
   standalone: true,
@@ -207,6 +208,7 @@ export class ClientsComponent implements OnInit {
   ajustementFideliteForm: { delta: number; motif: string } = { delta: 0, motif: '' };
 
   constructor(
+    private roleService: RoleService,
     private clientService: ClientService,
     private authService: AuthService,
     private venteService: VenteService,
@@ -218,6 +220,12 @@ export class ClientsComponent implements OnInit {
     private fideliteService: FideliteService,
     private translate: TranslateService
   ) {}
+
+  /** Bouton visible seulement si le rôle de la personne permet l'action (rôles personnalisés). */
+  peut(module: string, action: ActionPermission): boolean {
+    return this.roleService.peut(module, action);
+  }
+
 
   ngOnInit(): void {
     this.design = this.designService.getDesign();

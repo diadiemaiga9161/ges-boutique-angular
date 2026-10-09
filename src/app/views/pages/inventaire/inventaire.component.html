@@ -1040,7 +1040,7 @@
 
         <ng-container *ngIf="!niveauxLoadingMap[produit.id]">
           <div class="d-flex justify-content-end mb-2">
-            <button class="btn btn-sm btn-outline-primary" *ngIf="isAdmin" (click)="ouvrirAjoutNiveau(produit)">
+            <button [hidden]="!peut('PRODUITS', 'GERER')" class="btn btn-sm btn-outline-primary" *ngIf="isAdmin" (click)="ouvrirAjoutNiveau(produit)">
               <i class="fa fa-plus-circle me-1"></i>
               {{ niveauxMap[produit.id]?.length ? 'Ajouter un sous-conditionnement' : 'Configurer gros / détail' }}
             </button>
@@ -1060,11 +1060,11 @@
               </small>
             </div>
             <div class="d-flex align-items-center gap-2" *ngIf="isAdmin">
-              <button class="btn btn-sm btn-outline-secondary" title="Modifier ce niveau"
+              <button [hidden]="!peut('PRODUITS', 'GERER')" class="btn btn-sm btn-outline-secondary" title="Modifier ce niveau"
                       (click)="ouvrirModifierNiveau(niveau, produit)">
                 <i class="fa fa-edit"></i>
               </button>
-              <button class="btn btn-sm btn-outline-primary"
+              <button [hidden]="!peut('PRODUITS', 'GERER')" class="btn btn-sm btn-outline-primary"
                       (click)="decomposerNiveau(niveau, produit)">
                 <i class="i-Scissors me-1"></i>
                 Prendre 1 {{ i === 0 ? produit.nom : niveauxMap[produit.id][i-1].nom }}
@@ -1201,7 +1201,7 @@
         <button type="button" class="btn btn-secondary" (click)="fermerWizardNiveau()" [disabled]="niveauWizardSaving">
           {{ 'COMMON.CANCEL' | translate }}
         </button>
-        <button type="button" class="btn btn-primary" [disabled]="!niveauWizardValide || niveauWizardSaving"
+        <button [hidden]="!peut('PRODUITS', 'GERER')" type="button" class="btn btn-primary" [disabled]="!niveauWizardValide || niveauWizardSaving"
                 (click)="enregistrerNiveauWizard()">
           <span *ngIf="!niveauWizardSaving">
             <i class="fa fa-save me-1"></i> {{ 'COMMON.SAVE' | translate }}

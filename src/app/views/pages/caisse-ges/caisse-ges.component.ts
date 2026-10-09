@@ -32,6 +32,7 @@ import { CompteService, Compte } from '../../../shared/services/compte.service';
 import { TranslateModule } from '@ngx-translate/core';
 import { MontantInputDirective } from '../../../shared/directives/montant-input.directive';
 
+import { ActionPermission, RoleService } from '../../../shared/services/role.service';
 interface CaisseSession {
   dateOuverture: string;
   dateFermeture: string;
@@ -197,6 +198,7 @@ export class CaisseGesComponent implements OnInit, OnDestroy {
   Math = Math;
 
   constructor(
+    private roleService: RoleService,
     public caisseService: CaisseService,
     private authService: AuthService,
     private compteService: CompteService,
@@ -204,6 +206,12 @@ export class CaisseGesComponent implements OnInit, OnDestroy {
     private factureService: FactureService,
     private venteService: VenteService
   ) {}
+
+  /** Bouton visible seulement si le rôle de la personne permet l'action (rôles personnalisés). */
+  peut(module: string, action: ActionPermission): boolean {
+    return this.roleService.peut(module, action);
+  }
+
 
   ngOnInit(): void {
     this.loadAllData();

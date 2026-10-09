@@ -12,10 +12,10 @@
       <button class="btn btn-outline-secondary" type="button" (click)="telechargerStockPdf()" [disabled]="!produits.length">
         <i class="fa fa-file-pdf-o me-1"></i> Stock PDF
       </button>
-      <button class="btn btn-primary" type="button" (click)="openAddModal()" *ngIf="isAdmin">
+      <button [hidden]="!peut('PRODUITS', 'GERER')" class="btn btn-primary" type="button" (click)="openAddModal()" *ngIf="isAdmin">
         <i class="fa fa-plus me-1"></i> {{ 'PRODUCTS.ADD' | translate }}
       </button>
-      <button class="btn btn-success" type="button" (click)="openImportModal()" *ngIf="isAdmin">
+      <button [hidden]="!peut('PRODUITS', 'GERER')" class="btn btn-success" type="button" (click)="openImportModal()" *ngIf="isAdmin">
         <i class="fa fa-upload me-1"></i> Importer Excel
       </button>
       <div class="dropdown" *ngIf="isAdmin" (click)="$event.stopPropagation()">
@@ -23,12 +23,12 @@
           <i class="fa fa-cog me-1"></i> Gestion
         </button>
         <ul class="dropdown-menu" [class.show]="showGestionDropdown">
-          <li><a class="dropdown-item" (click)="openAddCategoryModal(); showGestionDropdown=false"><i class="fa fa-tag me-2"></i>Ajouter catégorie</a></li>
+          <li><a [hidden]="!peut('PRODUITS', 'GERER')" class="dropdown-item" (click)="openAddCategoryModal(); showGestionDropdown=false"><i class="fa fa-tag me-2"></i>Ajouter catégorie</a></li>
           <li><a class="dropdown-item" (click)="activeTab = 'categories'; showGestionDropdown=false"><i class="fa fa-list me-2"></i>Gérer catégories</a></li>
           <!-- Gestion fournisseur retirée de la page Produit : tout se fait désormais depuis la
                vraie page Fournisseurs (menu latéral), pour éviter une double implémentation.
           <li><hr class="dropdown-divider"></li>
-          <li><a class="dropdown-item" (click)="openAddFournisseurModal(); showGestionDropdown=false"><i class="fa fa-truck me-2"></i>Ajouter fournisseur</a></li>
+          <li><a [hidden]="!peut('PRODUITS', 'GERER')" class="dropdown-item" (click)="openAddFournisseurModal(); showGestionDropdown=false"><i class="fa fa-truck me-2"></i>Ajouter fournisseur</a></li>
           <li><a class="dropdown-item" (click)="activeTab = 'fournisseurs'; showGestionDropdown=false"><i class="fa fa-users me-2"></i>Gérer fournisseurs</a></li>
           -->
         </ul>
@@ -49,7 +49,7 @@
       comme un sac de riz ou une caisse de Coca. Juste le prix et la quantité pour démarrer,
       tu pourras compléter le reste plus tard.
     </p>
-    <button class="btn btn-primary" type="button" (click)="openAddModal()">
+    <button [hidden]="!peut('PRODUITS', 'GERER')" class="btn btn-primary" type="button" (click)="openAddModal()">
       <i class="fa fa-plus me-1"></i> Ajouter mon premier produit
     </button>
   </div>
@@ -193,7 +193,7 @@
         <h5 class="mb-0">Liste des produits</h5>
         <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
           <span class="text-muted me-3" *ngIf="filteredProducts.length > 0">Page {{ currentPage }}/{{ totalPages }} ({{ filteredProducts.length }} produits)</span>
-          <button class="btn btn-sm btn-primary" type="button" (click)="openAddModal()" *ngIf="isAdmin"><i class="fa fa-plus me-1"></i> Créer</button>
+          <button [hidden]="!peut('PRODUITS', 'GERER')" class="btn btn-sm btn-primary" type="button" (click)="openAddModal()" *ngIf="isAdmin"><i class="fa fa-plus me-1"></i> Créer</button>
           <button class="btn btn-sm btn-outline-success" type="button" (click)="exportProducts()" *ngIf="isAdmin"><i class="fa fa-download me-1"></i> Excel</button>
           <button class="btn btn-sm btn-outline-info" type="button" (click)="loadData()"><i class="fa fa-refresh me-1"></i> Actualiser</button>
         </div>
@@ -245,9 +245,9 @@
                 </td>
                 <td class="text-center" *ngIf="isAdmin">
                   <div class="btn-group btn-group-sm btn-group-icons">
-                    <button class="btn btn-outline-primary" type="button" (click)="openEditModal(produit)" title="Modifier"><i class="fa fa-edit"></i> Modifier</button>
+                    <button [hidden]="!peut('PRODUITS', 'GERER')" class="btn btn-outline-primary" type="button" (click)="openEditModal(produit)" title="Modifier"><i class="fa fa-edit"></i> Modifier</button>
                     <button class="btn btn-outline-info" type="button" (click)="openDetailsModal(produit)" title="Détails"><i class="fa fa-info-circle"></i> Détails</button>
-                    <button class="btn btn-outline-danger" type="button" (click)="openDeleteModal(produit)" title="Supprimer"><i class="fa fa-trash"></i> Supprimer</button>
+                    <button [hidden]="!peut('PRODUITS', 'SUPPRIMER')" class="btn btn-outline-danger" type="button" (click)="openDeleteModal(produit)" title="Supprimer"><i class="fa fa-trash"></i> Supprimer</button>
                   </div>
                 </td>
               </tr>
@@ -255,7 +255,7 @@
                 <td [attr.colspan]="isAdmin ? 10 : 9" class="text-center py-4">
                   <i class="fa fa-box fa-3x text-muted mb-3"></i>
                   <p class="text-muted">Aucun produit trouvé</p>
-                  <button class="btn btn-primary" type="button" (click)="openAddModal()" *ngIf="isAdmin"><i class="fa fa-plus me-1"></i> Créer un produit</button>
+                  <button [hidden]="!peut('PRODUITS', 'GERER')" class="btn btn-primary" type="button" (click)="openAddModal()" *ngIf="isAdmin"><i class="fa fa-plus me-1"></i> Créer un produit</button>
                 </td>
               </tr>
             </tbody>
@@ -284,7 +284,7 @@
         <h5 class="mb-0">Liste des fournisseurs</h5>
         <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
           <button class="btn btn-sm btn-outline-success" type="button" (click)="exportFournisseurs()" *ngIf="isAdmin"><i class="fa fa-download me-1"></i> Excel</button>
-          <button class="btn btn-sm btn-primary" type="button" (click)="openAddFournisseurModal()" *ngIf="isAdmin"><i class="fa fa-plus me-1"></i> Ajouter</button>
+          <button [hidden]="!peut('PRODUITS', 'GERER')" class="btn btn-sm btn-primary" type="button" (click)="openAddFournisseurModal()" *ngIf="isAdmin"><i class="fa fa-plus me-1"></i> Ajouter</button>
         </div>
       </div>
       <div class="card-body p-0">
@@ -323,13 +323,13 @@
                 <td class="text-center"><span [class]="'badge ' + (f.actif ? 'bg-success' : 'bg-danger')">{{ f.actif ? "Actif" : "Inactif" }}</span></td>
                 <td class="text-center" *ngIf="isAdmin">
                   <div class="btn-group btn-group-sm btn-group-icons">
-                    <button class="btn btn-outline-primary" type="button" (click)="openEditFournisseurModal(f)" title="Modifier"><i class="fa fa-edit"></i> Modifier</button>
+                    <button [hidden]="!peut('PRODUITS', 'GERER')" class="btn btn-outline-primary" type="button" (click)="openEditFournisseurModal(f)" title="Modifier"><i class="fa fa-edit"></i> Modifier</button>
                     <button class="btn btn-outline-info" type="button" (click)="openSituationModal(f)" title="Situation comptable"><i class="fa fa-chart-line"></i> Situation</button>
-                    <button class="btn btn-outline-success" type="button" (click)="openAchatModal(f)" title="Enregistrer un achat"><i class="fa fa-shopping-cart"></i> Achat</button>
-                    <button class="btn btn-outline-warning" type="button" (click)="openPaiementModal(f)" title="Effectuer un paiement"><i class="fa fa-money"></i> Paiement</button>
-                    <button class="btn btn-outline-primary" type="button" (click)="openAvanceFournisseurModal(f)" title="Enregistrer une avance fournisseur"><i class="fa fa-hand-holding-usd"></i> Avance</button>
+                    <button [hidden]="!peut('FOURNISSEURS', 'GERER')" class="btn btn-outline-success" type="button" (click)="openAchatModal(f)" title="Enregistrer un achat"><i class="fa fa-shopping-cart"></i> Achat</button>
+                    <button [hidden]="!peut('FOURNISSEURS', 'GERER')" class="btn btn-outline-warning" type="button" (click)="openPaiementModal(f)" title="Effectuer un paiement"><i class="fa fa-money"></i> Paiement</button>
+                    <button [hidden]="!peut('FOURNISSEURS', 'GERER')" class="btn btn-outline-primary" type="button" (click)="openAvanceFournisseurModal(f)" title="Enregistrer une avance fournisseur"><i class="fa fa-hand-holding-usd"></i> Avance</button>
                     <button class="btn btn-outline-info" type="button" (click)="openHistoriqueAvancesModal(f)" title="Voir l'historique des avances"><i class="fa fa-history"></i> Historique</button>
-                    <button class="btn btn-outline-danger" type="button" (click)="openDeleteFournisseurModal(f)" [disabled]="f.nombreProduits > 0" title="Supprimer"><i class="fa fa-trash"></i> Supprimer</button>
+                    <button [hidden]="!peut('PRODUITS', 'SUPPRIMER')" class="btn btn-outline-danger" type="button" (click)="openDeleteFournisseurModal(f)" [disabled]="f.nombreProduits > 0" title="Supprimer"><i class="fa fa-trash"></i> Supprimer</button>
                   </div>
                 </td>
               </tr>
@@ -337,7 +337,7 @@
                 <td [attr.colspan]="isAdmin ? 10 : 9" class="text-center py-4">
                   <i class="fa fa-truck fa-3x text-muted mb-3"></i>
                   <p class="text-muted">Aucun fournisseur enregistré</p>
-                  <button class="btn btn-primary" type="button" (click)="openAddFournisseurModal()" *ngIf="isAdmin"><i class="fa fa-plus me-1"></i> Ajouter un fournisseur</button>
+                  <button [hidden]="!peut('PRODUITS', 'GERER')" class="btn btn-primary" type="button" (click)="openAddFournisseurModal()" *ngIf="isAdmin"><i class="fa fa-plus me-1"></i> Ajouter un fournisseur</button>
                 </td>
               </tr>
             </tbody>
@@ -350,7 +350,7 @@
     <div class="card" *ngIf="activeTab === 'categories'">
       <div class="card-header bg-white d-flex justify-content-between align-items-center">
         <h5 class="mb-0">Liste des catégories</h5>
-        <button class="btn btn-sm btn-primary" type="button" (click)="openAddCategoryModal()" *ngIf="isAdmin"><i class="fa fa-plus me-1"></i> Ajouter</button>
+        <button [hidden]="!peut('PRODUITS', 'GERER')" class="btn btn-sm btn-primary" type="button" (click)="openAddCategoryModal()" *ngIf="isAdmin"><i class="fa fa-plus me-1"></i> Ajouter</button>
       </div>
       <div class="card-body p-0">
         <div class="table-responsive">
@@ -372,8 +372,8 @@
                 <td class="text-center"><small>{{ cat.dateCreation | date: "dd/MM/yyyy" }}</small></td>
                 <td class="text-center" *ngIf="isAdmin">
                   <div class="btn-group btn-group-sm">
-                    <button class="btn btn-outline-primary" type="button" (click)="startEditCategory(cat)" title="Modifier"><i class="fa fa-edit me-1"></i> Modifier</button>
-                    <button class="btn btn-outline-danger" type="button" (click)="openDeleteCategoryModal(cat)" [disabled]="countProductsForCategory(cat) > 0" title="Supprimer"><i class="fa fa-trash me-1"></i> Supprimer</button>
+                    <button [hidden]="!peut('PRODUITS', 'GERER')" class="btn btn-outline-primary" type="button" (click)="startEditCategory(cat)" title="Modifier"><i class="fa fa-edit me-1"></i> Modifier</button>
+                    <button [hidden]="!peut('PRODUITS', 'SUPPRIMER')" class="btn btn-outline-danger" type="button" (click)="openDeleteCategoryModal(cat)" [disabled]="countProductsForCategory(cat) > 0" title="Supprimer"><i class="fa fa-trash me-1"></i> Supprimer</button>
                   </div>
                 </td>
               </tr>
@@ -381,7 +381,7 @@
                 <td [attr.colspan]="isAdmin ? 5 : 4" class="text-center py-4">
                   <i class="fa fa-tags fa-3x text-muted mb-3"></i>
                   <p class="text-muted">Aucune catégorie définie</p>
-                  <button class="btn btn-primary" type="button" (click)="openAddCategoryModal()" *ngIf="isAdmin"><i class="fa fa-plus me-1"></i> Ajouter une catégorie</button>
+                  <button [hidden]="!peut('PRODUITS', 'GERER')" class="btn btn-primary" type="button" (click)="openAddCategoryModal()" *ngIf="isAdmin"><i class="fa fa-plus me-1"></i> Ajouter une catégorie</button>
                 </td>
               </tr>
             </tbody>
@@ -543,7 +543,7 @@
                       <i class="fa fa-camera me-1" aria-hidden="true"></i> {{ urlPhoto(selectedProduct) ? 'Changer la photo' : 'Ajouter une photo' }}
                       <input type="file" accept="image/*" hidden (change)="choisirPhotoExistant($event)" [disabled]="photoEnvoiEnCours">
                     </label>
-                    <button type="button" class="btn btn-sm btn-link text-danger" *ngIf="urlPhoto(selectedProduct)" (click)="retirerPhoto()" [disabled]="photoEnvoiEnCours">Retirer</button>
+                    <button [hidden]="!peut('PRODUITS', 'GERER')" type="button" class="btn btn-sm btn-link text-danger" *ngIf="urlPhoto(selectedProduct)" (click)="retirerPhoto()" [disabled]="photoEnvoiEnCours">Retirer</button>
                   </div>
                 </div>
               </div>
@@ -564,11 +564,11 @@
                     <select class="form-select form-select-sm w-auto" [(ngModel)]="nouveauModeMesure" name="nouveauModeMesure" aria-label="Nouvelle façon de vendre">
                       <option *ngFor="let m of ['KG','L','M']" [value]="m">{{ $any(mesures)[m].libelle }}</option>
                     </select>
-                    <button type="button" class="btn btn-sm btn-outline-primary" (click)="changerModeMesure(nouveauModeMesure)" [disabled]="changementModeEnCours">
+                    <button [hidden]="!peut('PRODUITS', 'GERER')" type="button" class="btn btn-sm btn-outline-primary" (click)="changerModeMesure(nouveauModeMesure)" [disabled]="changementModeEnCours">
                       Vendre de cette façon
                     </button>
                   </ng-container>
-                  <button type="button" class="btn btn-sm btn-outline-secondary" *ngIf="modeMesureForm" (click)="changerModeMesure(null)" [disabled]="changementModeEnCours">
+                  <button [hidden]="!peut('PRODUITS', 'GERER')" type="button" class="btn btn-sm btn-outline-secondary" *ngIf="modeMesureForm" (click)="changerModeMesure(null)" [disabled]="changementModeEnCours">
                     Remettre à l'unité
                   </button>
                 </div>
@@ -629,8 +629,8 @@
                   <td class="text-end">{{ formatPrice(u.prixAchat) }}</td>
                   <td class="text-center">
                     <div class="btn-group btn-group-sm">
-                      <button class="btn btn-outline-primary" type="button" (click)="startEditUniteVente(u)" title="Modifier"><i class="fa fa-edit"></i></button>
-                      <button class="btn btn-outline-danger" type="button" (click)="deleteUniteVente(u)" title="Supprimer"><i class="fa fa-trash"></i></button>
+                      <button [hidden]="!peut('PRODUITS', 'GERER')" class="btn btn-outline-primary" type="button" (click)="startEditUniteVente(u)" title="Modifier"><i class="fa fa-edit"></i></button>
+                      <button [hidden]="!peut('PRODUITS', 'SUPPRIMER')" class="btn btn-outline-danger" type="button" (click)="deleteUniteVente(u)" title="Supprimer"><i class="fa fa-trash"></i></button>
                     </div>
                   </td>
                 </tr>
@@ -671,7 +671,7 @@
               </div>
               <small class="text-muted d-block mt-2">{{ 'UNITE_VENTE.RELATIVE_FACTOR_HELP' | translate }}</small>
               <div class="mt-3 d-flex gap-2">
-                <button class="btn btn-sm btn-success" type="button" (click)="submitUniteVente()" [disabled]="isLoadingUnitesVente">
+                <button [hidden]="!peut('PRODUITS', 'GERER')" class="btn btn-sm btn-success" type="button" (click)="submitUniteVente()" [disabled]="isLoadingUnitesVente">
                   <i class="fa fa-save me-1"></i> {{ isEditingUniteVente ? ('UNITE_VENTE.EDIT' | translate) : ('UNITE_VENTE.ADD' | translate) }}
                 </button>
                 <button class="btn btn-sm btn-outline-secondary" type="button" *ngIf="isEditingUniteVente" (click)="cancelEditUniteVente()">Annuler</button>
@@ -706,7 +706,7 @@
           <div class="row"><div class="col-6"><strong>Bio:</strong> <i class="fa" [class.fa-check-circle]="selectedProduct.bio" [class.fa-circle-o]="!selectedProduct.bio" [class.text-success]="selectedProduct.bio" [class.text-muted]="!selectedProduct.bio"></i> {{ selectedProduct.bio ? "Oui" : "Non" }}</div><div class="col-6"><strong>Statut stock:</strong> <span [class]="'badge ' + getStockStatusClass(selectedProduct)">{{ getStockStatusText(selectedProduct) }}</span></div></div>
         </div>
       </div>
-      <div class="modal-footer"><button type="button" class="btn btn-secondary" (click)="closeDetailsModal()">Fermer</button><button type="button" class="btn btn-warning" (click)="openEditModal(selectedProduct!); closeDetailsModal()"><i class="fa fa-edit me-1"></i> Modifier</button></div>
+      <div class="modal-footer"><button type="button" class="btn btn-secondary" (click)="closeDetailsModal()">Fermer</button><button [hidden]="!peut('PRODUITS', 'GERER')" type="button" class="btn btn-warning" (click)="openEditModal(selectedProduct!); closeDetailsModal()"><i class="fa fa-edit me-1"></i> Modifier</button></div>
     </div>
   </div>
 </div>
@@ -756,7 +756,7 @@
                   <td class="text-end">{{ formatPrice(achat.montantPaye || 0) }}</td>
                   <td class="text-end fw-bold" [class.text-success]="achat.montantRestant <= 0.01" [class.text-danger]="achat.montantRestant > 0.01">{{ formatPrice(achat.montantRestant) }}</td>
                   <td class="text-center"><span class="badge" [ngClass]="getAchatStatusClass(achat)">{{ getAchatStatusText(achat) }}</span></td>
-                  <td class="text-center"><div class="d-flex gap-1 justify-content-center"><button class="btn btn-sm btn-outline-warning py-0" title="Retour marchandise" [disabled]="achat.statut === 'ANNULE'" (click)="openRetourAchatModal(achat); showSituationModal=false"><i class="fa fa-undo me-1"></i>Retour</button><button class="btn btn-sm btn-outline-danger py-0" title="Annuler cet achat" [disabled]="achat.statut === 'ANNULE'" (click)="annulerAchat(achat)"><i class="fa fa-ban me-1"></i>Annuler</button></div></td>
+                  <td class="text-center"><div class="d-flex gap-1 justify-content-center"><button class="btn btn-sm btn-outline-warning py-0" title="Retour marchandise" [disabled]="achat.statut === 'ANNULE'" (click)="openRetourAchatModal(achat); showSituationModal=false"><i class="fa fa-undo me-1"></i>Retour</button><button [hidden]="!peut('FOURNISSEURS', 'SUPPRIMER')" class="btn btn-sm btn-outline-danger py-0" title="Annuler cet achat" [disabled]="achat.statut === 'ANNULE'" (click)="annulerAchat(achat)"><i class="fa fa-ban me-1"></i>Annuler</button></div></td>
                 </tr>
                 <tr *ngIf="fournisseurSituation.achatsRecents.length === 0"><td colspan="7" class="text-center">Aucun achat récent</td></tr>
               </tbody>
@@ -782,8 +782,8 @@
       <div class="modal-footer">
         <button class="btn btn-secondary" (click)="showSituationModal = false">Fermer</button>
         <button class="btn btn-info" (click)="openSituationModal(selectedFournisseurForSituation!)" *ngIf="selectedFournisseurForSituation"><i class="fa fa-refresh me-2"></i> Rafraîchir</button>
-        <button class="btn btn-primary" (click)="openAchatModal(selectedFournisseurForSituation!); showSituationModal = false">Nouvel achat</button>
-        <button class="btn btn-success" (click)="openPaiementModal(selectedFournisseurForSituation!); showSituationModal = false">Effectuer paiement</button>
+        <button [hidden]="!peut('FOURNISSEURS', 'GERER')" class="btn btn-primary" (click)="openAchatModal(selectedFournisseurForSituation!); showSituationModal = false">Nouvel achat</button>
+        <button [hidden]="!peut('FOURNISSEURS', 'GERER')" class="btn btn-success" (click)="openPaiementModal(selectedFournisseurForSituation!); showSituationModal = false">Effectuer paiement</button>
       </div>
     </div>
   </div>
@@ -1271,7 +1271,7 @@
         <div *ngIf="!isLoadingAvance && historiqueAvancesFournisseur.length === 0" class="text-center text-muted py-4"><i class="fa fa-inbox fa-3x mb-3 d-block opacity-50"></i>Aucune avance enregistrée pour ce fournisseur.</div>
         <div class="table-responsive" *ngIf="!isLoadingAvance && historiqueAvancesFournisseur.length > 0"><table class="table table-hover table-sm"><thead class="table-light"><tr><th>Date</th><th class="text-end">Montant initial</th><th class="text-end">Utilisé</th><th class="text-end text-success fw-bold">Disponible</th><th>Source</th><th>Statut</th><th>Motif</th></tr></thead><tbody><tr *ngFor="let avance of historiqueAvancesFournisseur" [class.table-success]="(avance.montantDisponible || 0) > 0" [class.table-secondary]="(avance.montantDisponible || 0) <= 0"><td><small>{{ formatDate(avance.dateDepot) }}</small></td><td class="text-end">{{ formatPrice(avance.montant) }}</td><td class="text-end text-warning">{{ formatPrice(avance.montantUtilise) }}</td><td class="text-end fw-bold" [class.text-success]="avance.montantDisponible > 0" [class.text-muted]="avance.montantDisponible <= 0">{{ formatPrice(avance.montantDisponible) }}</td><td><span class="badge" [class.bg-info]="avance.sourceFinancement === 'CAISSE'" [class.bg-primary]="avance.sourceFinancement === 'BANQUE'">{{ avance.sourceFinancement === 'CAISSE' ? 'Caisse' : 'Banque' }}</span></td><td><span class="badge" [class.bg-success]="avance.statut === 'DISPONIBLE'" [class.bg-secondary]="avance.statut === 'EPUISE'" [class.bg-warning]="avance.statut === 'UTILISE_PARTIELLEMENT'">{{ avance.statut === 'DISPONIBLE' ? 'Disponible' : avance.statut === 'EPUISE' ? 'Épuisée' : 'Partielle' }}</span></td><td><small class="text-muted">{{ avance.motif || '-' }}</small></td></tr></tbody><tfoot class="table-light fw-bold"><tr><td>Total</td><td class="text-end">{{ formatPrice(getSumAvances('montant')) }}</td><td class="text-end text-warning">{{ formatPrice(getSumAvances('montantUtilise')) }}</td><td class="text-end text-success">{{ formatPrice(getTotalAvancesDisponibles()) }}</td><td colspan="3"></td></tr></tfoot></table></div>
       </div>
-      <div class="modal-footer"><button class="btn btn-outline-secondary" (click)="showHistoriqueAvancesModal=false">Fermer</button><button class="btn btn-primary" (click)="openAvanceFournisseurModal(selectedFournisseurForHistorique!); showHistoriqueAvancesModal=false" *ngIf="selectedFournisseurForHistorique"><i class="fa fa-plus me-1"></i> Nouvelle avance</button></div>
+      <div class="modal-footer"><button class="btn btn-outline-secondary" (click)="showHistoriqueAvancesModal=false">Fermer</button><button [hidden]="!peut('FOURNISSEURS', 'GERER')" class="btn btn-primary" (click)="openAvanceFournisseurModal(selectedFournisseurForHistorique!); showHistoriqueAvancesModal=false" *ngIf="selectedFournisseurForHistorique"><i class="fa fa-plus me-1"></i> Nouvelle avance</button></div>
     </div>
   </div>
 </div>
@@ -1303,7 +1303,7 @@
         <div class="mb-3"><label class="form-label fw-semibold">Motif du retour</label><input type="text" class="form-control" [(ngModel)]="retourAchatMotif" placeholder="Ex: Produit défectueux, mauvaise livraison..."></div>
         <div class="alert alert-info mb-0" *ngIf="totalRetourAchat > 0"><i class="fa fa-info-circle me-2"></i><ng-container *ngIf="totalRetourAchat <= ((selectedAchatPourRetour?.montantTotal || 0) - (selectedAchatPourRetour?.montantPaye || 0)); else excessTemplate"><strong>Dette réduite de {{ formatPrice(totalRetourAchat) }}</strong> — aucun remboursement en espèces.</ng-container><ng-template #excessTemplate>Dette soldée + remboursement de <strong>{{ formatPrice(totalRetourAchat - ((selectedAchatPourRetour?.montantTotal || 0) - (selectedAchatPourRetour?.montantPaye || 0))) }}</strong> vers {{ retourAchatModeRemboursement === 'CAISSE' ? 'la caisse' : 'la banque' }}.</ng-template></div>
       </div>
-      <div class="modal-footer"><button class="btn btn-outline-secondary" (click)="showRetourAchatModal=false" [disabled]="isLoading">Annuler</button><button class="btn btn-warning" (click)="submitRetourAchat()" [disabled]="isLoading || totalRetourAchat <= 0"><span *ngIf="!isLoading"><i class="fa fa-undo me-1"></i> Confirmer le retour</span><span *ngIf="isLoading"><i class="fa fa-spinner fa-spin me-1"></i> Traitement...</span></button></div>
+      <div class="modal-footer"><button class="btn btn-outline-secondary" (click)="showRetourAchatModal=false" [disabled]="isLoading">Annuler</button><button [hidden]="!peut('FOURNISSEURS', 'GERER')" class="btn btn-warning" (click)="submitRetourAchat()" [disabled]="isLoading || totalRetourAchat <= 0"><span *ngIf="!isLoading"><i class="fa fa-undo me-1"></i> Confirmer le retour</span><span *ngIf="isLoading"><i class="fa fa-spinner fa-spin me-1"></i> Traitement...</span></button></div>
     </div>
   </div>
 </div>

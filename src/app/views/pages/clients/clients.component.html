@@ -9,7 +9,7 @@
       </div>
     </div>
     <div class="app-page-header-actions">
-      <button type="button" class="btn btn-primary" (click)="openCreateModal()">
+      <button [hidden]="!peut('CLIENTS', 'GERER')" type="button" class="btn btn-primary" (click)="openCreateModal()">
         <i class="fa fa-plus me-1"></i> {{ 'CLIENTS.ADD' | translate }}
       </button>
       <button type="button" class="btn btn-secondary" (click)="showClientDiversVentes()">
@@ -133,13 +133,13 @@
                   <button  type="button" class="btn btn-info text-white" (click)="showClientVentes(client)" title="Ventes, situation, paiements et avances">
                     <i class="fa fa-shopping-cart"></i> Ventes
                   </button>
-                  <button type="button" class="btn btn-warning" (click)="editClient(client)" title="Modifier">
+                  <button [hidden]="!peut('CLIENTS', 'GERER')" type="button" class="btn btn-warning" (click)="editClient(client)" title="Modifier">
                     <i class="fa fa-edit"></i> Modifier
                   </button>
-                  <button type="button" class="btn btn-danger" (click)="deleteClient(client)" title="Supprimer">
+                  <button [hidden]="!peut('CLIENTS', 'SUPPRIMER')" type="button" class="btn btn-danger" (click)="deleteClient(client)" title="Supprimer">
                     <i class="fa fa-trash"></i> Supprimer
                   </button>
-                  <button type="button" class="btn btn-primary" (click)="openAvanceModal(client)" title="Déposer une avance">
+                  <button [hidden]="!peut('CLIENTS', 'GERER')" type="button" class="btn btn-primary" (click)="openAvanceModal(client)" title="Déposer une avance">
                     <i class="fa fa-money"></i> Avance
                   </button>
                 </div>
@@ -170,13 +170,13 @@
               <button type="button" class="btn btn-sm btn-info text-white" (click)="showClientVentes(client)" title="Ventes, situation, paiements et avances">
                 <i class="fa fa-shopping-cart me-1"></i>Ventes
               </button>
-              <button type="button" class="btn btn-sm btn-warning" (click)="editClient(client)" title="Modifier">
+              <button [hidden]="!peut('CLIENTS', 'GERER')" type="button" class="btn btn-sm btn-warning" (click)="editClient(client)" title="Modifier">
                 <i class="fa fa-edit me-1"></i>Modifier
               </button>
-              <button type="button" class="btn btn-sm btn-danger" (click)="deleteClient(client)" title="Supprimer">
+              <button [hidden]="!peut('CLIENTS', 'SUPPRIMER')" type="button" class="btn btn-sm btn-danger" (click)="deleteClient(client)" title="Supprimer">
                 <i class="fa fa-trash me-1"></i>Supprimer
               </button>
-              <button type="button" class="btn btn-sm btn-primary" (click)="openAvanceModal(client)" title="Avance">
+              <button [hidden]="!peut('CLIENTS', 'GERER')" type="button" class="btn btn-sm btn-primary" (click)="openAvanceModal(client)" title="Avance">
                 <i class="fa fa-money me-1"></i>Avance
               </button>
             </div>
@@ -213,7 +213,7 @@
   <div *ngIf="!isLoading && clients.length === 0" class="text-center py-5 d-none d-md-block">
     <i class="fa fa-users fa-3x text-muted mb-3 d-block"></i>
     <p class="text-muted">{{ 'PROMO.EMPTY' | translate }}</p>
-    <button class="btn btn-primary" (click)="openCreateModal()"><i class="fa fa-plus me-1"></i> {{ 'CLIENTS.ADD' | translate }}</button>
+    <button [hidden]="!peut('CLIENTS', 'GERER')" class="btn btn-primary" (click)="openCreateModal()"><i class="fa fa-plus me-1"></i> {{ 'CLIENTS.ADD' | translate }}</button>
   </div>
 </div>
 
@@ -1223,7 +1223,7 @@
                    [placeholder]="'FIDELITE.ADJUST_MOTIF_PLACEHOLDER' | translate">
           </div>
           <div class="col-md-3 d-flex gap-2">
-            <button type="button" class="btn btn-primary btn-sm flex-fill" [disabled]="isSavingAjustementFidelite" (click)="confirmerAjustementFidelite()">
+            <button [hidden]="!peut('CLIENTS', 'GERER')" type="button" class="btn btn-primary btn-sm flex-fill" [disabled]="isSavingAjustementFidelite" (click)="confirmerAjustementFidelite()">
               <i class="fa fa-check me-1" *ngIf="!isSavingAjustementFidelite"></i>
               <i class="fa fa-spinner fa-spin me-1" *ngIf="isSavingAjustementFidelite"></i>
               {{ 'FIDELITE.ADJUST_CONFIRM' | translate }}
@@ -1238,10 +1238,10 @@
 
     <div class="modal-footer">
       <button type="button" class="btn-secondary" (click)="closeVentesModal()">Fermer</button>
-      <button type="button" class="btn-primary" (click)="openAvanceModal(selectedClientForVentes!)" *ngIf="clientDetailTab==='avances' && selectedClientForVentes">
+      <button [hidden]="!peut('CLIENTS', 'GERER')" type="button" class="btn-primary" (click)="openAvanceModal(selectedClientForVentes!)" *ngIf="clientDetailTab==='avances' && selectedClientForVentes">
         <i class="fa fa-plus me-1"></i> Nouvelle avance
       </button>
-      <button type="button" class="btn-primary" (click)="ouvrirAjustementFidelite()"
+      <button [hidden]="!peut('CLIENTS', 'GERER')" type="button" class="btn-primary" (click)="ouvrirAjustementFidelite()"
               *ngIf="clientDetailTab==='fidelite' && isAdmin && !showAjustementFideliteForm && selectedClientForVentes">
         <i class="fa fa-sliders me-1"></i> {{ 'FIDELITE.ADJUST_BUTTON' | translate }}
       </button>

@@ -2217,3 +2217,20 @@ body.dark-mode .app-filter-card .btn-period:hover {
   border-color: var(--primary) !important;
   color: #93c5fd !important;
 }
+
+/* ======================================================
+   CAISSE (site) — lisibilité en mode clair : le vert, le rouge, le gris et les
+   boutons à contour du thème étaient trop pâles sur fond blanc ou jaune.
+   Limité à la page Caisse ; le mode sombre garde ses couleurs.
+   ====================================================== */
+body:not(.dark-mode) app-caisse-ges .text-success { color: #047857 !important; }
+body:not(.dark-mode) app-caisse-ges .text-danger { color: #b91c1c !important; }
+body:not(.dark-mode) app-caisse-ges .text-muted { color: #475569 !important; }
+body:not(.dark-mode) app-caisse-ges .btn-outline-primary:not(:hover):not(.active) { color: #1d4ed8; border-color: #1d4ed8; }
+body:not(.dark-mode) app-caisse-ges .btn-outline-warning:not(:hover):not(.active) { color: #92400e; border-color: #d97706; }
+body:not(.dark-mode) app-caisse-ges .card.bg-warning,
+body:not(.dark-mode) app-caisse-ges .card.bg-warning h3,
+body:not(.dark-mode) app-caisse-ges .card.bg-warning h6,
+body:not(.dark-mode) app-caisse-ges .card.bg-warning small { color: #2b1d00 !important; }
+body:not(.dark-mode) app-caisse-ges .badge.bg-warning.text-dark,
+body:not(.dark-mode) app-caisse-ges .badge.bg-light.text-dark { color: #1a1200 !important; }

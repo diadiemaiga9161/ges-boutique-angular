@@ -8,7 +8,7 @@ import { WebSocketService } from '../../../shared/services/websocket.service';
 import Swal from 'sweetalert2';
 import { InventaireService, MouvementStock, ProduitStock, StatistiquesInventaire, TypeMouvement, TypeSortie, MouvementRequest, AjustementRequest } from '../../../shared/services/inventaire.service';
 import { ProductService, Produit, Categorie } from '../../../shared/services/product.service';
-import { RoleService } from '../../../shared/services/role.service';
+import { ActionPermission, RoleService } from '../../../shared/services/role.service';
 import { AuthService } from '../../../shared/services/auth.service';
 import { ProduitNiveau, ProduitNiveauService } from '../../../shared/services/produit-niveau.service';
 import * as XLSX from 'xlsx';
@@ -159,6 +159,12 @@ export class InventaireComponent implements OnInit {
     private niveauService: ProduitNiveauService,
     private roleService: RoleService
   ) {}
+
+  /** Bouton visible seulement si le rôle de la personne permet l'action (rôles personnalisés). */
+  peut(module: string, action: ActionPermission): boolean {
+    return this.roleService.peut(module, action);
+  }
+
 
   // ---------------------------------------------------------------- vente à la mesure
   // Produit vendu au kg/L/m : stock gardé en g/ml/cm. Les formulaires se remplissent en

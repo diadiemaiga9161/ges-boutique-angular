@@ -76,13 +76,13 @@
         </div>
       </div>
       
-      <button class="btn btn-primary" (click)="openNewVenteModal()">
+      <button [hidden]="!peut('VENTES', 'GERER')" class="btn btn-primary" (click)="openNewVenteModal()">
         <i class="fa fa-plus me-1"></i><span class="d-none d-sm-inline">Nouvelle </span>Vente
       </button>
       <!-- Fusionné dans la même modale que "Nouvelle Vente" (interrupteur
            "Vente à crédit" à l'intérieur, comme sur Ionic). Ancien bouton
            séparé gardé en commentaire au cas où :
-      <button class="btn btn-warning" (click)="openNewVenteCreditModal()">
+      <button [hidden]="!peut('VENTES', 'GERER')" class="btn btn-warning" (click)="openNewVenteCreditModal()">
         <i class="fa fa-credit-card me-1"></i><span class="d-none d-sm-inline">Vente à </span>Crédit
       </button>
       -->
@@ -365,10 +365,10 @@
             <td class="text-center">
               <div class="btn-group btn-group-sm btn-group-icons">
                 <button type="button" class="btn btn-outline-info" (click)="openVenteDetailModal(vente); $event.stopPropagation()" title="Détails"><i class="fa fa-eye"></i> Détails</button>
-                <button type="button" class="btn btn-outline-secondary" (click)="ouvrirModificationLignes(vente); $event.stopPropagation()" title="Changer des produits" *ngIf="canManageVentes && !vente.annulee">
+                <button [hidden]="!peut('VENTES', 'GERER')" type="button" class="btn btn-outline-secondary" (click)="ouvrirModificationLignes(vente); $event.stopPropagation()" title="Changer des produits" *ngIf="canManageVentes && !vente.annulee">
                   <i class="fa fa-exchange-alt"></i> Modifier
                 </button>
-                <button type="button" class="btn btn-outline-danger" (click)="openAnnulationModal(vente); $event.stopPropagation()" title="Annuler" *ngIf="canManageVentes && peutAnnulerVente(vente)"><i class="fa fa-ban"></i> Annuler</button>
+                <button [hidden]="!peut('VENTES', 'SUPPRIMER')" type="button" class="btn btn-outline-danger" (click)="openAnnulationModal(vente); $event.stopPropagation()" title="Annuler" *ngIf="canManageVentes && peutAnnulerVente(vente)"><i class="fa fa-ban"></i> Annuler</button>
                 <button type="button" class="btn btn-outline-primary" (click)="openFactureDateModal(vente.id); $event.stopPropagation()" title="Facture"><i class="fa fa-file-pdf"></i> Facture</button>
                 <button type="button" class="btn btn-outline-success" (click)="envoyerFactureWhatsApp(vente); $event.stopPropagation()"
                         [title]="vente.clientTelephone ? 'Envoyer la facture par WhatsApp' : 'Ajoutez un numéro de téléphone au client pour activer l\'envoi WhatsApp'"
@@ -381,7 +381,7 @@
               <div class="app-empty-state">
                 <i class="fa fa-shopping-cart fa-3x mb-3"></i>
                 <p>{{ 'PROMO.EMPTY' | translate }}</p>
-                <button class="btn btn-primary" (click)="openNewVenteModal()"><i class="fa fa-plus me-1"></i> {{ 'SALES.NEW' | translate }}</button>
+                <button [hidden]="!peut('VENTES', 'GERER')" class="btn btn-primary" (click)="openNewVenteModal()"><i class="fa fa-plus me-1"></i> {{ 'SALES.NEW' | translate }}</button>
               </div>
             </td>
           </tr>
@@ -1252,7 +1252,7 @@
       </div>
       <div class="modal-footer py-2">
         <button class="btn btn-secondary btn-sm" (click)="closeAllModals()"><i class="fa fa-times me-1"></i> Annuler</button>
-        <button class="btn btn-primary btn-sm" (click)="createVente()" [disabled]="produitsPanier.length === 0 || isLoading">
+        <button [hidden]="!peut('VENTES', 'GERER')" class="btn btn-primary btn-sm" (click)="createVente()" [disabled]="produitsPanier.length === 0 || isLoading">
           <i class="fa fa-save me-1"></i> Enregistrer la vente
         </button>
       </div>
@@ -1459,7 +1459,7 @@ MODALE NOUVELLE VENTE À CRÉDIT (ancienne)
       </div>
       <div class="modal-footer py-2">
         <button class="btn btn-secondary btn-sm" (click)="closeAllModals()"><i class="fa fa-times me-1"></i> Annuler</button>
-        <button class="btn btn-warning btn-sm" (click)="createVenteCredit()" [disabled]="produitsPanier.length === 0 || !clientSelectionne || isLoading">
+        <button [hidden]="!peut('VENTES', 'GERER')" class="btn btn-warning btn-sm" (click)="createVenteCredit()" [disabled]="produitsPanier.length === 0 || !clientSelectionne || isLoading">
           <i class="fa fa-save me-1"></i> Enregistrer le crédit
         </button>
       </div>
@@ -1487,7 +1487,7 @@ MODALE NOUVELLE VENTE À CRÉDIT (ancienne)
             <input type="text" class="form-control form-control-sm" placeholder="Téléphone" [(ngModel)]="clientSearchForm.telephone" (input)="rechercherClients()">
           </div>
           <div class="col-md-2">
-            <button class="btn btn-success btn-sm w-100" (click)="ouvrirFormulaireNouveauClient()"><i class="fa fa-plus"></i> Nouveau</button>
+            <button [hidden]="!peut('CLIENTS', 'GERER')" class="btn btn-success btn-sm w-100" (click)="ouvrirFormulaireNouveauClient()"><i class="fa fa-plus"></i> Nouveau</button>
           </div>
         </div>
         <div class="table-responsive">
@@ -1563,7 +1563,7 @@ MODALE NOUVELLE VENTE À CRÉDIT (ancienne)
       </div>
       <div class="modal-footer py-2">
         <button class="btn btn-outline-secondary btn-sm" (click)="showNewClientForm=false" [disabled]="isLoading">Annuler</button>
-        <button class="btn btn-success btn-sm" (click)="creerNouveauClient()" [disabled]="isLoading || !nouveauClientForm.nom || !nouveauClientForm.numeroTelephone">
+        <button [hidden]="!peut('CLIENTS', 'GERER')" class="btn btn-success btn-sm" (click)="creerNouveauClient()" [disabled]="isLoading || !nouveauClientForm.nom || !nouveauClientForm.numeroTelephone">
           <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-1"></span>
           <i class="fa fa-check me-1" *ngIf="!isLoading"></i> Créer le client
         </button>
@@ -1753,7 +1753,7 @@ MODALE NOUVELLE VENTE À CRÉDIT (ancienne)
       <div class="modal-footer" [style.background]="design === 2 ? '#0f172a' : '#fff'"
            [style.border-top]="design === 2 ? '1px solid #334155' : ''">
         <button type="button" class="btn btn-secondary" (click)="closeAllModals()">Fermer</button>
-        <button type="button" class="btn btn-warning"
+        <button [hidden]="!peut('VENTES', 'GERER')" type="button" class="btn btn-warning"
                 *ngIf="selectedVente && !selectedVente.annulee"
                 (click)="openRetourVenteModal(selectedVente!); closeAllModals()">
           <i class="fa fa-undo me-1"></i> Retour produit
@@ -2053,7 +2053,7 @@ MODALE NOUVELLE VENTE À CRÉDIT (ancienne)
         <button type="button" class="btn btn-secondary" (click)="closeAllModals()" [disabled]="isLoading">
           Annuler
         </button>
-        <button type="button" class="btn" [class.btn-warning]="isModificationCredit"
+        <button [hidden]="!peut('VENTES', 'GERER')" type="button" class="btn" [class.btn-warning]="isModificationCredit"
           [class.btn-primary]="!isModificationCredit" (click)="modifierVente()"
           [disabled]="isLoading || produitsPanier.length === 0">
           <span *ngIf="!isLoading">
@@ -2131,7 +2131,7 @@ MODALE NOUVELLE VENTE À CRÉDIT (ancienne)
         <button type="button" class="btn btn-secondary" (click)="closeAllModals()" [disabled]="isLoading">
           Annuler
         </button>
-        <button type="button" class="btn btn-danger" (click)="annulerVente()"
+        <button [hidden]="!peut('VENTES', 'SUPPRIMER')" type="button" class="btn btn-danger" (click)="annulerVente()"
           [disabled]="isLoading || !annulationForm.motif">
           <span *ngIf="!isLoading">
             <i class="fa fa-ban me-1"></i> Confirmer l'annulation
@@ -2292,7 +2292,7 @@ MODALE NOUVELLE VENTE À CRÉDIT (ancienne)
         <button class="btn btn-outline-secondary" (click)="showRetourVenteModal=false" [disabled]="isLoading">
           Annuler
         </button>
-        <button class="btn btn-warning" (click)="submitRetourVente()" [disabled]="isLoading || totalRetourVente <= 0">
+        <button [hidden]="!peut('VENTES', 'GERER')" class="btn btn-warning" (click)="submitRetourVente()" [disabled]="isLoading || totalRetourVente <= 0">
           <span *ngIf="!isLoading"><i class="fa fa-undo me-1"></i> Confirmer le retour</span>
           <span *ngIf="isLoading"><i class="fa fa-spinner fa-spin me-1"></i> Traitement...</span>
         </button>
@@ -2422,7 +2422,7 @@ MODALE NOUVELLE VENTE À CRÉDIT (ancienne)
                               [class.fa-eye-slash]="creditDetailVente?.id === vente.id"></i>
                 {{ creditDetailVente?.id === vente.id ? 'Masquer' : 'Produits' }}
               </button>
-              <button class="btn btn-sm btn-success"
+              <button [hidden]="!peut('VENTES', 'GERER')" class="btn btn-sm btn-success"
                       (click)="openReglementCreditModal(vente); showCreditsModal = false; creditDetailVente = null">
                 <i class="fa fa-money-bill-wave me-1"></i> Régler
               </button>
@@ -2582,7 +2582,7 @@ MODALE NOUVELLE VENTE À CRÉDIT (ancienne)
         <button class="btn btn-secondary" (click)="showReglementCreditModal = false">
           <i class="fa fa-times me-1"></i> Annuler
         </button>
-        <button class="btn btn-success" (click)="reglementCredit()" [disabled]="isLoading">
+        <button [hidden]="!peut('VENTES', 'GERER')" class="btn btn-success" (click)="reglementCredit()" [disabled]="isLoading">
           <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-1"></span>
           <i class="fa fa-check me-1" *ngIf="!isLoading"></i>
           Enregistrer le règlement
@@ -2743,7 +2743,7 @@ MODALE NOUVELLE VENTE À CRÉDIT (ancienne)
         <button class="btn btn-secondary" (click)="showModificationLignesModal = false">
           <i class="fa fa-times me-1"></i> Annuler
         </button>
-        <button class="btn btn-primary" (click)="confirmerModificationLignes()" [disabled]="isModificationLoading">
+        <button [hidden]="!peut('VENTES', 'GERER')" class="btn btn-primary" (click)="confirmerModificationLignes()" [disabled]="isModificationLoading">
           <span *ngIf="isModificationLoading" class="spinner-border spinner-border-sm me-1"></span>
           <i class="fa fa-check me-1" *ngIf="!isModificationLoading"></i>
           Confirmer la modification

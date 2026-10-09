@@ -38,6 +38,7 @@ import { PeseeModalComponent } from '../../../shared/components/pesee/pesee-moda
 import { ProduitImageService } from '../../../shared/services/produit-image.service';
 import { infoMesure, lireNombre, prixAffiche, prixStocke, qteAffichee, qteDoc, qteStockee, texteQte } from '../../../shared/utils/mesure.util';
 
+import { ActionPermission, RoleService } from '../../../shared/services/role.service';
 @Component({
   selector: 'app-ventes',
   templateUrl: './ventes.component.html',
@@ -485,6 +486,7 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
   private periodeChargee: string = '';
 
   constructor(
+    private roleService: RoleService,
     private venteService: VenteService,
     private productService: ProductService,
     private authService: AuthService,
@@ -502,6 +504,12 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
     private tutorielDemarrage: TutorielDemarrageService,
     public photos: ProduitImageService
   ) {}
+
+  /** Bouton visible seulement si le rôle de la personne permet l'action (rôles personnalisés). */
+  peut(module: string, action: ActionPermission): boolean {
+    return this.roleService.peut(module, action);
+  }
+
 
   // Étape 2 du tuto de démarrage : boutique avec des produits mais aucune vente
   // encore faite — jamais bloquant, fermable, disparaît dès la première vraie vente.
