@@ -135,14 +135,15 @@
               <tbody>
                 <tr *ngFor="let l of lignesPeriodes">
                   <th scope="row" class="fw-semibold">{{ l.libelle }}</th>
-                  <td class="text-end text-success">{{ l.stats ? formatPrice(l.stats.totalEntrees || 0) : '…' }}</td>
-                  <td class="text-end text-danger">{{ l.stats ? formatPrice(l.stats.totalSorties || 0) : '…' }}</td>
+                  <td class="text-end text-success">{{ l.stats ? formatPrice((l.stats.argentEntreTiroir ?? l.stats.totalEntrees) || 0) : '…' }}</td>
+                  <td class="text-end text-danger">{{ l.stats ? formatPrice((l.stats.argentSortiTiroir ?? l.stats.totalSorties) || 0) : '…' }}</td>
                   <td class="text-end fw-bold">{{ l.stats ? formatPrice(l.stats.soldeNetPeriode || 0) : '…' }}</td>
                 </tr>
               </tbody>
             </table>
           </div>
-          <div class="small text-muted">« Différence » = de combien l'argent de la caisse a vraiment augmenté (ou baissé) sur la période. Les dépôts à la banque ne comptent pas. Ce n'est pas le bénéfice.</div>
+          <div class="small text-muted">Seul l'argent en espèces du tiroir est compté : les ventes Wave, Moov et Orange Money n'y passent pas. Entré − Sorti = Différence (de combien l'argent du tiroir a augmenté ou baissé). Les dépôts à la banque sont à part. Ce n'est pas le bénéfice.</div>
+          <div class="small text-muted mt-1" *ngIf="(statistiquesMoisCourant?.argentDeposeBanque || 0) > 0">Déposé à la banque ce mois-ci : <strong>{{ formatPrice(statistiquesMoisCourant?.argentDeposeBanque || 0) }}</strong></div>
         </div>
       </div>
     </div>
@@ -166,10 +167,10 @@
           </div>
           <div class="d-flex justify-content-between mt-3 pt-2 border-top border-white border-opacity-25 small">
             <span>
-              <i class="bi bi-arrow-up me-1"></i>Entrées: <strong>{{ formatPrice(statistiquesMois?.totalEntrees || 0) }}</strong>
+              <i class="bi bi-arrow-up me-1"></i>Entrées: <strong>{{ formatPrice((statistiquesMois?.argentEntreTiroir ?? statistiquesMois?.totalEntrees) || 0) }}</strong>
             </span>
             <span>
-              <i class="bi bi-arrow-down me-1"></i>Sorties: <strong>{{ formatPrice(statistiquesMois?.totalSorties || 0) }}</strong>
+              <i class="bi bi-arrow-down me-1"></i>Sorties: <strong>{{ formatPrice((statistiquesMois?.argentSortiTiroir ?? statistiquesMois?.totalSorties) || 0) }}</strong>
             </span>
           </div>
           Précise que c'est le mois précédent, complet — pas le mois en cours
