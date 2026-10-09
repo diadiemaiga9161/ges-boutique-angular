@@ -10,6 +10,7 @@ import { formaterMessageWhatsApp, envoyerWhatsAppDirect } from '../../../shared/
 import Swal from 'sweetalert2';
 import { TranslateModule } from '@ngx-translate/core';
 
+import { ActionPermission, RoleService } from '../../../shared/services/role.service';
 const MOIS_LABELS = [
   'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
   'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
@@ -94,6 +95,7 @@ export class PaiementEmployeComponent implements OnInit {
   }
 
   constructor(
+    private roleService: RoleService,
     private employeService: EmployeService,
     private paiementService: PaiementEmployeService,
     private authService: AuthService,
@@ -348,5 +350,10 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;padding:24px;fon
 </div></body></html>`;
 
     this.factureService.ouvrirHtmlPersonnalise(html);
+  }
+
+  /** Bouton visible seulement si le rôle de la personne permet l'action (rôles personnalisés). */
+  peut(module: string, action: ActionPermission): boolean {
+    return this.roleService.peut(module, action);
   }
 }

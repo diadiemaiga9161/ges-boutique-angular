@@ -11,7 +11,7 @@ import { Router } from '@angular/router';
 import { Observable, Subscription, of, timer } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import Swal from 'sweetalert2';
-import { RoleBoutique, RoleService } from '../../../shared/services/role.service';
+import { ActionPermission, RoleBoutique, RoleService } from '../../../shared/services/role.service';
 import { COUNTRY_CODES, validatePhoneForCountry, construireNumeroComplet, separerIndicatif } from '../../../shared/utils/telephone.util';
 import { MontantInputDirective } from '../../../shared/directives/montant-input.directive';
 
@@ -741,5 +741,10 @@ export class VendeurComponent implements OnInit, OnDestroy {
       actifs,
       inactifs: total - actifs
     };
+  }
+
+  /** Bouton visible seulement si le rôle de la personne permet l'action (rôles personnalisés). */
+  peut(module: string, action: ActionPermission): boolean {
+    return this.roleService.peut(module, action);
   }
 }

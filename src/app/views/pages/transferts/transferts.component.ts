@@ -13,6 +13,7 @@ import { MontantInputDirective } from '../../../shared/directives/montant-input.
 import { MesurePuPipe, MesureQtePipe, MesureSuffixePipe } from '../../../shared/pipes/mesure.pipe';
 import { qteDoc, puDoc } from '../../../shared/utils/mesure.util';
 
+import { ActionPermission, RoleService } from '../../../shared/services/role.service';
 @Component({
   selector: 'app-transferts',
   templateUrl: './transferts.component.html',
@@ -98,6 +99,7 @@ export class TransfertsComponent implements OnInit {
   };
 
   constructor(
+    private roleService: RoleService,
     private transfertService: TransfertService,
     private produitService: ProductService,
     private factureService: FactureService
@@ -495,5 +497,10 @@ export class TransfertsComponent implements OnInit {
 
   get totalPaiements(): number {
     return this.paiementsTransfert.reduce((s, p) => s + (p.montant || 0), 0);
+  }
+
+  /** Bouton visible seulement si le rôle de la personne permet l'action (rôles personnalisés). */
+  peut(module: string, action: ActionPermission): boolean {
+    return this.roleService.peut(module, action);
   }
 }

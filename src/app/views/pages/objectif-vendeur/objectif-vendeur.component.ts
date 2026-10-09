@@ -12,6 +12,7 @@ import { UserService, User } from '../../../shared/services/user.service';
 import { AuthService } from '../../../shared/services/auth.service';
 import { MontantInputDirective } from '../../../shared/directives/montant-input.directive';
 
+import { ActionPermission, RoleService } from '../../../shared/services/role.service';
 /** Retourne le numéro de semaine ISO-8601 et l'année correspondante pour une date donnée. */
 function getSemaineIso(date: Date): { semaine: number; annee: number } {
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
@@ -81,6 +82,7 @@ export class ObjectifVendeurComponent implements OnInit {
   }
 
   constructor(
+    private roleService: RoleService,
     public objectifService: ObjectifVendeurService,
     private userService: UserService,
     private authService: AuthService
@@ -237,5 +239,10 @@ export class ObjectifVendeurComponent implements OnInit {
 
   fmt(m: number): string {
     return this.objectifService.formatMontant(m);
+  }
+
+  /** Bouton visible seulement si le rôle de la personne permet l'action (rôles personnalisés). */
+  peut(module: string, action: ActionPermission): boolean {
+    return this.roleService.peut(module, action);
   }
 }

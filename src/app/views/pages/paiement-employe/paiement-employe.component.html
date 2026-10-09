@@ -10,7 +10,7 @@
       </div>
     </div>
     <div class="app-page-header-actions">
-      <button class="btn btn-primary" (click)="ouvrirFormPaiement()">
+      <button [hidden]="!peut('PERSONNEL', 'GERER')" class="btn btn-primary" (click)="ouvrirFormPaiement()">
         <i class="fa fa-plus me-1"></i> Payer un employé
       </button>
     </div>
@@ -149,7 +149,7 @@
                   title="Envoyer le reçu par WhatsApp" (click)="envoyerRecuWhatsApp(p)">
                   <i class="fab fa-whatsapp"></i> WhatsApp
                 </button>
-                <button *ngIf="p.statut === 'PAYE'" class="btn btn-xs btn-outline-danger"
+                <button [hidden]="!peut('PERSONNEL', 'SUPPRIMER')" *ngIf="p.statut === 'PAYE'" class="btn btn-xs btn-outline-danger"
                   title="Annuler le paiement" (click)="confirmerAnnulation(p)">
                   <i class="i-Close-Window"></i> Annuler
                 </button>
@@ -268,7 +268,7 @@
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" (click)="fermerModal()">Annuler</button>
-        <button class="btn btn-success" (click)="confirmerPaiement()" [disabled]="isSaving">
+        <button [hidden]="!peut('PERSONNEL', 'GERER')" class="btn btn-success" (click)="confirmerPaiement()" [disabled]="isSaving">
           <span *ngIf="isSaving" class="spinner-border spinner-border-sm mr-1"></span>
           <i class="i-Money-2 mr-1" *ngIf="!isSaving"></i> Payer
         </button>

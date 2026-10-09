@@ -16,6 +16,7 @@ import { MontantInputDirective } from '../../../shared/directives/montant-input.
 
 import { MesurePuPipe, MesureQtePipe, MesureSuffixePipe } from '../../../shared/pipes/mesure.pipe';
 
+import { ActionPermission, RoleService } from '../../../shared/services/role.service';
 @Component({
   selector: 'app-factures',
   standalone: true,
@@ -99,6 +100,7 @@ export class FacturesComponent implements OnInit, OnDestroy {
   FactureStatut = FactureStatut;
 
   constructor(
+    private roleService: RoleService,
     private factureService: FactureService,
     private authService: AuthService,
     private clientService: ClientService,
@@ -703,4 +705,9 @@ export class FacturesComponent implements OnInit, OnDestroy {
   getStatusText(statut: string): string { return this.factureService.getStatutText(statut); }
   getStatutOptions(): { value: string; label: string }[] { return this.factureService.getStatutOptions(); }
   get isAdmin(): boolean { return this.authService.isAdmin(); }
+
+  /** Bouton visible seulement si le rôle de la personne permet l'action (rôles personnalisés). */
+  peut(module: string, action: ActionPermission): boolean {
+    return this.roleService.peut(module, action);
+  }
 }

@@ -233,7 +233,7 @@
         <button class="btn btn-secondary" (click)="toggleCreateForm()">
           <i class="fas fa-times"></i> Annuler
         </button>
-        <button class="btn btn-primary" (click)="createVendeur()" [disabled]="isLoading">
+        <button [hidden]="!peut('PERSONNEL', 'GERER')" class="btn btn-primary" (click)="createVendeur()" [disabled]="isLoading">
           <i class="fas fa-save"></i> {{ isLoading ? 'Création...' : 'Créer le vendeur' }}
         </button>
       </div>
@@ -304,10 +304,10 @@
 
           <!-- Actions -->
           <div class="uc-actions" (click)="$event.stopPropagation()">
-            <button class="uc-btn uc-btn--edit" (click)="openEditModal(user)" title="Modifier">
+            <button [hidden]="!peut('PERSONNEL', 'GERER')" class="uc-btn uc-btn--edit" (click)="openEditModal(user)" title="Modifier">
               <i class="fas fa-edit"></i> Modifier
             </button>
-            <button class="uc-btn uc-btn--delete" (click)="deleteUser(user)" title="Supprimer">
+            <button [hidden]="!peut('PERSONNEL', 'SUPPRIMER')" class="uc-btn uc-btn--delete" (click)="deleteUser(user)" title="Supprimer">
               <i class="fas fa-trash-alt"></i>
             </button>
           </div>
@@ -511,7 +511,7 @@
           <button class="btn btn-secondary" (click)="closeEditModal()">
             <i class="fas fa-times"></i> Annuler
           </button>
-          <button class="btn btn-primary" (click)="saveUser()" [disabled]="isLoading">
+          <button [hidden]="!peut('PERSONNEL', 'GERER')" class="btn btn-primary" (click)="saveUser()" [disabled]="isLoading">
             <i class="fas fa-save"></i> {{ isLoading ? 'Sauvegarde...' : 'Sauvegarder' }}
           </button>
         </div>
@@ -558,7 +558,7 @@
           <button class="btn btn-secondary" (click)="closeDeleteModal()">
             <i class="fas fa-times"></i> Annuler
           </button>
-          <button class="btn btn-danger" (click)="confirmDelete()" [disabled]="isLoading">
+          <button [hidden]="!peut('PERSONNEL', 'SUPPRIMER')" class="btn btn-danger" (click)="confirmDelete()" [disabled]="isLoading">
             <i class="fas fa-trash"></i> {{ isLoading ? 'Suppression...' : 'Supprimer' }}
           </button>
         </div>

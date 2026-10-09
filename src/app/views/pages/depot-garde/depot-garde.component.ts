@@ -16,6 +16,7 @@ import Swal from 'sweetalert2';
 import { TranslateModule } from '@ngx-translate/core';
 import { MontantInputDirective } from '../../../shared/directives/montant-input.directive';
 
+import { ActionPermission, RoleService } from '../../../shared/services/role.service';
 @Component({
   selector: 'app-depot-garde',
   standalone: true,
@@ -96,7 +97,7 @@ export class DepotGardeComponent implements OnInit {
     if (p >= 1 && p <= this.totalPages) this.currentPage = p;
   }
 
-  constructor(private depotService: DepotGardeService) {}
+  constructor(private roleService: RoleService, private depotService: DepotGardeService) {}
 
   ngOnInit(): void {
     this.chargerDonnees();
@@ -399,5 +400,10 @@ export class DepotGardeComponent implements OnInit {
   getPourcentageRetire(depot: DepotGarde): number {
     if (!depot.montantInitial) return 0;
     return Math.round((depot.montantRetire / depot.montantInitial) * 100);
+  }
+
+  /** Bouton visible seulement si le rôle de la personne permet l'action (rôles personnalisés). */
+  peut(module: string, action: ActionPermission): boolean {
+    return this.roleService.peut(module, action);
   }
 }

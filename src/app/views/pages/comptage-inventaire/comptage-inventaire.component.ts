@@ -5,7 +5,7 @@ import { RouterLink } from '@angular/router';
 import Swal from 'sweetalert2';
 import { Comptage, InventaireService, LigneComptage } from '../../../shared/services/inventaire.service';
 import { ProductService } from '../../../shared/services/product.service';
-import { RoleService } from '../../../shared/services/role.service';
+import { ActionPermission, RoleService } from '../../../shared/services/role.service';
 import { AuthService } from '../../../shared/services/auth.service';
 import { infoMesure, lireNombre, qteAffichee, qteStockee, texteQte } from '../../../shared/utils/mesure.util';
 
@@ -268,5 +268,10 @@ export class ComptageInventaireComponent implements OnInit {
 
   private alerte(e: any): void {
     Swal.fire('Erreur', e?.error?.message || e?.error?.error || 'Action impossible pour le moment.', 'error');
+  }
+
+  /** Bouton visible seulement si le rôle de la personne permet l'action (rôles personnalisés). */
+  peut(module: string, action: ActionPermission): boolean {
+    return this.roleService.peut(module, action);
   }
 }

@@ -18,6 +18,7 @@ import Swal from 'sweetalert2';
 import { TranslateModule } from '@ngx-translate/core';
 import { MontantInputDirective } from '../../../shared/directives/montant-input.directive';
 
+import { ActionPermission, RoleService } from '../../../shared/services/role.service';
 @Component({
   selector: 'app-comptes',
   templateUrl: './comptes.component.html',
@@ -71,6 +72,7 @@ export class ComptesComponent implements OnInit {
   dateFin: string = '';
 
   constructor(
+    private roleService: RoleService,
     private compteService: CompteService,
     private authService: AuthService,
     private http: HttpClient,
@@ -591,5 +593,10 @@ export class ComptesComponent implements OnInit {
 
   private emptyCompteForm(): CompteRequest {
     return { nomBanque: '', numeroCompte: '', agence: '', titulaire: '', soldeInitial: 0, description: '' };
+  }
+
+  /** Bouton visible seulement si le rôle de la personne permet l'action (rôles personnalisés). */
+  peut(module: string, action: ActionPermission): boolean {
+    return this.roleService.peut(module, action);
   }
 }

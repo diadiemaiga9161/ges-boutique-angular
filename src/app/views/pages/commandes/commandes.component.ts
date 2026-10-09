@@ -21,6 +21,7 @@ interface LigneForm {
 
 import { MesurePuPipe, MesureQtePipe, MesureSuffixePipe } from '../../../shared/pipes/mesure.pipe';
 
+import { ActionPermission, RoleService } from '../../../shared/services/role.service';
 @Component({
   selector: 'app-commandes',
   standalone: true,
@@ -81,6 +82,7 @@ export class CommandesComponent implements OnInit {
   montantReglementGroupe = 0;
 
   constructor(
+    private roleService: RoleService,
     private commandeService: CommandeService,
     private productService: ProductService,
     private clientService: ClientService,
@@ -655,4 +657,9 @@ export class CommandesComponent implements OnInit {
   get totalValidees(): number { return this.commandes.filter(c => c.statut === StatutCommande.VALIDEE).reduce((s, c) => s + (c.montantTotal || 0), 0); }
   get nbCreditsEnCours(): number { return this.commandes.filter(c => c.estCredit && c.montantRestant > 0).length; }
   get totalCreditsRestants(): number { return this.commandes.filter(c => c.estCredit && c.montantRestant > 0).reduce((s, c) => s + (c.montantRestant || 0), 0); }
+
+  /** Bouton visible seulement si le rôle de la personne permet l'action (rôles personnalisés). */
+  peut(module: string, action: ActionPermission): boolean {
+    return this.roleService.peut(module, action);
+  }
 }

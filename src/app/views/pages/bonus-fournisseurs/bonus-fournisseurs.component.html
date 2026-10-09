@@ -10,7 +10,7 @@
       </div>
     </div>
     <div class="app-page-header-actions">
-      <button class="btn btn-primary" (click)="startCreate()">
+      <button [hidden]="!peut('FOURNISSEURS', 'GERER')" class="btn btn-primary" (click)="startCreate()">
         <i class="fa fa-plus me-1"></i> {{ 'SUPPLIER_BONUS.NEW' | translate }}
       </button>
     </div>
@@ -123,10 +123,10 @@
                 </span>
               </td>
               <td class="text-center">
-                <button class="btn btn-sm btn-outline-primary me-1" (click)="startEdit(b)" title="Modifier">
+                <button [hidden]="!peut('FOURNISSEURS', 'GERER')" class="btn btn-sm btn-outline-primary me-1" (click)="startEdit(b)" title="Modifier">
                   <i class="fa fa-edit"></i>
                 </button>
-                <button class="btn btn-sm btn-outline-danger" (click)="supprimer(b)" title="Supprimer">
+                <button [hidden]="!peut('FOURNISSEURS', 'SUPPRIMER')" class="btn btn-sm btn-outline-danger" (click)="supprimer(b)" title="Supprimer">
                   <i class="fa fa-trash"></i>
                 </button>
               </td>
@@ -190,7 +190,7 @@
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" (click)="cancel()">Annuler</button>
-        <button class="btn btn-success" (click)="save()">
+        <button [hidden]="!peut('FOURNISSEURS', 'GERER')" class="btn btn-success" (click)="save()">
           <i class="fa fa-save me-1"></i>
           {{ editing ? 'Enregistrer' : 'Ajouter le bonus' }}
         </button>

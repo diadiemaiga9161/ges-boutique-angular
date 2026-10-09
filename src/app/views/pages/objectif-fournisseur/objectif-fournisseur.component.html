@@ -117,7 +117,7 @@
           </select>
         </div>
         <div class="col-md-2 text-right">
-          <button class="btn btn-primary btn-sm" (click)="ouvrirFormulaire()">
+          <button [hidden]="!peut('FOURNISSEURS', 'GERER')" class="btn btn-primary btn-sm" (click)="ouvrirFormulaire()">
             <i class="i-Add mr-1"></i> {{ 'SUPPLIER_OBJ.NEW' | translate }}
           </button>
         </div>
@@ -150,7 +150,7 @@
       <div class="text-center py-5 text-muted" *ngIf="!isLoading && !objectifsFiltres.length">
         <i class="i-Medal-2" style="font-size:3rem;opacity:.3"></i>
         <p class="mt-2">{{ 'SUPPLIER_OBJ.EMPTY' | translate }}</p>
-        <button class="btn btn-primary btn-sm" (click)="ouvrirFormulaire()">Créer le premier objectif</button>
+        <button [hidden]="!peut('FOURNISSEURS', 'GERER')" class="btn btn-primary btn-sm" (click)="ouvrirFormulaire()">Créer le premier objectif</button>
       </div>
       <div class="table-responsive" *ngIf="!isLoading && objectifsFiltres.length">
         <table class="table table-hover mb-0">
@@ -203,16 +203,16 @@
                 </span>
               </td>
               <td class="text-center text-nowrap">
-                <button class="btn btn-sm btn-outline-primary mr-1" (click)="ouvrirFormulaire(o)"
+                <button [hidden]="!peut('FOURNISSEURS', 'GERER')" class="btn btn-sm btn-outline-primary mr-1" (click)="ouvrirFormulaire(o)"
                   [disabled]="o.stockAjoute" title="Modifier">
                   <i class="i-Pen-2"></i>
                 </button>
-                <button class="btn btn-sm btn-outline-success mr-1"
+                <button [hidden]="!peut('FOURNISSEURS', 'GERER')" class="btn btn-sm btn-outline-success mr-1"
                   *ngIf="o.statut === 'ATTEINT' && !o.stockAjoute"
                   (click)="confirmerValider(o)" title="Valider et ajouter au stock">
                   <i class="i-Check"></i>
                 </button>
-                <button class="btn btn-sm btn-outline-danger"
+                <button [hidden]="!peut('FOURNISSEURS', 'SUPPRIMER')" class="btn btn-sm btn-outline-danger"
                   (click)="confirmerSupprimer(o)" [disabled]="o.stockAjoute" title="Supprimer">
                   <i class="i-Trash1"></i>
                 </button>
@@ -299,7 +299,7 @@
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" (click)="showFormModal = false">Annuler</button>
-        <button class="btn btn-primary" (click)="enregistrer()" [disabled]="isSaving">
+        <button [hidden]="!peut('FOURNISSEURS', 'GERER')" class="btn btn-primary" (click)="enregistrer()" [disabled]="isSaving">
           <span *ngIf="isSaving" class="spinner-border spinner-border-sm mr-1"></span>
           {{ isEditing ? 'Enregistrer les modifications' : 'Créer l\'objectif' }}
         </button>

@@ -11,7 +11,7 @@
         </div>
       </div>
       <div class="app-page-header-actions">
-        <button class="btn btn-primary" (click)="openNouvelleDette()">
+        <button [hidden]="!peut('CLIENTS', 'GERER')" class="btn btn-primary" (click)="openNouvelleDette()">
           <i class="fas fa-plus-circle me-1"></i> {{ 'DEBTS.NEW' | translate }}
         </button>
         <button class="btn btn-outline-secondary" (click)="refresh()">
@@ -134,16 +134,16 @@
               </span>
             </td>
             <td class="actions">
-              <button class="action-btn pay-btn" (click)="preparerReglement(dette)" [disabled]="dette.estReglee" title="Enregistrer un règlement">
+              <button [hidden]="!peut('CLIENTS', 'GERER')" class="action-btn pay-btn" (click)="preparerReglement(dette)" [disabled]="dette.estReglee" title="Enregistrer un règlement">
                 <i class="fas fa-hand-holding-usd"></i> Payer
               </button>
               <button class="action-btn history-btn" (click)="voirHistorique(dette)" title="Voir l'historique">
                 <i class="fas fa-history"></i> Historique
               </button>
-              <button class="action-btn edit-btn" (click)="editerDette(dette)" *ngIf="!dette.estReglee" title="Modifier">
+              <button [hidden]="!peut('CLIENTS', 'GERER')" class="action-btn edit-btn" (click)="editerDette(dette)" *ngIf="!dette.estReglee" title="Modifier">
                 <i class="fas fa-edit"></i> Modifier
               </button>
-              <button class="action-btn delete-btn" (click)="supprimerDette(dette.id)" *ngIf="!dette.estReglee && dette.montantInitial === dette.montantRestant" title="Supprimer">
+              <button [hidden]="!peut('CLIENTS', 'SUPPRIMER')" class="action-btn delete-btn" (click)="supprimerDette(dette.id)" *ngIf="!dette.estReglee && dette.montantInitial === dette.montantRestant" title="Supprimer">
                 <i class="fas fa-trash-alt"></i> Supprimer
               </button>
             </td>
@@ -152,7 +152,7 @@
             <td colspan="7" class="empty-state">
               <i class="fas fa-inbox fa-3x"></i>
               <p><i class="fas fa-folder-open"></i> Aucune dette trouvée</p>
-              <button class="btn btn-outline" (click)="openNouvelleDette()">
+              <button [hidden]="!peut('CLIENTS', 'GERER')" class="btn btn-outline" (click)="openNouvelleDette()">
                 <i class="fas fa-plus-circle"></i> Créer une nouvelle dette
               </button>
             </td>

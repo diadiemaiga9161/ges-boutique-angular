@@ -8,7 +8,7 @@
       </div>
     </div>
     <div class="app-page-header-actions">
-      <button type="button" class="btn btn-primary-action" (click)="nouveauRole()" [disabled]="chargement">
+      <button [hidden]="!peut('PERSONNEL', 'GERER')" type="button" class="btn btn-primary-action" (click)="nouveauRole()" [disabled]="chargement">
         <i class="fa fa-plus mr-1" aria-hidden="true"></i> Nouveau rôle
       </button>
     </div>
@@ -122,12 +122,12 @@
         </div>
 
         <div class="editeur-actions" *ngIf="!brouillon.verrouille">
-          <button type="button" class="btn btn-outline-danger" *ngIf="brouillon.id && !brouillon.systeme" (click)="supprimer()">
+          <button [hidden]="!peut('PERSONNEL', 'SUPPRIMER')" type="button" class="btn btn-outline-danger" *ngIf="brouillon.id && !brouillon.systeme" (click)="supprimer()">
             <i class="fa fa-trash mr-1" aria-hidden="true"></i> Supprimer
           </button>
           <span class="flex-spacer"></span>
           <button type="button" class="btn btn-light" (click)="annuler()">Annuler</button>
-          <button type="button" class="btn btn-primary" (click)="enregistrer()" [disabled]="enregistrement">
+          <button [hidden]="!peut('PERSONNEL', 'GERER')" type="button" class="btn btn-primary" (click)="enregistrer()" [disabled]="enregistrement">
             <span *ngIf="enregistrement" class="spinner-border spinner-border-sm mr-1"></span>
             Enregistrer le rôle
           </button>

@@ -10,6 +10,7 @@ import { FactureService } from '../../../shared/services/facture.service';
 import { TranslateModule } from '@ngx-translate/core';
 import { MontantInputDirective } from '../../../shared/directives/montant-input.directive';
 
+import { ActionPermission, RoleService } from '../../../shared/services/role.service';
 @Component({
   selector: 'app-dettes-anciennes',
   standalone: true,
@@ -93,6 +94,7 @@ export class DettesAnciennesComponent implements OnInit {
   submitting: boolean = false;
 
   constructor(
+    private roleService: RoleService,
     public detteService: DetteAncienneService,
     private clientService: ClientService,
     private factureService: FactureService
@@ -581,5 +583,10 @@ export class DettesAnciennesComponent implements OnInit {
   openNouvelleDette(): void {
     this.resetFormulaireDette();
     this.vueActuelle = 'nouvelle';
+  }
+
+  /** Bouton visible seulement si le rôle de la personne permet l'action (rôles personnalisés). */
+  peut(module: string, action: ActionPermission): boolean {
+    return this.roleService.peut(module, action);
   }
 }

@@ -36,6 +36,7 @@ interface GroupeClient {
 
 import { MesurePuPipe, MesureQtePipe, MesureSuffixePipe } from '../../../shared/pipes/mesure.pipe';
 
+import { ActionPermission, RoleService } from '../../../shared/services/role.service';
 @Component({
   selector: 'app-reglement-credits',
   standalone: true,
@@ -137,6 +138,7 @@ export class ReglementCreditsComponent implements OnInit {
   }
 
   constructor(
+    private roleService: RoleService,
     private caisseService: CaisseService,
     private venteService: VenteService,
     private authService: AuthService,
@@ -1129,5 +1131,10 @@ td{padding:5px 8px;border-bottom:1px solid #f1f5f9;color:#374151}
     if (c.enRetard) return `Retard ${c.joursRetard}j`;
     if (c.progression > 0) return `Payé ${c.progression.toFixed(0)}%`;
     return 'En cours';
+  }
+
+  /** Bouton visible seulement si le rôle de la personne permet l'action (rôles personnalisés). */
+  peut(module: string, action: ActionPermission): boolean {
+    return this.roleService.peut(module, action);
   }
 }

@@ -28,6 +28,7 @@ interface HistoriquePaiementEntry {
 import { MesurePuPipe, MesureQtePipe, MesureSuffixePipe } from '../../../shared/pipes/mesure.pipe';
 import { qteDoc } from '../../../shared/utils/mesure.util';
 
+import { ActionPermission, RoleService } from '../../../shared/services/role.service';
 @Component({
   selector: 'app-partenaires',
   standalone: true,
@@ -150,6 +151,7 @@ export class PartenairesComponent implements OnInit {
   };
 
   constructor(
+    private roleService: RoleService,
     private clientService: ClientService,
     private authService: AuthService,
     private venteService: VenteService,
@@ -967,5 +969,10 @@ export class PartenairesComponent implements OnInit {
       case 'EPUISE': return 'Épuisé';
       default: return statut;
     }
+  }
+
+  /** Bouton visible seulement si le rôle de la personne permet l'action (rôles personnalisés). */
+  peut(module: string, action: ActionPermission): boolean {
+    return this.roleService.peut(module, action);
   }
 }

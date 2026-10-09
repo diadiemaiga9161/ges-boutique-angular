@@ -10,7 +10,7 @@
       </div>
     </div>
     <div class="app-page-header-actions">
-      <button type="button" class="btn btn-primary" (click)="openCreateModal()">
+      <button [hidden]="!peut('CLIENTS', 'GERER')" type="button" class="btn btn-primary" (click)="openCreateModal()">
         <i class="fa fa-plus me-1"></i> {{ 'CLIENTS.ADD' | translate }}
       </button>
     </div>
@@ -123,10 +123,10 @@
                 <button type="button" class="btn btn-info text-white" (click)="showClientVentes(client)" title="Historique ventes et paiements">
                   <i class="fa fa-shopping-cart"></i> Ventes
                 </button>
-                <button type="button" class="btn btn-warning" (click)="editClient(client)" title="Modifier">
+                <button [hidden]="!peut('CLIENTS', 'GERER')" type="button" class="btn btn-warning" (click)="editClient(client)" title="Modifier">
                   <i class="fa fa-edit"></i> Modifier
                 </button>
-                <button type="button" class="btn btn-danger" (click)="deleteClient(client)" title="Supprimer">
+                <button [hidden]="!peut('CLIENTS', 'SUPPRIMER')" type="button" class="btn btn-danger" (click)="deleteClient(client)" title="Supprimer">
                   <i class="fa fa-trash"></i> Supprimer
                 </button>
               </div>
@@ -157,10 +157,10 @@
             <button type="button" class="btn btn-sm btn-info text-white" (click)="showClientVentes(client)" title="Ventes et paiements">
               <i class="fa fa-shopping-cart me-1"></i>Ventes
             </button>
-            <button type="button" class="btn btn-sm btn-warning" (click)="editClient(client)" title="Modifier">
+            <button [hidden]="!peut('CLIENTS', 'GERER')" type="button" class="btn btn-sm btn-warning" (click)="editClient(client)" title="Modifier">
               <i class="fa fa-edit me-1"></i>Modifier
             </button>
-            <button type="button" class="btn btn-sm btn-danger" (click)="deleteClient(client)" title="Supprimer">
+            <button [hidden]="!peut('CLIENTS', 'SUPPRIMER')" type="button" class="btn btn-sm btn-danger" (click)="deleteClient(client)" title="Supprimer">
               <i class="fa fa-trash me-1"></i>Supprimer
             </button>
           </div>
@@ -197,7 +197,7 @@
   <div *ngIf="!isLoading && clients.length === 0" class="text-center py-5 d-none d-md-block">
     <i class="fa fa-handshake-o fa-3x text-muted mb-3 d-block"></i>
     <p class="text-muted">Aucun partenaire enregistré</p>
-    <button class="btn btn-primary" (click)="openCreateModal()"><i class="fa fa-plus me-1"></i> {{ 'CLIENTS.ADD' | translate }}</button>
+    <button [hidden]="!peut('CLIENTS', 'GERER')" class="btn btn-primary" (click)="openCreateModal()"><i class="fa fa-plus me-1"></i> {{ 'CLIENTS.ADD' | translate }}</button>
   </div>
 </div>
 
@@ -1246,7 +1246,7 @@
     </div>
     <div class="modal-footer">
       <button type="button" class="btn-secondary" (click)="closeHistoriqueAvancesModal()">Fermer</button>
-      <button type="button" class="btn-primary" (click)="openAvanceModal(clientPourAvance!)" *ngIf="clientPourAvance">
+      <button [hidden]="!peut('CLIENTS', 'GERER')" type="button" class="btn-primary" (click)="openAvanceModal(clientPourAvance!)" *ngIf="clientPourAvance">
         <i class="fa fa-plus me-1"></i> Nouvelle avance
       </button>
     </div>

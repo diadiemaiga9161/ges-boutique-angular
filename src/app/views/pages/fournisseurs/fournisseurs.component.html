@@ -13,7 +13,7 @@
       <button class="btn btn-outline-secondary btn-sm" (click)="telechargerPdfTousFournisseurs()">
         <i class="fa fa-file-pdf-o me-1"></i> Liste PDF
       </button>
-      <button class="btn btn-primary" (click)="ouvrirFormulaire()">
+      <button [hidden]="!peut('PRODUITS', 'GERER')" class="btn btn-primary" (click)="ouvrirFormulaire()">
         <i class="fa fa-plus me-1"></i> {{ 'SUPPLIERS.NEW' | translate }}
       </button>
     </div>
@@ -138,7 +138,7 @@
     <div class="empty-state" *ngIf="!isLoading && !fournisseursFiltres.length">
       <i class="i-Business-Man"></i>
       <p>Aucun fournisseur trouvé</p>
-      <button class="btn btn-primary" (click)="ouvrirFormulaire()">Ajouter un fournisseur</button>
+      <button [hidden]="!peut('PRODUITS', 'GERER')" class="btn btn-primary" (click)="ouvrirFormulaire()">Ajouter un fournisseur</button>
     </div>
 
     <div class="fournisseurs-grid" *ngIf="!isLoading && fournisseursFiltres.length">
@@ -184,7 +184,7 @@
         </div>
 
         <div class="card-actions">
-          <button class="btn btn-sm btn-outline-primary" (click)="ouvrirFormulaire(f)">
+          <button [hidden]="!peut('PRODUITS', 'GERER')" class="btn btn-sm btn-outline-primary" (click)="ouvrirFormulaire(f)">
             <i class="i-Pen-2"></i> Modifier
           </button>
           <button class="btn btn-sm btn-outline-success" (click)="filtreFournisseurId = f.id; changerOnglet('achats')">
@@ -193,7 +193,7 @@
           <button class="btn btn-sm btn-outline-info" (click)="filtreFournisseurId = f.id; changerOnglet('situation')">
             <i class="i-Bar-Chart"></i> Situation
           </button>
-          <button class="btn btn-sm btn-outline-danger" (click)="confirmerSupprimer(f)">
+          <button [hidden]="!peut('PRODUITS', 'SUPPRIMER')" class="btn btn-sm btn-outline-danger" (click)="confirmerSupprimer(f)">
             <i class="i-Trash mr-1"></i> Supprimer
           </button>
         </div>
@@ -222,7 +222,7 @@
         <button class="btn btn-sm btn-outline-secondary mr-2" (click)="telechargerPdfAchats()" [disabled]="!achatsFiltres.length">
           <i class="i-File-Download mr-1"></i> PDF achats
         </button>
-        <button class="btn btn-sm btn-primary" (click)="ouvrirAchatModal()">
+        <button [hidden]="!peut('FOURNISSEURS', 'GERER')" class="btn btn-sm btn-primary" (click)="ouvrirAchatModal()">
           <i class="i-Add mr-1"></i> Nouvel achat
         </button>
       </div>
@@ -270,7 +270,7 @@
     <div class="empty-state" *ngIf="filtreFournisseurId && !isLoading && !achatsFiltres.length">
       <i class="i-Shop"></i>
       <p>Aucun achat trouvé</p>
-      <button class="btn btn-primary" (click)="ouvrirAchatModal()">Enregistrer un achat</button>
+      <button [hidden]="!peut('FOURNISSEURS', 'GERER')" class="btn btn-primary" (click)="ouvrirAchatModal()">Enregistrer un achat</button>
     </div>
 
     <!-- Résumé mensuel par produit -->
@@ -331,12 +331,12 @@
                 <span class="badge" [class]="statutClass(achat.statut)">{{ statutLabel(achat.statut) }}</span>
               </td>
               <td class="btn-group-icons d-flex flex-wrap">
-                <button class="btn btn-xs btn-success mr-1" (click)="ouvrirPaiementModal(achat)"
+                <button [hidden]="!peut('FOURNISSEURS', 'GERER')" class="btn btn-xs btn-success mr-1" (click)="ouvrirPaiementModal(achat)"
                         *ngIf="achat.statut !== 'PAYE' && achat.statut !== 'ANNULE'"
                         title="Payer">
                   <i class="i-Money-Bag"></i> Payer
                 </button>
-                <button class="btn btn-xs btn-outline-danger mr-1" (click)="confirmerAnnulerAchat(achat)"
+                <button [hidden]="!peut('FOURNISSEURS', 'SUPPRIMER')" class="btn btn-xs btn-outline-danger mr-1" (click)="confirmerAnnulerAchat(achat)"
                         *ngIf="achat.statut !== 'ANNULE'"
                         [disabled]="isAnnulationEnCours"
                         title="Annuler cet achat">
@@ -409,10 +409,10 @@
           <button class="btn btn-sm btn-outline-secondary mr-2" (click)="telechargerPdfPaiements()" [disabled]="!paiements.length">
             <i class="i-File-Download mr-1"></i> PDF paiements
           </button>
-          <button class="btn btn-sm btn-outline-primary mr-2" (click)="ouvrirAvanceModal()">
+          <button [hidden]="!peut('FOURNISSEURS', 'GERER')" class="btn btn-sm btn-outline-primary mr-2" (click)="ouvrirAvanceModal()">
             <i class="i-Add mr-1"></i> Avance
           </button>
-          <button class="btn btn-sm btn-primary" (click)="ouvrirPaiementModal()">
+          <button [hidden]="!peut('FOURNISSEURS', 'GERER')" class="btn btn-sm btn-primary" (click)="ouvrirPaiementModal()">
             <i class="i-Add mr-1"></i> Paiement
           </button>
         </div>
@@ -612,7 +612,7 @@
                   <td class="text-right text-success">{{ fmt(a.montantPaye) }}</td>
                   <td class="text-right text-danger font-weight-bold">{{ fmt(a.montantRestant) }}</td>
                   <td>
-                    <button class="btn btn-xs btn-success" (click)="ouvrirPaiementModal(a)" title="Payer cet achat">
+                    <button [hidden]="!peut('FOURNISSEURS', 'GERER')" class="btn btn-xs btn-success" (click)="ouvrirPaiementModal(a)" title="Payer cet achat">
                       <i class="i-Money-Bag"></i> Payer
                     </button>
                   </td>
@@ -735,7 +735,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline-secondary" (click)="showFormModal = false">Annuler</button>
-      <button class="btn btn-primary" (click)="enregistrerFournisseur()" [disabled]="isSaving">
+      <button [hidden]="!peut('PRODUITS', 'GERER')" class="btn btn-primary" (click)="enregistrerFournisseur()" [disabled]="isSaving">
         <span *ngIf="isSaving" class="spinner-border spinner-border-sm mr-1"></span>
         {{ isEditing ? 'Enregistrer' : 'Créer' }}
       </button>
@@ -931,7 +931,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline-secondary" (click)="showAchatModal = false">Annuler</button>
-      <button class="btn btn-primary" (click)="enregistrerAchat()" [disabled]="isSaving">
+      <button [hidden]="!peut('FOURNISSEURS', 'GERER')" class="btn btn-primary" (click)="enregistrerAchat()" [disabled]="isSaving">
         <span *ngIf="isSaving" class="spinner-border spinner-border-sm mr-1"></span>
         Enregistrer l'achat
       </button>
@@ -993,7 +993,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline-secondary" (click)="showPaiementModal = false">Annuler</button>
-      <button class="btn btn-success" (click)="enregistrerPaiement()" [disabled]="isSaving">
+      <button [hidden]="!peut('FOURNISSEURS', 'GERER')" class="btn btn-success" (click)="enregistrerPaiement()" [disabled]="isSaving">
         <span *ngIf="isSaving" class="spinner-border spinner-border-sm mr-1"></span>
         Enregistrer le paiement
       </button>
@@ -1047,7 +1047,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline-secondary" (click)="showAvanceModal = false">Annuler</button>
-      <button class="btn btn-primary" (click)="enregistrerAvance()" [disabled]="isSaving">
+      <button [hidden]="!peut('FOURNISSEURS', 'GERER')" class="btn btn-primary" (click)="enregistrerAvance()" [disabled]="isSaving">
         <span *ngIf="isSaving" class="spinner-border spinner-border-sm mr-1"></span>
         Enregistrer l'avance
       </button>

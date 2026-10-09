@@ -5,6 +5,7 @@ import Swal from 'sweetalert2';
 import { Promotion, PromotionService, WhatsAppLien, WhatsAppResult } from '../../../shared/services/promotion.service';
 import { TranslateModule } from '@ngx-translate/core';
 
+import { ActionPermission, RoleService } from '../../../shared/services/role.service';
 @Component({
   selector: 'app-promotions',
   standalone: true,
@@ -29,7 +30,7 @@ export class PromotionsComponent implements OnInit {
 
   today = new Date().toISOString().split('T')[0];
 
-  constructor(private promotionService: PromotionService) {}
+  constructor(private roleService: RoleService, private promotionService: PromotionService) {}
 
   ngOnInit(): void {
     this.load();
@@ -154,4 +155,9 @@ export class PromotionsComponent implements OnInit {
   }
 
   formatPrice(v: number): string { return this.promotionService.formatPrice(v); }
+
+  /** Bouton visible seulement si le rôle de la personne permet l'action (rôles personnalisés). */
+  peut(module: string, action: ActionPermission): boolean {
+    return this.roleService.peut(module, action);
+  }
 }

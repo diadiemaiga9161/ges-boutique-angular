@@ -92,7 +92,7 @@
           <button (click)="resetFilters()" class="btn btn-secondary btn-sm" title="Réinitialiser">
             <i class="fa fa-refresh"></i>
           </button>
-          <button (click)="openCreateModal()" class="btn btn-primary btn-sm" title="Nouvelle facture pro forma">
+          <button [hidden]="!peut('VENTES', 'GERER')" (click)="openCreateModal()" class="btn btn-primary btn-sm" title="Nouvelle facture pro forma">
             <i class="fa fa-plus"></i> <span class="d-none d-sm-inline">Nouvelle</span>
           </button>
         </div>
@@ -133,19 +133,19 @@
         <button class="fc-btn fc-btn--view" (click)="ouvrirPdfServeur(facture); $event.stopPropagation()" title="Voir PDF">
           <i class="fa fa-eye"></i> Voir
         </button>
-        <button class="fc-btn fc-btn--validate" *ngIf="facture.statut === 'BROUILLON'"
+        <button [hidden]="!peut('VENTES', 'GERER')" class="fc-btn fc-btn--validate" *ngIf="facture.statut === 'BROUILLON'"
                 (click)="validerFacture(facture); $event.stopPropagation()">
           <i class="fa fa-check"></i> Valider
         </button>
-        <button class="fc-btn fc-btn--edit" *ngIf="facture.statut === 'BROUILLON'"
+        <button [hidden]="!peut('VENTES', 'GERER')" class="fc-btn fc-btn--edit" *ngIf="facture.statut === 'BROUILLON'"
                 (click)="openEditModal(facture); $event.stopPropagation()">
           <i class="fa fa-edit"></i> Modifier
         </button>
-        <button class="fc-btn fc-btn--cancel" *ngIf="facture.statut !== 'ANNULEE' && facture.statut !== 'PAYEE'"
+        <button [hidden]="!peut('VENTES', 'SUPPRIMER')" class="fc-btn fc-btn--cancel" *ngIf="facture.statut !== 'ANNULEE' && facture.statut !== 'PAYEE'"
                 (click)="annulerFacture(facture); $event.stopPropagation()">
           <i class="fa fa-ban"></i> Annuler
         </button>
-        <button class="fc-btn fc-btn--delete" *ngIf="facture.statut === 'BROUILLON'"
+        <button [hidden]="!peut('VENTES', 'SUPPRIMER')" class="fc-btn fc-btn--delete" *ngIf="facture.statut === 'BROUILLON'"
                 (click)="supprimerFacture(facture); $event.stopPropagation()">
           <i class="fa fa-trash"></i> Suppr.
         </button>
@@ -167,7 +167,7 @@
     <i class="fa fa-receipt fa-4x mb-3"></i>
     <h4>{{ 'INVOICES.EMPTY' | translate }}</h4>
     <p>{{ 'INVOICES.SUBTITLE' | translate }}</p>
-    <button (click)="openCreateModal()" class="btn-primary mt-3">
+    <button [hidden]="!peut('VENTES', 'GERER')" (click)="openCreateModal()" class="btn-primary mt-3">
       <i class="fa fa-plus"></i> {{ 'COMMON.ADD' | translate }}
     </button>
   </div>
@@ -327,10 +327,10 @@
         <button class="btn-primary" (click)="imprimerFacture(selectedFacture)"><i class="fa fa-print"></i> Imprimer</button>
         <button class="btn-success" (click)="exporterPdf(selectedFacture)"><i class="fa fa-download"></i> Télécharger PDF</button>
         <button class="btn-primary" (click)="ouvrirPdfServeur(selectedFacture)"><i class="fa fa-eye"></i> Voir PDF</button>
-        <button class="btn-warning" *ngIf="selectedFacture.statut === 'BROUILLON' && isAdmin" (click)="openEditModal(selectedFacture); closeAllModals()">
+        <button [hidden]="!peut('VENTES', 'GERER')" class="btn-warning" *ngIf="selectedFacture.statut === 'BROUILLON' && isAdmin" (click)="openEditModal(selectedFacture); closeAllModals()">
           <i class="fa fa-edit"></i> Modifier
         </button>
-        <button class="btn-danger" *ngIf="selectedFacture.statut === 'BROUILLON' && isAdmin" (click)="supprimerFacture(selectedFacture); closeAllModals()">
+        <button [hidden]="!peut('VENTES', 'SUPPRIMER')" class="btn-danger" *ngIf="selectedFacture.statut === 'BROUILLON' && isAdmin" (click)="supprimerFacture(selectedFacture); closeAllModals()">
           <i class="fa fa-trash"></i> Supprimer
         </button>
         <button class="btn-secondary" (click)="closeAllModals()"><i class="fa fa-times"></i> Fermer</button>
@@ -393,7 +393,7 @@
               <div class="form-group"><input type="text" class="form-control" placeholder="Nom *" [(ngModel)]="nouveauClient.nom" [ngModelOptions]="{standalone: true}"></div>
               <div class="form-group"><input type="text" class="form-control" placeholder="Prénom" [(ngModel)]="nouveauClient.prenom" [ngModelOptions]="{standalone: true}"></div>
               <div class="form-group"><input type="tel" class="form-control" placeholder="Téléphone *" [(ngModel)]="nouveauClient.numeroTelephone" [ngModelOptions]="{standalone: true}"></div>
-              <div class="form-group"><button type="button" class="btn-success" (click)="creerClient()"><i class="fa fa-save"></i> Créer client</button></div>
+              <div class="form-group"><button [hidden]="!peut('CLIENTS', 'GERER')" type="button" class="btn-success" (click)="creerClient()"><i class="fa fa-save"></i> Créer client</button></div>
             </div>
           </div>
         </div>

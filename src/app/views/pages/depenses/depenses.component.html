@@ -13,7 +13,7 @@
       <button class="btn btn-outline-secondary btn-sm" (click)="telechargerPdf()" [disabled]="!depensesFiltrees.length">
         <i class="fa fa-file-pdf-o me-1"></i> {{ 'COMMON.DOWNLOAD' | translate }}
       </button>
-      <button class="btn btn-primary" (click)="startCreate()">
+      <button [hidden]="!peut('DEPENSES', 'GERER')" class="btn btn-primary" (click)="startCreate()">
         <i class="fa fa-plus me-1"></i> {{ 'EXPENSES.NEW' | translate }}
       </button>
     </div>
@@ -191,15 +191,15 @@
               </td>
               <td class="text-center">
                 <ng-container *ngIf="!d['sourceExterne'] && !d['annulee']">
-                  <button *ngIf="!d['validee']" class="btn btn-sm btn-outline-primary me-1" (click)="startEdit(d)"
+                  <button [hidden]="!peut('DEPENSES', 'GERER')" *ngIf="!d['validee']" class="btn btn-sm btn-outline-primary me-1" (click)="startEdit(d)"
                           title="{{ 'COMMON.EDIT' | translate }}">
                     <i class="fa fa-edit me-1"></i> Modifier
                   </button>
-                  <button *ngIf="!d['validee']" class="btn btn-sm btn-outline-success me-1" (click)="valider(d)"
+                  <button [hidden]="!peut('DEPENSES', 'GERER')" *ngIf="!d['validee']" class="btn btn-sm btn-outline-success me-1" (click)="valider(d)"
                           title="Valider (verrouille la dépense dans les comptes)">
                     <i class="fa fa-check me-1"></i> Valider
                   </button>
-                  <button class="btn btn-sm btn-outline-danger" (click)="supprimer(d)"
+                  <button [hidden]="!peut('DEPENSES', 'SUPPRIMER')" class="btn btn-sm btn-outline-danger" (click)="supprimer(d)"
                           [title]="d['validee'] ? 'Annuler (dépense validée — motif requis)' : ('COMMON.DELETE' | translate)">
                     <i class="fa" [ngClass]="d['validee'] ? 'fa-ban' : 'fa-trash'"></i>
                     {{ d['validee'] ? ' Annuler' : ' Supprimer' }}
@@ -257,14 +257,14 @@
             <!-- Mode édition -->
             <ng-container *ngIf="editingTypeId === t.id">
               <input type="text" class="form-control form-control-sm flex-grow-1" [(ngModel)]="editingTypeName" (keyup.enter)="saveEditType()">
-              <button class="btn btn-success btn-sm" (click)="saveEditType()" [disabled]="typesLoading"><i class="fa fa-check"></i></button>
+              <button [hidden]="!peut('DEPENSES', 'GERER')" class="btn btn-success btn-sm" (click)="saveEditType()" [disabled]="typesLoading"><i class="fa fa-check"></i></button>
               <button class="btn btn-secondary btn-sm" (click)="cancelEditType()"><i class="fa fa-times"></i></button>
             </ng-container>
             <!-- Mode affichage -->
             <ng-container *ngIf="editingTypeId !== t.id">
               <span class="flex-grow-1"><i class="fa me-1" [ngClass]="getIconeType(t.nom)"></i>{{ t.nom }}</span>
-              <button class="btn btn-outline-primary btn-sm" (click)="startEditType(t)" title="Modifier"><i class="fa fa-pencil"></i></button>
-              <button class="btn btn-outline-danger btn-sm" (click)="supprimerTypeDepense(t)" [disabled]="typesLoading" title="Supprimer"><i class="fa fa-trash"></i></button>
+              <button [hidden]="!peut('DEPENSES', 'GERER')" class="btn btn-outline-primary btn-sm" (click)="startEditType(t)" title="Modifier"><i class="fa fa-pencil"></i></button>
+              <button [hidden]="!peut('DEPENSES', 'SUPPRIMER')" class="btn btn-outline-danger btn-sm" (click)="supprimerTypeDepense(t)" [disabled]="typesLoading" title="Supprimer"><i class="fa fa-trash"></i></button>
             </ng-container>
           </div>
           <div *ngIf="typesDepense.length === 0" class="list-group-item text-muted small text-center">Aucun type</div>
@@ -273,7 +273,7 @@
         <!-- Ajouter un type -->
         <div class="d-flex gap-2">
           <input type="text" class="form-control" [(ngModel)]="newTypeName" placeholder="Nouveau type..." (keyup.enter)="ajouterType()">
-          <button class="btn btn-primary" (click)="ajouterType()" [disabled]="typesLoading || !newTypeName.trim()">
+          <button [hidden]="!peut('DEPENSES', 'GERER')" class="btn btn-primary" (click)="ajouterType()" [disabled]="typesLoading || !newTypeName.trim()">
             <i class="fa fa-plus"></i> Ajouter
           </button>
         </div>
@@ -316,7 +316,7 @@
               <option value="">-- Sélectionner un type --</option>
               <option *ngFor="let t of typesDepense" [value]="t.nom">{{ t.nom }}</option>
             </select>
-            <button type="button" class="btn btn-outline-secondary btn-sm" (click)="ouvrirGestionTypes()" title="Gérer les types">
+            <button [hidden]="!peut('DEPENSES', 'GERER')" type="button" class="btn btn-outline-secondary btn-sm" (click)="ouvrirGestionTypes()" title="Gérer les types">
               <i class="fa fa-cog"></i>
             </button>
           </div>
@@ -349,7 +349,7 @@
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" (click)="cancel()">{{ 'COMMON.CANCEL' | translate }}</button>
-        <button class="btn btn-primary" (click)="save()">
+        <button [hidden]="!peut('DEPENSES', 'GERER')" class="btn btn-primary" (click)="save()">
           <i class="fa fa-save me-1"></i>
           {{ editing ? ('COMMON.EDIT' | translate) : ('COMMON.ADD' | translate) }}
         </button>

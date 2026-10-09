@@ -13,6 +13,7 @@ import { ProductService } from '../../../shared/services/product.service';
 import { TranslateModule } from '@ngx-translate/core';
 import { MontantInputDirective } from '../../../shared/directives/montant-input.directive';
 
+import { ActionPermission, RoleService } from '../../../shared/services/role.service';
 @Component({
   selector: 'app-bonus-fournisseurs',
   standalone: true,
@@ -46,6 +47,7 @@ export class BonusFournisseursComponent implements OnInit {
   ];
 
   constructor(
+    private roleService: RoleService,
     private bonusService: BonusFournisseurService,
     private productService: ProductService
   ) {}
@@ -181,5 +183,10 @@ export class BonusFournisseursComponent implements OnInit {
 
   private showError(msg: string): void {
     Swal.fire({ icon: 'error', title: 'Erreur', text: msg });
+  }
+
+  /** Bouton visible seulement si le rôle de la personne permet l'action (rôles personnalisés). */
+  peut(module: string, action: ActionPermission): boolean {
+    return this.roleService.peut(module, action);
   }
 }

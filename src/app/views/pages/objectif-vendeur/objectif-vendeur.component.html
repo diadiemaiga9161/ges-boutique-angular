@@ -82,7 +82,7 @@
           </select>
         </div>
         <div class="col-md-2 text-right">
-          <button class="btn btn-primary btn-sm" (click)="ouvrirFormulaire()">
+          <button [hidden]="!peut('PERSONNEL', 'GERER')" class="btn btn-primary btn-sm" (click)="ouvrirFormulaire()">
             <i class="i-Add mr-1"></i> Nouvelle prime
           </button>
         </div>
@@ -105,7 +105,7 @@
       <div class="text-center py-5 text-muted" *ngIf="!isLoading && !objectifsFiltres.length">
         <i class="i-Medal-2" style="font-size:3rem;opacity:.3"></i>
         <p class="mt-2">Aucune prime définie pour le moment.</p>
-        <button class="btn btn-primary btn-sm" (click)="ouvrirFormulaire()">Créer la première prime</button>
+        <button [hidden]="!peut('PERSONNEL', 'GERER')" class="btn btn-primary btn-sm" (click)="ouvrirFormulaire()">Créer la première prime</button>
       </div>
       <div class="table-responsive" *ngIf="!isLoading && objectifsFiltres.length">
         <table class="table table-hover mb-0">
@@ -152,16 +152,16 @@
                 </span>
               </td>
               <td class="text-center text-nowrap">
-                <button class="btn btn-sm btn-outline-primary mr-1" (click)="ouvrirFormulaire(o)"
+                <button [hidden]="!peut('PERSONNEL', 'GERER')" class="btn btn-sm btn-outline-primary mr-1" (click)="ouvrirFormulaire(o)"
                   [disabled]="o.bonusValide" title="Modifier">
                   <i class="i-Pen-2"></i>
                 </button>
-                <button class="btn btn-sm btn-outline-success mr-1"
+                <button [hidden]="!peut('PERSONNEL', 'GERER')" class="btn btn-sm btn-outline-success mr-1"
                   *ngIf="o.statut === 'ATTEINT' && !o.bonusValide"
                   (click)="confirmerValider(o)" title="Valider la prime">
                   <i class="i-Check"></i>
                 </button>
-                <button class="btn btn-sm btn-outline-danger"
+                <button [hidden]="!peut('PERSONNEL', 'SUPPRIMER')" class="btn btn-sm btn-outline-danger"
                   (click)="confirmerSupprimer(o)" [disabled]="o.bonusValide" title="Supprimer">
                   <i class="i-Trash1"></i>
                 </button>
@@ -215,7 +215,7 @@
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" (click)="fermerFormulaire()">Annuler</button>
-        <button class="btn btn-primary" (click)="enregistrer()" [disabled]="isSaving">
+        <button [hidden]="!peut('PERSONNEL', 'GERER')" class="btn btn-primary" (click)="enregistrer()" [disabled]="isSaving">
           <span *ngIf="isSaving" class="spinner-border spinner-border-sm mr-1"></span>
           {{ isEditing ? 'Enregistrer les modifications' : 'Créer la prime' }}
         </button>

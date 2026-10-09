@@ -8,6 +8,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { COUNTRY_CODES, validatePhoneForCountry, construireNumeroComplet, separerIndicatif } from '../../../shared/utils/telephone.util';
 import { MontantInputDirective } from '../../../shared/directives/montant-input.directive';
 
+import { ActionPermission, RoleService } from '../../../shared/services/role.service';
 @Component({
   selector: 'app-employes',
   standalone: true,
@@ -67,7 +68,7 @@ export class EmployesComponent implements OnInit {
 
   goToPage(p: number) { if (p >= 1 && p <= this.totalPages) this.currentPage = p; }
 
-  constructor(private employeService: EmployeService, private authService: AuthService) {}
+  constructor(private roleService: RoleService, private employeService: EmployeService, private authService: AuthService) {}
 
   ngOnInit(): void { this.chargerEmployes(); }
 
@@ -221,5 +222,10 @@ export class EmployesComponent implements OnInit {
 
   formatMontant(m: number): string {
     return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(m) + ' FCFA';
+  }
+
+  /** Bouton visible seulement si le rôle de la personne permet l'action (rôles personnalisés). */
+  peut(module: string, action: ActionPermission): boolean {
+    return this.roleService.peut(module, action);
   }
 }

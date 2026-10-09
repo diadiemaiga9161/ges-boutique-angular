@@ -9,6 +9,7 @@ import { FactureService } from '../../../shared/services/facture.service';
 import { TranslateModule } from '@ngx-translate/core';
 import { MontantInputDirective } from '../../../shared/directives/montant-input.directive';
 
+import { ActionPermission, RoleService } from '../../../shared/services/role.service';
 @Component({
   selector: 'app-depenses',
   standalone: true,
@@ -53,6 +54,7 @@ export class DepensesComponent implements OnInit {
   itemsParPage: number = 10;
 
   constructor(
+    private roleService: RoleService,
     private depenseService: DepenseService,
     private paiementEmployeService: PaiementEmployeService,
     private factureService: FactureService
@@ -496,5 +498,10 @@ tr:last-child td{border-bottom:none}
 
   private showError(msg: string): void {
     Swal.fire({ icon: 'error', title: 'Erreur', text: msg, confirmButtonColor: '#dc2626' });
+  }
+
+  /** Bouton visible seulement si le rôle de la personne permet l'action (rôles personnalisés). */
+  peut(module: string, action: ActionPermission): boolean {
+    return this.roleService.peut(module, action);
   }
 }

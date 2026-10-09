@@ -272,7 +272,7 @@
                       title="Voir les détails et les produits">
                       <i class="bi bi-eye"></i> Détails
                     </button>
-                    <button *ngIf="!credit.estReglee" class="btn btn-sm btn-outline-success"
+                    <button [hidden]="!peut('VENTES', 'GERER')" *ngIf="!credit.estReglee" class="btn btn-sm btn-outline-success"
                       (click)="ouvrirModal(credit)"
                       [disabled]="credit.montantRestant <= 0"
                       title="Enregistrer un règlement">
@@ -915,7 +915,7 @@
           *ngIf="selectedCredit && versements.length > 0">
           <i class="bi bi-file-earmark-pdf me-1"></i> PDF versements
         </button>
-        <button class="btn btn-success" (click)="ouvrirModal(selectedCredit!)"
+        <button [hidden]="!peut('VENTES', 'GERER')" class="btn btn-success" (click)="ouvrirModal(selectedCredit!)"
           *ngIf="selectedCredit && selectedCredit.montantRestant > 0">
           <i class="bi bi-check-circle me-1"></i> Enregistrer paiement
         </button>
@@ -977,7 +977,7 @@
                   </span>
                 </td>
                 <td class="text-center">
-                  <button class="btn btn-sm btn-primary"
+                  <button [hidden]="!peut('VENTES', 'GERER')" class="btn btn-sm btn-primary"
                     (click)="closeCreditsClientModal(); ouvrirModal(credit)"
                     [disabled]="credit.estReglee || credit.venteAnnulee || credit.montantRestant <= 0">
                     <i class="bi bi-cash me-1"></i> Payer
@@ -999,7 +999,7 @@
       </div>
 
       <div class="modal-footer d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <button class="btn btn-success" (click)="openPaiementGroupeModal()"
+        <button [hidden]="!peut('VENTES', 'GERER')" class="btn btn-success" (click)="openPaiementGroupeModal()"
           [disabled]="totalSelectedClientCredits('montantRestant') <= 0">
           <i class="bi bi-cash-stack me-1"></i> Payer en groupe
         </button>
@@ -1109,7 +1109,7 @@
 
       <div class="modal-footer">
         <button class="btn btn-secondary" (click)="showPaiementGroupeModal = false">Annuler</button>
-        <button class="btn btn-success" (click)="confirmerPaiementGroupe()"
+        <button [hidden]="!peut('VENTES', 'GERER')" class="btn btn-success" (click)="confirmerPaiementGroupe()"
           [disabled]="isLoadingPaiementGroupe || montantPaiementGroupe <= 0 || repartitionGroupe.length === 0">
           <span *ngIf="isLoadingPaiementGroupe"><i class="bi bi-arrow-repeat me-1"></i> Traitement...</span>
           <span *ngIf="!isLoadingPaiementGroupe"><i class="bi bi-check-lg me-1"></i> Confirmer le paiement groupé</span>
@@ -1194,7 +1194,7 @@
     <button class="btn btn-outline-secondary" (click)="fermerModal()" [disabled]="isLoadingReglement">
       Annuler
     </button>
-    <button class="btn btn-success" (click)="enregistrerReglement()" [disabled]="isLoadingReglement">
+    <button [hidden]="!peut('VENTES', 'GERER')" class="btn btn-success" (click)="enregistrerReglement()" [disabled]="isLoadingReglement">
       <span *ngIf="isLoadingReglement" class="spinner-border spinner-border-sm me-1"></span>
       <i *ngIf="!isLoadingReglement" class="bi bi-check-circle me-1"></i>
       {{ isLoadingReglement ? 'Enregistrement…' : 'Confirmer le paiement' }}

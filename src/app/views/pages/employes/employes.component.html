@@ -9,7 +9,7 @@
       </div>
     </div>
     <div class="app-page-header-actions">
-      <button class="btn btn-primary" (click)="ouvrirFormAjout()">
+      <button [hidden]="!peut('PERSONNEL', 'GERER')" class="btn btn-primary" (click)="ouvrirFormAjout()">
         <i class="fa fa-plus me-1"></i> {{ 'EMPLOYEES.NEW' | translate }}
       </button>
     </div>
@@ -73,18 +73,18 @@
               </span>
             </td>
             <td>
-              <button class="btn btn-xs btn-outline-primary mr-1" title="Modifier" (click)="ouvrirFormModification(emp)">
+              <button [hidden]="!peut('PERSONNEL', 'GERER')" class="btn btn-xs btn-outline-primary mr-1" title="Modifier" (click)="ouvrirFormModification(emp)">
                 <i class="i-Pen-2"></i>
               </button>
-              <button *ngIf="emp.statut === 'ACTIF'" class="btn btn-xs btn-outline-warning mr-1"
+              <button [hidden]="!peut('PERSONNEL', 'GERER')" *ngIf="emp.statut === 'ACTIF'" class="btn btn-xs btn-outline-warning mr-1"
                       title="Désactiver l'employé" (click)="confirmerDesactivation(emp)">
                 <i class="i-Power-2"></i>
               </button>
-              <button *ngIf="emp.statut === 'INACTIF'" class="btn btn-xs btn-outline-success mr-1"
+              <button [hidden]="!peut('PERSONNEL', 'GERER')" *ngIf="emp.statut === 'INACTIF'" class="btn btn-xs btn-outline-success mr-1"
                       title="Réactiver l'employé" (click)="confirmerActivation(emp)">
                 <i class="i-Check"></i>
               </button>
-              <button class="btn btn-xs btn-outline-danger" title="Supprimer" (click)="confirmerSuppression(emp)">
+              <button [hidden]="!peut('PERSONNEL', 'SUPPRIMER')" class="btn btn-xs btn-outline-danger" title="Supprimer" (click)="confirmerSuppression(emp)">
                 <i class="i-Close-Window"></i>
               </button>
             </td>
@@ -171,7 +171,7 @@
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" (click)="fermerModal()">Annuler</button>
-        <button class="btn btn-primary" (click)="sauvegarder()" [disabled]="isSaving">
+        <button [hidden]="!peut('PERSONNEL', 'GERER')" class="btn btn-primary" (click)="sauvegarder()" [disabled]="isSaving">
           <span *ngIf="isSaving" class="spinner-border spinner-border-sm mr-1"></span>
           {{ isEditing ? 'Modifier' : 'Enregistrer' }}
         </button>

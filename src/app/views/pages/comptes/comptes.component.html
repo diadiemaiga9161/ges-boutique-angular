@@ -10,7 +10,7 @@
       </div>
     </div>
     <div class="app-page-header-actions">
-      <button *ngIf="isAdmin()" class="btn btn-primary" (click)="openAddModal()">
+      <button [hidden]="!peut('CAISSE', 'GERER')" *ngIf="isAdmin()" class="btn btn-primary" (click)="openAddModal()">
         <i class="fa fa-plus me-1"></i> {{ 'ACCOUNTS.NEW' | translate }}
       </button>
     </div>
@@ -61,7 +61,7 @@
   <div *ngIf="!isLoading && comptes.length === 0" class="text-center py-5 text-muted">
     <i class="i-University" style="font-size:3rem"></i>
     <p class="mt-2">{{ 'ACCOUNTS.EMPTY' | translate }}</p>
-    <button *ngIf="isAdmin()" class="btn btn-outline-primary" (click)="openAddModal()">Créer un compte</button>
+    <button [hidden]="!peut('CAISSE', 'GERER')" *ngIf="isAdmin()" class="btn btn-outline-primary" (click)="openAddModal()">Créer un compte</button>
   </div>
 
   <div class="row" *ngIf="!isLoading">
@@ -122,13 +122,13 @@
         </div>
         <div class="card-footer bg-white border-0 pt-0">
           <div class="d-flex gap-2">
-            <button class="btn btn-sm btn-outline-primary flex-fill" (click)="openOperationModal(compte)">
+            <button [hidden]="!peut('CAISSE', 'GERER')" class="btn btn-sm btn-outline-primary flex-fill" (click)="openOperationModal(compte)">
               <i class="i-Add me-1"></i>Opération
             </button>
             <button class="btn btn-sm btn-outline-secondary flex-fill" (click)="openHistoriqueModal(compte)">
               <i class="i-Clock me-1"></i>Historique
             </button>
-            <button *ngIf="isAdmin()" class="btn btn-sm btn-outline-warning" (click)="openEditModal(compte)">
+            <button [hidden]="!peut('CAISSE', 'GERER')" *ngIf="isAdmin()" class="btn btn-sm btn-outline-warning" (click)="openEditModal(compte)">
               <i class="i-Edit"></i>
             </button>
           </div>
@@ -176,7 +176,7 @@
       </div>
       <div class="modal-footer">
         <button class="btn btn-outline-secondary" (click)="showAddModal=false">Annuler</button>
-        <button class="btn btn-primary" (click)="saveCompte()" [disabled]="isLoading">
+        <button [hidden]="!peut('CAISSE', 'GERER')" class="btn btn-primary" (click)="saveCompte()" [disabled]="isLoading">
           <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-2"></span>
           Créer le compte
         </button>
@@ -223,7 +223,7 @@
       </div>
       <div class="modal-footer">
         <button class="btn btn-outline-secondary" (click)="showEditModal=false">Annuler</button>
-        <button class="btn btn-primary" (click)="updateCompte()" [disabled]="isLoading">Enregistrer</button>
+        <button [hidden]="!peut('CAISSE', 'GERER')" class="btn btn-primary" (click)="updateCompte()" [disabled]="isLoading">Enregistrer</button>
       </div>
     </div>
   </div>
@@ -271,7 +271,7 @@
       </div>
       <div class="modal-footer">
         <button class="btn btn-outline-secondary" (click)="showOperationModal=false">Annuler</button>
-        <button class="btn btn-primary" (click)="enregistrerOperation()" [disabled]="isLoading">
+        <button [hidden]="!peut('CAISSE', 'GERER')" class="btn btn-primary" (click)="enregistrerOperation()" [disabled]="isLoading">
           <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-2"></span>
           Enregistrer
         </button>

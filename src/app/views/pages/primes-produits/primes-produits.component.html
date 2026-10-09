@@ -8,10 +8,10 @@
       </div>
     </div>
     <div class="app-page-header-actions">
-      <button type="button" class="btn btn-light mr-2" (click)="ouvrirReglages()" title="Types de primes utilisés">
+      <button [hidden]="!peut('PRIMES', 'GERER')" type="button" class="btn btn-light mr-2" (click)="ouvrirReglages()" title="Types de primes utilisés">
         <i class="fa fa-sliders mr-1" aria-hidden="true"></i> Réglages
       </button>
-      <button type="button" class="btn btn-primary-action" (click)="nouvelleRegle()">
+      <button [hidden]="!peut('PRIMES', 'GERER')" type="button" class="btn btn-primary-action" (click)="nouvelleRegle()">
         <i class="fa fa-plus mr-1" aria-hidden="true"></i> Nouvelle condition
       </button>
     </div>
@@ -87,7 +87,7 @@
       <i class="fa fa-medal" aria-hidden="true"></i>
       <p *ngIf="!regles.length">Aucune condition de prime pour le moment.</p>
       <p *ngIf="regles.length">Aucune prime gagnée sur cette période.</p>
-      <button type="button" class="btn btn-primary btn-sm" *ngIf="!regles.length" (click)="nouvelleRegle()">Créer la première condition</button>
+      <button [hidden]="!peut('PRIMES', 'GERER')" type="button" class="btn btn-primary btn-sm" *ngIf="!regles.length" (click)="nouvelleRegle()">Créer la première condition</button>
     </div>
 
     <ul class="vendeurs" *ngIf="!chargementCalcul && !erreur && calcul?.vendeurs?.length">
@@ -111,7 +111,7 @@
             <span class="chiffre-valeur" [class.text-warning-fort]="v.resteAPayer > 0">{{ cs.fmt(v.resteAPayer) }}</span>
           </div>
           <div class="vendeur-action">
-            <button type="button" class="btn btn-sm btn-primary" (click)="ouvrirPaiement(v)" [disabled]="v.resteAPayer <= 0">
+            <button [hidden]="!peut('PRIMES', 'GERER')" type="button" class="btn btn-sm btn-primary" (click)="ouvrirPaiement(v)" [disabled]="v.resteAPayer <= 0">
               <i class="fa fa-hand-holding-dollar mr-1" aria-hidden="true"></i> Payer
             </button>
           </div>
@@ -148,7 +148,7 @@
     <div class="etat" *ngIf="!chargementRegles && !regles.length">
       <i class="fa fa-list-check" aria-hidden="true"></i>
       <p>Aucune condition. Exemple : « 100 FCFA pour chaque carton de lait vendu ».</p>
-      <button type="button" class="btn btn-primary btn-sm" (click)="nouvelleRegle()">Créer une condition</button>
+      <button [hidden]="!peut('PRIMES', 'GERER')" type="button" class="btn btn-primary btn-sm" (click)="nouvelleRegle()">Créer une condition</button>
     </div>
     <div class="table-responsive" *ngIf="!chargementRegles && regles.length">
       <table class="table table-hover mb-0 regles-table">
@@ -175,9 +175,9 @@
             </td>
             <td class="text-right">
               <div class="btn-group btn-group-icons justify-content-end">
-                <button type="button" class="btn btn-sm btn-outline-primary" (click)="modifierRegle(r)"><i class="fa fa-pen" aria-hidden="true"></i> Modifier</button>
-                <button type="button" class="btn btn-sm btn-outline-secondary" *ngIf="r.statut !== 'TERMINEE'" (click)="arreterRegle(r)"><i class="fa fa-stop" aria-hidden="true"></i> Arrêter</button>
-                <button type="button" class="btn btn-sm btn-outline-danger" (click)="supprimerRegle(r)"><i class="fa fa-trash" aria-hidden="true"></i> Supprimer</button>
+                <button [hidden]="!peut('PRIMES', 'GERER')" type="button" class="btn btn-sm btn-outline-primary" (click)="modifierRegle(r)"><i class="fa fa-pen" aria-hidden="true"></i> Modifier</button>
+                <button [hidden]="!peut('PRIMES', 'GERER')" type="button" class="btn btn-sm btn-outline-secondary" *ngIf="r.statut !== 'TERMINEE'" (click)="arreterRegle(r)"><i class="fa fa-stop" aria-hidden="true"></i> Arrêter</button>
+                <button [hidden]="!peut('PRIMES', 'SUPPRIMER')" type="button" class="btn btn-sm btn-outline-danger" (click)="supprimerRegle(r)"><i class="fa fa-trash" aria-hidden="true"></i> Supprimer</button>
               </div>
             </td>
           </tr>
@@ -205,7 +205,7 @@
             <td>{{ p.note || '—' }}</td>
             <td>{{ p.enregistrePar || '—' }}</td>
             <td class="text-right">
-              <button type="button" class="btn btn-sm btn-outline-danger" (click)="supprimerPaiement(p)"><i class="fa fa-trash" aria-hidden="true"></i> Supprimer</button>
+              <button [hidden]="!peut('PRIMES', 'SUPPRIMER')" type="button" class="btn btn-sm btn-outline-danger" (click)="supprimerPaiement(p)"><i class="fa fa-trash" aria-hidden="true"></i> Supprimer</button>
             </td>
           </tr>
         </tbody>
@@ -297,7 +297,7 @@
     </div>
     <footer class="gl-modal-pied">
       <button type="button" class="btn btn-outline-secondary" (click)="formRegle = null">Annuler</button>
-      <button type="button" class="btn btn-primary" (click)="enregistrerRegle()" [disabled]="enregistrement">
+      <button [hidden]="!peut('PRIMES', 'GERER')" type="button" class="btn btn-primary" (click)="enregistrerRegle()" [disabled]="enregistrement">
         <span *ngIf="enregistrement" class="spinner-border spinner-border-sm mr-1"></span>
         {{ formRegle.id ? 'Enregistrer' : 'Créer la condition' }}
       </button>
@@ -334,7 +334,7 @@
     </div>
     <footer class="gl-modal-pied">
       <button type="button" class="btn btn-outline-secondary" (click)="paiement = null">Annuler</button>
-      <button type="button" class="btn btn-primary" (click)="enregistrerPaiement()" [disabled]="enregistrement">Confirmer le paiement</button>
+      <button [hidden]="!peut('PRIMES', 'GERER')" type="button" class="btn btn-primary" (click)="enregistrerPaiement()" [disabled]="enregistrement">Confirmer le paiement</button>
     </footer>
   </div>
 </div>
@@ -356,7 +356,7 @@
     </div>
     <footer class="gl-modal-pied">
       <button type="button" class="btn btn-outline-secondary" (click)="reglagesOuverts = false">Annuler</button>
-      <button type="button" class="btn btn-primary" (click)="enregistrerReglages()">Enregistrer</button>
+      <button [hidden]="!peut('PRIMES', 'GERER')" type="button" class="btn btn-primary" (click)="enregistrerReglages()">Enregistrer</button>
     </footer>
   </div>
 </div>

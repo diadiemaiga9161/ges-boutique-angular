@@ -31,6 +31,7 @@ import { MontantInputDirective } from '../../../shared/directives/montant-input.
 import { MesurePuPipe, MesureQtePipe, MesureSuffixePipe } from '../../../shared/pipes/mesure.pipe';
 import { infoMesure, prixAffiche, prixStocke, puDoc, qteDoc, qteStockee } from '../../../shared/utils/mesure.util';
 
+import { ActionPermission, RoleService } from '../../../shared/services/role.service';
 @Component({
   selector: 'app-fournisseurs',
   standalone: true,
@@ -197,6 +198,7 @@ export class FournisseursComponent implements OnInit {
   }
 
   constructor(
+    private roleService: RoleService,
     private productService: ProductService,
     private authService: AuthService,
     private http: HttpClient,
@@ -1356,4 +1358,8 @@ tr:last-child td{border-bottom:none}
     return nom.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
   }
 
+  /** Bouton visible seulement si le rôle de la personne permet l'action (rôles personnalisés). */
+  peut(module: string, action: ActionPermission): boolean {
+    return this.roleService.peut(module, action);
+  }
 }

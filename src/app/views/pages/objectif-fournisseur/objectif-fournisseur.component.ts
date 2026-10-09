@@ -14,6 +14,7 @@ import Swal from 'sweetalert2';
 import { TranslateModule } from '@ngx-translate/core';
 import { MontantInputDirective } from '../../../shared/directives/montant-input.directive';
 
+import { ActionPermission, RoleService } from '../../../shared/services/role.service';
 @Component({
   selector: 'app-objectif-fournisseur',
   standalone: true,
@@ -72,6 +73,7 @@ export class ObjectifFournisseurComponent implements OnInit {
   }
 
   constructor(
+    private roleService: RoleService,
     public objectifService: ObjectifFournisseurService,
     private productService: ProductService,
     private factureService: FactureService
@@ -311,5 +313,10 @@ export class ObjectifFournisseurComponent implements OnInit {
 
   private formatQte(n: number): string {
     return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(n || 0);
+  }
+
+  /** Bouton visible seulement si le rôle de la personne permet l'action (rôles personnalisés). */
+  peut(module: string, action: ActionPermission): boolean {
+    return this.roleService.peut(module, action);
   }
 }

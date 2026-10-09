@@ -15,6 +15,7 @@ import {
 import { ProductService } from '../../../shared/services/product.service';
 import { MontantInputDirective } from '../../../shared/directives/montant-input.directive';
 
+import { ActionPermission, RoleService } from '../../../shared/services/role.service';
 type Onglet = 'vendeurs' | 'regles' | 'paiements';
 type Periode = 'mois' | 'mois-dernier' | 'annee' | 'perso';
 
@@ -72,7 +73,7 @@ export class PrimesProduitsComponent implements OnInit {
     OBJECTIF: { titre: 'Objectif à atteindre', exemple: '10 000 FCFA s\'il vend 50 sacs dans le mois', icone: 'fa-bullseye' }
   };
 
-  constructor(public cs: CommissionService, private productService: ProductService) {}
+  constructor(private roleService: RoleService, public cs: CommissionService, private productService: ProductService) {}
 
   ngOnInit(): void {
     this.choisirPeriode('mois');
@@ -353,5 +354,10 @@ export class PrimesProduitsComponent implements OnInit {
     this.formRegle = null;
     this.paiement = null;
     this.reglagesOuverts = false;
+  }
+
+  /** Bouton visible seulement si le rôle de la personne permet l'action (rôles personnalisés). */
+  peut(module: string, action: ActionPermission): boolean {
+    return this.roleService.peut(module, action);
   }
 }

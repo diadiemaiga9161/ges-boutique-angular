@@ -280,4 +280,9 @@ export class RolesComponent implements OnInit {
   libelleBase(base: string): string {
     return base === 'ADMIN' ? 'Basé sur Gérant' : 'Basé sur Vendeur';
   }
+
+  /** Bouton visible seulement si le rôle de la personne permet l'action (rôles personnalisés). */
+  peut(module: string, action: ActionPermission): boolean {
+    return this.roleService.peut(module, action);
+  }
 }

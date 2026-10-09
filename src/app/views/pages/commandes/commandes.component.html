@@ -10,10 +10,10 @@
       </div>
     </div>
     <div class="app-page-header-actions">
-      <button class="btn btn-warning btn-sm" (click)="ouvrirReglementGroupe()" *ngIf="nbCreditsEnCours > 0">
+      <button [hidden]="!peut('COMMANDES', 'GERER')" class="btn btn-warning btn-sm" (click)="ouvrirReglementGroupe()" *ngIf="nbCreditsEnCours > 0">
         <i class="bi bi-cash-stack me-1"></i> Règlement groupé ({{ nbCreditsEnCours }})
       </button>
-      <button class="btn btn-primary btn-sm" (click)="ouvrirCreer()">
+      <button [hidden]="!peut('COMMANDES', 'GERER')" class="btn btn-primary btn-sm" (click)="ouvrirCreer()">
         <i class="bi bi-plus-circle me-1"></i> Nouvelle commande
       </button>
     </div>
@@ -136,7 +136,7 @@
     <i class="bi bi-clipboard-x fs-1 d-block mb-2"></i>
     Aucune commande trouvée
     <div class="mt-3">
-      <button class="btn btn-primary btn-sm" (click)="ouvrirCreer()">
+      <button [hidden]="!peut('COMMANDES', 'GERER')" class="btn btn-primary btn-sm" (click)="ouvrirCreer()">
         <i class="bi bi-plus-circle me-1"></i> Créer une commande
       </button>
     </div>
@@ -220,31 +220,31 @@
                 <button class="btn btn-sm btn-outline-secondary" (click)="imprimerFacture(c)" title="Générer la facture">
                   <i class="bi bi-printer"></i> Imprimer
                 </button>
-                <button class="btn btn-sm btn-outline-primary" (click)="ouvrirModifier(c)"
+                <button [hidden]="!peut('COMMANDES', 'GERER')" class="btn btn-sm btn-outline-primary" (click)="ouvrirModifier(c)"
                   *ngIf="c.statut === StatutCommande.BROUILLON" title="Modifier">
                   <i class="bi bi-pencil"></i> Modifier
                 </button>
-                <button class="btn btn-sm btn-success" (click)="valider(c)"
+                <button [hidden]="!peut('COMMANDES', 'GERER')" class="btn btn-sm btn-success" (click)="valider(c)"
                   *ngIf="c.statut === StatutCommande.BROUILLON" title="Valider">
                   <i class="bi bi-check-lg"></i> Valider
                 </button>
-                <button class="btn btn-sm btn-info text-white" (click)="marquerEtape(c, 'PRETE')"
+                <button [hidden]="!peut('COMMANDES', 'GERER')" class="btn btn-sm btn-info text-white" (click)="marquerEtape(c, 'PRETE')"
                   *ngIf="c.statut === StatutCommande.VALIDEE && !c.etapeLivraison" title="Marquer la commande prête">
                   <i class="bi bi-box-seam"></i> Prête
                 </button>
-                <button class="btn btn-sm btn-success" (click)="marquerEtape(c, 'LIVREE')"
+                <button [hidden]="!peut('COMMANDES', 'GERER')" class="btn btn-sm btn-success" (click)="marquerEtape(c, 'LIVREE')"
                   *ngIf="c.statut === StatutCommande.VALIDEE && c.etapeLivraison === 'PRETE'" title="Marquer la commande livrée">
                   <i class="bi bi-truck"></i> Livrée
                 </button>
-                <button class="btn btn-sm btn-warning" (click)="ouvrirReglementIndividuel(c)"
+                <button [hidden]="!peut('COMMANDES', 'GERER')" class="btn btn-sm btn-warning" (click)="ouvrirReglementIndividuel(c)"
                   *ngIf="c.estCredit && c.montantRestant > 0" title="Régler">
                   <i class="bi bi-cash-coin"></i> Régler
                 </button>
-                <button class="btn btn-sm btn-outline-danger" (click)="annuler(c)"
+                <button [hidden]="!peut('COMMANDES', 'SUPPRIMER')" class="btn btn-sm btn-outline-danger" (click)="annuler(c)"
                   *ngIf="c.statut !== StatutCommande.ANNULEE" title="Annuler">
                   <i class="bi bi-x-circle"></i> Annuler
                 </button>
-                <button class="btn btn-sm btn-outline-secondary" (click)="supprimer(c)"
+                <button [hidden]="!peut('COMMANDES', 'SUPPRIMER')" class="btn btn-sm btn-outline-secondary" (click)="supprimer(c)"
                   *ngIf="c.statut === StatutCommande.BROUILLON" title="Supprimer">
                   <i class="bi bi-trash"></i> Supprimer
                 </button>
@@ -420,7 +420,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" (click)="fermerModal()" [disabled]="isSubmitting">Annuler</button>
-        <button type="button" class="btn btn-primary" (click)="enregistrer()" [disabled]="isSubmitting || lignesForm.length === 0">
+        <button [hidden]="!peut('COMMANDES', 'GERER')" type="button" class="btn btn-primary" (click)="enregistrer()" [disabled]="isSubmitting || lignesForm.length === 0">
           <span class="spinner-border spinner-border-sm me-1" *ngIf="isSubmitting"></span>
           {{ editingId ? 'Enregistrer' : 'Créer la commande' }}
         </button>
@@ -468,7 +468,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" (click)="fermerReglementModal()">Annuler</button>
-        <button type="button" class="btn btn-warning" (click)="confirmerReglementIndividuel()" [disabled]="!montantReglement || montantReglement <= 0">
+        <button [hidden]="!peut('COMMANDES', 'GERER')" type="button" class="btn btn-warning" (click)="confirmerReglementIndividuel()" [disabled]="!montantReglement || montantReglement <= 0">
           <i class="bi bi-check-lg me-1"></i>Confirmer le paiement
         </button>
       </div>

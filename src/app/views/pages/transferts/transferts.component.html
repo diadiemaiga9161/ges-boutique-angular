@@ -12,7 +12,7 @@
       <button class="btn btn-outline-secondary" (click)="afficherFormPartenaire ? afficherFormPartenaire=false : nouveauPartenaire()">
         <i class="i-Shop-2 me-1"></i> Boutiques partenaires
       </button>
-      <button class="btn btn-primary" (click)="nouveauTransfert()">
+      <button [hidden]="!peut('STOCK', 'GERER')" class="btn btn-primary" (click)="nouveauTransfert()">
         <i class="i-Add me-1"></i> {{ 'TRANSFERS.NEW' | translate }}
       </button>
     </div>
@@ -22,7 +22,7 @@
   <div class="card mb-3" *ngIf="afficherFormPartenaire">
     <div class="card-header d-flex align-items-center">
       <strong>Boutiques partenaires</strong>
-      <button class="btn btn-sm btn-outline-primary ms-3" (click)="nouveauPartenaire()">
+      <button [hidden]="!peut('STOCK', 'GERER')" class="btn btn-sm btn-outline-primary ms-3" (click)="nouveauPartenaire()">
         <i class="i-Add me-1"></i> Ajouter
       </button>
     </div>
@@ -39,7 +39,7 @@
           <input type="text" class="form-control form-control-sm" placeholder="Description" [(ngModel)]="formPartenaire.description">
         </div>
         <div class="col-12 col-md-2 d-flex gap-2">
-          <button class="btn btn-sm btn-success flex-fill" (click)="sauvegarderPartenaire()">
+          <button [hidden]="!peut('STOCK', 'GERER')" class="btn btn-sm btn-success flex-fill" (click)="sauvegarderPartenaire()">
             <i class="i-Yes me-1"></i>{{ editingPartenaire ? 'Modifier' : 'Ajouter' }}
           </button>
           <button class="btn btn-sm btn-light" (click)="afficherFormPartenaire=false">✕</button>
@@ -56,8 +56,8 @@
             <td class="text-muted small">{{ p.url }}</td>
             <td class="text-muted small">{{ p.description }}</td>
             <td class="text-end">
-              <button class="btn btn-xs btn-outline-primary me-1" (click)="editerPartenaire(p)"><i class="i-Pen-2"></i></button>
-              <button class="btn btn-xs btn-outline-danger" (click)="supprimerPartenaire(p)"><i class="i-Trash-with-Menu"></i></button>
+              <button [hidden]="!peut('STOCK', 'GERER')" class="btn btn-xs btn-outline-primary me-1" (click)="editerPartenaire(p)"><i class="i-Pen-2"></i></button>
+              <button [hidden]="!peut('STOCK', 'SUPPRIMER')" class="btn btn-xs btn-outline-danger" (click)="supprimerPartenaire(p)"><i class="i-Trash-with-Menu"></i></button>
             </td>
           </tr>
         </tbody>
@@ -145,7 +145,7 @@
       </div>
 
       <div class="d-flex gap-2 mt-3">
-        <button class="btn btn-success" (click)="sauvegarder()">
+        <button [hidden]="!peut('STOCK', 'GERER')" class="btn btn-success" (click)="sauvegarder()">
           <i class="i-Yes me-1"></i>{{ editingTransfert ? 'Enregistrer la modification' : 'Créer le transfert' }}
         </button>
         <button class="btn btn-light" (click)="afficherFormulaire=false">Annuler</button>
@@ -212,7 +212,7 @@
               <button class="btn btn-xs btn-outline-secondary me-1" (click)="voirDetail(t)" title="Détail">
                 <i class="i-Eye"></i>
               </button>
-              <button class="btn btn-xs btn-outline-primary me-1" (click)="editerTransfert(t)"
+              <button [hidden]="!peut('STOCK', 'GERER')" class="btn btn-xs btn-outline-primary me-1" (click)="editerTransfert(t)"
                 *ngIf="t.statut !== 'CONFIRME' && t.statut !== 'ACCEPTE' && t.statut !== 'ANNULE' && t.statut !== 'REJETE'" title="Modifier">
                 <i class="i-Pen-2"></i>
               </button>
@@ -226,22 +226,22 @@
                    (cf. TransfertService.creer/recevoir côté backend) : c'est un identifiant fiable
                    du rôle, indépendant de l'onglet sélectionné. -->
               <ng-container *ngIf="t.boutiqueDestUrl">
-                <button class="btn btn-xs btn-outline-success me-1"
+                <button [hidden]="!peut('STOCK', 'GERER')" class="btn btn-xs btn-outline-success me-1"
                   *ngIf="t.statut !== 'CONFIRME' && t.statut !== 'ACCEPTE' && t.statut !== 'ANNULE' && t.statut !== 'REJETE'"
                   (click)="confirmer(t)" title="Confirmer">
                   <i class="i-Check"></i>
                 </button>
-                <button class="btn btn-xs btn-outline-danger"
+                <button [hidden]="!peut('STOCK', 'SUPPRIMER')" class="btn btn-xs btn-outline-danger"
                   *ngIf="t.statut !== 'CONFIRME' && t.statut !== 'ACCEPTE' && t.statut !== 'ANNULE' && t.statut !== 'REJETE'"
                   (click)="annuler(t)" title="Annuler">
                   <i class="i-Close-Window"></i>
                 </button>
               </ng-container>
               <ng-container *ngIf="!t.boutiqueDestUrl && (t.statut === 'EN_ATTENTE_CONFIRMATION' || t.statut === 'EN_ATTENTE' || t.statut === 'CONFIRME')">
-                <button class="btn btn-xs btn-outline-success me-1" (click)="accepterTransfert(t)" title="Accepter">
+                <button [hidden]="!peut('STOCK', 'GERER')" class="btn btn-xs btn-outline-success me-1" (click)="accepterTransfert(t)" title="Accepter">
                   <i class="i-Check-2"></i>
                 </button>
-                <button class="btn btn-xs btn-outline-danger" (click)="rejeterTransfert(t)" title="Rejeter">
+                <button [hidden]="!peut('STOCK', 'GERER')" class="btn btn-xs btn-outline-danger" (click)="rejeterTransfert(t)" title="Rejeter">
                   <i class="i-Close-Window"></i>
                 </button>
               </ng-container>
@@ -263,7 +263,7 @@
       <strong>{{ transfertDetail.numeroTransfert }}</strong>
       <span class="badge bg-{{ STATUT_COLORS[transfertDetail.statut] }} ms-2">{{ STATUT_LABELS[transfertDetail.statut] }}</span>
       <div class="ms-auto d-flex gap-2">
-        <button class="btn btn-sm btn-outline-warning"
+        <button [hidden]="!peut('STOCK', 'GERER')" class="btn btn-sm btn-outline-warning"
                 *ngIf="transfertDetail.statut !== 'CONFIRME' && transfertDetail.statut !== 'ANNULE'"
                 (click)="editerTransfert(transfertDetail); transfertDetail=null">
           <i class="i-Pen me-1"></i> Modifier
@@ -332,7 +332,7 @@
               <input type="text" class="form-control form-control-sm" placeholder="Notes" [(ngModel)]="formPaiement.notes">
             </div>
             <div class="col-12 col-md-2 d-flex gap-1">
-              <button class="btn btn-sm btn-success flex-fill" (click)="enregistrerPaiement()" [disabled]="savingPaiement">
+              <button [hidden]="!peut('STOCK', 'GERER')" class="btn btn-sm btn-success flex-fill" (click)="enregistrerPaiement()" [disabled]="savingPaiement">
                 <span *ngIf="savingPaiement" class="spinner-border spinner-border-sm me-1"></span>
                 Enregistrer
               </button>
