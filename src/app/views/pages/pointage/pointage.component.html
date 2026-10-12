@@ -1,0 +1,176 @@
+<div class="container-fluid py-4 app-page">
+
+  <div class="app-page-header mb-4">
+    <div class="app-page-header-left">
+      <div class="app-page-icon"><i class="i-Clock"></i></div>
+      <div>
+        <h1 class="app-page-title">Pointage des employés</h1>
+        <p class="app-page-subtitle">Arrivées, départs, retards et absences. Les employés pointent en scannant le code de la boutique.</p>
+      </div>
+    </div>
+    <button type="button" class="pt-btn pt-btn--principal" (click)="ouvrirQr()">
+      <i class="i-Bar-Code me-1"></i> Afficher le code QR
+    </button>
+  </div>
+
+  <div class="pt-onglets" role="tablist" aria-label="Vue">
+    <button type="button" role="tab" class="pt-chip" [class.pt-chip--actif]="onglet === 'jour'" [attr.aria-selected]="onglet === 'jour'" (click)="choisirOnglet('jour')">Journée</button>
+    <button type="button" role="tab" class="pt-chip" [class.pt-chip--actif]="onglet === 'mois'" [attr.aria-selected]="onglet === 'mois'" (click)="choisirOnglet('mois')">Résumé du mois</button>
+    <button type="button" role="tab" class="pt-chip" [class.pt-chip--actif]="onglet === 'reglages'" [attr.aria-selected]="onglet === 'reglages'" (click)="choisirOnglet('reglages')">Réglages</button>
+  </div>
+
+  <p class="pt-message" *ngIf="message" role="status">{{ message }}</p>
+  <p class="pt-message pt-message--erreur" *ngIf="erreur" role="alert">{{ erreur }}</p>
+
+  <!-- ===================== Journée ===================== -->
+  <ng-container *ngIf="onglet === 'jour'">
+    <div class="pt-barre">
+      <label class="pt-label">Jour
+        <input type="date" class="pt-champ" [(ngModel)]="date" (change)="saisie = null; chargerJour()" />
+      </label>
+      <p class="pt-compteurs" *ngIf="journee && !chargement">
+        <strong>{{ journee.presents }}</strong> présent(s) sur {{ totalEmployes }}
+        <span *ngIf="journee.retards"> · <strong>{{ journee.retards }}</strong> en retard</span>
+        <span *ngIf="journee.estJourRepos"> · jour de repos</span>
+      </p>
+    </div>
+
+    <!-- Saisie à la main -->
+    <form class="pt-saisie" *ngIf="saisie" (ngSubmit)="enregistrerSaisie()">
+      <p class="pt-saisie__titre">Pointer à la main : {{ saisie.nom }}</p>
+      <div class="pt-saisie__champs">
+        <label class="pt-label">Arrivée
+          <input type="time" class="pt-champ" name="arrivee" [(ngModel)]="saisie.heureArrivee" required />
+        </label>
+        <label class="pt-label">Départ (facultatif)
+          <input type="time" class="pt-champ" name="depart" [(ngModel)]="saisie.heureDepart" />
+        </label>
+        <label class="pt-label pt-label--large">Note (facultatif)
+          <input type="text" class="pt-champ" name="observation" maxlength="255" [(ngModel)]="saisie.observation" placeholder="Ex : téléphone oublié" />
+        </label>
+      </div>
+      <div class="pt-saisie__actions">
+        <button type="submit" class="pt-btn pt-btn--principal" [disabled]="enregistrement || !saisie.heureArrivee">
+          {{ enregistrement ? 'Enregistrement…' : 'Enregistrer' }}
+        </button>
+        <button type="button" class="pt-btn pt-btn--neutre" (click)="saisie = null">Annuler</button>
+      </div>
+    </form>
+
+    <div class="pt-etat" *ngIf="chargement">Chargement…</div>
+
+    <div class="pt-tableau table-responsive" *ngIf="journee && !chargement">
+      <table class="table align-middle mb-0">
+        <thead>
+          <tr>
+            <th scope="col">Employé</th>
+            <th scope="col">Arrivée</th>
+            <th scope="col">Départ</th>
+            <th scope="col">Temps de travail</th>
+            <th scope="col">État</th>
+            <th scope="col" class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let l of journee.employes">
+            <td>
+              <span class="fw-semibold">{{ l.nom }}</span>
+              <span class="pt-sous">{{ l.poste }}<ng-container *ngIf="l.aCompte === false"> · sans compte (à pointer à la main)</ng-container></span>
+            </td>
+            <td>
+              <ng-container *ngIf="l.heureArrivee; else vide">
+                {{ l.heureArrivee }}
+                <span class="pt-retard" *ngIf="l.retardMinutes > 0">+{{ duree(l.retardMinutes) }}</span>
+                <span class="pt-main" *ngIf="l.methodeArrivee === 'MANUEL'" [title]="'Saisi par ' + (l.saisiPar || 'le gérant')">à la main</span>
+              </ng-container>
+            </td>
+            <td>
+              <ng-container *ngIf="l.heureDepart; else vide">
+                {{ l.heureDepart }}
+                <span class="pt-main" *ngIf="l.methodeDepart === 'MANUEL'" [title]="'Saisi par ' + (l.saisiPar || 'le gérant')">à la main</span>
+              </ng-container>
+            </td>
+            <td>{{ duree(l.minutesTravail) }}</td>
+            <td>
+              <span class="pt-badge" [ngClass]="classeStatut(l)">{{ libelleStatut(l) }}</span>
+              <span class="pt-sous" *ngIf="l.observation">{{ l.observation }}</span>
+            </td>
+            <td class="text-end pt-actions">
+              <button type="button" class="pt-btn pt-btn--petit" (click)="ouvrirSaisie(l)">{{ l.pointageId ? 'Modifier' : 'Pointer' }}</button>
+              <button type="button" class="pt-btn pt-btn--petit pt-btn--danger" *ngIf="l.pointageId" (click)="effacer(l)">Effacer</button>
+            </td>
+          </tr>
+          <tr *ngIf="!journee.employes.length">
+            <td colspan="6" class="pt-etat">Aucun employé actif. Ajoutez-les dans Ressources humaines › Employés.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <ng-template #vide><span class="pt-vide">—</span></ng-template>
+  </ng-container>
+
+  <!-- ===================== Mois ===================== -->
+  <ng-container *ngIf="onglet === 'mois'">
+    <div class="pt-barre">
+      <label class="pt-label">Mois
+        <input type="month" class="pt-champ" [(ngModel)]="mois" (change)="chargerMois()" />
+      </label>
+    </div>
+    <div class="pt-etat" *ngIf="chargement">Chargement…</div>
+    <div class="pt-tableau table-responsive" *ngIf="!chargement">
+      <table class="table align-middle mb-0">
+        <thead>
+          <tr>
+            <th scope="col">Employé</th>
+            <th scope="col" class="text-end">Jours présent</th>
+            <th scope="col" class="text-end">Absences</th>
+            <th scope="col" class="text-end">Retards</th>
+            <th scope="col" class="text-end">Heures travaillées</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let r of resume">
+            <td><span class="fw-semibold">{{ r.nom }}</span><span class="pt-sous">{{ r.poste }}</span></td>
+            <td class="text-end">{{ r.joursPresence }}</td>
+            <td class="text-end" [class.pt-alerte]="r.absences > 0">{{ r.absences }}</td>
+            <td class="text-end" [class.pt-alerte]="r.retards > 0">{{ r.retards }}<span class="pt-sous" *ngIf="r.retards">{{ duree(r.minutesRetard) }} au total</span></td>
+            <td class="text-end">{{ duree(r.minutesTravail) }}</td>
+          </tr>
+          <tr *ngIf="!resume.length">
+            <td colspan="5" class="pt-etat">Aucun employé.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="pt-aide">Absences : jours passés sans pointage, sans compter le jour de repos ni les jours avant l'embauche. Les heures ne comptent que les journées avec un départ.</p>
+  </ng-container>
+
+  <!-- ===================== Réglages ===================== -->
+  <form class="pt-reglages" *ngIf="onglet === 'reglages'" (ngSubmit)="enregistrerReglages()">
+    <label class="pt-label">Heure d'arrivée prévue
+      <input type="time" class="pt-champ" name="heure" [(ngModel)]="reglages.heureArriveePrevue" required />
+    </label>
+    <label class="pt-label">Retard toléré (minutes)
+      <input type="number" class="pt-champ" name="tolerance" min="0" max="180" [(ngModel)]="reglages.toleranceMinutes" required />
+    </label>
+    <label class="pt-label">Jour de repos
+      <select class="pt-champ" name="repos" [(ngModel)]="reglages.jourRepos">
+        <option *ngFor="let j of jours" [value]="j.cle">{{ j.libelle }}</option>
+      </select>
+    </label>
+    <p class="pt-aide">Exemple : arrivée prévue à 08:00 et 10 minutes tolérées. Un employé arrivé à 08:09 est à l'heure ; à 08:15, il a 15 minutes de retard.</p>
+    <button type="submit" class="pt-btn pt-btn--principal" [disabled]="enregistrement">{{ enregistrement ? 'Enregistrement…' : 'Enregistrer' }}</button>
+  </form>
+</div>
+
+<!-- ===================== Écran du code QR ===================== -->
+<div class="pt-ecran" *ngIf="ecranQr" role="dialog" aria-modal="true" aria-label="Code QR de pointage">
+  <button type="button" class="pt-ecran__fermer" (click)="fermerQr()">Fermer</button>
+  <p class="pt-ecran__heure">{{ heure }}</p>
+  <h2 class="pt-ecran__titre">Pointage</h2>
+  <p class="pt-ecran__consigne">Ouvrez l'application sur votre téléphone, menu <strong>« Mon pointage »</strong>, puis <strong>« Scanner le code »</strong>.</p>
+  <img class="pt-ecran__qr" *ngIf="qrImage" [src]="qrImage" alt="Code QR de pointage" />
+  <p class="pt-ecran__compte" *ngIf="!qrErreur">Nouveau code dans {{ changeDans }} s</p>
+  <p class="pt-ecran__erreur" *ngIf="qrErreur" role="alert">{{ qrErreur }}</p>
+  <p class="pt-ecran__note">Le code change toutes les 30 secondes : une photo du code ne permet pas de pointer depuis ailleurs.</p>
+</div>
