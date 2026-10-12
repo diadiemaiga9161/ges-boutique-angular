@@ -57,6 +57,7 @@
     "feather-icons": "^4.29.1",
     "file-saver": "^2.0.5",
     "highlight.js": "^11.6.0",
+    "jsbarcode": "3.11.6",
     "jspdf": "^3.0.4",
     "jspdf-autotable": "^5.0.7",
     "ng-apexcharts": "^1.14.0",

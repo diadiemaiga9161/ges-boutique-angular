@@ -113,6 +113,7 @@ export class NavigationService {
         {
             name: 'Stock', type: 'dropDown', icon: 'i-Bar-Chart', sub: [
                 { name: 'INVENTORY.TITLE',     type: 'link', icon: 'i-Bar-Chart',                   state: '/inventaire' },
+                { name: 'Étiquettes de prix',  type: 'link', icon: 'i-Tag-3',                       state: '/etiquettes' },
                 { name: 'TRANSFERS.TITLE',     type: 'link', icon: 'i-Arrow-Right',                 state: '/transferts' },
             ]
         },

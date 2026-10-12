@@ -1,0 +1,77 @@
+<div class="container-fluid py-4 app-page">
+
+  <div class="app-page-header mb-4">
+    <div class="app-page-header-left">
+      <div class="app-page-icon"><i class="i-Tag-3"></i></div>
+      <div>
+        <h1 class="app-page-title">Étiquettes de prix</h1>
+        <p class="app-page-subtitle">Feuille A4 de 24 étiquettes (70 × 37 mm) avec le prix et le code-barres, pour une imprimante normale</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Produits sans code-barres -->
+  <div class="et-alerte" *ngIf="!chargement && sansCode.length">
+    <div>
+      <p class="et-alerte__titre">{{ sansCode.length }} produit(s) sans code-barres</p>
+      <p class="et-alerte__texte">Un code unique peut leur être créé, au format des supermarchés (série réservée à l'usage interne). Les codes existants ne changent pas.</p>
+    </div>
+    <button type="button" class="et-btn et-btn--secondaire" (click)="creerCodesManquants()" [disabled]="generation">
+      {{ generation ? 'Création…' : 'Créer les codes manquants' }}
+    </button>
+  </div>
+  <p class="et-message" *ngIf="message" role="status">{{ message }}</p>
+  <p class="et-message et-message--erreur" *ngIf="erreur" role="alert">{{ erreur }}</p>
+
+  <!-- Filtres + impression -->
+  <div class="et-barre">
+    <input type="search" class="et-champ" placeholder="Rechercher un produit ou un code…" [(ngModel)]="recherche" aria-label="Rechercher" />
+    <select class="et-champ" [(ngModel)]="categorie" aria-label="Catégorie">
+      <option value="">Toutes les catégories</option>
+      <option *ngFor="let c of categories" [value]="c">{{ c }}</option>
+    </select>
+    <button type="button" class="et-btn et-btn--principal" (click)="imprimer()" [disabled]="!totalEtiquettes">
+      <i class="i-Billing me-1"></i> Imprimer {{ totalEtiquettes }} étiquette(s)
+    </button>
+  </div>
+  <p class="et-aide" *ngIf="totalEtiquettes">{{ totalEtiquettes }} étiquette(s) = {{ (totalEtiquettes / 24) | number:'1.0-0' }} feuille(s) A4 environ. Dans la fenêtre d'impression, choisissez « Taille réelle » (100 %) et sans marges.</p>
+
+  <div class="et-etat" *ngIf="chargement">Chargement…</div>
+
+  <div class="et-tableau table-responsive" *ngIf="!chargement">
+    <table class="table align-middle mb-0">
+      <thead>
+        <tr>
+          <th scope="col" class="et-col-case">
+            <input type="checkbox" [checked]="toutVisibleCoche" (change)="basculerTout()" aria-label="Tout cocher" />
+          </th>
+          <th scope="col">Produit</th>
+          <th scope="col" class="text-end">Prix</th>
+          <th scope="col">Code-barres</th>
+          <th scope="col" class="text-end">Nombre d'étiquettes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let l of visibles" [class.et-ligne--choisie]="l.choisi">
+          <td class="et-col-case"><input type="checkbox" [(ngModel)]="l.choisi" [attr.aria-label]="'Choisir ' + l.produit.nom" /></td>
+          <td>
+            <span class="fw-semibold">{{ l.produit.nom }}</span>
+            <span class="et-cat" *ngIf="l.produit.categorie?.nom">{{ l.produit.categorie.nom }}</span>
+          </td>
+          <td class="text-end">{{ prixAffiche(l.produit) }}</td>
+          <td>
+            <code *ngIf="l.produit.codeBarre">{{ l.produit.codeBarre }}</code>
+            <span class="et-sans" *ngIf="!l.produit.codeBarre">aucun</span>
+          </td>
+          <td class="text-end">
+            <input type="number" min="1" max="200" class="et-nombre" [(ngModel)]="l.nombre" (focus)="l.choisi = true"
+                   [attr.aria-label]="'Nombre d\'étiquettes pour ' + l.produit.nom" />
+          </td>
+        </tr>
+        <tr *ngIf="!visibles.length">
+          <td colspan="5" class="et-etat">Aucun produit trouvé.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

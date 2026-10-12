@@ -1,0 +1,126 @@
+.et-alerte {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px;
+  margin-bottom: 12px;
+  border-radius: 16px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+}
+
+.et-alerte__titre {
+  margin: 0 0 2px;
+  font-weight: 700;
+  color: #9a3412;
+}
+
+.et-alerte__texte {
+  margin: 0;
+  font-size: 0.88rem;
+  color: #7c2d12;
+}
+
+.et-message {
+  margin: 0 0 12px;
+  font-weight: 600;
+  color: #047857;
+
+  &--erreur { color: #b91c1c; }
+}
+
+.et-barre {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.et-champ {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1.5px solid var(--border, #e2e8f0);
+  border-radius: 12px;
+  background: var(--surface, #fff);
+  color: var(--text, #0f172a);
+  font-size: 0.92rem;
+  flex: 1 1 220px;
+
+  &:focus { outline: none; border-color: #1a56db; }
+}
+
+.et-btn {
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 12px;
+  border: 0;
+  font-weight: 700;
+  font-size: 0.92rem;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:disabled { opacity: .55; cursor: not-allowed; }
+  &:focus-visible { outline: 2px solid #93b4f5; outline-offset: 2px; }
+
+  &--principal { background: #1a56db; color: #fff; }
+  &--secondaire { background: #fff; color: #9a3412; border: 1.5px solid #fdba74; }
+}
+
+.et-aide {
+  margin: 0 0 12px;
+  font-size: 0.85rem;
+  color: var(--text-muted, #475569);
+}
+
+.et-etat {
+  padding: 32px;
+  text-align: center;
+  color: var(--text-muted, #475569);
+}
+
+.et-tableau {
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 16px;
+  padding: 4px 8px;
+
+  th {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: .02em;
+    color: var(--text-muted, #475569);
+    white-space: nowrap;
+  }
+
+  /* Le style général fige la dernière colonne (boutons d'action) : inutile ici. */
+  th:last-child,
+  td:last-child { position: static !important; }
+
+  input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
+}
+
+.et-col-case { width: 44px; }
+
+.et-ligne--choisie td { background: #f5f8ff; }
+
+.et-cat {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--text-muted, #475569);
+}
+
+.et-sans {
+  font-size: 0.85rem;
+  color: #9a3412;
+}
+
+.et-nombre {
+  width: 80px;
+  min-height: 38px;
+  padding: 0 8px;
+  text-align: right;
+  border: 1.5px solid var(--border, #e2e8f0);
+  border-radius: 10px;
+}

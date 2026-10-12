@@ -60,7 +60,7 @@ export class RoleService {
     '/rapport': 'RAPPORTS',
     '/fournisseurs': 'FOURNISSEURS', '/objectif-fournisseur': 'FOURNISSEURS', '/bonus-fournisseurs': 'FOURNISSEURS',
     '/employes': 'PERSONNEL', '/paiement-employe': 'PERSONNEL', '/vendeur': 'PERSONNEL',
-    '/objectifs-vendeur': 'PERSONNEL', '/historique-vendeur': 'PERSONNEL', '/classement-vendeurs': 'RAPPORTS', '/roles': 'PERSONNEL',
+    '/objectifs-vendeur': 'PERSONNEL', '/historique-vendeur': 'PERSONNEL', '/classement-vendeurs': 'RAPPORTS', '/etiquettes': 'PRODUITS', '/roles': 'PERSONNEL',
     '/primes-produits': 'PRIMES',
     '/boutique': 'ADMINISTRATION', '/facture-design': 'ADMINISTRATION', '/annulation-paiements': 'ADMINISTRATION',
     '/parametres': 'ADMINISTRATION', '/journal-audit': 'ADMINISTRATION', '/export-donnees': 'ADMINISTRATION',
