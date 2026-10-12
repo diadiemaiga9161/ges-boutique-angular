@@ -139,6 +139,7 @@ export class NavigationService {
                 { name: 'EMPLOYEES.TITLE',     type: 'link', icon: 'i-Business-Man',                state: '/employes' },
                 { name: 'EMPLOYEE_PAY.TITLE',  type: 'link', icon: 'i-Money-Bag',                   state: '/paiement-employe' },
                 { name: 'SELLERS_MENU.TITLE',  type: 'link', icon: 'i-Administrator',               state: '/vendeur' },
+                { name: 'Classement des vendeurs', type: 'link', icon: 'i-Medal-2',                 state: '/classement-vendeurs' },
                 { name: 'SELLER_BONUS.TITLE',  type: 'link', icon: 'i-Gift-Box',                    state: '/objectifs-vendeur' },
                 { name: 'Primes sur produits', type: 'link', icon: 'i-Medal-2',                     state: '/primes-produits' },
             ]

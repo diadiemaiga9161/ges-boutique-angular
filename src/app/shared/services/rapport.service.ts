@@ -276,6 +276,33 @@ export interface StatistiquesGenerales {
   };
 }
 
+export interface LigneClassementVendeur {
+  rang: number;
+  vendeurId: number;
+  nom: string;
+  actif: boolean;
+  nombreVentes: number;
+  chiffreAffaires: number;
+  chiffreAffairesPrecedent: number;
+  evolution: number | null;
+  benefice: number;
+  panierMoyen: number;
+  nombreCredits: number;
+  montantCredits: number;
+  creditsRecuperes: number;
+  nombreAnnulations: number;
+  montantAnnulations: number;
+  remises: number;
+}
+
+export interface ClassementVendeurs {
+  dateDebut: string;
+  dateFin: string;
+  vendeurs: LigneClassementVendeur[];
+  totalChiffreAffaires: number;
+  totalVentes: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -1135,6 +1162,11 @@ export class RapportService {
 
   getPrevisionStock(): Observable<Array<any>> {
     return this.http.get<Array<any>>(`${this.baseUrl}/previsions/stock`);
+  }
+
+  /** Classement des vendeurs (gérant) : CA, ventes, bénéfice, crédits, annulations, remises. */
+  getClassementVendeurs(dateDebut: string, dateFin: string): Observable<ClassementVendeurs> {
+    return this.http.get<ClassementVendeurs>(`${this.baseUrl}/rapports/classement-vendeurs?dateDebut=${dateDebut}&dateFin=${dateFin}`);
   }
 
   getVentesParVendeur(dateDebut?: string, dateFin?: string): Observable<Array<VenteParVendeurJour>> {

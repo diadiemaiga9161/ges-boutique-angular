@@ -1,0 +1,91 @@
+<div class="container-fluid py-4 app-page">
+
+  <div class="app-page-header mb-4">
+    <div class="app-page-header-left">
+      <div class="app-page-icon"><i class="i-Medal-2"></i></div>
+      <div>
+        <h1 class="app-page-title">Classement des vendeurs</h1>
+        <p class="app-page-subtitle">Qui vend le plus, et comment : ventes, crédits, annulations et remises</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="cv-periodes" role="group" aria-label="Période">
+    <button type="button" *ngFor="let p of periodes" class="cv-chip" [class.cv-chip--actif]="periode === p.cle"
+            [attr.aria-pressed]="periode === p.cle" (click)="choisir(p.cle)">{{ p.libelle }}</button>
+  </div>
+
+  <div class="cv-dates" *ngIf="periode === 'perso'">
+    <label>Du <input type="date" [(ngModel)]="dateDebut" (change)="charger()" /></label>
+    <label>Au <input type="date" [(ngModel)]="dateFin" (change)="charger()" /></label>
+  </div>
+
+  <div class="cv-etat" *ngIf="chargement">Chargement…</div>
+  <div class="cv-etat cv-etat--erreur" *ngIf="erreur && !chargement" role="alert">{{ erreur }}</div>
+
+  <ng-container *ngIf="donnees && !chargement && !erreur">
+    <div class="cv-etat" *ngIf="!donnees.vendeurs.length">Aucune vente sur cette période.</div>
+
+    <ng-container *ngIf="donnees.vendeurs.length">
+      <p class="cv-total">
+        {{ prix(donnees.totalChiffreAffaires) }} vendus en {{ donnees.totalVentes }} vente(s),
+        du {{ donnees.dateDebut | date:'dd/MM/yyyy' }} au {{ donnees.dateFin | date:'dd/MM/yyyy' }}
+      </p>
+
+      <!-- Podium des 3 premiers -->
+      <div class="cv-podium" *ngIf="podium.length">
+        <article class="cv-place" *ngFor="let v of podium" [class.cv-place--premier]="v.rang === 1">
+          <span class="cv-rang">{{ v.rang }}</span>
+          <h2 class="cv-nom">{{ v.nom }}</h2>
+          <p class="cv-ca">{{ prix(v.chiffreAffaires) }}</p>
+          <p class="cv-meta">{{ v.nombreVentes }} vente(s) · {{ part(v) }} % du total</p>
+          <p class="cv-evol" *ngIf="v.evolution !== null"
+             [class.cv-evol--hausse]="v.evolution >= 0" [class.cv-evol--baisse]="v.evolution < 0">
+            {{ v.evolution >= 0 ? '+' : '' }}{{ v.evolution }} % par rapport à la période d'avant
+          </p>
+        </article>
+      </div>
+
+      <!-- Tableau complet -->
+      <div class="cv-tableau table-responsive">
+        <table class="table align-middle mb-0">
+          <thead>
+            <tr>
+              <th scope="col">#</th>
+              <th scope="col">Vendeur</th>
+              <th scope="col" class="text-end">Chiffre d'affaires</th>
+              <th scope="col" class="text-end">Ventes</th>
+              <th scope="col" class="text-end">Panier moyen</th>
+              <th scope="col" class="text-end">Bénéfice</th>
+              <th scope="col" class="text-end">Crédits accordés</th>
+              <th scope="col" class="text-end">Crédits récupérés</th>
+              <th scope="col" class="text-end">Annulations</th>
+              <th scope="col" class="text-end">Remises</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let v of donnees.vendeurs">
+              <td class="fw-bold">{{ v.rang }}</td>
+              <td>
+                <span class="fw-semibold">{{ v.nom }}</span>
+                <span class="cv-inactif" *ngIf="!v.actif">compte désactivé</span>
+              </td>
+              <td class="text-end fw-semibold">{{ prix(v.chiffreAffaires) }}</td>
+              <td class="text-end">{{ v.nombreVentes }}</td>
+              <td class="text-end">{{ prix(v.panierMoyen) }}</td>
+              <td class="text-end">{{ prix(v.benefice) }}</td>
+              <td class="text-end">{{ prix(v.montantCredits) }}<span class="cv-sous">{{ v.nombreCredits }} crédit(s)</span></td>
+              <td class="text-end">{{ prix(v.creditsRecuperes) }}</td>
+              <td class="text-end" [class.cv-alerte]="v.nombreAnnulations >= 3">
+                {{ v.nombreAnnulations }}<span class="cv-sous" *ngIf="v.nombreAnnulations">{{ prix(v.montantAnnulations) }}</span>
+              </td>
+              <td class="text-end">{{ prix(v.remises) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="cv-note">Ventes annulées ou entièrement retournées non comptées ; chiffre d'affaires et bénéfice nets des retours.
+        « Crédits récupérés » = règlements encaissés par la personne sur la période.</p>
+    </ng-container>
+  </ng-container>
+</div>
