@@ -1,0 +1,107 @@
+<div class="container-fluid py-4 app-page">
+
+  <div class="app-page-header mb-4">
+    <div class="app-page-header-left">
+      <div class="app-page-icon"><i class="i-Gift-Box"></i></div>
+      <div>
+        <h1 class="app-page-title">Offres par quantité</h1>
+        <p class="app-page-subtitle">Exemple : « 2 pour 75 F ». La caisse applique l'offre toute seule ; le vendeur ne peut pas la retirer.</p>
+      </div>
+    </div>
+    <button type="button" class="oq-btn oq-btn--principal" (click)="nouvelle()" *ngIf="!saisie">+ Nouvelle offre</button>
+  </div>
+
+  <p class="oq-message" *ngIf="message" role="status">{{ message }}</p>
+  <p class="oq-message oq-message--erreur" *ngIf="erreur" role="alert">{{ erreur }}</p>
+
+  <!-- Saisie -->
+  <form class="oq-saisie" *ngIf="saisie" (ngSubmit)="enregistrer()">
+    <p class="oq-saisie__titre">{{ saisie.id ? 'Modifier l\'offre' : 'Nouvelle offre' }}</p>
+
+    <div class="oq-champ-produit">
+      <label class="oq-label">Produit
+        <span class="oq-produit" *ngIf="produitChoisi; else choix">
+          <strong>{{ produitChoisi.nom }}</strong> · prix normal {{ prix(produitChoisi.prixVente) }}
+          <button type="button" class="oq-lien" (click)="saisie.produitId = null">Changer</button>
+        </span>
+        <ng-template #choix>
+          <input type="search" class="oq-champ" name="rech" [(ngModel)]="rechercheProduit" placeholder="Rechercher un produit…" autocomplete="off" />
+        </ng-template>
+      </label>
+      <ul class="oq-liste" *ngIf="!produitChoisi" aria-label="Produits">
+        <li *ngFor="let p of produitsFiltres">
+          <button type="button" (click)="choisirProduit(p)">{{ p.nom }} <span>{{ prix(p.prixVente) }}</span></button>
+        </li>
+        <li *ngIf="!produitsFiltres.length" class="oq-vide">Aucun produit trouvé.</li>
+      </ul>
+    </div>
+
+    <div class="oq-ligne">
+      <label class="oq-label">Nombre d'articles
+        <input type="number" class="oq-champ" name="quantite" min="2" step="1" [(ngModel)]="saisie.quantite" required />
+      </label>
+      <label class="oq-label">Prix du lot (F)
+        <input type="number" class="oq-champ" name="prix" min="1" [(ngModel)]="saisie.prix" required />
+      </label>
+      <label class="oq-label">Début (facultatif)
+        <input type="date" class="oq-champ" name="debut" [(ngModel)]="saisie.dateDebut" />
+      </label>
+      <label class="oq-label">Fin (facultatif)
+        <input type="date" class="oq-champ" name="fin" [(ngModel)]="saisie.dateFin" />
+      </label>
+    </div>
+
+    <p class="oq-apercu" *ngIf="apercu as a">
+      {{ saisie.quantite }} articles : <s>{{ prix(a.normal) }}</s> → <strong>{{ prix(saisie.prix || 0) }}</strong>,
+      le client gagne {{ prix(a.economie) }}.
+      <span class="oq-perte" *ngIf="a.perte">Attention : ce prix est en dessous du prix d'achat, chaque lot sera vendu à perte.</span>
+    </p>
+
+    <label class="oq-case">
+      <input type="checkbox" name="active" [(ngModel)]="saisie.active" /> Offre en marche
+    </label>
+
+    <div class="oq-actions">
+      <button type="submit" class="oq-btn oq-btn--principal" [disabled]="enregistrement || !saisie.produitId || !saisie.quantite || !saisie.prix">
+        {{ enregistrement ? 'Enregistrement…' : 'Enregistrer' }}
+      </button>
+      <button type="button" class="oq-btn oq-btn--neutre" (click)="saisie = null">Annuler</button>
+    </div>
+  </form>
+
+  <div class="oq-etat" *ngIf="chargement">Chargement…</div>
+
+  <div class="oq-tableau table-responsive" *ngIf="!chargement">
+    <table class="table align-middle mb-0">
+      <thead>
+        <tr>
+          <th scope="col">Produit</th>
+          <th scope="col">Offre</th>
+          <th scope="col" class="text-end">Le client gagne</th>
+          <th scope="col">Période</th>
+          <th scope="col">État</th>
+          <th scope="col" class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let o of offres">
+          <td><span class="fw-semibold">{{ o.produitNom }}</span><span class="oq-sous">Prix normal {{ prix(o.prixNormal) }}</span></td>
+          <td><strong>{{ o.quantite }} pour {{ prix(o.prix) }}</strong>
+            <span class="oq-sous oq-perte" *ngIf="o.prix < o.quantite * o.prixAchat">vendu à perte</span></td>
+          <td class="text-end">{{ prix(o.economie) }}</td>
+          <td>{{ periode(o) }}</td>
+          <td><span class="oq-badge" [ngClass]="etat(o).classe">{{ etat(o).texte }}</span></td>
+          <td class="text-end oq-boutons">
+            <button type="button" class="oq-btn oq-btn--petit" (click)="modifier(o)">Modifier</button>
+            <button type="button" class="oq-btn oq-btn--petit" (click)="basculer(o)">{{ o.active ? 'Arrêter' : 'Remettre' }}</button>
+            <button type="button" class="oq-btn oq-btn--petit oq-btn--danger" (click)="supprimer(o)">Supprimer</button>
+          </td>
+        </tr>
+        <tr *ngIf="!offres.length">
+          <td colspan="6" class="oq-etat">Aucune offre pour l'instant. Cliquez sur « Nouvelle offre ».</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="oq-aide">Quand un client prend plus d'articles que le lot, la caisse complète au prix normal : avec « 2 pour 75 F », 3 articles = 75 + 50 = 125 F. L'offre ne s'applique pas si le vendeur change le prix ou met une remise sur la ligne.</p>
+</div>

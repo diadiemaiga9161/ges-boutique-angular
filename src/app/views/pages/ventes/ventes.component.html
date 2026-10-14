@@ -889,7 +889,7 @@
                         <input type="number" class="form-control text-center" style="width: 60px;" [value]="produit.quantite" (change)="onQuantiteChange(i, $event)" min="1">
                         <button class="btn btn-outline-secondary" (click)="updateQuantite(i, produit.quantite + 1)">+</button>
                       </div>
-                      <strong class="text-primary fs-5">{{ formatPrice(getPrixApresRemise(i) * produit.quantite) }}</strong>
+                      <strong class="text-primary fs-5">{{ formatPrice(getSousTotalLigne(i)) }}</strong>
                     </div>
                     <div class="small mt-1" [ngClass]="getBeneficeProduitColor(i)">
                       {{ getBeneficeProduitLabel(i) }}: {{ formatPrice(Math.abs(getBeneficeProduit(i))) }}
@@ -897,6 +897,7 @@
                         | Prix d'achat: {{ estMesure(produit) ? puLigne({ modeMesure: produit.modeMesure }, produit.prixAchat) : formatPrice(produit.prixAchat) }}
                       </span>
                     </div>
+                    <div *ngIf="getOffreLigne(i).libelle as offre" class="small mt-1 fw-semibold text-success">{{ offre }} : −{{ formatPrice(getOffreLigne(i).remise) }}</div>
                     <div class="small text-danger mt-1" *ngIf="isProduitPanierEnPerte(i)">
                       Prix saisi inferieur au prix d'achat.
                     </div>
@@ -1159,7 +1160,7 @@
                         <input type="number" class="form-control text-center" style="width: 60px;" [value]="produit.quantite" (change)="onQuantiteChange(i, $event)" min="1">
                         <button class="btn btn-outline-secondary" (click)="updateQuantite(i, produit.quantite + 1)">+</button>
                       </div>
-                      <strong class="text-primary fs-5">{{ formatPrice(getPrixApresRemise(i) * produit.quantite) }}</strong>
+                      <strong class="text-primary fs-5">{{ formatPrice(getSousTotalLigne(i)) }}</strong>
                     </div>
                     <div class="small mt-1" [ngClass]="getBeneficeProduitColor(i)">
                       {{ getBeneficeProduitLabel(i) }}: {{ formatPrice(Math.abs(getBeneficeProduit(i))) }}
@@ -1167,6 +1168,7 @@
                         | Prix d'achat: {{ estMesure(produit) ? puLigne({ modeMesure: produit.modeMesure }, produit.prixAchat) : formatPrice(produit.prixAchat) }}
                       </span>
                     </div>
+                    <div *ngIf="getOffreLigne(i).libelle as offre" class="small mt-1 fw-semibold text-success">{{ offre }} : −{{ formatPrice(getOffreLigne(i).remise) }}</div>
                     <div class="small text-danger mt-1" *ngIf="isProduitPanierEnPerte(i)">
                       Prix saisi inferieur au prix d'achat.
                     </div>
@@ -1414,7 +1416,7 @@ MODALE NOUVELLE VENTE À CRÉDIT (ancienne)
                         <input type="number" class="form-control text-center" style="width: 60px;" [value]="produit.quantite" (change)="onQuantiteChange(i, $event)" min="1">
                         <button class="btn btn-outline-secondary" (click)="updateQuantite(i, produit.quantite + 1)">+</button>
                       </div>
-                      <strong class="text-warning fs-5">{{ formatPrice(getPrixApresRemise(i) * produit.quantite) }}</strong>
+                      <strong class="text-warning fs-5">{{ formatPrice(getSousTotalLigne(i)) }}</strong>
                     </div>
                     <div class="small mt-1" [ngClass]="getBeneficeProduitColor(i)">
                       {{ getBeneficeProduitLabel(i) }}: {{ formatPrice(Math.abs(getBeneficeProduit(i))) }}
@@ -1422,6 +1424,7 @@ MODALE NOUVELLE VENTE À CRÉDIT (ancienne)
                         | Prix d'achat: {{ estMesure(produit) ? puLigne({ modeMesure: produit.modeMesure }, produit.prixAchat) : formatPrice(produit.prixAchat) }}
                       </span>
                     </div>
+                    <div *ngIf="getOffreLigne(i).libelle as offre" class="small mt-1 fw-semibold text-success">{{ offre }} : −{{ formatPrice(getOffreLigne(i).remise) }}</div>
                     <div class="small text-danger mt-1" *ngIf="isProduitPanierEnPerte(i)">
                       Prix saisi inferieur au prix d'achat.
                     </div>
@@ -1927,7 +1930,8 @@ MODALE NOUVELLE VENTE À CRÉDIT (ancienne)
                       </div>
                     </div>
                     <div class="text-end">
-                      <div class="fw-bold">{{ formatPrice(getPrixApresRemise(i) * produit.quantite) }}</div>
+                      <div class="fw-bold">{{ formatPrice(getSousTotalLigne(i)) }}</div>
+                      <div *ngIf="getOffreLigne(i).libelle as offre" class="small fw-semibold text-success">{{ offre }} : −{{ formatPrice(getOffreLigne(i).remise) }}</div>
                       <button class="btn btn-sm btn-outline-danger mt-2" (click)="removeProduitFromVente(i)">
                         <i class="fa fa-trash"></i>
                       </button>

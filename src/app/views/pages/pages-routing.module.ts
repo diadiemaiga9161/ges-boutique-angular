@@ -38,6 +38,7 @@ import { HistoriqueVendeurComponent } from './historique-vendeur/historique-vend
 import { ClassementVendeursComponent } from './classement-vendeurs/classement-vendeurs.component';
 import { EtiquettesComponent } from './etiquettes/etiquettes.component';
 import { PointageComponent } from './pointage/pointage.component';
+import { OffresQuantiteComponent } from './offres-quantite/offres-quantite.component';
 import { RessourcesComponent } from './ressources/ressources.component';
 import { ParametresComponent } from './parametres/parametres.component';
 import { JournalAuditComponent } from './journal-audit/journal-audit.component';
@@ -211,6 +212,10 @@ const routes: Routes = [
     {
         path: 'pointage',
         component: PointageComponent
+    },
+    {
+        path: 'offres-quantite',
+        component: OffresQuantiteComponent
     },
     {
         path: 'ressources',

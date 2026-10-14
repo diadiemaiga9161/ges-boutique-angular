@@ -39,6 +39,8 @@ import { ProduitImageService } from '../../../shared/services/produit-image.serv
 import { infoMesure, lireNombre, prixAffiche, prixStocke, qteAffichee, qteDoc, qteStockee, texteQte } from '../../../shared/utils/mesure.util';
 
 import { ActionPermission, RoleService } from '../../../shared/services/role.service';
+import { OffreQuantiteService } from '../../../shared/services/offre-quantite.service';
+import { remiseOffreLigne, ResultatOffre } from '../../../shared/utils/offres-quantite.util';
 @Component({
   selector: 'app-ventes',
   templateUrl: './ventes.component.html',
@@ -502,7 +504,8 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
     private fideliteService: FideliteService,
     private translate: TranslateService,
     private tutorielDemarrage: TutorielDemarrageService,
-    public photos: ProduitImageService
+    public photos: ProduitImageService,
+    private offreQuantiteService: OffreQuantiteService
   ) {}
 
   /** Bouton visible seulement si le rôle de la personne permet l'action (rôles personnalisés). */
@@ -579,6 +582,15 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
       this.venteGrosDetailActif = liste.find(f => f.cle === 'VENTE_GROS_DETAIL')?.actif === true;
     });
     this.subscriptions.push(venteGrosDetailSub);
+
+    // Offres par quantité du gérant (« 2 pour 75 F ») : le serveur les applique de toute
+    // façon ; on les charge ici pour que le total affiché soit le même.
+    const offresSub = this.boutiqueService.fonctionnalitesAvancees$.subscribe(liste => {
+      if (liste.find(f => f.cle === 'OFFRES_QUANTITE')?.actif === true) {
+        this.offreQuantiteService.chargerEnCours().subscribe(() => this.cdr.detectChanges());
+      }
+    });
+    this.subscriptions.push(offresSub);
   }
 
   ngAfterViewInit(): void {
@@ -824,7 +836,7 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
     if (!produit) return 0;
     const prixVente = this.getPrixApresRemise(index);
     const beneficeUnitaire = prixVente - produit.prixAchat;
-    return beneficeUnitaire * produit.quantite;
+    return beneficeUnitaire * produit.quantite - this.getOffreLigne(index).remise;
   }
 
   isProduitPanierEnPerte(index: number): boolean {
@@ -2430,6 +2442,30 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
     return this.venteForm.lignes;
   }
 
+  /** Offre par quantité applicable à une ligne (mêmes conditions que le serveur). */
+  getOffreLigne(index: number): ResultatOffre {
+    const produit = this.produitsPanier[index];
+    const ligne = this.getActiveLignes()[index];
+    const offres = this.offreQuantiteService.enCours;
+    if (!produit || !ligne || !offres.length) return { remise: 0, libelle: null };
+    return remiseOffreLigne({
+      produitId: produit.id,
+      quantite: Number(ligne.quantite) || 0,
+      prixUnitaire: this.getPrixUnitaireActuel(index),
+      prixNormal: Number(produit.prixVente) || 0,
+      aRemise: (this.lignesAvecRemise.get(index)?.valeur || 0) > 0,
+      parCarton: produit.niveauId != null || (produit.niveauFacteurTotal || 1) > 1,
+      auPoids: !!produit.modeMesure
+    }, offres);
+  }
+
+  /** Montant de la ligne : prix × quantité, moins l'offre par quantité s'il y en a une. */
+  getSousTotalLigne(index: number): number {
+    const ligne = this.getActiveLignes()[index];
+    if (!ligne) return 0;
+    return Math.max(0, this.getPrixApresRemise(index) * ligne.quantite - this.getOffreLigne(index).remise);
+  }
+
   getPrixApresRemise(index: number): number {
     const prixUnitaire = this.getPrixUnitaireActuel(index);
     const remise = this.lignesAvecRemise.get(index);
@@ -2459,7 +2495,7 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
     let total = 0;
     const lignes = this.getActiveLignes();
     for (let i = 0; i < lignes.length; i++) {
-      total += this.getPrixApresRemise(i) * lignes[i].quantite;
+      total += this.getSousTotalLigne(i);
     }
     return total;
   }
@@ -2501,7 +2537,7 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
     const prixVente = this.getPrixApresRemise(index);
     const prixAchat = produit.prixAchat;
     const beneficeUnitaire = prixVente - prixAchat;
-    return beneficeUnitaire * produit.quantite;
+    return beneficeUnitaire * produit.quantite - this.getOffreLigne(index).remise;
   }
 
   getBeneficeTotalPanier(): number {
@@ -4021,7 +4057,7 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
     this.selectedVentePourRetour = vente;
     this.retourVenteMotif = '';
     this.retourVenteLignes = (vente.produits || []).map((p: any) => ({
-      ligneVenteId: p.id || p.ligneVenteId,
+      ligneVenteId: p.ligneVenteId || p.id,
       produitId: p.produitId || p.id,
       produitNom: p.produitNom || p.nom || 'Produit',
       prixUnitaire: p.prixApresRemise || p.prixUnitaire || p.prixVente || 0,
@@ -4054,7 +4090,15 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
       }))
     };
 
-    const montantRetour = this.totalRetourVente;
+    // Montant demandé au serveur : avec une offre par quantité (« 2 pour 75 F »), rendre un
+    // article ne rend pas forcément son prix normal. Sans réseau, on garde le calcul local.
+    this.productService.apercuRetourVente(request).subscribe({
+      next: r => this.confirmerRetourVente(request, Number(r?.montantTotal ?? this.totalRetourVente)),
+      error: () => this.confirmerRetourVente(request, this.totalRetourVente)
+    });
+  }
+
+  private confirmerRetourVente(request: RetourVenteRequest, montantRetour: number): void {
     const numVente = this.selectedVentePourRetour!.numeroVente;
     const estCredit = !!this.selectedVentePourRetour?.estCredit;
     const impactLabel = estCredit

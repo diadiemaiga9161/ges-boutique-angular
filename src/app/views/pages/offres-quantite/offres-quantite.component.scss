@@ -1,0 +1,225 @@
+.app-page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.oq-message {
+  margin: 0 0 12px;
+  font-weight: 600;
+  color: #047857;
+
+  &--erreur { color: #b91c1c; }
+}
+
+.oq-btn {
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 12px;
+  border: 0;
+  font-weight: 700;
+  font-size: 0.92rem;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:disabled { opacity: .55; cursor: not-allowed; }
+  &:focus-visible { outline: 2px solid #93b4f5; outline-offset: 2px; }
+
+  &--principal { background: #1a56db; color: #fff; }
+  &--neutre { background: var(--surface, #fff); color: var(--text, #0f172a); border: 1.5px solid var(--border, #e2e8f0); }
+  &--petit {
+    min-height: 36px;
+    padding: 0 12px;
+    font-size: 0.85rem;
+    background: #eef4ff;
+    color: #1a56db;
+  }
+  &--danger { background: #fef2f2; color: #b91c1c; }
+}
+
+.oq-saisie {
+  margin-bottom: 16px;
+  padding: 18px 20px;
+  border-radius: 16px;
+  background: #f5f8ff;
+  border: 1px solid #c7d7fe;
+}
+
+.oq-saisie__titre {
+  margin: 0 0 12px;
+  font-weight: 700;
+  color: var(--text, #0f172a);
+}
+
+.oq-label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted, #475569);
+}
+
+.oq-champ {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1.5px solid var(--border, #e2e8f0);
+  border-radius: 12px;
+  background: var(--surface, #fff);
+  color: var(--text, #0f172a);
+  font-size: 0.92rem;
+  font-weight: 400;
+
+  &:focus { outline: none; border-color: #1a56db; }
+}
+
+.oq-champ-produit {
+  max-width: 520px;
+  margin-bottom: 12px;
+}
+
+.oq-produit {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  font-size: 0.95rem;
+  font-weight: 400;
+  color: var(--text, #0f172a);
+}
+
+.oq-lien {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: #1a56db;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.oq-liste {
+  max-height: 220px;
+  overflow-y: auto;
+  margin: 6px 0 0;
+  padding: 4px;
+  list-style: none;
+  border-radius: 12px;
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #e2e8f0);
+
+  button {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    min-height: 40px;
+    padding: 0 10px;
+    border: 0;
+    border-radius: 8px;
+    background: none;
+    color: var(--text, #0f172a);
+    text-align: left;
+    cursor: pointer;
+
+    &:hover, &:focus-visible { background: #eef4ff; outline: none; }
+    span { color: var(--text-muted, #475569); }
+  }
+}
+
+.oq-vide {
+  padding: 10px;
+  color: var(--text-muted, #475569);
+}
+
+.oq-ligne {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+
+  .oq-label { flex: 1 1 160px; max-width: 220px; }
+}
+
+.oq-apercu {
+  margin: 0 0 12px;
+  color: var(--text, #0f172a);
+}
+
+.oq-perte {
+  display: block;
+  color: #b45309;
+  font-weight: 700;
+}
+
+.oq-case {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-weight: 600;
+
+  input { width: 18px; height: 18px; }
+}
+
+.oq-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.oq-etat {
+  padding: 32px;
+  text-align: center;
+  color: var(--text-muted, #475569);
+}
+
+.oq-tableau {
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 16px;
+  padding: 4px 8px;
+
+  th {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: .02em;
+    color: var(--text-muted, #475569);
+    white-space: nowrap;
+  }
+
+  /* Le style général fige la dernière colonne : inutile ici. */
+  th:last-child,
+  td:last-child { position: static !important; box-shadow: none !important; border-left: 0 !important; }
+}
+
+.oq-boutons {
+  white-space: nowrap;
+
+  .oq-btn + .oq-btn { margin-left: 6px; }
+}
+
+.oq-sous {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--text-muted, #475569);
+}
+
+.oq-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+
+  &--actif { background: #ecfdf5; color: #047857; }
+  &--arret { background: #f1f5f9; color: #475569; }
+  &--attente { background: #fffbeb; color: #b45309; }
+}
+
+.oq-aide {
+  margin: 12px 0 0;
+  font-size: 0.85rem;
+  color: var(--text-muted, #475569);
+}

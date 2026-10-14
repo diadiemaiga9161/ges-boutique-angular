@@ -1394,6 +1394,13 @@ export class ProductService {
     }).pipe(catchError(() => of([])));
   }
 
+  /** Montant exact qui sera rendu (offres par quantité comprises), sans rien enregistrer. */
+  apercuRetourVente(request: RetourVenteRequest): Observable<{ montantTotal: number }> {
+    return this.http.post<{ montantTotal: number }>(`${environment.apiUrl}/retours-ventes/apercu`, request, {
+      headers: this.getAuthHeaders()
+    });
+  }
+
   effectuerRetourVente(request: RetourVenteRequest): Observable<RetourVente> {
     return this.http.post<RetourVente>(`${environment.apiUrl}/retours-ventes`, request, {
       headers: this.getAuthHeaders()

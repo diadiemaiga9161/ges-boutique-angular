@@ -109,6 +109,9 @@ export interface LigneVenteDto {
   montantRemise: number;
   /** Vente à la mesure : 'KG' | 'L' | 'M', sinon absent. */
   modeMesure?: string | null;
+  ligneVenteId?: number | null;
+  /** Offre par quantité appliquée à la ligne (ex : « Offre 2 pour 75 F »). */
+  offreLibelle?: string | null;
 }
 
 export interface VenteDto {
@@ -517,7 +520,9 @@ export class VenteService {
         remiseMontant,
         prixApresRemise,
         sousTotal,
-        montantRemise: Number(ligne.montantRemise ?? this.calculerMontantRemise(prixUnitaire, quantite, remisePourcentage, remiseMontant))
+        montantRemise: Number(ligne.montantRemise ?? this.calculerMontantRemise(prixUnitaire, quantite, remisePourcentage, remiseMontant)),
+        ligneVenteId: ligne.id ?? ligne.ligneVenteId ?? null,
+        offreLibelle: ligne.offreLibelle ?? null
       };
     });
   }
@@ -1352,10 +1357,10 @@ export class VenteService {
     // Génération des lignes
     const lignesHtml = vente.produits.map(p => `
       <tr>
-        <td><strong>${this.escapeHtml(p.produitNom || 'Produit')}</strong></td>
+        <td><strong>${this.escapeHtml(p.produitNom || 'Produit')}</strong>${p.offreLibelle ? '<br><small>' + this.escapeHtml(p.offreLibelle) + '</small>' : ''}</td>
         <td class="text-center">${qteDoc(p)}</td>
         <td class="text-right">${puDoc(p, v => this.formatPrice(v))}</td>
-        <td class="text-center">${p.remisePourcentage ? p.remisePourcentage + '%' : (p.remiseMontant ? this.formatPrice(p.remiseMontant) : '-')}</td>
+        <td class="text-center">${p.remisePourcentage ? p.remisePourcentage + '%' : (p.remiseMontant ? this.formatPrice(p.remiseMontant) : (p.offreLibelle ? this.formatPrice(p.montantRemise) : '-'))}</td>
         <td class="text-right"><strong>${this.formatPrice(p.sousTotal)}</strong></td>
       </tr>
     `).join('');

@@ -114,6 +114,7 @@ export class NavigationService {
             name: 'Stock', type: 'dropDown', icon: 'i-Bar-Chart', sub: [
                 { name: 'INVENTORY.TITLE',     type: 'link', icon: 'i-Bar-Chart',                   state: '/inventaire' },
                 { name: 'Étiquettes de prix',  type: 'link', icon: 'i-Tag-3',                       state: '/etiquettes' },
+                { name: 'Offres par quantité', type: 'link', icon: 'i-Gift-Box',                    state: '/offres-quantite' },
                 { name: 'TRANSFERS.TITLE',     type: 'link', icon: 'i-Arrow-Right',                 state: '/transferts' },
             ]
         },
@@ -195,7 +196,8 @@ export class NavigationService {
         RESULTAT_NET: '/resultat-net',
         ROLES_PERSONNALISES: '/roles',
         PRIMES_PRODUITS: ['/primes-produits', '/mes-primes'],
-        POINTAGE: '/pointage'
+        POINTAGE: '/pointage',
+        OFFRES_QUANTITE: '/offres-quantite'
     };
     private etatsAvancesDesactives = new Set<string>();
 
