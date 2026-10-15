@@ -41,6 +41,7 @@ import { PointageComponent } from './pointage/pointage.component';
 import { OffresQuantiteComponent } from './offres-quantite/offres-quantite.component';
 import { ClientsAbsentsComponent } from './clients-absents/clients-absents.component';
 import { PlanningComponent } from './planning/planning.component';
+import { EntrainementComponent } from './entrainement/entrainement.component';
 import { RessourcesComponent } from './ressources/ressources.component';
 import { ParametresComponent } from './parametres/parametres.component';
 import { JournalAuditComponent } from './journal-audit/journal-audit.component';
@@ -226,6 +227,10 @@ const routes: Routes = [
     {
         path: 'planning',
         component: PlanningComponent
+    },
+    {
+        path: 'entrainement',
+        component: EntrainementComponent
     },
     {
         path: 'ressources',

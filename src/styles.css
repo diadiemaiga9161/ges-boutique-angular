@@ -2234,3 +2234,32 @@ body:not(.dark-mode) app-caisse-ges .card.bg-warning h6,
 body:not(.dark-mode) app-caisse-ges .card.bg-warning small { color: #2b1d00 !important; }
 body:not(.dark-mode) app-caisse-ges .badge.bg-warning.text-dark,
 body:not(.dark-mode) app-caisse-ges .badge.bg-light.text-dark { color: #1a1200 !important; }
+
+/* Mode entraînement : bandeau orange en bas de l'écran */
+.gl-bandeau-entrainement {
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  z-index: 3000;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 12px 10px 18px;
+  border-radius: 999px;
+  background: #c2410c;
+  color: #fff;
+  font-weight: 800;
+  box-shadow: 0 10px 30px rgba(194, 65, 12, 0.35);
+}
+
+.gl-bandeau-entrainement button {
+  min-height: 34px;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 999px;
+  background: transparent;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}

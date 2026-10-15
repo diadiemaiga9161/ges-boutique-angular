@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import { ModeEntrainementService } from './shared/services/mode-entrainement.service';
+import { Component, OnInit, inject } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { BoutiqueService } from './shared/services/boutique.service';
 import { WebSocketService } from './shared/services/websocket.service';
@@ -13,6 +14,7 @@ import { AuthService } from './shared/services/auth.service';
     standalone: false
 })
 export class AppComponent implements OnInit {
+  entrainement = inject(ModeEntrainementService);
   title = 'bootDash';
 
   constructor(

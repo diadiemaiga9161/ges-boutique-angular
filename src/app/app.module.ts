@@ -1,3 +1,4 @@
+import { EntrainementInterceptor } from './shared/interceptors/entrainement.interceptor';
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule, isDevMode, APP_INITIALIZER } from '@angular/core';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -50,6 +51,7 @@ export function initLanguage(lang: LanguageService) {
     })
   ],
   providers: [
+    { provide: HTTP_INTERCEPTORS, useClass: EntrainementInterceptor, multi: true },
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
     { provide: HTTP_INTERCEPTORS, useClass: CacheInterceptor, multi: true },
     { provide: HTTP_INTERCEPTORS, useClass: LoadingInterceptor, multi: true },

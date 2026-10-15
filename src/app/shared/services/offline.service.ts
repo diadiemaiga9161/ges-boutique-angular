@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { fromEvent, merge, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { db, SyncOperation } from '../db/app-db';
+import { ModeEntrainementService } from './mode-entrainement.service';
 import { environment } from 'src/environments/environment';
 
 @Injectable({ providedIn: 'root' })
@@ -52,6 +53,8 @@ export class OfflineService {
   }
 
   async syncPendingOperations(): Promise<void> {
+    // Mode entraînement : rien ne part vers le serveur, on reprendra après.
+    if (ModeEntrainementService.estActif()) return;
     const pending = await db.syncQueue
       .where('status')
       .anyOf(['PENDING', 'ERROR'])

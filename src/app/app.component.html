@@ -1,3 +1,7 @@
+<div class="gl-bandeau-entrainement" *ngIf="entrainement.actif$ | async" role="status">
+  <span>Mode entraînement · rien n'est enregistré</span>
+  <button type="button" (click)="entrainement.desactiver()">Arrêter</button>
+</div>
 <router-outlet></router-outlet>
 <!-- Désactivé temporairement à la demande (gênait pendant les tests) -->
 <!-- <app-chatbot-assistant></app-chatbot-assistant> -->

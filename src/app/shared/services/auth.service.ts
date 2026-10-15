@@ -1,4 +1,5 @@
-import { Injectable } from "@angular/core";
+import { Injectable, inject } from "@angular/core";
+import { ModeEntrainementService } from './mode-entrainement.service';
 import { LocalStoreService } from "./local-store.service";
 import { Router } from "@angular/router";
 import { HttpClient, HttpHeaders } from "@angular/common/http";
@@ -39,6 +40,7 @@ export interface User {
   providedIn: "root"
 })
 export class AuthService {
+  private entrainement = inject(ModeEntrainementService);
   private apiUrl = `${environment.apiUrl}/auth`;
   private tokenKey = 'auth_token';
   private userKey = 'user_data';
@@ -126,6 +128,7 @@ export class AuthService {
   }
 
   signout() {
+    this.entrainement.desactiver();
     console.log('🚪 Déconnexion de l\'utilisateur');
     
     this.store.removeItem(this.tokenKey);

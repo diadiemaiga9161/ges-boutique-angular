@@ -40,6 +40,7 @@ import { infoMesure, lireNombre, prixAffiche, prixStocke, qteAffichee, qteDoc, q
 
 import { ActionPermission, RoleService } from '../../../shared/services/role.service';
 import { OffreQuantiteService } from '../../../shared/services/offre-quantite.service';
+import { ModeEntrainementService } from '../../../shared/services/mode-entrainement.service';
 import { remiseOffreLigne, ResultatOffre } from '../../../shared/utils/offres-quantite.util';
 @Component({
   selector: 'app-ventes',
@@ -505,7 +506,8 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
     private translate: TranslateService,
     private tutorielDemarrage: TutorielDemarrageService,
     public photos: ProduitImageService,
-    private offreQuantiteService: OffreQuantiteService
+    private offreQuantiteService: OffreQuantiteService,
+    public entrainement: ModeEntrainementService
   ) {}
 
   /** Bouton visible seulement si le rôle de la personne permet l'action (rôles personnalisés). */
@@ -1379,6 +1381,7 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
       cancelButtonColor: '#6c757d'
     }).then(async result => {
       if (!result.isConfirmed) return;
+      if (this.entrainement.actif) { this.simulerVenteEntrainement(total, false); return; }
 
       this.prepareRemises(false);
       this.prepareClientInfo(false);
@@ -1436,6 +1439,7 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
       cancelButtonColor: '#6c757d'
     }).then(async result => {
       if (!result.isConfirmed) return;
+      if (this.entrainement.actif) { this.simulerVenteEntrainement(total, true); return; }
 
       this.prepareRemises(true);
       const fideliteAUtiliser = this.getFideliteAUtiliserPourEnvoi();
@@ -2283,6 +2287,22 @@ export class VentesComponent implements OnInit, OnDestroy, AfterViewInit {
       form.remiseGlobale = undefined;
       form.typeRemiseGlobale = undefined;
     }
+  }
+
+  /** Mode entraînement : faux ticket, rien n'est envoyé ni mis de côté hors ligne. */
+  private simulerVenteEntrainement(total: number, credit: boolean): void {
+    this.showNewVenteModal = false;
+    this.showNewVenteCreditModal = false;
+    this.resetForms();
+    this.isLoading = false;
+    this.cdr.detectChanges();
+    Swal.fire({
+      icon: 'success',
+      title: "Vente d'entraînement réussie",
+      html: `Total : <b>${this.formatPrice(total)}</b><br>C'est un entraînement : rien n'a été enregistré (ni stock, ni caisse${credit ? ', ni crédit' : ''}).`,
+      confirmButtonText: 'Vente suivante',
+      confirmButtonColor: '#1a56db'
+    });
   }
 
   private handleVenteSuccess(response: any, type: string, fideliteAUtiliser?: { clientId: number; points: number }): void {

@@ -87,6 +87,7 @@ export class NavigationService {
             name: 'Compte', type: 'dropDown', icon: 'i-Administrator', sub: [
                 { name: 'PROFILE_MENU.TITLE',  type: 'link', icon: 'i-Administrator',               state: '/profile' },
                 { name: 'Mes primes',          type: 'link', icon: 'i-Gift-Box',                    state: '/mes-primes' },
+                { name: 'Mode entraînement',   type: 'link', icon: 'i-Student-Hat-2',                 state: '/entrainement' },
                 { name: 'En savoir plus',      type: 'link', icon: 'i-Information',                 state: '/ressources' },
             ]
         },
@@ -169,6 +170,7 @@ export class NavigationService {
             name: 'Compte', type: 'dropDown', icon: 'i-Administrator', sub: [
                 { name: 'PROFILE_MENU.TITLE',  type: 'link', icon: 'i-Administrator',               state: '/profile' },
                 { name: 'Mes primes',          type: 'link', icon: 'i-Gift-Box',                    state: '/mes-primes' },
+                { name: 'Mode entraînement',   type: 'link', icon: 'i-Student-Hat-2',                 state: '/entrainement' },
                 { name: 'En savoir plus',      type: 'link', icon: 'i-Information',                 state: '/ressources' },
             ]
         },
@@ -201,7 +203,8 @@ export class NavigationService {
         POINTAGE: '/pointage',
         OFFRES_QUANTITE: '/offres-quantite',
         CLIENTS_ABSENTS: '/clients-absents',
-        PLANNING: '/planning'
+        PLANNING: '/planning',
+        MODE_ENTRAINEMENT: '/entrainement'
     };
     private etatsAvancesDesactives = new Set<string>();
 
