@@ -5,7 +5,7 @@
       <div class="app-page-icon"><i class="i-Gift-Box"></i></div>
       <div>
         <h1 class="app-page-title">Offres par quantité</h1>
-        <p class="app-page-subtitle">Exemple : « 2 pour 75 F ». La caisse applique l'offre toute seule ; le vendeur ne peut pas la retirer.</p>
+        <p class="app-page-subtitle">Exemple : « 2 pour 75 F », seulement si le client en prend exactement 2 (pour 3, créez une autre offre). La caisse l'applique toute seule ; le vendeur ne peut pas la retirer.</p>
       </div>
     </div>
     <button type="button" class="oq-btn oq-btn--principal" (click)="nouvelle()" *ngIf="!saisie">+ Nouvelle offre</button>
@@ -54,6 +54,7 @@
     <p class="oq-apercu" *ngIf="apercu as a">
       {{ saisie.quantite }} articles : <s>{{ prix(a.normal) }}</s> → <strong>{{ prix(saisie.prix || 0) }}</strong>,
       le client gagne {{ prix(a.economie) }}.
+      {{ (saisie.quantite || 0) + 1 }} articles ou plus : prix normal, sauf autre offre.
       <span class="oq-perte" *ngIf="a.perte">Attention : ce prix est en dessous du prix d'achat, chaque lot sera vendu à perte.</span>
     </p>
 
