@@ -7,7 +7,9 @@
     "!/**/*__*",
     "!/**/*__*/**",
     "!/vitrine",
-    "!/vitrine/**"
+    "!/vitrine/**",
+    "!/mobile",
+    "!/mobile/**"
   ],
   "assetGroups": [
     {

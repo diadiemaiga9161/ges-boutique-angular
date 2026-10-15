@@ -42,6 +42,7 @@ import { OffresQuantiteComponent } from './offres-quantite/offres-quantite.compo
 import { ClientsAbsentsComponent } from './clients-absents/clients-absents.component';
 import { PlanningComponent } from './planning/planning.component';
 import { EntrainementComponent } from './entrainement/entrainement.component';
+import { DevisComponent } from './devis/devis.component';
 import { RessourcesComponent } from './ressources/ressources.component';
 import { ParametresComponent } from './parametres/parametres.component';
 import { JournalAuditComponent } from './journal-audit/journal-audit.component';
@@ -231,6 +232,10 @@ const routes: Routes = [
     {
         path: 'entrainement',
         component: EntrainementComponent
+    },
+    {
+        path: 'devis',
+        component: DevisComponent
     },
     {
         path: 'ressources',

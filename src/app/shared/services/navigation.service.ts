@@ -100,6 +100,7 @@ export class NavigationService {
                 { name: 'SALES.TITLE',         type: 'link', icon: 'i-Money-2',                     state: '/vente' },
                 { name: 'CAISSE.TITLE',        type: 'link', icon: 'i-Cash-register-2',             state: '/caisse' },
                 { name: 'INVOICES.TITLE',      type: 'link', icon: 'i-Receipt-3',                   state: '/facture' },
+                { name: 'Devis',               type: 'link', icon: 'i-File-Clipboard-File--Text',  state: '/devis' },
                 { name: 'CREDIT_PAYMENT.TITLE',type: 'link', icon: 'i-Credit-Card',                 state: '/reglement-credits' },
                 { name: 'ORDERS.TITLE',        type: 'link', icon: 'i-File-Clipboard-File--Text',   state: '/commandes' },
             ]
@@ -204,7 +205,8 @@ export class NavigationService {
         OFFRES_QUANTITE: '/offres-quantite',
         CLIENTS_ABSENTS: '/clients-absents',
         PLANNING: '/planning',
-        MODE_ENTRAINEMENT: '/entrainement'
+        MODE_ENTRAINEMENT: '/entrainement',
+        DEVIS: '/devis'
     };
     private etatsAvancesDesactives = new Set<string>();
 

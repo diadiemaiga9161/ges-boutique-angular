@@ -50,7 +50,7 @@ export class RoleService {
 
   /** Chaque page (state du menu) appartient à une partie de l'application côté serveur. */
   static readonly MODULE_PAR_PAGE: Record<string, string> = {
-    '/vente': 'VENTES', '/facture': 'VENTES', '/reglement-credits': 'VENTES',
+    '/vente': 'VENTES', '/facture': 'VENTES', '/devis': 'VENTES', '/reglement-credits': 'VENTES',
     '/produit': 'PRODUITS', '/promotions': 'PRODUITS',
     '/inventaire': 'STOCK', '/inventaire-comptage': 'STOCK', '/transferts': 'STOCK',
     '/client': 'CLIENTS', '/partenaires': 'CLIENTS', '/dettes': 'CLIENTS',

@@ -1,0 +1,183 @@
+<div class="container-fluid py-4 app-page">
+
+  <div class="app-page-header mb-4">
+    <div class="app-page-header-left">
+      <div class="app-page-icon"><i class="i-File-Clipboard-File--Text"></i></div>
+      <div>
+        <h1 class="app-page-title">Devis</h1>
+        <p class="app-page-subtitle">Factures pro forma pour les écoles, mairies, ONG… Quand le client accepte, le devis devient une vente d'un clic.</p>
+      </div>
+    </div>
+    <button type="button" class="dv-btn dv-btn--principal" (click)="nouveau()" *ngIf="!saisie">+ Nouveau devis</button>
+  </div>
+
+  <p class="dv-message" *ngIf="message" role="status">{{ message }}</p>
+  <p class="dv-message dv-message--erreur" *ngIf="erreur" role="alert">{{ erreur }}</p>
+
+  <!-- ══════════ Saisie ══════════ -->
+  <form class="dv-saisie" *ngIf="saisie" (ngSubmit)="enregistrer()">
+    <p class="dv-saisie__titre">{{ saisie.id ? 'Modifier le devis' : 'Nouveau devis' }}</p>
+
+    <div class="dv-grille">
+      <div class="dv-bloc">
+        <p class="dv-bloc__titre">1. Le client</p>
+        <ng-container *ngIf="!saisie.clientId">
+          <label class="dv-label">Chercher un client déjà enregistré
+            <input type="search" class="dv-champ" name="rc" [(ngModel)]="rechercheClient" placeholder="Nom du client…" autocomplete="off" />
+          </label>
+          <ul class="dv-liste" *ngIf="clientsFiltres.length">
+            <li *ngFor="let c of clientsFiltres"><button type="button" (click)="choisirClient(c)">{{ c.prenom }} {{ c.nom }} <span>{{ c.numeroTelephone || c.telephone }}</span></button></li>
+          </ul>
+          <p class="dv-ou">ou écrire un nouveau client :</p>
+        </ng-container>
+        <p class="dv-choisi" *ngIf="saisie.clientId">Client enregistré : <strong>{{ saisie.clientNom }}</strong>
+          <button type="button" class="dv-lien" (click)="oublierClient()">Changer</button></p>
+        <label class="dv-label">Nom (école, mairie, ONG…)
+          <input type="text" class="dv-champ" name="cn" [(ngModel)]="saisie.clientNom" [disabled]="!!saisie.clientId" required placeholder="Ex : École de Kalaban" />
+        </label>
+        <div class="dv-deux">
+          <label class="dv-label">Téléphone
+            <input type="tel" class="dv-champ" name="ct" [(ngModel)]="saisie.clientTelephone" [disabled]="!!saisie.clientId" />
+          </label>
+          <label class="dv-label">Adresse
+            <input type="text" class="dv-champ" name="ca" [(ngModel)]="saisie.clientAdresse" [disabled]="!!saisie.clientId" />
+          </label>
+        </div>
+      </div>
+
+      <div class="dv-bloc">
+        <p class="dv-bloc__titre">2. Le devis</p>
+        <label class="dv-label">Objet
+          <input type="text" class="dv-champ" name="obj" [(ngModel)]="saisie.objet" maxlength="200" placeholder="Ex : Fournitures pour la cantine" />
+        </label>
+        <div class="dv-deux">
+          <label class="dv-label">Valable jusqu'au
+            <input type="date" class="dv-champ" name="val" [(ngModel)]="saisie.dateValidite" required />
+          </label>
+          <label class="dv-label">Remise (F)
+            <input type="number" class="dv-champ" name="rem" min="0" [(ngModel)]="saisie.remise" />
+          </label>
+        </div>
+        <label class="dv-label">Conditions
+          <input type="text" class="dv-champ" name="cond" [(ngModel)]="saisie.conditions" maxlength="500" placeholder="Ex : Paiement à la livraison" />
+        </label>
+      </div>
+    </div>
+
+    <div class="dv-bloc">
+      <p class="dv-bloc__titre">3. Les produits</p>
+      <label class="dv-label">Ajouter un produit
+        <input type="search" class="dv-champ" name="rp" [(ngModel)]="rechercheProduit" placeholder="Nom ou code-barres…" autocomplete="off" />
+      </label>
+      <ul class="dv-liste" *ngIf="produitsFiltres.length">
+        <li *ngFor="let p of produitsFiltres"><button type="button" (click)="ajouterProduit(p)">{{ p.nom }} <span>{{ prix(p.prixVente) }} · stock {{ p.quantite }}</span></button></li>
+      </ul>
+
+      <div class="table-responsive dv-lignes" *ngIf="saisie.lignes.length">
+        <table class="table align-middle mb-0">
+          <thead><tr><th>Produit</th><th class="text-end">Quantité</th><th class="text-end">Prix unitaire (F)</th><th class="text-end">Montant</th><th></th></tr></thead>
+          <tbody>
+            <tr *ngFor="let l of saisie.lignes; let i = index">
+              <td>{{ l.designation }}</td>
+              <td class="text-end"><input type="number" class="dv-petit" min="1" [name]="'q' + i" [(ngModel)]="l.quantite" /></td>
+              <td class="text-end"><input type="number" class="dv-petit" min="0" [name]="'p' + i" [(ngModel)]="l.prixUnitaire" /></td>
+              <td class="text-end fw-semibold">{{ prix(l.quantite * l.prixUnitaire) }}</td>
+              <td class="text-end"><button type="button" class="dv-btn dv-btn--petit dv-btn--danger" (click)="retirerLigne(i)" [attr.aria-label]="'Retirer ' + l.designation">Retirer</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="dv-vide" *ngIf="!saisie.lignes.length">Aucun produit pour l'instant.</p>
+
+      <div class="dv-total" *ngIf="saisie.lignes.length">
+        <span *ngIf="saisie.remise > 0">Sous-total {{ prix(sousTotalSaisie) }} · remise − {{ prix(saisie.remise) }} ·</span>
+        Total <strong>{{ prix(totalSaisie) }}</strong>
+      </div>
+    </div>
+
+    <div class="dv-actions">
+      <button type="submit" class="dv-btn dv-btn--principal" [disabled]="enregistrement || !saisie.clientNom || !saisie.lignes.length">
+        {{ enregistrement ? 'Enregistrement…' : 'Enregistrer le devis' }}
+      </button>
+      <button type="button" class="dv-btn dv-btn--neutre" (click)="saisie = null">Annuler</button>
+    </div>
+    <p class="dv-aide">Les prix du devis restent bloqués jusqu'à la date de validité, même si le prix du produit change. Le stock et la caisse ne bougent qu'au moment de la transformation en vente.</p>
+  </form>
+
+  <!-- ══════════ Transformation en vente ══════════ -->
+  <div class="dv-saisie" *ngIf="transformation">
+    <p class="dv-saisie__titre">Transformer le devis {{ transformation.devis.numero }} en vente ({{ prix(transformation.devis.montantTotal) }})</p>
+    <div class="dv-choix" role="radiogroup" aria-label="Paiement">
+      <button type="button" role="radio" class="dv-choix__btn" [class.dv-choix__btn--actif]="!transformation.comptant"
+              [attr.aria-checked]="!transformation.comptant" (click)="transformation.comptant = false">
+        <strong>À crédit</strong><span>Le client paiera plus tard</span>
+      </button>
+      <button type="button" role="radio" class="dv-choix__btn" [class.dv-choix__btn--actif]="transformation.comptant"
+              [attr.aria-checked]="transformation.comptant" (click)="transformation.comptant = true">
+        <strong>Payé maintenant</strong><span>Tout est payé aujourd'hui</span>
+      </button>
+    </div>
+    <div class="dv-deux">
+      <label class="dv-label" *ngIf="!transformation.comptant">Date limite de paiement
+        <input type="date" class="dv-champ" [(ngModel)]="transformation.dateEcheance" />
+      </label>
+      <label class="dv-label" *ngIf="!transformation.comptant">Acompte versé (F, facultatif)
+        <input type="number" class="dv-champ" min="0" [(ngModel)]="transformation.montantVerse" />
+      </label>
+      <label class="dv-label">Moyen de paiement
+        <select class="dv-champ" [(ngModel)]="transformation.modePaiement">
+          <option *ngFor="let m of modes" [value]="m.cle">{{ m.libelle }}</option>
+        </select>
+      </label>
+      <label class="dv-label" *ngIf="transformation.modePaiement !== 'ESPECES'">Référence du paiement
+        <input type="text" class="dv-champ" [(ngModel)]="transformation.referencePaiement" />
+      </label>
+    </div>
+    <p class="dv-aide">Le stock baisse et la vente apparaît dans la caisse comme toute vente{{ transformation.comptant ? '' : ', avec le reste à payer au nom du client' }}.</p>
+    <div class="dv-actions">
+      <button type="button" class="dv-btn dv-btn--principal" (click)="transformer()" [disabled]="enregistrement">
+        {{ enregistrement ? 'Transformation…' : 'Créer la vente' }}
+      </button>
+      <button type="button" class="dv-btn dv-btn--neutre" (click)="transformation = null">Annuler</button>
+    </div>
+  </div>
+
+  <!-- ══════════ Liste ══════════ -->
+  <div class="dv-etat" *ngIf="chargement">Chargement…</div>
+  <div class="dv-tableau table-responsive" *ngIf="!chargement">
+    <table class="table align-middle mb-0">
+      <thead>
+        <tr>
+          <th scope="col">Numéro</th>
+          <th scope="col">Client</th>
+          <th scope="col">Valable jusqu'au</th>
+          <th scope="col" class="text-end">Total</th>
+          <th scope="col">État</th>
+          <th scope="col" class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let d of devis">
+          <td><span class="fw-semibold">{{ d.numero }}</span><span class="dv-sous">{{ date(d.dateCreation) }}</span></td>
+          <td><span class="fw-semibold">{{ d.clientNom }}</span><span class="dv-sous" *ngIf="d.objet">{{ d.objet }}</span></td>
+          <td>{{ date(d.dateValidite) }}</td>
+          <td class="text-end fw-semibold">{{ prix(d.montantTotal) }}</td>
+          <td><span class="dv-badge" [ngClass]="statut(d).classe">{{ statut(d).texte }}</span></td>
+          <td class="text-end dv-boutons">
+            <button type="button" class="dv-btn dv-btn--petit" (click)="imprimer(d)">Imprimer</button>
+            <ng-container *ngIf="d.statut === 'EN_ATTENTE'">
+              <button type="button" class="dv-btn dv-btn--petit dv-btn--vert" (click)="ouvrirTransformation(d)">Transformer en vente</button>
+              <button type="button" class="dv-btn dv-btn--petit" (click)="modifier(d)">Modifier</button>
+              <button type="button" class="dv-btn dv-btn--petit" (click)="refuser(d)">Refusé</button>
+            </ng-container>
+            <button type="button" class="dv-btn dv-btn--petit" *ngIf="d.statut === 'EXPIRE'" (click)="prolonger(d)">Prolonger</button>
+            <button type="button" class="dv-btn dv-btn--petit dv-btn--danger" *ngIf="d.statut !== 'TRANSFORME'" (click)="supprimer(d)">Supprimer</button>
+          </td>
+        </tr>
+        <tr *ngIf="!devis.length">
+          <td colspan="6" class="dv-etat">Aucun devis pour l'instant. Cliquez sur « Nouveau devis ».</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
