@@ -573,7 +573,7 @@
       <div class="row" *ngIf="reconciliationList.length > 0">
         <div class="col-lg-4 col-md-6 mb-3" *ngFor="let v of reconciliationList">
           <div class="card h-100 border-0 shadow-sm">
-            <div class="card-header bg-primary text-white d-flex align-items-center justify-content-between">
+            <div class="card-header bg-primary text-white d-flex align-items-center justify-content-between" style="background:var(--bs-primary, #0d6efd) !important;">
               <span><i class="bi bi-person-badge me-2"></i><strong>{{ v.vendeurNom }}</strong></span>
               <span class="badge bg-light text-primary">{{ v.nombreVentes }} {{ 'CAISSE.RECONCILIATION.SALES' | translate }}</span>
             </div>
@@ -592,6 +592,14 @@
                     <td>{{ 'CAISSE.RECONCILIATION.CREDIT_PAYMENTS_CASH' | translate }}</td>
                     <td class="text-end fw-semibold text-info">{{ formatPrice(v.totalReglementsCreditEspeces) }}</td>
                   </tr>
+                  <tr *ngIf="v.totalRetoursRembourses">
+                    <td>Retours remboursés</td>
+                    <td class="text-end fw-semibold text-danger text-nowrap">− {{ formatPrice(v.totalRetoursRembourses) }}</td>
+                  </tr>
+                  <tr *ngIf="v.totalAutresMouvementsVentes">
+                    <td>Acomptes, annulations, modifications</td>
+                    <td class="text-end fw-semibold text-nowrap">{{ v.totalAutresMouvementsVentes > 0 ? '+' : '−' }} {{ formatPrice(v.totalAutresMouvementsVentes > 0 ? v.totalAutresMouvementsVentes : -v.totalAutresMouvementsVentes) }}</td>
+                  </tr>
                 </tbody>
               </table>
               <div class="text-center p-3 rounded"
@@ -603,6 +611,29 @@
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- Contrôle : total à remettre + autres mouvements = argent réellement entré/sorti du tiroir -->
+      <div class="card border-0 shadow-sm mt-2" *ngIf="reconciliationControle as c">
+        <div class="card-header d-flex flex-wrap gap-2 align-items-center justify-content-between"
+             [attr.style]="'color:#fff;background:' + (c.ecart ? '#dc2626' : '#059669') + ' !important'">
+          <strong><i class="bi bi-calculator me-2"></i>Contrôle de la caisse du jour</strong>
+          <span *ngIf="!c.ecart"><i class="bi bi-check-circle me-1"></i>Tout correspond</span>
+          <span *ngIf="c.ecart">Écart de {{ formatPrice(c.ecart) }} à vérifier</span>
+        </div>
+        <div class="card-body">
+          <table class="table table-sm mb-0">
+            <tbody>
+              <tr><td>Total à remettre par les vendeurs</td><td class="text-end fw-semibold">{{ formatPrice(c.totalARemettre) }}</td></tr>
+              <tr *ngFor="let a of c.autresMouvements">
+                <td>{{ a.libelle }}</td>
+                <td class="text-end fw-semibold text-nowrap" [class.text-danger]="a.montant < 0" [class.text-success]="a.montant > 0">{{ a.montant > 0 ? '+' : '−' }} {{ formatPrice(a.montant > 0 ? a.montant : -a.montant) }}</td>
+              </tr>
+              <tr class="table-light"><td><strong>= Argent entré − sorti du tiroir (Différence de la caisse du jour)</strong></td><td class="text-end"><strong>{{ formatPrice(c.variationTiroir) }}</strong></td></tr>
+              <tr *ngIf="c.depotBanque"><td class="text-muted">Déposé à la banque (à part)</td><td class="text-end text-muted">{{ formatPrice(c.depotBanque) }}</td></tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

@@ -270,12 +270,26 @@ export interface ReconciliationVendeur {
   totalVentesCredit: number;
   totalReglementsCreditEspeces: number;
   totalAiRemettre: number;
+  /** Argent rendu aux clients pour des retours par cette personne, ce jour. */
+  totalRetoursRembourses?: number;
+  /** Acomptes, annulations, modifications de ventes faits par cette personne (effet sur le tiroir). */
+  totalAutresMouvementsVentes?: number;
+}
+
+export interface ControleReconciliation {
+  totalARemettre: number;
+  autresMouvements: { libelle: string; montant: number }[];
+  totalAutresMouvements: number;
+  variationTiroir: number;
+  depotBanque: number;
+  ecart: number;
 }
 
 export interface ReconciliationVendeursResponse {
   success: boolean;
   date: string;
   reconciliation: ReconciliationVendeur[];
+  controle?: ControleReconciliation | null;
 }
 
 @Injectable({
@@ -1375,7 +1389,8 @@ export class CaisseService {
       map(response => ({
         success: response?.success !== false,
         date: response?.date || date || this.getAujourdhui(),
-        reconciliation: response?.reconciliation || []
+        reconciliation: response?.reconciliation || [],
+        controle: response?.controle || null
       })),
       catchError(error => this.handleError(error, 'récupérer la réconciliation caisse par vendeur'))
     );

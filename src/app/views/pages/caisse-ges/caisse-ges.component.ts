@@ -24,7 +24,8 @@ import {
   VentesComptantDuJour,
   VentesCreditDuJour,
   TransfertCaisseBanqueRequest,
-  ReconciliationVendeur
+  ReconciliationVendeur,
+  ControleReconciliation
 } from '../../../shared/services/caisse.service';
 import { AuthService, User } from '../../../shared/services/auth.service';
 import { VenteService, VenteMap } from '../../../shared/services/vente.service';
@@ -85,6 +86,7 @@ export class CaisseGesComponent implements OnInit, OnDestroy {
   activeMainTab: 'principal' | 'reconciliation' = 'principal';
   reconciliationDate: string = new Date().toISOString().split('T')[0];
   reconciliationList: ReconciliationVendeur[] = [];
+  reconciliationControle: ControleReconciliation | null = null;
   isLoadingReconciliation: boolean = false;
   reconciliationError: string = '';
 
@@ -464,6 +466,7 @@ export class CaisseGesComponent implements OnInit, OnDestroy {
     this.caisseService.getReconciliationVendeurs(this.reconciliationDate).subscribe({
       next: (res) => {
         this.reconciliationList = res.reconciliation || [];
+        this.reconciliationControle = res.controle || null;
         this.isLoadingReconciliation = false;
       },
       error: (error) => {
