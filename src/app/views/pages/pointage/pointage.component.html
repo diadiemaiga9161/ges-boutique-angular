@@ -75,7 +75,7 @@
           <tr *ngFor="let l of journee.employes">
             <td>
               <span class="fw-semibold">{{ l.nom }}</span>
-              <span class="pt-sous">{{ l.poste }}<ng-container *ngIf="l.aCompte === false"> · sans compte (à pointer à la main)</ng-container></span>
+              <span class="pt-sous">{{ l.poste }}<ng-container *ngIf="l.horaire"> · prévu : {{ l.horaire }}</ng-container><ng-container *ngIf="l.aCompte === false"> · sans compte (à pointer à la main)</ng-container></span>
             </td>
             <td>
               <ng-container *ngIf="l.heureArrivee; else vide">

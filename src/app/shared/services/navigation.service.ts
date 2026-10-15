@@ -141,6 +141,7 @@ export class NavigationService {
             name: 'Ressources humaines', type: 'dropDown', icon: 'i-Administrator', sub: [
                 { name: 'EMPLOYEES.TITLE',     type: 'link', icon: 'i-Business-Man',                state: '/employes' },
                 { name: 'Pointage',            type: 'link', icon: 'i-Clock',                       state: '/pointage' },
+                { name: 'Planning',            type: 'link', icon: 'i-Calendar-4',                  state: '/planning' },
                 { name: 'EMPLOYEE_PAY.TITLE',  type: 'link', icon: 'i-Money-Bag',                   state: '/paiement-employe' },
                 { name: 'SELLERS_MENU.TITLE',  type: 'link', icon: 'i-Administrator',               state: '/vendeur' },
                 { name: 'Classement des vendeurs', type: 'link', icon: 'i-Medal-2',                 state: '/classement-vendeurs' },
@@ -199,7 +200,8 @@ export class NavigationService {
         PRIMES_PRODUITS: ['/primes-produits', '/mes-primes'],
         POINTAGE: '/pointage',
         OFFRES_QUANTITE: '/offres-quantite',
-        CLIENTS_ABSENTS: '/clients-absents'
+        CLIENTS_ABSENTS: '/clients-absents',
+        PLANNING: '/planning'
     };
     private etatsAvancesDesactives = new Set<string>();
 

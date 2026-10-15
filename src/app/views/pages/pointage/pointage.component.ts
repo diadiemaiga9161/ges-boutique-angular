@@ -18,8 +18,9 @@ interface LignePointage {
   observation: string | null;
   retardMinutes: number;
   minutesTravail: number | null;
-  statut: 'PAS_ENCORE' | 'ABSENT' | 'PRESENT' | 'PARTI';
+  statut: 'PAS_ENCORE' | 'ABSENT' | 'PRESENT' | 'PARTI' | 'REPOS';
   aCompte?: boolean;
+  horaire?: string | null;
 }
 
 interface Journee {
@@ -51,7 +52,8 @@ const STATUTS: Record<string, string> = {
   PAS_ENCORE: 'Pas encore arrivé',
   ABSENT: 'Absent',
   PRESENT: 'Présent',
-  PARTI: 'Parti'
+  PARTI: 'Parti',
+  REPOS: 'Repos'
 };
 
 /**
@@ -240,7 +242,7 @@ export class PointageComponent implements OnInit, OnDestroy {
 
   classeStatut(l: LignePointage): string {
     if (l.statut === 'ABSENT') return 'pt-badge--absent';
-    if (l.statut === 'PAS_ENCORE') return 'pt-badge--attente';
+    if (l.statut === 'PAS_ENCORE' || l.statut === 'REPOS') return 'pt-badge--attente';
     if (l.retardMinutes > 0) return 'pt-badge--retard';
     return l.statut === 'PARTI' ? 'pt-badge--parti' : 'pt-badge--present';
   }

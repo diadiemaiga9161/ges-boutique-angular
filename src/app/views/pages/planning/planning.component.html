@@ -1,0 +1,98 @@
+<div class="container-fluid py-4 app-page">
+
+  <div class="app-page-header mb-4">
+    <div class="app-page-header-left">
+      <div class="app-page-icon"><i class="i-Calendar-4"></i></div>
+      <div>
+        <h1 class="app-page-title">Planning de l'équipe</h1>
+        <p class="app-page-subtitle">Qui travaille quel jour, à quelle heure. Cliquez sur une case pour la remplir.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="pl-barre">
+    <div class="pl-nav">
+      <button type="button" class="pl-btn pl-btn--carre" (click)="changerSemaine(-1)" aria-label="Semaine précédente">‹</button>
+      <p class="pl-titre">{{ titreSemaine || '…' }}</p>
+      <button type="button" class="pl-btn pl-btn--carre" (click)="changerSemaine(1)" aria-label="Semaine suivante">›</button>
+      <button type="button" class="pl-btn pl-btn--neutre" *ngIf="!estSemaineEnCours" (click)="revenirAujourdhui()">Cette semaine</button>
+    </div>
+    <button type="button" class="pl-btn pl-btn--neutre" (click)="recopier()">Recopier la semaine précédente</button>
+  </div>
+
+  <p class="pl-message" *ngIf="message" role="status">{{ message }}</p>
+  <p class="pl-message pl-message--erreur" *ngIf="erreur" role="alert">{{ erreur }}</p>
+
+  <div class="pl-etat" *ngIf="chargement && !semaine">Chargement…</div>
+
+  <div class="pl-tableau table-responsive" *ngIf="semaine">
+    <table class="table mb-0">
+      <thead>
+        <tr>
+          <th scope="col" class="pl-col-nom">Employé</th>
+          <th scope="col" *ngFor="let j of semaine.jours" [class.pl-auj]="j.aujourdhui">
+            <span class="pl-th-nom">{{ j.nom }}</span>
+            <span class="pl-th-num">{{ numeroJour(j) }}</span>
+          </th>
+          <th scope="col" class="text-end">Semaine</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let e of semaine.employes">
+          <th scope="row" class="pl-col-nom">
+            <span class="fw-semibold">{{ e.nom }}</span>
+            <span class="pl-sous">{{ e.poste }}</span>
+          </th>
+          <td *ngFor="let c of e.cases; let i = index" [class.pl-auj]="semaine.jours[i].aujourdhui">
+            <button type="button" class="pl-case" (click)="ouvrir(e, i)"
+                    [class.pl-case--travail]="c.rempli && !c.repos" [class.pl-case--repos]="c.repos"
+                    [class.pl-case--active]="enEdition(e, i)"
+                    [attr.aria-label]="e.nom + ', ' + semaine.jours[i].nom + ' : ' + (c.repos ? 'repos' : c.rempli ? c.heureDebut + ' à ' + c.heureFin : 'pas prévu')">
+              <ng-container *ngIf="c.rempli && !c.repos">{{ c.heureDebut }}<br>{{ c.heureFin }}</ng-container>
+              <ng-container *ngIf="c.repos">Repos</ng-container>
+              <ng-container *ngIf="!c.rempli">+</ng-container>
+            </button>
+          </td>
+          <td class="text-end pl-total">{{ duree(e.minutesSemaine) }}<span class="pl-sous">{{ e.joursTravail }} j</span></td>
+        </tr>
+        <tr *ngIf="!semaine.employes.length">
+          <td colspan="9" class="pl-etat">Aucun employé actif. Ajoutez-les dans Ressources humaines › Employés.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Édition d'une case -->
+  <form class="pl-edition" *ngIf="edition && semaine" (ngSubmit)="enregistrer()">
+    <p class="pl-edition__titre">{{ edition.employe.nom }} · {{ semaine.jours[edition.index].nom }} {{ numeroJour(semaine.jours[edition.index]) }}</p>
+    <div class="pl-edition__ligne">
+      <div class="pl-choix" role="radiogroup" aria-label="Type de journée">
+        <button type="button" role="radio" class="pl-choix__btn" [class.pl-choix__btn--actif]="!edition.repos"
+                [attr.aria-checked]="!edition.repos" (click)="edition.repos = false">Travaille</button>
+        <button type="button" role="radio" class="pl-choix__btn" [class.pl-choix__btn--actif]="edition.repos"
+                [attr.aria-checked]="edition.repos" (click)="edition.repos = true">Repos</button>
+      </div>
+      <ng-container *ngIf="!edition.repos">
+        <label class="pl-label">Arrivée<input type="time" class="pl-champ" name="debut" [(ngModel)]="edition.heureDebut" /></label>
+        <label class="pl-label">Départ<input type="time" class="pl-champ" name="fin" [(ngModel)]="edition.heureFin" /></label>
+      </ng-container>
+      <label class="pl-label pl-label--large">Note (facultatif)
+        <input type="text" class="pl-champ" name="note" maxlength="120" [(ngModel)]="edition.note" placeholder="Ex : ouvre la boutique" />
+      </label>
+    </div>
+    <div class="pl-autres">
+      <span class="pl-autres__titre">Appliquer aussi à :</span>
+      <label class="pl-autre" *ngFor="let j of semaine.jours; let i = index" [class.pl-autre--off]="i === edition.index">
+        <input type="checkbox" [name]="'jour' + i" [(ngModel)]="edition.autresJours[i]" [disabled]="i === edition.index" />
+        {{ j.nom }}
+      </label>
+    </div>
+    <div class="pl-edition__actions">
+      <button type="submit" class="pl-btn pl-btn--principal" [disabled]="enregistrement">{{ enregistrement ? 'Enregistrement…' : 'Enregistrer' }}</button>
+      <button type="button" class="pl-btn pl-btn--danger" (click)="enregistrer(true)" [disabled]="enregistrement">Effacer la case</button>
+      <button type="button" class="pl-btn pl-btn--neutre" (click)="edition = null">Annuler</button>
+    </div>
+  </form>
+
+  <p class="pl-aide">Avec le pointage, les retards sont comptés à partir de l'heure d'arrivée prévue ici, et un jour de repos n'est jamais compté comme une absence. Chaque employé voit son planning dans l'appli, menu « Planning ».</p>
+</div>
