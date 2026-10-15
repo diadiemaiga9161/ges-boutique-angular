@@ -573,7 +573,7 @@
       <div class="row" *ngIf="reconciliationList.length > 0">
         <div class="col-lg-4 col-md-6 mb-3" *ngFor="let v of reconciliationList">
           <div class="card h-100 border-0 shadow-sm">
-            <div class="card-header bg-primary text-white d-flex align-items-center justify-content-between" style="background:var(--bs-primary, #0d6efd) !important;">
+            <div class="card-header bg-primary text-white d-flex align-items-center justify-content-between">
               <span><i class="bi bi-person-badge me-2"></i><strong>{{ v.vendeurNom }}</strong></span>
               <span class="badge bg-light text-primary">{{ v.nombreVentes }} {{ 'CAISSE.RECONCILIATION.SALES' | translate }}</span>
             </div>

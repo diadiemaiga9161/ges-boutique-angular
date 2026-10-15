@@ -2263,3 +2263,32 @@ body:not(.dark-mode) app-caisse-ges .badge.bg-light.text-dark { color: #1a1200 !
   font-weight: 700;
   cursor: pointer;
 }
+
+/* En-têtes de cartes colorés (card-header + bg-primary/success/…) : la règle
+   `.card-header { background: #fff !important }` plus haut (et sa version
+   dark-mode) écrasait la couleur de fond, et le texte blanc devenait
+   invisible (blanc sur blanc) sur 24 en-têtes de 8 pages. On rend leur
+   couleur aux utilitaires bg-* uniquement : les en-têtes sans bg-* restent
+   blancs comme avant. */
+.card-header.bg-primary   { background: rgba(var(--bs-primary-rgb, 13, 110, 253), 1) !important; }
+.card-header.bg-secondary { background: rgba(var(--bs-secondary-rgb, 108, 117, 125), 1) !important; }
+.card-header.bg-success   { background: rgba(var(--bs-success-rgb, 25, 135, 84), 1) !important; }
+.card-header.bg-danger    { background: rgba(var(--bs-danger-rgb, 220, 53, 69), 1) !important; }
+.card-header.bg-warning   { background: rgba(var(--bs-warning-rgb, 255, 193, 7), 1) !important; }
+.card-header.bg-info      { background: rgba(var(--bs-info-rgb, 13, 202, 240), 1) !important; }
+.card-header.bg-dark      { background: rgba(var(--bs-dark-rgb, 33, 37, 41), 1) !important; }
+
+.card-header[class*="bg-"].text-white,
+.card-header[class*="bg-"].text-white h1, .card-header[class*="bg-"].text-white h2,
+.card-header[class*="bg-"].text-white h3, .card-header[class*="bg-"].text-white h4,
+.card-header[class*="bg-"].text-white h5, .card-header[class*="bg-"].text-white h6 {
+  color: #fff !important;
+}
+
+.card-header[class*="bg-"].text-dark,
+.card-header[class*="bg-"].text-dark h1, .card-header[class*="bg-"].text-dark h2,
+.card-header[class*="bg-"].text-dark h3, .card-header[class*="bg-"].text-dark h4,
+.card-header[class*="bg-"].text-dark h5, .card-header[class*="bg-"].text-dark h6,
+.card-header[class*="bg-"].text-dark i {
+  color: #1f2937 !important;
+}
