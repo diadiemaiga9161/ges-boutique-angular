@@ -106,6 +106,7 @@ export class NavigationService {
         {
             name: 'Clients', type: 'dropDown', icon: 'i-Business-ManWoman', sub: [
                 { name: 'CLIENTS.TITLE',       type: 'link', icon: 'i-Business-ManWoman',           state: '/client' },
+                { name: 'Clients à rappeler',  type: 'link', icon: 'i-Telephone',                   state: '/clients-absents' },
                 { name: 'PARTENAIRES.TITLE',   type: 'link', icon: 'i-Business-ManWoman',           state: '/partenaires' },
                 { name: 'DEBTS_MENU.TITLE',    type: 'link', icon: 'i-Money-2',                     state: '/dettes' },
             ]
@@ -197,7 +198,8 @@ export class NavigationService {
         ROLES_PERSONNALISES: '/roles',
         PRIMES_PRODUITS: ['/primes-produits', '/mes-primes'],
         POINTAGE: '/pointage',
-        OFFRES_QUANTITE: '/offres-quantite'
+        OFFRES_QUANTITE: '/offres-quantite',
+        CLIENTS_ABSENTS: '/clients-absents'
     };
     private etatsAvancesDesactives = new Set<string>();
 

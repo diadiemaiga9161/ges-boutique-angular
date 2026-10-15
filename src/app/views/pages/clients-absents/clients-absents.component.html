@@ -1,0 +1,57 @@
+<div class="container-fluid py-4 app-page">
+
+  <div class="app-page-header mb-4">
+    <div class="app-page-header-left">
+      <div class="app-page-icon"><i class="i-Telephone"></i></div>
+      <div>
+        <h1 class="app-page-title">Clients à rappeler</h1>
+        <p class="app-page-subtitle">Bons clients qui achetaient souvent mais qu'on n'a pas revus depuis {{ libelleChoix() }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="ca-barre">
+    <div class="ca-periodes" role="group" aria-label="Absents depuis">
+      <button type="button" *ngFor="let c of choix" class="ca-chip" [class.ca-chip--actif]="jours === c.jours"
+              [attr.aria-pressed]="jours === c.jours" (click)="choisir(c.jours)">{{ c.libelle }}</button>
+    </div>
+    <p class="ca-total" *ngIf="donnees && !chargement">
+      <strong>{{ donnees.total }}</strong> client{{ donnees.total > 1 ? 's' : '' }} à rappeler
+    </p>
+  </div>
+
+  <div class="ca-etat" *ngIf="chargement">Chargement…</div>
+  <div class="ca-etat ca-etat--erreur" *ngIf="erreur && !chargement" role="alert">{{ erreur }}</div>
+
+  <div class="ca-vide" *ngIf="donnees && !donnees.clients.length && !chargement && !erreur">
+    <p class="ca-vide__titre">Tout le monde est revenu</p>
+    <p class="ca-vide__texte">Aucun bon client absent depuis {{ libelleChoix() }}.</p>
+  </div>
+
+  <div class="ca-grille" *ngIf="donnees?.clients?.length && !chargement">
+    <article class="ca-carte" *ngFor="let c of donnees!.clients">
+      <header class="ca-carte__haut">
+        <span class="ca-avatar" aria-hidden="true">{{ initiales(c.nom) }}</span>
+        <div class="ca-carte__id">
+          <h2 class="ca-nom">{{ c.nom }}</h2>
+          <p class="ca-habitude">{{ habitude(c) }} · {{ c.nbAchats }} achats</p>
+        </div>
+        <span class="ca-absence" [class.ca-absence--urgent]="urgent(c)"><strong>{{ c.joursAbsence }}</strong> jours</span>
+      </header>
+      <dl class="ca-infos">
+        <div><dt>Dernière visite</dt><dd>{{ date(c.derniereVisite) }}</dd></div>
+        <div><dt>Panier moyen</dt><dd>{{ prix(c.panierMoyen) }}</dd></div>
+        <div><dt>Téléphone</dt><dd>{{ c.telephone || '—' }}</dd></div>
+      </dl>
+      <div class="ca-produits" *ngIf="c.produits.length">
+        <span class="ca-produits__label">Achetait :</span>
+        <span class="ca-produit" *ngFor="let p of c.produits">{{ p }}</span>
+      </div>
+      <button type="button" class="ca-whatsapp" *ngIf="aUnNumero(c)" (click)="whatsapp(c)">Envoyer un message WhatsApp</button>
+    </article>
+  </div>
+
+  <p class="ca-note" *ngIf="donnees">
+    Un « bon client » a fait au moins {{ donnees.minAchats }} achats ces 3 derniers mois. Les ventes « client divers » ne sont pas comptées : enregistrez vos clients pour les retrouver ici. Chaque lundi à 9 h, une notification rappelle les clients à appeler.
+  </p>
+</div>
