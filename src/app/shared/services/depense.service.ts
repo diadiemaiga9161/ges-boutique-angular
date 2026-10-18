@@ -104,7 +104,10 @@ export class DepenseService {
     const headers = this.getHeaders().set('X-Client-Request-ID', identifiantDemande);
     return this.http.post<any>(this.apiUrl, request, { headers }).pipe(
       map(r => DepenseService.versResultatCreation(r)),
-      catchError(e => throwError(() => new Error(e?.error?.message || 'Erreur création dépense')))
+      // Le code HTTP est gardé (0 = aucune réponse) : la page sait si la dépense a pu être
+      // enregistrée malgré l'erreur (réponse perdue, erreur serveur) ou sûrement pas (refus 4xx).
+      catchError(e => throwError(() => Object.assign(
+        new Error(e?.error?.message || 'Erreur création dépense'), { status: e?.status as number | undefined })))
     );
   }
 

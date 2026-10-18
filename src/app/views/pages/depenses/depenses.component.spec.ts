@@ -274,4 +274,143 @@ describe('DepensesComponent — dépenses en attente', () => {
     composant.ngOnInit();
     expect(composant.comportementCreation).toBe('inconnu');
   });
+
+  // ------------------------------------------------------------------ I2 : tentative au résultat inconnu
+
+  const perdue = () => throwError(() => Object.assign(new Error('Erreur création dépense'), { status: 0 }));
+  const refusee = () => throwError(() => Object.assign(new Error('Le montant doit être supérieur à 0'), { status: 400 }));
+  const succes = (d: any = { id: 50 }) => of({ depense: d, validationRequise: false, message: 'Dépense enregistrée et déduite de la caisse' });
+  const dernierId = () => depenseService.creer.calls.mostRecent().args[1];
+  const derniereDemande = () => depenseService.creer.calls.mostRecent().args[0];
+
+  it('I2-1. erreur réseau puis nouvel essai : identifiant identique', () => {
+    composant.startCreate();
+    composant.form = { nom: 'Essence', montant: 700, date: '2026-10-18' };
+    depenseService.creer.and.returnValue(perdue());
+    composant.save();
+    const id1 = dernierId();
+    composant.save();
+    expect(dernierId()).toBe(id1);
+    expect(composant.tentativeIncertaine?.identifiant).toBe(id1);
+  });
+
+  it('I2-2. fermeture puis réouverture après une erreur : même identifiant, même demande, champs bloqués', () => {
+    composant.startCreate();
+    composant.form = { nom: 'Essence', montant: 700, date: '2026-10-18' };
+    depenseService.creer.and.returnValue(perdue());
+    composant.save();
+    const id1 = dernierId();
+    const fenetre: any = (Swal.fire as jasmine.Spy).calls.mostRecent().args[0];
+    expect(fenetre.title).toBe('Résultat inconnu');
+
+    composant.cancel();
+    composant.startCreate();
+    expect(composant.enRepriseIncertaine).toBeTrue();
+    expect(composant.form).toEqual({ nom: 'Essence', montant: 700, date: '2026-10-18' });
+
+    composant.form.montant = 9999; // une modification ne doit pas partir avec l'ancien identifiant
+    depenseService.creer.and.returnValue(succes());
+    composant.save();
+    expect(dernierId()).toBe(id1);
+    expect(derniereDemande().montant).toBe(700);
+    expect(composant.tentativeIncertaine).toBeNull();
+  });
+
+  it('I2-3. succès confirmé puis nouvelle dépense : nouvel identifiant', () => {
+    composant.startCreate();
+    composant.form = { nom: 'Pain', montant: 100, date: '2026-10-18' };
+    depenseService.creer.and.returnValue(succes());
+    composant.save();
+    const id1 = dernierId();
+    composant.startCreate();
+    expect(composant.enRepriseIncertaine).toBeFalse();
+    composant.form = { nom: 'Lait', montant: 200, date: '2026-10-18' };
+    composant.save();
+    expect(dernierId()).not.toBe(id1);
+  });
+
+  it('I2-4. réponse « déjà enregistrée » : confirmation cohérente, tentative levée, liste relue ensuite', async () => {
+    let fermer!: (v: any) => void;
+    composant.startCreate();
+    composant.form = { nom: 'Essence', montant: 700, date: '2026-10-18' };
+    depenseService.creer.and.returnValue(perdue());
+    composant.save();
+    const id1 = dernierId();
+    composant.cancel();
+    composant.startCreate();
+
+    (Swal.fire as jasmine.Spy).and.callFake(() => new Promise(res => fermer = res));
+    depenseService.getAll.calls.reset();
+    depenseService.creer.and.returnValue(of({ depense: { id: 51, nom: 'Essence', montant: 700 }, validationRequise: false, message: 'Dépense déjà enregistrée' }));
+    composant.save();
+    expect(dernierId()).toBe(id1);
+    const fenetre: any = (Swal.fire as jasmine.Spy).calls.mostRecent().args[0];
+    expect(fenetre.title).toBe('Dépense déjà enregistrée');
+    expect(fenetre.text).toContain('pas été ajoutée une deuxième fois');
+    expect(fenetre.text).not.toContain('attend la validation'); // dépense du gérant : argent déjà sorti
+    expect(composant.tentativeIncertaine).toBeNull();
+    expect(depenseService.getAll).not.toHaveBeenCalled();
+    fermer({ isConfirmed: true });
+    await new Promise(r => setTimeout(r));
+    expect(depenseService.getAll).toHaveBeenCalledTimes(1);
+  });
+
+  it('I2-5. abandon explicite : confirmation demandée, liste relue, nouvel identifiant pour la nouvelle dépense', async () => {
+    composant.startCreate();
+    composant.form = { nom: 'Essence', montant: 700, date: '2026-10-18' };
+    depenseService.creer.and.returnValue(perdue());
+    composant.save();
+    const id1 = dernierId();
+
+    // Refus de l'abandon : la tentative est gardée
+    (Swal.fire as jasmine.Spy).and.returnValue(Promise.resolve({ isConfirmed: false } as any));
+    composant.abandonnerTentative();
+    await new Promise(r => setTimeout(r));
+    expect(composant.tentativeIncertaine?.identifiant).toBe(id1);
+
+    // Abandon confirmé
+    (Swal.fire as jasmine.Spy).and.returnValue(Promise.resolve({ isConfirmed: true } as any));
+    depenseService.getAll.calls.reset();
+    composant.abandonnerTentative();
+    const avertissement: any = (Swal.fire as jasmine.Spy).calls.mostRecent().args[0];
+    expect(avertissement.html).toContain('Vérifiez d\'abord la liste');
+    await new Promise(r => setTimeout(r));
+    expect(composant.tentativeIncertaine).toBeNull();
+    expect(composant.enRepriseIncertaine).toBeFalse();
+    expect(depenseService.getAll).toHaveBeenCalledTimes(1);
+
+    composant.form = { nom: 'Gaz', montant: 300, date: '2026-10-18' };
+    depenseService.creer.and.returnValue(succes());
+    composant.save();
+    expect(dernierId()).not.toBe(id1);
+    expect(derniereDemande().nom).toBe('Gaz');
+  });
+
+  it('I2-4b. « déjà enregistrée » pour une dépense en attente : la fenêtre le rappelle', () => {
+    composant.startCreate();
+    composant.form = { nom: 'Essence', montant: 700, date: '2026-10-18' };
+    depenseService.creer.and.returnValue(of({ depense: { id: 52, sortieEnAttente: true }, validationRequise: true, message: 'Dépense déjà enregistrée' }));
+    composant.save();
+    const fenetre: any = (Swal.fire as jasmine.Spy).calls.mostRecent().args[0];
+    expect(fenetre.title).toBe('Dépense déjà enregistrée');
+    expect(fenetre.text).toContain('attend la validation du gérant');
+  });
+
+  it('I2-6. refus certain (4xx) : pas de tentative incertaine, saisie modifiable, message du serveur', () => {
+    composant.startCreate();
+    composant.form = { nom: 'Essence', montant: 700, date: '2026-10-18' };
+    depenseService.creer.and.returnValue(refusee());
+    composant.save();
+    expect(composant.tentativeIncertaine).toBeNull();
+    expect(composant.enRepriseIncertaine).toBeFalse();
+    expect((Swal.fire as jasmine.Spy).calls.mostRecent().args[0].text).toBe('Le montant doit être supérieur à 0');
+  });
+
+  it('I2-7. erreur serveur 500 : résultat incertain (la dépense a pu être enregistrée)', () => {
+    composant.startCreate();
+    composant.form = { nom: 'Essence', montant: 700, date: '2026-10-18' };
+    depenseService.creer.and.returnValue(throwError(() => Object.assign(new Error('Erreur serveur'), { status: 500 })));
+    composant.save();
+    expect(composant.tentativeIncertaine).not.toBeNull();
+  });
 });

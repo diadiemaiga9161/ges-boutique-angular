@@ -85,4 +85,15 @@ describe('DepenseService (dépenses en attente, anti-doublon)', () => {
     expect(DepenseService.versResultatCreation({ validationRequise: false, depense: { id: 4 } }).validationRequise).toBeFalse();
     expect(DepenseService.versResultatCreation({ depense: { id: 5, sortieEnAttente: null } }).validationRequise).toBeFalse();
   });
+
+  it('erreur de création : le code HTTP est transmis (0 = aucune réponse, 400 = refus)', () => {
+    let e1: any; let e2: any;
+    service.creer(demande, 'a').subscribe({ error: e => e1 = e });
+    http.expectOne(url).error(new ProgressEvent('network'));
+    service.creer(demande, 'b').subscribe({ error: e => e2 = e });
+    http.expectOne(url).flush({ message: 'Le montant doit être supérieur à 0' }, { status: 400, statusText: 'Bad Request' });
+    expect(e1.status).toBe(0);
+    expect(e2.status).toBe(400);
+    expect(e2.message).toBe('Le montant doit être supérieur à 0');
+  });
 });

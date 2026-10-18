@@ -44,6 +44,15 @@ export class DepensesComponent implements OnInit, OnDestroy {
    */
   private identifiantCreation: string | null = null;
 
+  /**
+   * Dernière création dont le résultat est inconnu (réponse perdue, erreur serveur) : la dépense a
+   * peut-être été enregistrée. Gardée en mémoire seulement (rien dans le navigateur), avec son
+   * identifiant et son contenu exact : rouvrir le formulaire propose de renvoyer CETTE demande
+   * (le serveur ne l'enregistre jamais deux fois) ; une nouvelle dépense demande d'abandonner
+   * explicitement cette tentative.
+   */
+  tentativeIncertaine: { identifiant: string; demande: DepenseRequest } | null = null;
+
   /** Salaires refusés par le serveur (403 : rôle sans le droit Personnel) : dépenses affichées sans eux. */
   salairesIndisponibles = false;
   /** La dernière actualisation de la liste a échoué : la liste affichée n'est pas à jour. */
@@ -280,9 +289,55 @@ export class DepensesComponent implements OnInit, OnDestroy {
 
   startCreate(): void {
     this.editing = null;
-    this.form = this.emptyForm();
-    this.identifiantCreation = nouvelIdentifiantDemande();
+    if (this.tentativeIncertaine) {
+      // Même demande, même identifiant : rien ne peut être enregistré une deuxième fois.
+      this.form = { ...this.tentativeIncertaine.demande };
+      this.identifiantCreation = this.tentativeIncertaine.identifiant;
+    } else {
+      this.form = this.emptyForm();
+      this.identifiantCreation = nouvelIdentifiantDemande();
+    }
     this.showForm = true;
+  }
+
+  /** Formulaire de création ouvert sur une tentative dont le résultat est inconnu (champs bloqués). */
+  get enRepriseIncertaine(): boolean {
+    return !this.editing && !!this.tentativeIncertaine;
+  }
+
+  /**
+   * Erreur après laquelle la dépense a PU être enregistrée : aucune réponse (réseau coupé, réponse
+   * perdue) ou erreur du serveur (5xx). Un refus 4xx signifie que rien n'a été enregistré.
+   */
+  private static resultatIncertain(e: any): boolean {
+    const status = e?.status;
+    return status === undefined || status === null || status === 0 || status >= 500;
+  }
+
+  /**
+   * Abandon explicite de la tentative incertaine, pour saisir une dépense réellement nouvelle :
+   * confirmation (vérifier la liste d'abord), puis liste relue et nouvel identifiant.
+   */
+  abandonnerTentative(): void {
+    if (!this.tentativeIncertaine) return;
+    const d = this.tentativeIncertaine.demande;
+    Swal.fire({
+      icon: 'warning',
+      title: 'Abandonner cette tentative ?',
+      html: `<b>${this.echapper(d.nom)}</b> — ${this.formatPrice(d.montant || 0)}<br><br>`
+        + 'Elle a peut-être déjà été enregistrée. Vérifiez d\'abord la liste des dépenses :'
+        + ' si elle y figure, ne la saisissez pas une deuxième fois.',
+      showCancelButton: true,
+      confirmButtonText: 'Abandonner et saisir une nouvelle dépense',
+      cancelButtonText: 'Garder la tentative',
+      confirmButtonColor: '#dc2626'
+    }).then(r => {
+      if (!r.isConfirmed) return;
+      this.tentativeIncertaine = null;
+      this.identifiantCreation = nouvelIdentifiantDemande();
+      this.form = this.emptyForm();
+      this.load(true);
+    });
   }
 
   calculerTotauxParType(): void {
@@ -332,17 +387,24 @@ export class DepensesComponent implements OnInit, OnDestroy {
     }
 
     // Même identifiant pour chaque nouvel essai de cette création (pas de doublon côté serveur).
+    // Tentative incertaine : on renvoie exactement la même demande, avec le même identifiant.
     if (!this.identifiantCreation) this.identifiantCreation = nouvelIdentifiantDemande();
-    this.depenseService.creer(this.form, this.identifiantCreation).subscribe({
+    const identifiant = this.tentativeIncertaine ? this.tentativeIncertaine.identifiant : this.identifiantCreation;
+    const demande: DepenseRequest = this.tentativeIncertaine ? { ...this.tentativeIncertaine.demande } : { ...this.form };
+    this.depenseService.creer(demande, identifiant).subscribe({
       next: resultat => {
         // La dépense est enregistrée : l'identifiant est oublié (aucun renvoi automatique).
         this.identifiantCreation = null;
+        this.tentativeIncertaine = null;
         this.showForm = false;
         let confirmation: Promise<unknown>;
         if (resultat.message === 'Dépense déjà enregistrée') {
           confirmation = Swal.fire({
             icon: 'info', title: 'Dépense déjà enregistrée',
-            text: 'Cette dépense avait déjà été enregistrée : elle n\'a pas été ajoutée une deuxième fois.',
+            text: 'Cette dépense avait déjà été enregistrée : elle n\'a pas été ajoutée une deuxième fois.'
+              + (resultat.validationRequise
+                ? ' Elle attend la validation du gérant : aucun argent n\'est encore sorti de la caisse.'
+                : ''),
             confirmButtonColor: '#1a56db'
           });
         } else if (resultat.validationRequise) {
@@ -355,7 +417,21 @@ export class DepensesComponent implements OnInit, OnDestroy {
         // remplacer ; il donne la bande « liste non actualisée » avec « Réessayer ».
         Promise.resolve(confirmation).catch(() => undefined).then(() => this.load(true));
       },
-      error: e => this.showError(e.message)
+      error: e => {
+        if (DepensesComponent.resultatIncertain(e)) {
+          this.tentativeIncertaine = { identifiant, demande };
+          Swal.fire({
+            icon: 'warning',
+            title: 'Résultat inconnu',
+            html: 'La réponse du serveur n\'est pas arrivée : la dépense a peut-être été enregistrée.<br><br>'
+              + 'Renvoyez la même demande : elle ne sera jamais enregistrée deux fois.',
+            confirmButtonText: 'Compris',
+            confirmButtonColor: '#1a56db'
+          });
+        } else {
+          this.showError(e.message);
+        }
+      }
     });
   }
 

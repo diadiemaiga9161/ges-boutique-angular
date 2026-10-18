@@ -329,9 +329,20 @@
       </div>
       <div class="modal-body">
 
+        <div *ngIf="enRepriseIncertaine" class="alert alert-warning tentative-incertaine mb-3" role="alert">
+          <p class="mb-2">
+            <i class="fa fa-exclamation-triangle me-1" aria-hidden="true"></i>
+            <strong>Résultat inconnu :</strong> la réponse du serveur n'est pas arrivée pour cette dépense, elle a peut-être été enregistrée.
+            Renvoyez la même demande : elle ne sera jamais enregistrée deux fois.
+          </p>
+          <button type="button" class="btn btn-sm btn-outline-danger" (click)="abandonnerTentative()">
+            Abandonner cette tentative et saisir une nouvelle dépense
+          </button>
+        </div>
+
         <div class="mb-3">
           <label class="form-label fw-bold">{{ 'EXPENSES.NAME' | translate }} *</label>
-          <input class="form-control" [(ngModel)]="form.nom" placeholder="Ex: Électricité, Transport...">
+          <input class="form-control" [(ngModel)]="form.nom" [disabled]="enRepriseIncertaine" placeholder="Ex: Électricité, Transport...">
         </div>
 
         <div class="mb-3">
@@ -341,7 +352,7 @@
                   style="width:34px;height:34px;border-radius:8px;background:#eff6ff;color:#1e40af;flex-shrink:0">
               <i class="fa" [ngClass]="getIconeType(form.typeDepense)"></i>
             </span>
-            <select class="form-select flex-grow-1" [(ngModel)]="form.typeDepense" name="typeDepense">
+            <select class="form-select flex-grow-1" [(ngModel)]="form.typeDepense" name="typeDepense" [disabled]="enRepriseIncertaine">
               <option value="">-- Sélectionner un type --</option>
               <option *ngFor="let t of typesDepense" [value]="t.nom">{{ t.nom }}</option>
             </select>
@@ -353,17 +364,17 @@
 
         <div class="mb-3">
           <label class="form-label fw-bold">{{ 'EXPENSES.REASON' | translate }}</label>
-          <textarea class="form-control" [(ngModel)]="form.motif" rows="2" placeholder="Détails optionnels..."></textarea>
+          <textarea class="form-control" [(ngModel)]="form.motif" [disabled]="enRepriseIncertaine" rows="2" placeholder="Détails optionnels..."></textarea>
         </div>
 
         <div class="row g-2">
           <div class="col-6">
             <label class="form-label fw-bold">{{ 'COMMON.DATE' | translate }} *</label>
-            <input type="date" class="form-control" [(ngModel)]="form.date">
+            <input type="date" class="form-control" [(ngModel)]="form.date" [disabled]="enRepriseIncertaine">
           </div>
           <div class="col-6">
             <label class="form-label fw-bold">{{ 'COMMON.AMOUNT' | translate }} (FCFA) *</label>
-            <input type="text" inputmode="numeric" class="form-control" appMontantInput [(ngModel)]="form.montant" placeholder="0">
+            <input type="text" inputmode="numeric" class="form-control" appMontantInput [(ngModel)]="form.montant" [disabled]="enRepriseIncertaine" placeholder="0">
           </div>
         </div>
 
@@ -384,7 +395,7 @@
         <button class="btn btn-secondary" (click)="cancel()">{{ 'COMMON.CANCEL' | translate }}</button>
         <button [hidden]="!peut('DEPENSES', 'GERER')" class="btn btn-primary" (click)="save()">
           <i class="fa fa-save me-1"></i>
-          {{ editing ? ('COMMON.EDIT' | translate) : ('COMMON.ADD' | translate) }}
+          {{ editing ? ('COMMON.EDIT' | translate) : (enRepriseIncertaine ? 'Renvoyer la même demande' : ('COMMON.ADD' | translate)) }}
         </button>
       </div>
     </div>
