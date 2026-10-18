@@ -90,10 +90,36 @@
         <div class="app-stat-body">
           <div class="app-stat-label">Moyenne</div>
           <div class="app-stat-value">
-            {{ depensesFiltrees.length ? formatPrice(totalDepensesFiltrees / depensesFiltrees.length) : '0 FCFA' }}
+            {{ formatPrice(moyenneDepensesFiltrees) }}
           </div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Liste non actualisée (une action a réussi mais le rechargement a échoué) -->
+  <div *ngIf="listeNonActualisee" class="alert alert-warning d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4" role="alert">
+    <span>
+      <i class="fa fa-exclamation-triangle me-1" aria-hidden="true"></i>
+      La liste n'a pas pu être actualisée. La dépense a bien été enregistrée : ne la saisissez pas une deuxième fois.
+    </span>
+    <button type="button" class="btn btn-sm btn-outline-dark" (click)="reessayerChargement()" [disabled]="loading">
+      <i class="fa fa-refresh me-1" aria-hidden="true"></i>Réessayer le chargement
+    </button>
+  </div>
+
+  <!-- Salaires non disponibles pour ce rôle (pas de droit Personnel) -->
+  <p *ngIf="salairesIndisponibles" class="note-salaires mb-3">
+    <i class="fa fa-info-circle me-1" aria-hidden="true"></i>
+    Les salaires (onglet Employés) ne sont pas disponibles pour votre rôle : ils ne figurent pas dans cette liste ni dans les totaux.
+  </p>
+
+  <!-- Dépenses en attente de validation (caisse par sessions) : hors du total ci-dessus -->
+  <div *ngIf="depensesEnAttenteFiltrees.length" class="bande-attente mb-4" role="status">
+    <div class="bande-attente-icone"><i class="fa fa-hourglass-half" aria-hidden="true"></i></div>
+    <div class="bande-attente-texte">
+      <strong>{{ depensesEnAttenteFiltrees.length }} dépense{{ depensesEnAttenteFiltrees.length > 1 ? 's' : '' }} en attente de validation : {{ formatPrice(totalEnAttenteFiltrees) }}</strong>
+      <span>Hors du total : l'argent ne sort de la caisse qu'à la validation du gérant.</span>
     </div>
   </div>
 
@@ -174,7 +200,10 @@
                 </span>
                 <span *ngIf="d['sourceExterne']" class="badge ms-1" style="background:#dcfce7;color:#166534;font-size:0.7rem;border-radius:6px;padding:2px 6px">Salaire</span>
                 <span *ngIf="!(d)['typeDepense']" class="text-muted">—</span>
-                <br *ngIf="!d['sourceExterne'] && (d['validee'] || d['annulee'])">
+                <br *ngIf="!d['sourceExterne'] && (d['validee'] || d['annulee'] || estEnAttente(d))">
+                <span *ngIf="estEnAttente(d)" class="badge mt-1 badge-attente">
+                  <i class="fa fa-hourglass-half me-1" aria-hidden="true"></i>En attente de validation
+                </span>
                 <span *ngIf="d['annulee']" class="badge mt-1" style="background:#fee2e2;color:#991b1b;font-size:0.7rem;border-radius:6px;padding:2px 6px">
                   <i class="fa fa-ban me-1"></i>Annulée
                 </span>
@@ -195,8 +224,8 @@
                           title="{{ 'COMMON.EDIT' | translate }}">
                     <i class="fa fa-edit me-1"></i> Modifier
                   </button>
-                  <button [hidden]="!peut('DEPENSES', 'GERER')" *ngIf="!d['validee']" class="btn btn-sm btn-outline-success me-1" (click)="valider(d)"
-                          title="Valider (verrouille la dépense dans les comptes)">
+                  <button [hidden]="!peutValider(d)" *ngIf="!d['validee']" class="btn btn-sm btn-outline-success me-1" (click)="valider(d)"
+                          [title]="estEnAttente(d) ? 'Valider : l\'argent sort de la caisse maintenant' : 'Valider (verrouille la dépense dans les comptes)'">
                     <i class="fa fa-check me-1"></i> Valider
                   </button>
                   <button [hidden]="!peut('DEPENSES', 'SUPPRIMER')" class="btn btn-sm btn-outline-danger" (click)="supprimer(d)"
@@ -338,13 +367,17 @@
           </div>
         </div>
 
-        <div class="alert alert-warning mt-3 mb-0 py-2 small" *ngIf="editing">
+        <div class="alert alert-warning mt-3 mb-0 py-2 small" *ngIf="editing && !estEnAttente(editing)">
           <i class="fa fa-info-circle me-1"></i>
           {{ 'EXPENSES.ADJUST_INFO' | translate }}
         </div>
+        <div class="alert alert-warning mt-3 mb-0 py-2 small" *ngIf="editing && estEnAttente(editing)">
+          <i class="fa fa-hourglass-half me-1" aria-hidden="true"></i>
+          Dépense en attente de validation : la caisse ne bougera qu'à la validation du gérant.
+        </div>
         <div class="alert alert-info mt-3 mb-0 py-2 small" *ngIf="!editing">
           <i class="fa fa-info-circle me-1"></i>
-          {{ 'EXPENSES.DEDUCT_INFO' | translate }}
+          {{ comportementCreation === 'immediat' ? ('EXPENSES.DEDUCT_INFO' | translate) : texteCreationSansDeduction }}
         </div>
       </div>
       <div class="modal-footer">

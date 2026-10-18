@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { forkJoin } from 'rxjs';
+import { Observable, Subscription, forkJoin, of, throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 import { Depense, DepenseRequest, DepenseService, TypeDepense } from '../../../shared/services/depense.service';
 import { PaiementEmployeService, PaiementEmploye } from '../../../shared/services/paiement-employe.service';
@@ -9,7 +10,9 @@ import { FactureService } from '../../../shared/services/facture.service';
 import { TranslateModule } from '@ngx-translate/core';
 import { MontantInputDirective } from '../../../shared/directives/montant-input.directive';
 
-import { ActionPermission, RoleService } from '../../../shared/services/role.service';
+import { ActionPermission, MesPermissions, RoleService } from '../../../shared/services/role.service';
+import { BoutiqueService } from '../../../shared/services/boutique.service';
+import { nouvelIdentifiantDemande } from '../../../shared/utils/identifiant-demande.util';
 @Component({
   selector: 'app-depenses',
   standalone: true,
@@ -17,7 +20,7 @@ import { ActionPermission, RoleService } from '../../../shared/services/role.ser
   templateUrl: './depenses.component.html',
   styleUrls: ['./depenses.component.scss']
 })
-export class DepensesComponent implements OnInit {
+export class DepensesComponent implements OnInit, OnDestroy {
 
   typesDepense: TypeDepense[] = [];
   showTypesModal = false;
@@ -35,6 +38,21 @@ export class DepensesComponent implements OnInit {
   editing: Depense | null = null;
 
   form: DepenseRequest = this.emptyForm();
+  /**
+   * Identifiant anti-doublon de la création en cours : le même pour chaque nouvel essai après une
+   * erreur, renouvelé seulement pour une nouvelle dépense (ouverture du formulaire, ou après succès).
+   */
+  private identifiantCreation: string | null = null;
+
+  /** Salaires refusés par le serveur (403 : rôle sans le droit Personnel) : dépenses affichées sans eux. */
+  salairesIndisponibles = false;
+  /** La dernière actualisation de la liste a échoué : la liste affichée n'est pas à jour. */
+  listeNonActualisee = false;
+
+  /** « Caisse par sessions » relue à l'ouverture de la page ; null = inconnu. */
+  private caisseSessionsActive: boolean | null = null;
+  private mesPermissions: MesPermissions | null = null;
+  private abonnementPermissions?: Subscription;
 
   dateDebut = '';
   dateFin = '';
@@ -57,12 +75,66 @@ export class DepensesComponent implements OnInit {
     private roleService: RoleService,
     private depenseService: DepenseService,
     private paiementEmployeService: PaiementEmployeService,
-    private factureService: FactureService
+    private factureService: FactureService,
+    private boutiqueService: BoutiqueService
   ) {}
 
   ngOnInit(): void {
     this.load();
     this.loadTypes();
+    this.lireComportementCreation();
+  }
+
+  ngOnDestroy(): void {
+    this.abonnementPermissions?.unsubscribe();
+  }
+
+  /**
+   * Ce que fera le serveur à la création, pour le texte du formulaire : relit « Caisse par
+   * sessions » (la liste chargée à la connexion peut avoir changé) et suit les droits de la personne.
+   */
+  private lireComportementCreation(): void {
+    this.boutiqueService.getFonctionnalitesAvancees().subscribe({
+      next: liste => {
+        const f = (liste || []).find(x => x.cle === 'CAISSE_SESSIONS');
+        this.caisseSessionsActive = f ? f.actif === true : null;
+      },
+      error: () => { this.caisseSessionsActive = null; }
+    });
+    this.abonnementPermissions = this.roleService.mesPermissions$.subscribe(p => this.mesPermissions = p);
+  }
+
+  /**
+   * immediat : l'argent sortira tout de suite ; attente : la dépense attendra la validation du
+   * gérant ; inconnu : impossible de le savoir avec certitude (texte neutre). Même règle que le
+   * serveur : en attente seulement si « Caisse par sessions » est active ET que la personne n'a pas
+   * tous les droits. Les droits ne sont fiables que s'ils viennent vraiment du serveur (nom du rôle
+   * présent ; en cas d'échec de lecture, le site retombe sur « aucune restriction » sans nom).
+   */
+  get comportementCreation(): 'immediat' | 'attente' | 'inconnu' {
+    if (this.caisseSessionsActive === false) return 'immediat';
+    const p = this.mesPermissions;
+    if (this.caisseSessionsActive === true && p && p.roleNom) {
+      return p.toutAutorise ? 'immediat' : 'attente';
+    }
+    return 'inconnu';
+  }
+
+  /** Texte du formulaire quand l'argent ne sortira pas forcément tout de suite. */
+  get texteCreationSansDeduction(): string {
+    return this.comportementCreation === 'attente'
+      ? 'La dépense sera enregistrée en attente de validation. Aucun argent ne sortira de la caisse avant sa validation par le gérant.'
+      : 'Selon vos droits, la dépense sera déduite de la caisse tout de suite ou mise en attente de validation par le gérant : le résultat vous sera confirmé à l\'enregistrement.';
+  }
+
+  /**
+   * Salaires (onglet Employés) : un refus 403 (rôle sans le droit Personnel) n'empêche plus
+   * d'afficher les dépenses ; toute autre erreur reste une erreur.
+   */
+  private chargerSalaires(): Observable<PaiementEmploye[] | null> {
+    return this.paiementEmployeService.getTous().pipe(
+      catchError(err => err?.status === 403 ? of(null) : throwError(() => err))
+    );
   }
 
   loadTypes(): void {
@@ -124,23 +196,39 @@ export class DepensesComponent implements OnInit {
     });
   }
 
-  load(): void {
+  /**
+   * silencieux : actualisation après une action déjà réussie (ex. création) ; en cas d'échec, pas
+   * de fenêtre d'erreur qui cacherait la confirmation : une bande « liste non actualisée » avec
+   * « Réessayer » s'affiche, et la liste précédente reste visible.
+   */
+  load(silencieux = false): void {
     this.loading = true;
     this.filtreActif = false;
     this.pageActuelle = 1;
     forkJoin({
       depenses: this.depenseService.getAll(),
-      paiements: this.paiementEmployeService.getTous()
+      paiements: this.chargerSalaires()
     }).subscribe({
       next: ({ depenses, paiements }) => {
         this.depenses = depenses.depenses;
         this.totalDepenses = depenses.total;
-        this.paiementsEmploye = paiements.filter(p => p.statut === 'PAYE');
+        this.salairesIndisponibles = paiements === null;
+        this.paiementsEmploye = (paiements || []).filter(p => p.statut === 'PAYE');
+        this.listeNonActualisee = false;
         this.loading = false;
         this.calculerTotauxParType();
       },
-      error: e => { this.loading = false; this.showError(e.message); }
+      error: e => {
+        this.loading = false;
+        if (silencieux) this.listeNonActualisee = true;
+        else this.showError(e.message);
+      }
     });
+  }
+
+  /** « Réessayer » de la bande : relit seulement la liste, ne recrée jamais de dépense. */
+  reessayerChargement(): void {
+    this.load(true);
   }
 
   filtrer(): void {
@@ -150,13 +238,15 @@ export class DepensesComponent implements OnInit {
     this.pageActuelle = 1;
     forkJoin({
       depenses: this.depenseService.getParPeriode(this.dateDebut, this.dateFin),
-      paiements: this.paiementEmployeService.getTous()
+      paiements: this.chargerSalaires()
     }).subscribe({
       next: ({ depenses, paiements }) => {
         this.depenses = depenses.depenses;
         this.totalDepenses = depenses.total;
+        this.salairesIndisponibles = paiements === null;
+        this.listeNonActualisee = false;
         // Filtrer les paiements employés par période si filtre actif
-        this.paiementsEmploye = paiements.filter(p => {
+        this.paiementsEmploye = (paiements || []).filter(p => {
           if (p.statut !== 'PAYE') return false;
           const d = p.datePaiement?.split('T')[0] || '';
           return d >= this.dateDebut && d <= this.dateFin;
@@ -191,13 +281,14 @@ export class DepensesComponent implements OnInit {
   startCreate(): void {
     this.editing = null;
     this.form = this.emptyForm();
+    this.identifiantCreation = nouvelIdentifiantDemande();
     this.showForm = true;
   }
 
   calculerTotauxParType(): void {
     const map = new Map<string, number>();
     for (const d of this.toutesDepenses) {
-      if ((d as any).annulee) continue;
+      if ((d as any).annulee || this.estEnAttente(d)) continue;
       const type = (d as any).typeDepense || 'Sans type';
       if (type) map.set(type, (map.get(type) || 0) + d.montant);
     }
@@ -221,25 +312,75 @@ export class DepensesComponent implements OnInit {
     if (!this.form.montant || this.form.montant <= 0) { this.showError('Le montant doit être supérieur à 0'); return; }
     if (!this.form.date) { this.showError('La date est obligatoire'); return; }
 
-    const action = this.editing
-      ? this.depenseService.modifier(this.editing.id!, this.form)
-      : this.depenseService.creer(this.form);
+    const enEdition = this.editing;
+    if (enEdition) {
+      this.depenseService.modifier(enEdition.id!, this.form).subscribe({
+        next: () => {
+          this.showForm = false;
+          this.load();
+          Swal.fire({
+            icon: 'success', title: 'Dépense modifiée',
+            text: this.estEnAttente(enEdition)
+              ? 'Elle attend toujours la validation du gérant : la caisse n\'a pas bougé.'
+              : 'La caisse a été ajustée automatiquement.',
+            timer: 2500, timerProgressBar: true, confirmButtonColor: '#1a56db'
+          });
+        },
+        error: e => this.showError(e.message)
+      });
+      return;
+    }
 
-    action.subscribe({
-      next: () => {
+    // Même identifiant pour chaque nouvel essai de cette création (pas de doublon côté serveur).
+    if (!this.identifiantCreation) this.identifiantCreation = nouvelIdentifiantDemande();
+    this.depenseService.creer(this.form, this.identifiantCreation).subscribe({
+      next: resultat => {
+        // La dépense est enregistrée : l'identifiant est oublié (aucun renvoi automatique).
+        this.identifiantCreation = null;
         this.showForm = false;
-        this.load();
-        Swal.fire({ icon: 'success', title: this.editing ? 'Dépense modifiée' : 'Dépense créée', text: this.editing ? 'La caisse a été ajustée automatiquement.' : 'Le montant a été déduit de la caisse.', timer: 2500, timerProgressBar: true, confirmButtonColor: '#1a56db' });
+        let confirmation: Promise<unknown>;
+        if (resultat.message === 'Dépense déjà enregistrée') {
+          confirmation = Swal.fire({
+            icon: 'info', title: 'Dépense déjà enregistrée',
+            text: 'Cette dépense avait déjà été enregistrée : elle n\'a pas été ajoutée une deuxième fois.',
+            confirmButtonColor: '#1a56db'
+          });
+        } else if (resultat.validationRequise) {
+          confirmation = this.afficherDepenseEnAttente(resultat.depense);
+        } else {
+          confirmation = Swal.fire({ icon: 'success', title: 'Dépense créée', text: 'Le montant a été déduit de la caisse.', timer: 2500, timerProgressBar: true, confirmButtonColor: '#1a56db' });
+        }
+        // Actualisation de la liste une fois la confirmation fermée, et sans fenêtre d'erreur : un
+        // échec (et le message global « Mise à jour en cours » d'une coupure réseau) ne peut pas la
+        // remplacer ; il donne la bande « liste non actualisée » avec « Réessayer ».
+        Promise.resolve(confirmation).catch(() => undefined).then(() => this.load(true));
       },
       error: e => this.showError(e.message)
     });
   }
 
+  /** Fenêtre affichée quand la dépense attend la validation du gérant (rien n'est encore sorti). */
+  private afficherDepenseEnAttente(d: Depense): Promise<unknown> {
+    return Swal.fire({
+      icon: 'info',
+      title: 'Dépense notée — en attente de validation',
+      html: `<b>${this.echapper(d?.nom)}</b> — ${this.formatPrice(d?.montant || 0)}<br><br>`
+        + 'Elle doit être validée par le gérant pour être prise en compte.<br>'
+        + '<b>Aucun argent n\'est encore sorti de la caisse.</b>',
+      confirmButtonText: 'J\'ai compris',
+      confirmButtonColor: '#1a56db',
+      allowOutsideClick: false
+    });
+  }
+
   valider(d: Depense): void {
+    const enAttente = this.estEnAttente(d);
     Swal.fire({
       icon: 'question',
       title: 'Valider cette dépense ?',
-      html: `<b>${d.nom}</b> — ${this.formatPrice(d.montant)}<br><small class="text-muted">Une fois validée, elle ne pourra plus être supprimée directement — seulement annulée avec un motif tracé.</small>`,
+      html: `<b>${d.nom}</b> — ${this.formatPrice(d.montant)}<br>`
+        + (enAttente ? `<b>${this.formatPrice(d.montant)} vont sortir de la caisse maintenant.</b><br>` : '')
+        + '<small class="text-muted">Une fois validée, elle ne pourra plus être supprimée directement — seulement annulée avec un motif tracé.</small>',
       showCancelButton: true,
       cancelButtonText: 'Annuler',
       confirmButtonText: 'Valider',
@@ -249,7 +390,11 @@ export class DepensesComponent implements OnInit {
       this.depenseService.valider(d.id!).subscribe({
         next: () => {
           this.load();
-          Swal.fire({ icon: 'success', title: 'Dépense validée', timer: 2000, showConfirmButton: false });
+          Swal.fire({
+            icon: 'success', title: 'Dépense validée',
+            text: enAttente ? `${this.formatPrice(d.montant)} sortis de la caisse.` : undefined,
+            timer: 2500, showConfirmButton: false
+          });
         },
         error: e => this.showError(e.message)
       });
@@ -289,10 +434,15 @@ export class DepensesComponent implements OnInit {
       return;
     }
 
+    const enAttente = this.estEnAttente(d);
     Swal.fire({
       icon: 'warning',
       title: 'Supprimer cette dépense ?',
-      html: `<b>${d.nom}</b> — ${this.formatPrice(d.montant)}<br><small class="text-muted">Le montant sera remis en caisse.</small>`,
+      html: `<b>${d.nom}</b> — ${this.formatPrice(d.montant)}<br><small class="text-muted">`
+        + (enAttente
+          ? 'Elle n\'avait pas encore été prise en compte : la caisse ne changera pas.'
+          : 'Le montant sera remis en caisse.')
+        + '</small>',
       showCancelButton: true,
       cancelButtonText: 'Annuler',
       confirmButtonText: 'Supprimer',
@@ -302,7 +452,11 @@ export class DepensesComponent implements OnInit {
       this.depenseService.supprimer(d.id!).subscribe({
         next: () => {
           this.load();
-          Swal.fire({ icon: 'success', title: 'Supprimée', text: 'Le montant a été remis en caisse.', timer: 2000, showConfirmButton: false });
+          Swal.fire({
+            icon: 'success', title: 'Supprimée',
+            text: enAttente ? 'La caisse n\'a pas changé.' : 'Le montant a été remis en caisse.',
+            timer: 2000, showConfirmButton: false
+          });
         },
         error: e => this.showError(e.message)
       });
@@ -352,8 +506,38 @@ export class DepensesComponent implements OnInit {
     return pages;
   }
 
+  /** Dépense notée par un non-gérant, pas encore validée : l'argent n'est pas sorti de la caisse. */
+  estEnAttente(d: any): boolean {
+    return !!d && d.sortieEnAttente === true && !d.annulee;
+  }
+
+  /**
+   * Bouton « Valider » : pour une dépense en attente, le serveur exige « Dépenses : supprimer »
+   * (ou un gérant avec tous les droits) car c'est là que l'argent sort ; sinon « Dépenses : modifier ».
+   */
+  peutValider(d: any): boolean {
+    return this.estEnAttente(d) ? this.peut('DEPENSES', 'SUPPRIMER') : this.peut('DEPENSES', 'GERER');
+  }
+
+  /** Total effectif : hors annulées et hors dépenses en attente (même règle que le serveur). */
   get totalDepensesFiltrees(): number {
-    return this.depensesFiltrees.filter(d => !(d as any).annulee).reduce((s, d) => s + d.montant, 0);
+    return this.depensesFiltrees
+      .filter(d => !(d as any).annulee && !this.estEnAttente(d))
+      .reduce((s, d) => s + d.montant, 0);
+  }
+
+  get depensesEnAttenteFiltrees(): any[] {
+    return this.depensesFiltrees.filter(d => this.estEnAttente(d));
+  }
+
+  get totalEnAttenteFiltrees(): number {
+    return this.depensesEnAttenteFiltrees.reduce((s, d) => s + d.montant, 0);
+  }
+
+  /** Moyenne du total effectif (les dépenses en attente ne comptent pas encore). */
+  get moyenneDepensesFiltrees(): number {
+    const nombre = this.depensesFiltrees.length - this.depensesEnAttenteFiltrees.length;
+    return nombre > 0 ? this.totalDepensesFiltrees / nombre : 0;
   }
 
   get totalToutesFiltrees(): number {
@@ -363,7 +547,7 @@ export class DepensesComponent implements OnInit {
   get resumeParTypeFiltrees(): { type: string; total: number }[] {
     const map = new Map<string, number>();
     for (const d of this.depensesFiltrees) {
-      if ((d as any).annulee) continue;
+      if ((d as any).annulee || this.estEnAttente(d)) continue;
       const type = (d as any).typeDepense || 'Sans type';
       map.set(type, (map.get(type) || 0) + d.montant);
     }
@@ -387,6 +571,8 @@ export class DepensesComponent implements OnInit {
     const total = this.totalDepensesFiltrees;
     const totalSalaires = liste.filter(d => d.typeDepense === 'Salaire').reduce((s: number, d: any) => s + d.montant, 0);
     const totalAutres = total - totalSalaires;
+    const nombreEnAttente = this.depensesEnAttenteFiltrees.length;
+    const totalEnAttente = this.totalEnAttenteFiltrees;
 
     const resumeRows = this.resumeParTypeFiltrees.map(r =>
       `<tr><td>${r.type}</td><td style="text-align:right;font-weight:700">${this.formatPrice(r.total)}</td></tr>`
@@ -395,10 +581,10 @@ export class DepensesComponent implements OnInit {
     const depenseRows = liste.map((d: any) =>
       `<tr>
         <td>${d.date || '—'}</td>
-        <td><strong>${d.nom}</strong>${d.periodeDebut ? `<br><small style="color:#64748b">${d.periodeDebut}${d.periodeFin && d.periodeFin !== d.periodeDebut ? ' → ' + d.periodeFin : ''}</small>` : ''}</td>
+        <td><strong>${d.nom}</strong>${d.periodeDebut ? `<br><small style="color:#64748b">${d.periodeDebut}${d.periodeFin && d.periodeFin !== d.periodeDebut ? ' → ' + d.periodeFin : ''}</small>` : ''}${this.estEnAttente(d) ? '<br><small style="color:#b45309;font-weight:700">En attente de validation — hors total</small>' : ''}</td>
         <td><span style="background:${d.typeDepense === 'Salaire' ? '#fef3c7' : '#eff6ff'};color:${d.typeDepense === 'Salaire' ? '#92400e' : '#1e40af'};padding:2px 8px;border-radius:12px;font-size:0.75rem">${d.typeDepense || '—'}</span></td>
         <td>${d.motif || '—'}</td>
-        <td style="text-align:right;font-weight:700;color:#dc2626">${this.formatPrice(d.montant)}</td>
+        <td style="text-align:right;font-weight:700;color:${this.estEnAttente(d) ? '#b45309' : '#dc2626'}">${this.formatPrice(d.montant)}</td>
       </tr>`
     ).join('');
 
@@ -450,6 +636,9 @@ tr:last-child td{border-bottom:none}
       <div class="kpi"><div class="kpi-val" style="color:#92400e">${this.formatPrice(totalSalaires)}</div><div class="kpi-lbl">dont Salaires</div></div>
       <div class="kpi"><div class="kpi-val" style="color:#7c3aed">${this.formatPrice(totalAutres)}</div><div class="kpi-lbl">dont Autres</div></div>
     </div>
+    ${nombreEnAttente ? `<div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:10px;padding:10px 14px;margin-bottom:20px;color:#92400e">
+      <strong>${nombreEnAttente} dépense(s) en attente de validation : ${this.formatPrice(totalEnAttente)}</strong><br>
+      <small>Hors du total ci-dessus : l'argent ne sort de la caisse qu'à la validation du gérant.</small></div>` : ''}
     <div class="section">
       <div class="section-title">Répartition par type</div>
       <table>
@@ -490,6 +679,10 @@ tr:last-child td{border-bottom:none}
     if (/formation|école|ecole|éducation|education|cours/.test(n)) return 'fa-graduation-cap';
     if (/pétrole|petrole|fuel/.test(n)) return 'fa-fire';
     return 'fa-tag';
+  }
+
+  private echapper(v: string | undefined | null): string {
+    return (v || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' } as any)[c]);
   }
 
   private emptyForm(): DepenseRequest {
